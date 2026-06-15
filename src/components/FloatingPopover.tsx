@@ -1,0 +1,202 @@
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type DependencyList, type RefObject, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+
+type Placement = 'auto' | 'bottom-start' | 'bottom-end' | 'bottom-center' | 'top-start' | 'top-end' | 'top-center';
+
+interface Props {
+  open: boolean;
+  anchorRef: RefObject<HTMLElement | null>;
+  children: ReactNode;
+  className?: string;
+  placement?: Placement;
+  offset?: number;
+  viewportMargin?: number;
+  matchAnchorWidth?: boolean;
+  minWidth?: number;
+  onDismiss?: () => void;
+}
+
+interface FloatingState {
+  style: CSSProperties;
+  side: 'top' | 'bottom';
+  ready: boolean;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function useIsomorphicLayoutEffect(callback: () => void | (() => void), deps: DependencyList) {
+  useLayoutEffect(callback, deps);
+}
+
+function resolvePosition(args: {
+  anchor: DOMRect;
+  panel: DOMRect;
+  placement: Placement;
+  offset: number;
+  margin: number;
+  matchAnchorWidth: boolean;
+  minWidth?: number;
+}): FloatingState {
+  const { anchor, panel, placement, offset, margin, matchAnchorWidth, minWidth } = args;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const viewportMaxWidth = Math.max(120, viewportWidth - margin * 2);
+  const measuredPanelWidth = panel.width > 0 && panel.width < viewportMaxWidth - 1 ? panel.width : 0;
+  const desiredWidth = matchAnchorWidth
+    ? anchor.width
+    : minWidth ?? (measuredPanelWidth || Math.min(anchor.width, viewportMaxWidth));
+  const width = Math.min(Math.max(desiredWidth, minWidth ?? 0, 120), viewportMaxWidth);
+  const estimatedHeight = Math.min(panel.height || 220, Math.max(120, viewportHeight - margin * 2));
+  const spaceBelow = viewportHeight - anchor.bottom - margin - offset;
+  const spaceAbove = anchor.top - margin - offset;
+
+  let preferredSide: 'top' | 'bottom';
+  if (placement.startsWith('top')) preferredSide = 'top';
+  else if (placement.startsWith('bottom')) preferredSide = 'bottom';
+  else preferredSide = spaceBelow >= estimatedHeight || spaceBelow >= spaceAbove ? 'bottom' : 'top';
+
+  const available = preferredSide === 'bottom' ? spaceBelow : spaceAbove;
+  const fallbackAvailable = preferredSide === 'bottom' ? spaceAbove : spaceBelow;
+  if (available < 140 && fallbackAvailable > available) {
+    preferredSide = preferredSide === 'bottom' ? 'top' : 'bottom';
+  }
+
+  const sidePlacement = placement === 'auto' ? `${preferredSide}-start` : placement;
+  const align = sidePlacement.endsWith('end') ? 'end' : sidePlacement.endsWith('center') ? 'center' : 'start';
+
+  let left = anchor.left;
+  if (align === 'end') left = anchor.right - width;
+  if (align === 'center') left = anchor.left + anchor.width / 2 - width / 2;
+  left = clamp(left, margin, Math.max(margin, viewportWidth - width - margin));
+
+  const maxHeight = Math.max(
+    120,
+    preferredSide === 'bottom'
+      ? viewportHeight - anchor.bottom - offset - margin
+      : anchor.top - offset - margin
+  );
+
+  let top = preferredSide === 'bottom'
+    ? anchor.bottom + offset
+    : anchor.top - Math.min(panel.height || estimatedHeight, maxHeight) - offset;
+  top = clamp(top, margin, Math.max(margin, viewportHeight - Math.min(panel.height || estimatedHeight, maxHeight) - margin));
+
+  return {
+    side: preferredSide,
+    ready: true,
+    style: {
+      position: 'fixed',
+      left,
+      top,
+      width: matchAnchorWidth || minWidth ? width : undefined,
+      minWidth: matchAnchorWidth ? width : minWidth,
+      maxWidth: `calc(100vw - ${margin * 2}px)`,
+      maxHeight,
+      zIndex: 1000,
+      visibility: 'visible',
+      '--floating-origin-y': preferredSide === 'bottom' ? 'top' : 'bottom',
+      '--floating-available-height': `${maxHeight}px`
+    } as CSSProperties
+  };
+}
+
+export function FloatingPopover({
+  open,
+  anchorRef,
+  children,
+  className,
+  placement = 'auto',
+  offset = 8,
+  viewportMargin = 12,
+  matchAnchorWidth = false,
+  minWidth,
+  onDismiss
+}: Props) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [floating, setFloating] = useState<FloatingState>({
+    side: 'bottom',
+    ready: false,
+    style: { position: 'fixed', left: 0, top: 0, visibility: 'hidden', zIndex: 1000 }
+  });
+
+  const update = () => {
+    const anchor = anchorRef.current;
+    const panel = panelRef.current;
+    if (!anchor || !panel) return;
+
+    setFloating(resolvePosition({
+      anchor: anchor.getBoundingClientRect(),
+      panel: panel.getBoundingClientRect(),
+      placement,
+      offset,
+      margin: viewportMargin,
+      matchAnchorWidth,
+      minWidth
+    }));
+  };
+
+  useIsomorphicLayoutEffect(() => {
+    if (!open) return;
+    update();
+  }, [open, placement, offset, viewportMargin, matchAnchorWidth, minWidth, children]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    let frame = 0;
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (anchorRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      onDismiss?.();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onDismiss?.();
+    };
+
+    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule, true);
+    window.addEventListener('pointerdown', handlePointerDown, true);
+    window.addEventListener('keydown', handleKeyDown);
+
+    const observer = new ResizeObserver(schedule);
+    if (anchorRef.current) observer.observe(anchorRef.current);
+    if (panelRef.current) observer.observe(panelRef.current);
+
+    schedule();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule, true);
+      window.removeEventListener('pointerdown', handlePointerDown, true);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, anchorRef, onDismiss]);
+
+  if (!open || typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      ref={panelRef}
+      className={`floating-popover-layer ${className ?? ''}`}
+      style={floating.style}
+      data-side={floating.side}
+      data-ready={floating.ready ? 'true' : 'false'}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
+    >
+      {children}
+    </div>,
+    document.body
+  );
+}
