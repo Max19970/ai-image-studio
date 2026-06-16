@@ -142,3 +142,19 @@ docs/
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Mobile screenshot checks
+
+The project includes a lightweight Puppeteer-based screenshot helper for mobile layout work.
+
+```bash
+npm run capture:mobile
+```
+
+It builds the app, starts a temporary static server for `dist/client`, seeds a small local demo gallery, opens the main mobile surfaces including the multi-generation composer, and writes phone-sized screenshots to `artifacts/mobile-screenshots`. It uses the system Chromium by default (`/usr/bin/chromium`); set `CHROMIUM_PATH` or `PUPPETEER_EXECUTABLE_PATH` if Chromium lives elsewhere.
+
+For full-page captures instead of viewport captures:
+
+```bash
+FULL_PAGE=1 npm run capture:mobile
+```

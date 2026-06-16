@@ -61,7 +61,7 @@ export function StudioInfoPage({ mode, provider, capabilityReport, onOpenSetting
           <p>{t('info.guidesText')}</p>
         </div>
 
-        <div className="workspace-guides-grid">
+        <div className="workspace-guides-grid workspace-guides-grid-desktop">
           {guides.map((guide) => (
             <article className="info-guide-card" key={guide}>
               <span className="info-guide-number">{String(guides.indexOf(guide) + 1).padStart(2, '0')}</span>
@@ -75,6 +75,25 @@ export function StudioInfoPage({ mode, provider, capabilityReport, onOpenSetting
                 <li>{t(`info.guide.${guide}.step3`)}</li>
               </ol>
             </article>
+          ))}
+        </div>
+
+        <div className="mobile-guide-list">
+          {guides.map((guide, index) => (
+            <details className="mobile-guide-details" key={guide} open={index === 0}>
+              <summary>
+                <span className="info-guide-number">{String(index + 1).padStart(2, '0')}</span>
+                <span>
+                  <strong>{t(`info.guide.${guide}.title`)}</strong>
+                  <small>{t(`info.guide.${guide}.text`)}</small>
+                </span>
+              </summary>
+              <ol>
+                <li>{t(`info.guide.${guide}.step1`)}</li>
+                <li>{t(`info.guide.${guide}.step2`)}</li>
+                <li>{t(`info.guide.${guide}.step3`)}</li>
+              </ol>
+            </details>
           ))}
         </div>
       </section>

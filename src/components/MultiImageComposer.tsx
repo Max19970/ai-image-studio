@@ -262,15 +262,15 @@ export function MultiImageComposer({
         <header className="batch-composer-topbar">
           <div>
             <span className="section-kicker">{t('batch.kicker')}</span>
-            <h2>{t('batch.title')}</h2>
+            <h2><span className="batch-title-full">{t('batch.title')}</span><span className="batch-title-mobile">{t('batch.mobileTitle')}</span></h2>
             <p>{t('batch.subtitle')}</p>
           </div>
-          <button type="button" className="btn-secondary" onClick={onCancel}>{t('batch.close')}</button>
+          <button type="button" className="btn-secondary batch-close-button" onClick={onCancel}><span className="batch-action-full">{t('batch.close')}</span><span className="batch-action-mobile">{t('batch.mobileClose')}</span></button>
         </header>
 
         <div className="batch-composer-controls">
           <label className="batch-interval-field">
-            <span>{t('batch.interval')}</span>
+            <span><span className="batch-action-full">{t('batch.interval')}</span><span className="batch-action-mobile">{t('batch.mobileInterval')}</span></span>
             <input
               type="number"
               min={0}
@@ -283,7 +283,7 @@ export function MultiImageComposer({
           </label>
           <div className="batch-summary-card">
             <span>{t('batch.summary')}</span>
-            <strong>{t('batch.summaryValue', { requests: drafts.length, valid: validDrafts, images: totalImages })}</strong>
+            <strong><span className="batch-action-full">{t('batch.summaryValue', { requests: drafts.length, valid: validDrafts, images: totalImages })}</span><span className="batch-action-mobile">{t('batch.mobileSummaryValue', { requests: drafts.length, valid: validDrafts, images: totalImages })}</span></strong>
           </div>
         </div>
 
@@ -306,8 +306,8 @@ export function MultiImageComposer({
         </div>
 
         <footer className="batch-composer-footer">
-          <button type="button" className="btn-secondary" onClick={onAddDraft}>＋ {t('batch.addRequest')}</button>
-          <button type="button" className="btn-primary batch-submit-button" disabled={!canSubmit} onClick={onSubmit}>{busy ? t('batch.busy') : t('batch.submit')}</button>
+          <button type="button" className="btn-secondary batch-add-button" onClick={onAddDraft}>＋ <span>{t('batch.addRequest')}</span></button>
+          <button type="button" className="btn-primary batch-submit-button" disabled={!canSubmit} onClick={onSubmit}><span className="batch-action-full">{busy ? t('batch.busy') : t('batch.submit')}</span><span className="batch-action-mobile">{busy ? t('batch.busy') : t('batch.mobileSubmit')}</span></button>
         </footer>
       </div>
     </section>

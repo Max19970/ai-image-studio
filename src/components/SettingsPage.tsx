@@ -298,6 +298,7 @@ export function SettingsPage({
 
   return (
     <section className="workspace-settings-page settings-workbench" onClick={() => setActiveInfo(null)}>
+      <div className="settings-desktop-view">
       <header className="settings-page-heading settings-page-heading-flat">
         <p className="section-kicker">{t('settings.kicker')}</p>
         <h2>{t('settings.title')}</h2>
@@ -615,6 +616,317 @@ export function SettingsPage({
             </div>
           )}
         </section>
+      </div>
+      </div>
+
+      <div className="settings-mobile-view" onClick={(event) => event.stopPropagation()}>
+        <header className="mobile-page-hero mobile-settings-hero">
+          <p className="section-kicker">{t('settings.kicker')}</p>
+          <h2>{t('settings.title')}</h2>
+          <p>{t('settings.subtitle')}</p>
+        </header>
+
+        <div className="mobile-settings-tabs settings-mobile-tabs" role="tablist" aria-label={t('settings.tabsAria')}>
+          <button type="button" className={tab === 'interface' ? 'active' : ''} onClick={() => setTab('interface')}>
+            <strong>{t('settings.tab.interface')}</strong>
+            <span>{t('settings.tab.interfaceHint')}</span>
+          </button>
+          <button type="button" className={tab === 'generationApi' ? 'active' : ''} onClick={() => setTab('generationApi')}>
+            <strong>{t('settings.tab.generationApi')}</strong>
+            <span>{t('settings.tab.generationApiHint')}</span>
+          </button>
+        </div>
+
+        <div className="mobile-save-strip glass-panel">
+          <div>
+            <span className="section-kicker">{t('settings.actions')}</span>
+            <strong>{saved ? t('settings.saved') : isDirty ? t('settings.unsaved') : t('settings.noChanges')}</strong>
+          </div>
+          <div className="mobile-save-actions">
+            <button className="btn-secondary" onClick={resetDraft} disabled={!isDirty}>{t('settings.cancel')}</button>
+            <button className="btn-primary" onClick={save} disabled={!isDirty}>{t('settings.save')}</button>
+          </div>
+        </div>
+
+        {tab === 'interface' && (
+          <section className="mobile-settings-stack">
+            <article className="mobile-card mobile-language-card glass-panel">
+              <div className="mobile-card-head">
+                <div>
+                  <span className="section-kicker">{t('settings.languageTitle')}</span>
+                  <h3>{t('settings.languageLabel')}</h3>
+                  <p>{t('settings.languageHint')}</p>
+                </div>
+                <InfoTip id="mobileLanguage" text={t('settings.info.language')} activeId={activeInfo} onToggle={setActiveInfo} />
+              </div>
+              <PopoverSelect
+                value={locale}
+                onChange={(value) => setLocale(value as Locale)}
+                options={locales.map((item) => ({ value: item.value, label: item.nativeLabel, description: item.label }))}
+                ariaLabel={t('settings.languageLabel')}
+                className="settings-inline-select"
+                triggerClassName="settings-select-trigger"
+                panelClassName="settings-select-panel"
+                showSelectedDescription
+              />
+            </article>
+
+            <article className="mobile-card mobile-theme-card glass-panel">
+              <div className="mobile-card-head">
+                <div>
+                  <span className="section-kicker">{t('settings.themeTitle')}</span>
+                  <h3>{t('settings.themeHeading')}</h3>
+                  <p>{t('settings.themeHint')}</p>
+                </div>
+                <InfoTip id="mobileInterfaceTheme" text={t('settings.info.theme')} activeId={activeInfo} onToggle={setActiveInfo} />
+              </div>
+              <div className="mobile-theme-strip" role="radiogroup" aria-label={t('settings.themeTitle')}>
+                {interfaceThemes.map((theme) => (
+                  <button
+                    type="button"
+                    key={theme}
+                    role="radio"
+                    aria-checked={activeTheme === theme}
+                    className={`theme-choice theme-choice-${theme} ${activeTheme === theme ? 'active' : ''}`}
+                    onClick={() => selectTheme(theme)}
+                  >
+                    <span className={`theme-preview theme-preview-${theme}`} aria-hidden="true">
+                      <span className="theme-preview-sidebar" />
+                      <span className="theme-preview-canvas">
+                        <i className="theme-preview-line strong" />
+                        <i className="theme-preview-line" />
+                        <i className="theme-preview-button" />
+                      </span>
+                    </span>
+                    <span className="theme-choice-copy">
+                      <strong>{t(`settings.theme.${theme}.title`)}</strong>
+                      <span>{t(`settings.theme.${theme}.description`)}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </article>
+          </section>
+        )}
+
+        {tab === 'generationApi' && (
+          <section className="mobile-settings-stack mobile-api-page">
+            <div className="mobile-api-switch" role="tablist" aria-label={t('settings.apiTitle')}>
+              <button type="button" className={apiFocus === 'providers' ? 'active' : ''} onClick={() => setApiFocus('providers')}>{t('settings.providers')}</button>
+              <button type="button" className={apiFocus === 'models' ? 'active' : ''} onClick={() => setApiFocus('models')}>{t('settings.models')}</button>
+            </div>
+
+            {apiFocus === 'providers' && (
+              <>
+                <article className="mobile-card mobile-entity-card glass-panel">
+                  <div className="mobile-card-head compact">
+                    <div>
+                      <span className="section-kicker">{t('settings.providers')}</span>
+                      <h3>{t('settings.providers')}</h3>
+                      <p>{t('settings.providersHint')}</p>
+                    </div>
+                    <button type="button" className="btn-secondary micro" onClick={addProvider}>+ {t('settings.addProvider')}</button>
+                  </div>
+                  <div className="mobile-entity-strip">
+                    {draft.providers.map((provider) => {
+                      const relatedModels = draft.models.filter((model) => model.providerId === provider.id).length;
+                      return (
+                        <button
+                          type="button"
+                          key={provider.id}
+                          className={`mobile-entity-pill ${provider.id === selectedProvider?.id ? 'active' : ''}`}
+                          onClick={() => {
+                            setSelectedProviderId(provider.id);
+                            const model = firstModelForProvider(draft, provider.id);
+                            if (model) setSelectedModelId(model.id);
+                          }}
+                        >
+                          <strong>{provider.name || t('settings.unnamedProvider')}</strong>
+                          <span>{provider.generationEndpoint || t('detail.notSet')}</span>
+                          <small>{t('settings.modelsCount', { count: relatedModels })}</small>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </article>
+
+                {selectedProvider ? (
+                  <article className="mobile-card mobile-editor-card glass-panel">
+                    <div className="mobile-card-head compact">
+                      <div>
+                        <span className="section-kicker">{t('settings.providerEditor')}</span>
+                        <h3>{selectedProvider.name || t('settings.unnamedProvider')}</h3>
+                      </div>
+                      <button type="button" className="btn-secondary micro danger-soft" onClick={removeProvider} disabled={draft.providers.length <= 1}>{t('settings.deleteProvider')}</button>
+                    </div>
+
+                    <details className="mobile-settings-accordion">
+                      <summary>{t('settings.providerName')}</summary>
+                      <FieldShell id="mobileProviderName" label={t('settings.providerName')} info={t('settings.info.providerName')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                        <input className="field-input" value={selectedProvider.name} onChange={(e) => patchProvider('name', e.target.value)} />
+                      </FieldShell>
+                    </details>
+
+                    <details className="mobile-settings-accordion">
+                      <summary>{t('settings.section.connection')}</summary>
+                      <div className="settings-field-grid mobile-field-stack">
+                        <FieldShell id="mobileGenerationEndpoint" label={t('settings.generationEndpoint')} info={t('settings.info.generationEndpoint')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                          <input className="field-input" value={selectedProvider.generationEndpoint} onChange={(e) => patchProvider('generationEndpoint', e.target.value)} placeholder="https://.../images/generations" />
+                        </FieldShell>
+                        <FieldShell id="mobileEditEndpoint" label={t('settings.editEndpoint')} info={t('settings.info.editEndpoint')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                          <input className="field-input" value={selectedProvider.editEndpoint} onChange={(e) => patchProvider('editEndpoint', e.target.value)} placeholder="https://.../images/edits" />
+                        </FieldShell>
+                        <FieldShell id="mobileResponsesEndpoint" label={t('settings.responsesEndpoint')} info={t('settings.info.responsesEndpoint')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                          <input className="field-input" value={selectedProvider.responsesEndpoint} onChange={(e) => patchProvider('responsesEndpoint', e.target.value)} placeholder="https://.../responses" />
+                        </FieldShell>
+                        <FieldShell id="mobileTimeout" label={t('settings.timeout')} info={t('settings.info.timeout')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                          <input className="field-input" type="number" min={1000} step={1000} value={selectedProvider.timeoutMs} onChange={(e) => patchProvider('timeoutMs', Number(e.target.value) || 0)} />
+                        </FieldShell>
+                      </div>
+                    </details>
+
+                    <details className="mobile-settings-accordion">
+                      <summary>{t('settings.auth')}</summary>
+                      <div className="settings-field-grid mobile-field-stack">
+                        <FieldShell id="mobileApiKey" label={t('settings.apiKey')} info={t('settings.info.apiKey')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                          <input className="field-input" type="password" value={selectedProvider.apiKey} onChange={(e) => patchProvider('apiKey', e.target.value)} placeholder="sk-..." autoComplete="off" />
+                        </FieldShell>
+                        <FieldShell id="mobileAuthHeader" label={t('settings.authHeader')} info={t('settings.info.authHeader')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                          <input className="field-input" value={selectedProvider.authHeaderName} onChange={(e) => patchProvider('authHeaderName', e.target.value)} placeholder="Authorization" />
+                        </FieldShell>
+                        <FieldShell id="mobileAuthScheme" label={t('settings.authScheme')} info={t('settings.info.authScheme')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                          <input className="field-input" value={selectedProvider.authScheme} onChange={(e) => patchProvider('authScheme', e.target.value)} placeholder="Bearer" />
+                        </FieldShell>
+                        <div className="settings-check-card wide">
+                          <label className="inline-check">
+                            <input type="checkbox" className="h-4 w-4 rounded" checked={selectedProvider.persistApiKey} onChange={(e) => patchProvider('persistApiKey', e.target.checked)} />
+                            <span>{t('settings.persistApiKey')}</span>
+                          </label>
+                          <InfoTip id="mobilePersistApiKey" text={t('settings.info.persistApiKey')} activeId={activeInfo} onToggle={setActiveInfo} />
+                        </div>
+                      </div>
+                    </details>
+
+                    <details className="mobile-settings-accordion">
+                      <summary>{t('settings.customHeaders')}</summary>
+                      <FieldShell id="mobileCustomHeaders" label={t('settings.customHeaders')} info={t('settings.info.customHeaders')} activeInfo={activeInfo} setActiveInfo={setActiveInfo} wide>
+                        <textarea className="field-input min-h-[110px]" value={selectedProvider.customHeadersJson} onChange={(e) => patchProvider('customHeadersJson', e.target.value)} placeholder={'{ "OpenAI-Organization": "org_..." }'} />
+                      </FieldShell>
+                    </details>
+
+                    <details className="mobile-settings-accordion">
+                      <summary>{t('settings.providerChecks')}</summary>
+                      <p className="mobile-muted">{t('settings.providerChecksHint', { model: probeModel?.modelId ?? t('info.noModel') })}</p>
+                      <div className="settings-probe-actions mobile-probe-actions">
+                        <button className="btn-secondary" onClick={() => onQuickCheckProvider(selectedProvider, probeModel)} disabled={quickCheckingProviderId === selectedProvider.id}>
+                          {quickCheckingProviderId === selectedProvider.id ? t('settings.quickChecking') : t('settings.quickCheck')}
+                        </button>
+                        <button className="btn-primary" onClick={() => onProbeProvider(selectedProvider, probeModel)} disabled={probingProviderId === selectedProvider.id}>
+                          {probingProviderId === selectedProvider.id ? t('settings.probeRunningShort') : t('settings.probeButtonShort')}
+                        </button>
+                        <button className="btn-secondary" onClick={() => onClearCache(selectedProvider, probeModel)}>{t('settings.clearProbe')}</button>
+                      </div>
+                      {quickResult && (
+                        <div className={`quick-check-result ${quickResult.ok ? 'ok' : 'bad'}`}>
+                          <strong>{quickResult.ok ? t('settings.quickOk') : t('settings.quickBad')}</strong>
+                          <span>{quickResult.status ? `HTTP ${quickResult.status} · ` : ''}{quickResult.message}</span>
+                        </div>
+                      )}
+                      <ProbeState report={showReport} probing={probingProviderId === selectedProvider.id} error={probeError} />
+                    </details>
+                  </article>
+                ) : (
+                  <EmptyState title={t('settings.noProviders')} text={t('settings.noProvidersText')} />
+                )}
+              </>
+            )}
+
+            {apiFocus === 'models' && (
+              <>
+                <article className="mobile-card mobile-entity-card glass-panel">
+                  <div className="mobile-card-head compact">
+                    <div>
+                      <span className="section-kicker">{t('settings.models')}</span>
+                      <h3>{t('settings.models')}</h3>
+                      <p>{t('settings.modelsHint')}</p>
+                    </div>
+                    <button type="button" className="btn-secondary micro" onClick={addModel}>+ {t('settings.addModel')}</button>
+                  </div>
+                  <div className="mobile-entity-strip">
+                    {draft.models.map((model) => {
+                      const provider = draft.providers.find((item) => item.id === model.providerId);
+                      return (
+                        <button
+                          type="button"
+                          key={model.id}
+                          className={`mobile-entity-pill ${model.id === selectedModel?.id ? 'active' : ''}`}
+                          onClick={() => selectModel(model)}
+                        >
+                          <strong>{model.name || model.modelId}</strong>
+                          <span>{model.modelId}</span>
+                          <small>{provider?.name ?? t('detail.notSet')}</small>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </article>
+
+                {selectedModel ? (
+                  <article className="mobile-card mobile-editor-card glass-panel">
+                    <div className="mobile-card-head compact">
+                      <div>
+                        <span className="section-kicker">{t('settings.modelEditor')}</span>
+                        <h3>{selectedModel.name || selectedModel.modelId}</h3>
+                      </div>
+                      <button type="button" className="btn-secondary micro danger-soft" onClick={removeModel} disabled={draft.models.length <= 1}>{t('settings.deleteModel')}</button>
+                    </div>
+
+                    <details className="mobile-settings-accordion">
+                      <summary>{t('settings.modelEditor')}</summary>
+                      <div className="settings-field-grid mobile-field-stack">
+                        <FieldShell id="mobileModelName" label={t('settings.modelName')} info={t('settings.info.modelName')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                          <input className="field-input" value={selectedModel.name} onChange={(e) => patchModel('name', e.target.value)} />
+                        </FieldShell>
+                        <FieldShell id="mobileModelId" label={t('settings.modelId')} info={t('settings.info.modelId')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+                          <input className="field-input" value={selectedModel.modelId} onChange={(e) => patchModel('modelId', e.target.value)} placeholder="gpt-image-2" />
+                        </FieldShell>
+                        <FieldShell id="mobileModelProvider" label={t('settings.modelProvider')} info={t('settings.info.modelProvider')} activeInfo={activeInfo} setActiveInfo={setActiveInfo} wide>
+                          <PopoverSelect
+                            value={selectedModel.providerId}
+                            onChange={(value) => {
+                              patchModel('providerId', value);
+                              setSelectedProviderId(value);
+                            }}
+                            options={providerOptions}
+                            ariaLabel={t('settings.modelProvider')}
+                            className="settings-inline-select"
+                            triggerClassName="settings-select-trigger"
+                            panelClassName="settings-select-panel"
+                            showSelectedDescription
+                          />
+                        </FieldShell>
+                        <FieldShell id="mobileModelNotes" label={t('settings.modelNotes')} info={t('settings.info.modelNotes')} activeInfo={activeInfo} setActiveInfo={setActiveInfo} wide>
+                          <textarea className="field-input min-h-[92px]" value={selectedModel.notes} onChange={(e) => patchModel('notes', e.target.value)} />
+                        </FieldShell>
+                      </div>
+                    </details>
+
+                    <div className="mobile-active-model-card">
+                      <div>
+                        <span className="section-kicker">{t('settings.activeModel')}</span>
+                        <strong>{selectedModel.name || selectedModel.modelId}</strong>
+                        <p>{t('settings.activeModelHint')}</p>
+                      </div>
+                      <button type="button" className="btn-primary" onClick={() => selectModel(selectedModel)}>{t('settings.useModel')}</button>
+                    </div>
+                  </article>
+                ) : (
+                  <EmptyState title={t('settings.noModels')} text={t('settings.noModelsText')} />
+                )}
+              </>
+            )}
+          </section>
+        )}
       </div>
 
     </section>
