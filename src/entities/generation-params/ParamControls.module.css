@@ -1,0 +1,193 @@
+.fieldGridFull {
+  grid-column: 1 / -1;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 9px;
+  background: rgba(0,0,0,.13);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.copyBlock {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.label {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.description {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 10px;
+  outline: none;
+  background: var(--field);
+  color: var(--text);
+  font-size: 13px;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.input::placeholder {
+  color: rgba(244,244,241,.30);
+}
+
+.input:focus {
+  border-color: rgba(255,255,255,.32);
+  background: rgba(0,0,0,.28);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.055);
+}
+
+.textareaTall {
+  min-height: 120px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.toggle input,
+.inlineCheck input {
+  accent-color: var(--accent);
+}
+
+.inlineCheck {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.045);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.flatCheckCard {
+  grid-column: 1 / -1;
+}
+
+.warningStrip {
+  border: 1px solid rgba(255,210,143,.24);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255,210,143,.09);
+  color: #ffe0b2;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.warningStrip p {
+  margin: 0;
+}
+
+.retryVisualCard {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  margin: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 42%),
+    rgba(0,0,0,.16);
+}
+
+.retryVisualCard strong {
+  display: block;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.retryVisualCard p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.retryOrbit {
+  position: relative;
+  height: 78px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 36%, rgba(255,255,255,.10));
+  border-radius: 999px;
+  background: rgba(255,255,255,.035);
+}
+
+.retryOrbit span {
+  position: absolute;
+  top: 50%;
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid color-mix(in srgb, var(--accent) 62%, rgba(255,255,255,.22));
+  border-radius: 999px;
+  background: rgba(0,0,0,.24);
+  transform: translate(-50%, -50%);
+}
+
+.retryOrbit span:nth-child(1) { left: 25%; }
+.retryOrbit span:nth-child(2) { left: 50%; opacity: .72; }
+.retryOrbit span:nth-child(3) { left: 75%; opacity: .48; }
+
+.select {
+  width: 100%;
+}
+
+.selectTrigger {
+  width: 100%;
+}
+
+.selectPanel {
+  min-width: 100%;
+}
+
+@media (max-width: 860px) {
+  .retryVisualCard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    border-radius: 15px !important;
+    padding: 10px !important;
+  }
+}

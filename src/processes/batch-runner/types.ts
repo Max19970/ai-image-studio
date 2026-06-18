@@ -1,0 +1,23 @@
+import type { BatchComposerDraft, GenerationRequestSnapshot } from '../../domain/generationTask';
+import type { ProviderProbeReport } from '../../domain/providerProbe';
+import type { ProviderSettings } from '../../domain/providerSettings';
+import type { StudioSettings } from '../../domain/studioSettings';
+import type { RunnerTranslateFn, TaskHistoryPort } from '../generation-runner/types';
+
+export interface PreparedBatchItem {
+  draft: BatchComposerDraft;
+  index: number;
+  provider: ProviderSettings;
+  payload: Record<string, unknown>;
+  snapshot: GenerationRequestSnapshot;
+}
+
+export interface BatchGenerationRunInput {
+  drafts: BatchComposerDraft[];
+  intervalSeconds: number;
+  settings: StudioSettings;
+  selectedModelId: string;
+  capabilityReport: ProviderProbeReport | null;
+  taskHistory: TaskHistoryPort;
+  t: RunnerTranslateFn;
+}

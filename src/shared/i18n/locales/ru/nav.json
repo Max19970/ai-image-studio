@@ -1,0 +1,12 @@
+{
+  "nav.expand": "Развернуть панель",
+  "nav.collapse": "Свернуть панель",
+  "nav.ariaCollapsed": "Свернутая навигация",
+  "nav.aria": "Навигация студии",
+  "nav.brand": "Image Studio",
+  "nav.workspace": "рабочая область",
+  "nav.images": "Изображения",
+  "nav.info": "Инфо",
+  "nav.settings": "Настройки",
+  "nav.sections": "Разделы студии"
+}

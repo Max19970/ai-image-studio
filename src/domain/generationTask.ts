@@ -1,0 +1,103 @@
+import type { ImageParams } from './imageParams';
+import type { WorkMode } from './workMode';
+
+export interface BatchComposerDraft {
+  id: string;
+  mode: WorkMode;
+  params: ImageParams;
+  selectedModelId: string;
+  targetImage: File | null;
+  referenceImages: File[];
+  mask: File | null;
+}
+
+export interface AttachmentSummary {
+  role: 'target' | 'reference' | 'mask';
+  name: string;
+  size: number;
+  type: string;
+  previewUrl?: string;
+}
+
+export interface GenerationRequestSnapshot {
+  createdAt: number;
+  mode: WorkMode;
+  prompt: string;
+  endpoint: string;
+  providerLabel: string;
+  model: string;
+  modelLabel: string;
+  payload: Record<string, unknown>;
+  warnings: string[];
+  attachments: AttachmentSummary[];
+  params: Pick<
+    ImageParams,
+    | 'n'
+    | 'sizeMode'
+    | 'sizePreset'
+    | 'width'
+    | 'height'
+    | 'quality'
+    | 'background'
+    | 'moderation'
+    | 'outputFormat'
+    | 'outputCompression'
+    | 'stream'
+    | 'partialImages'
+    | 'responseFormat'
+    | 'inputFidelity'
+    | 'user'
+    | 'style'
+    | 'rawJson'
+    | 'retryAttempts'
+    | 'retryDelaySeconds'
+  >;
+}
+
+export interface GeneratedImage {
+  id: string;
+  taskId?: string;
+  batchItemId?: string;
+  batchItemIndex?: number;
+  src: string;
+  thumbnailSrc?: string;
+  storageAssetKey?: string;
+  storageThumbnailKey?: string;
+  storageAssetLoaded?: boolean;
+  format: string;
+  kind: 'final' | 'partial';
+  index: number;
+  createdAt: number;
+  raw?: unknown;
+  request?: GenerationRequestSnapshot;
+}
+
+export type GenerationStatus = 'created' | 'queued' | 'sending' | 'running' | 'retrying' | 'succeeded' | 'failed' | 'cancelled';
+
+export interface BatchGenerationItem {
+  id: string;
+  index: number;
+  status: GenerationStatus;
+  request: GenerationRequestSnapshot;
+  images: GeneratedImage[];
+  raw?: unknown;
+  error?: string | null;
+}
+
+export interface BatchGenerationSnapshot {
+  intervalMs: number;
+  items: BatchGenerationItem[];
+}
+
+export interface GenerationTask {
+  id: string;
+  kind?: 'single' | 'batch';
+  status: GenerationStatus;
+  createdAt: number;
+  updatedAt: number;
+  request: GenerationRequestSnapshot;
+  images: GeneratedImage[];
+  batch?: BatchGenerationSnapshot;
+  raw?: unknown;
+  error?: string | null;
+}

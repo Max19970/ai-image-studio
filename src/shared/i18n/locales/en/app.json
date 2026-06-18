@@ -1,0 +1,17 @@
+{
+  "app.localProvider": "local provider",
+  "app.warningEditNeedsTarget": "Edit mode needs a target image.",
+  "app.warningNoModel": "No generation model is selected.",
+  "app.status.queued": "Request sent — waiting for the first result.",
+  "app.status.streaming": "Receiving output… {count} image(s) so far.",
+  "app.status.failed": "Request failed: {error}",
+  "app.status.done": "Done — {count} image(s) received.",
+  "app.status.batchQueued": "Batch request created — starting the queue.",
+  "app.status.batchRunning": "Batch generation is running: {done} / {total} images ready.",
+  "app.status.batchDone": "Batch generation complete — {count} image(s) received.",
+  "app.errorUnknown": "unknown error",
+  "app.retryWaiting": "Attempt {attempt}/{total} in {seconds}s. Last error: {error}",
+  "app.cancelled": "Request cancelled.",
+  "app.status.sending": "Sending request to the provider…",
+  "app.status.cancelled": "Request cancelled."
+}

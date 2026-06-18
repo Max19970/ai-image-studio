@@ -1,0 +1,11 @@
+{
+  "status.queued": "В очереди",
+  "status.streaming": "Получение",
+  "status.failed": "Ошибка",
+  "status.succeeded": "Готово",
+  "status.created": "Создано",
+  "status.sending": "Отправка",
+  "status.running": "Выполняется",
+  "status.retrying": "Повтор",
+  "status.cancelled": "Отменено"
+}

@@ -1,0 +1,11 @@
+{
+  "status.queued": "Queued",
+  "status.streaming": "Streaming",
+  "status.failed": "Failed",
+  "status.succeeded": "Complete",
+  "status.created": "Created",
+  "status.sending": "Sending",
+  "status.running": "Running",
+  "status.retrying": "Retrying",
+  "status.cancelled": "Cancelled"
+}

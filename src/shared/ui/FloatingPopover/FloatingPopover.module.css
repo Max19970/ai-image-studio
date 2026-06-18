@@ -1,0 +1,46 @@
+.layer {
+  right: auto !important;
+  bottom: auto !important;
+  transform-origin: center var(--floating-origin-y, top);
+  animation: floating-popover-in var(--motion-duration-fast) var(--motion-ease-soft) both;
+}
+
+.layer[data-ready="false"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.layer:global(.popover-select-panel),
+.layer:global(.composer-inline-popover) {
+  position: fixed !important;
+  top: auto;
+  left: auto;
+}
+
+.layer:global(.popover-select-panel) {
+  min-width: 0;
+  overflow: hidden;
+  contain: layout paint;
+}
+
+.layer:global(.composer-inline-popover) {
+  display: grid;
+  overflow: auto;
+}
+
+.layer :global(.popover-select-scroll),
+.layer:global(.popover-select-panel) :global(.popover-select-scroll) {
+  width: 100%;
+  max-height: min(280px, calc(var(--floating-available-height, 100vh) - 16px));
+}
+
+@keyframes floating-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-17T20:19:16.764Z",
+  "description": "Final zero-violation boundary baseline. The checker fails if new records appear.",
+  "rules": [
+    {
+      "id": "no-import-from-legacy-components",
+      "title": "New code must not import from src/components",
+      "reason": "src/components was removed during the architecture migration. Put reusable UI in src/shared/ui and feature-owned UI inside src/features/<feature>."
+    },
+    {
+      "id": "no-legacy-components-to-features",
+      "title": "Legacy components must not grow new dependencies on src/features",
+      "reason": "src/components must not be recreated as an active layer. Feature-owned UI belongs inside src/features/<feature>."
+    },
+    {
+      "id": "no-shared-upward-imports",
+      "title": "Shared modules must stay independent from higher layers",
+      "reason": "src/shared should only contain reusable primitives and must not depend on app/features/entities/processes/providers/interface/infrastructure/components."
+    },
+    {
+      "id": "no-entities-to-features-or-app",
+      "title": "Entities must not depend on app/features/interface/components",
+      "reason": "Entity modules should describe business/data concepts. UI composition and feature behavior must depend on entities, not the other way around."
+    },
+    {
+      "id": "no-processes-to-app-or-features",
+      "title": "Processes must not depend on app/features/components/interface UI",
+      "reason": "Processes own workflows and should stay reusable from the app shell, commands, or future automation surfaces."
+    }
+  ],
+  "violations": []
+}

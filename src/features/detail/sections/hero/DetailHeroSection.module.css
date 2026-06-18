@@ -1,0 +1,364 @@
+.heroWrap {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, .6fr) minmax(640px, 1240px) minmax(0, .6fr);
+  align-items: center;
+  gap: clamp(8px, 1.6vw, 22px);
+  margin: 0 auto;
+}
+
+.heroOrbit {
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  color: rgba(244,244,241,.30);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.heroOrbitLeft {
+  justify-self: end;
+  transform: rotate(180deg);
+}
+
+.heroOrbitRight {
+  justify-self: start;
+}
+
+.heroCard {
+  grid-column: 2;
+  width: 100%;
+  justify-self: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 50% -15%, rgba(255,255,255,.12), transparent 36%),
+    linear-gradient(135deg, rgba(255,255,255,.075), transparent 45%),
+    rgba(24,24,24,.78);
+  box-shadow: 0 28px 100px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.hasCarousel {
+  width: min(1180px, 100%);
+}
+
+.imageStage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: clamp(360px, 62vh, 820px);
+  max-height: none;
+  border-radius: 30px 30px 0 0;
+  padding: clamp(18px, 2.4vw, 32px);
+  background:
+    radial-gradient(circle at 50% 115%, rgba(255,255,255,.10), transparent 42%),
+    radial-gradient(circle at 18% 12%, rgba(148,183,255,.08), transparent 30%),
+    linear-gradient(180deg, rgba(255,255,255,.045), transparent 40%),
+    rgba(6,6,6,.42);
+}
+
+.hasCarousel .imageStage {
+  max-height: none;
+  padding: clamp(22px, 2.8vw, 44px);
+  overflow: hidden;
+}
+
+.imageStage::before,
+.imageStage::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+}
+
+.imageStage::before {
+  inset: 28px;
+  opacity: .42;
+}
+
+.imageStage::after {
+  width: min(68%, 680px);
+  aspect-ratio: 1;
+  left: 50%;
+  bottom: -42%;
+  transform: translateX(-50%);
+  opacity: .22;
+}
+
+.singleImage,
+.placeholderState {
+  position: relative;
+  z-index: 1;
+}
+
+.singleImage {
+  display: block;
+  max-width: 100%;
+  max-height: min(74vh, 800px);
+  width: auto;
+  height: auto;
+  border-radius: 20px;
+  object-fit: contain;
+  box-shadow: 0 30px 100px rgba(0,0,0,.42);
+  animation: imageSoftIn var(--motion-duration-medium) var(--motion-ease-soft) both;
+  transition: transform var(--motion-duration-medium) var(--motion-ease-soft), box-shadow var(--motion-duration-medium) var(--motion-ease-soft);
+}
+
+.singleImage:hover {
+  transform: translateY(-1px) scale(1.002);
+  filter: saturate(1.02);
+  box-shadow: 0 36px 118px rgba(0,0,0,.48);
+}
+
+.imageStage :global(.status-pill.floating) {
+  top: 16px;
+  right: 16px;
+  bottom: auto;
+  z-index: 3;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  background: rgba(12,12,12,.52);
+}
+
+.placeholderState {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  max-width: 420px;
+  text-align: center;
+}
+
+.placeholderState strong {
+  font-size: 22px;
+  font-weight: 680;
+  letter-spacing: -.03em;
+}
+
+.placeholderState p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.foldoutButton {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 8px 10px 8px 12px;
+  background: rgba(14,14,14,.58);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  backdrop-filter: blur(16px) saturate(135%);
+  box-shadow: 0 14px 40px rgba(0,0,0,.32);
+  transition: transform .16s ease, background .16s ease, border-color .16s ease, color .16s ease;
+}
+
+.foldoutButton strong {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  font-size: 13px;
+  line-height: 1;
+  transition: transform .2s ease;
+}
+
+.foldoutButton.open strong {
+  transform: rotate(180deg);
+}
+
+.foldoutButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.28);
+  background: rgba(34,34,34,.70);
+}
+
+.outputStrip {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+  padding: 10px 12px;
+  background: rgba(255,255,255,.035);
+}
+
+.thumb {
+  overflow: hidden;
+  width: 68px;
+  flex: 0 0 68px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0;
+  background: rgba(255,255,255,.04);
+  cursor: pointer;
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+}
+
+.thumb:hover {
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
+}
+
+.thumb.active {
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.08);
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.actionBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding: 12px;
+  background: rgba(255,255,255,.035);
+}
+
+@media (max-width: 980px) {
+  .heroOrbit {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .heroWrap {
+    grid-template-columns: 1fr;
+  }
+
+  .heroCard {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .actionBar :global(.accent-action) {
+    margin-left: 0;
+  }
+
+  .foldoutButton {
+    right: 12px;
+    bottom: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .imageStage {
+    min-height: clamp(280px, 52vh, 560px);
+    border-radius: 22px 22px 0 0;
+  }
+
+  .heroCard {
+    border-radius: 22px;
+  }
+}
+
+@media (max-width: 560px) {
+  .heroWrap {
+    display: block;
+    margin-top: 8px;
+  }
+
+  .heroCard,
+  .hasCarousel {
+    width: 100%;
+    border-radius: 21px;
+  }
+
+  .imageStage {
+    min-height: 0;
+    max-height: none;
+    padding: 10px;
+    border-radius: 21px 21px 0 0;
+  }
+
+  .imageStage::before,
+  .imageStage::after {
+    display: none;
+  }
+
+  .singleImage {
+    width: 100%;
+    max-width: 100%;
+    max-height: min(62dvh, 560px);
+    border-radius: 17px;
+    object-fit: contain;
+  }
+
+  .imageStage :global(.status-pill.floating) {
+    top: 14px;
+    right: 14px;
+    bottom: auto;
+    max-width: calc(100% - 28px);
+  }
+
+  .foldoutButton {
+    right: 12px;
+    bottom: 12px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 8px;
+  }
+
+  .foldoutButton span {
+    display: none;
+  }
+
+  .outputStrip {
+    padding: 8px;
+  }
+
+  .thumb {
+    width: 54px;
+    flex-basis: 54px;
+  }
+
+  .actionBar {
+    gap: 7px;
+    overflow-x: auto;
+    padding: 8px;
+    scrollbar-width: none;
+  }
+
+  .actionBar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .actionBar > * {
+    flex: 0 0 auto;
+    min-height: 36px;
+    border-radius: 999px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+}
+
+@keyframes imageSoftIn {
+  from { opacity: 0; transform: translateY(6px) scale(.992); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

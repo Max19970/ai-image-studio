@@ -1,0 +1,114 @@
+.infoWrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.infoButton {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(255,255,255,.055);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.infoButton:hover,
+.infoButton.active {
+  border-color: rgba(255,255,255,.28);
+  background: rgba(255,255,255,.13);
+  color: var(--text);
+}
+
+.infoPopover {
+  color: rgba(244,244,241,.76);
+  font-size: 12px;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.field {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(0,0,0,.13);
+}
+
+.field.wide {
+  grid-column: 1 / -1;
+}
+
+.fieldHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.emptyCard {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(0,0,0,.14);
+  color: var(--muted);
+}
+
+.emptyCard strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.emptyCard span {
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .field {
+    padding: 10px 34px 10px 10px;
+    gap: 7px;
+  }
+
+  .fieldHead {
+    display: block;
+    min-height: 0;
+  }
+
+  .fieldHead .infoWrap,
+  .field > .infoWrap {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+
+  .infoButton {
+    width: 18px;
+    height: 18px;
+    border-color: rgba(255,255,255,.11);
+    background: rgba(255,255,255,.045);
+    color: rgba(244,244,241,.48);
+    font-size: 10px;
+  }
+
+  .infoButton:hover,
+  .infoButton.active {
+    background: rgba(255,255,255,.11);
+    color: var(--text);
+  }
+}

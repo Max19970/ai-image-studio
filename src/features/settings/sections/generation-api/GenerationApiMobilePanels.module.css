@@ -1,0 +1,155 @@
+.mobileCard {
+  display: grid;
+  gap: 14px;
+  border-radius: 22px;
+  padding: 14px;
+}
+
+.mobileCardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mobileCardHead.compact {
+  align-items: center;
+}
+
+.mobileCardHead h3 {
+  margin: 3px 0 4px;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 760;
+  letter-spacing: -.03em;
+}
+
+.mobileCardHead p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mobileEntityStrip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 3px;
+  scroll-snap-type: x mandatory;
+}
+
+.mobileEntityPill {
+  display: grid;
+  flex: 0 0 min(240px, 78vw);
+  gap: 4px;
+  scroll-snap-align: start;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 11px 12px;
+  background: rgba(0,0,0,.16);
+  color: var(--muted);
+  text-align: left;
+}
+
+.mobileEntityPill.active {
+  border-color: rgba(255,255,255,.25);
+  background: rgba(255,255,255,.11);
+  color: var(--text);
+}
+
+.mobileEntityPill strong,
+.mobileEntityPill span,
+.mobileEntityPill small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileEntityPill strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.mobileEntityPill span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.mobileEntityPill small {
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.mobileAccordion {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 16px;
+  background: rgba(0,0,0,.14);
+}
+
+.mobileAccordion summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 13px;
+  color: var(--text);
+  font-weight: 760;
+}
+
+.mobileAccordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.mobileAccordion summary::after {
+  content: '⌄';
+  color: var(--muted);
+}
+
+.mobileAccordion[open] summary {
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.mobileAccordion[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.mobileAccordion > :not(summary) {
+  padding: 12px;
+}
+
+.mobileActiveModelCard {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,.05);
+}
+
+.mobileActiveModelCard strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.mobileActiveModelCard p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .mobileCardHead h3 {
+    font-size: 16px;
+  }
+
+  .mobileEntityPill {
+    flex-basis: min(220px, 82vw);
+  }
+}

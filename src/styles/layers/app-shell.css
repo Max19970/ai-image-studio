@@ -1,0 +1,172 @@
+@layer components {
+  .studio-app {
+    --sidebar-width: 342px;
+    position: relative;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    overflow-x: hidden;
+    background: var(--bg);
+  }
+
+  .studio-app.sidebar-is-collapsed { --sidebar-width: 68px; }
+
+  .studio-noise {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background-image:
+      linear-gradient(rgba(255,255,255,.075) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.075) 1px, transparent 1px),
+      radial-gradient(circle at 52% 112%, rgba(255,255,255,.10), transparent 36%);
+    background-size: 220px 220px, 220px 220px, 100% 100%;
+    background-position: -2px -2px;
+    opacity: .48;
+    contain: paint;
+    transform: translateZ(0);
+    transition: opacity .18s ease;
+  }
+
+  .studio-noise::before,
+  .studio-noise::after {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    opacity: 0;
+    transition: opacity .18s ease;
+    will-change: opacity;
+  }
+
+  :root[data-studio-theme="midnight"] .studio-noise {
+    background:
+      radial-gradient(circle at 24% 20%, rgba(157, 183, 255, .20), transparent 30%),
+      radial-gradient(circle at 84% 10%, rgba(147, 100, 255, .16), transparent 34%),
+      linear-gradient(135deg, rgba(157,183,255,.055) 1px, transparent 1px),
+      #111624;
+    background-size: 100% 100%, 100% 100%, 72px 72px, 100% 100%;
+    opacity: .86;
+  }
+
+  :root[data-studio-theme="midnight"] .studio-noise::before {
+    opacity: .34;
+    background-image: radial-gradient(circle, rgba(180, 202, 255, .95) 0 1px, transparent 1.6px);
+    background-size: 46px 46px;
+    filter: blur(.4px);
+    animation: particles-drift 22s linear infinite;
+    animation-play-state: var(--ambient-animation-play-state);
+  }
+
+  :root[data-studio-theme="ember"] .studio-noise {
+    background:
+      radial-gradient(circle at 18% 86%, rgba(255, 178, 107, .20), transparent 34%),
+      radial-gradient(circle at 86% 10%, rgba(255, 108, 58, .13), transparent 34%),
+      linear-gradient(120deg, rgba(255,178,107,.08), transparent 52%),
+      #221714;
+    opacity: .88;
+  }
+
+  :root[data-studio-theme="ember"] .studio-noise::before {
+    opacity: .24;
+    background:
+      radial-gradient(circle at 10px 12px, rgba(255,178,107,.96) 0 1px, transparent 1.8px),
+      radial-gradient(circle at 80px 44px, rgba(255, 116, 72, .78) 0 1.4px, transparent 2px);
+    background-size: 120px 90px;
+    filter: blur(.7px);
+    animation: ember-rise 14s linear infinite;
+    animation-play-state: var(--ambient-animation-play-state);
+  }
+
+  :root[data-studio-theme="meadow"] .studio-noise {
+    background:
+      radial-gradient(circle at 20% 18%, rgba(167, 228, 195, .16), transparent 32%),
+      radial-gradient(circle at 78% 94%, rgba(58, 112, 84, .23), transparent 36%),
+      linear-gradient(90deg, rgba(167,228,195,.045) 1px, transparent 1px),
+      #111c18;
+    background-size: 100% 100%, 100% 100%, 180px 180px, 100% 100%;
+    opacity: .82;
+  }
+
+  :root[data-studio-theme="meadow"] .studio-noise::before {
+    opacity: .18;
+    background:
+      radial-gradient(circle at 16px 26px, rgba(167, 228, 195, .88) 0 1.2px, transparent 2px),
+      radial-gradient(circle at 64px 80px, rgba(99, 184, 138, .78) 0 1px, transparent 2px);
+    background-size: 96px 96px;
+    filter: blur(1.2px);
+    animation: particles-drift 30s linear infinite reverse;
+    animation-play-state: var(--ambient-animation-play-state);
+  }
+
+  :root[data-studio-theme="mono"] .studio-noise {
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 6px),
+      linear-gradient(90deg, rgba(217,214,200,.055) 1px, transparent 1px),
+      #181818;
+    background-size: 100% 100%, 34px 34px, 100% 100%;
+    opacity: .75;
+  }
+
+  :root[data-studio-theme="mono"] .studio-noise::before {
+    opacity: .40;
+    width: 36vw;
+    height: 3px;
+    inset: 24% auto auto -38vw;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(217,214,200,.84), transparent);
+    box-shadow: 0 0 18px rgba(217,214,200,.42);
+    animation: pixel-snake 7s steps(18) infinite;
+    animation-play-state: var(--ambient-animation-play-state);
+  }
+
+  :root[data-studio-theme="mono"] .studio-noise::after {
+    opacity: .22;
+    background-image: linear-gradient(90deg, transparent 0 22px, rgba(217,214,200,.52) 22px 28px, transparent 28px 60px);
+    background-size: 80px 80px;
+    animation: mono-scan 8s linear infinite;
+    animation-play-state: var(--ambient-animation-play-state);
+  }
+
+  @keyframes particles-drift {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(46px, 46px, 0); }
+  }
+
+  @keyframes ember-rise {
+    from { transform: translate3d(0, 60px, 0); }
+    to { transform: translate3d(36px, -60px, 0); }
+  }
+
+  @keyframes pixel-snake {
+    0% { transform: translate3d(0, 0, 0); }
+    30% { transform: translate3d(70vw, 0, 0); }
+    31% { transform: translate3d(70vw, 24vh, 0) rotate(90deg); }
+    58% { transform: translate3d(70vw, 58vh, 0) rotate(90deg); }
+    59% { transform: translate3d(70vw, 58vh, 0) rotate(180deg); }
+    100% { transform: translate3d(-8vw, 58vh, 0) rotate(180deg); }
+  }
+
+  @keyframes mono-scan {
+    from { background-position: 0 0; }
+    to { background-position: 80px 80px; }
+  }
+
+
+  @media (max-width: 860px), (prefers-reduced-motion: reduce) {
+    .studio-noise::before,
+    .studio-noise::after {
+      animation: none;
+    }
+  }
+
+  .studio-main {
+    position: relative;
+    z-index: 1;
+    grid-column: 2;
+    min-width: 0;
+    min-height: 100vh;
+    padding: 0 0 180px;
+  }
+}

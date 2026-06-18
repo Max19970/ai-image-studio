@@ -1,0 +1,153 @@
+.root {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.root:has(.panel) {
+  z-index: 120;
+}
+
+.trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,.18);
+  color: var(--text);
+  text-align: left;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.trigger:hover,
+.trigger.open,
+.trigger:focus-visible {
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.07);
+}
+
+.copy,
+.optionCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.copy strong,
+.optionCopy strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.copy small,
+.optionCopy small,
+.empty {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.chevron {
+  color: var(--faint);
+  font-size: 14px;
+}
+
+.panel {
+  z-index: 200;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 16px;
+  background: rgba(15,16,19,.98);
+  box-shadow: 0 24px 56px rgba(0,0,0,.35);
+  animation: popoverSelectIn var(--motion-duration-fast) var(--motion-ease-soft) both;
+}
+
+.scroll {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.empty {
+  padding: 12px;
+}
+
+.option {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  color: var(--text);
+}
+
+.option:hover,
+.option.active,
+.option.keyboardActive,
+.option:focus-visible {
+  background: rgba(255,255,255,.08);
+}
+
+.optionSide {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.check {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.open {
+  --popover-select-open: 1;
+}
+
+.active {
+  --popover-select-active: 1;
+}
+
+.keyboardActive {
+  outline: 1px solid rgba(255,255,255,.24);
+  outline-offset: -1px;
+}
+
+@keyframes popoverSelectIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+@media (pointer: coarse), (max-width: 780px) {
+  .trigger {
+    min-height: 44px;
+  }
+
+  .option {
+    min-height: 44px;
+    align-items: center;
+  }
+}

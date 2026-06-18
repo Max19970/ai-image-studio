@@ -1,0 +1,62 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.topbar h2 {
+  margin: 4px 0 6px;
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
+  letter-spacing: -0.05em;
+}
+
+.topbar p {
+  max-width: 780px;
+  color: rgba(236, 238, 255, 0.68);
+}
+
+@media (max-width: 860px) {
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 66px;
+    gap: 10px;
+    margin: 0 0 4px;
+    padding: max(14px, env(safe-area-inset-top)) 10px 8px 66px;
+  }
+
+  .topbar :global(.section-kicker),
+  .topbar p {
+    display: none;
+  }
+
+  .topbar h2 {
+    margin: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: clamp(22px, 7vw, 29px);
+    line-height: 1.02;
+    letter-spacing: -.055em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .closeButton {
+    min-height: 36px;
+    max-width: 120px;
+    overflow: hidden;
+    border-radius: 999px;
+    padding: 0 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar h2 {
+    font-size: clamp(20px, 6.6vw, 25px);
+  }
+}

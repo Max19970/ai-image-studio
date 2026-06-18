@@ -1,0 +1,28 @@
+.draftCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 26px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(7, 10, 24, 0.76);
+  padding: 16px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
+
+@media (max-width: 860px) {
+  .draftCard {
+    display: grid;
+    min-width: 0;
+    flex: none;
+    gap: 10px;
+    border-radius: 22px;
+    padding: 12px;
+    scroll-snap-align: none;
+    background:
+      radial-gradient(circle at 0 0, color-mix(in srgb, var(--accent) 13%, transparent), transparent 38%),
+      linear-gradient(145deg, rgba(255,255,255,.072), rgba(255,255,255,.026)),
+      rgba(15,16,22,.82);
+  }
+}

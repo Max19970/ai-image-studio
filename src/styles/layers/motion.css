@@ -1,0 +1,33 @@
+@layer base {
+  :root {
+    --motion-duration-instant: .01ms;
+    --motion-duration-fast: .16s;
+    --motion-duration-medium: .24s;
+    --motion-duration-slow: .32s;
+    --motion-ease-standard: cubic-bezier(.2, .8, .2, 1);
+    --motion-ease-soft: ease;
+    --ambient-animation-play-state: running;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --motion-duration-fast: var(--motion-duration-instant);
+      --motion-duration-medium: var(--motion-duration-instant);
+      --motion-duration-slow: var(--motion-duration-instant);
+      --ambient-animation-play-state: paused;
+    }
+
+    *, *::before, *::after {
+      animation-duration: var(--motion-duration-instant) !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: var(--motion-duration-instant) !important;
+    }
+  }
+}
+
+@layer components {
+  .studio-app.motion-is-transitioning {
+    --ambient-animation-play-state: paused;
+  }
+}

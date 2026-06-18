@@ -1,0 +1,17 @@
+{
+  "app.localProvider": "локальный провайдер",
+  "app.warningEditNeedsTarget": "Для режима редактирования нужно прикрепить исходное изображение.",
+  "app.warningNoModel": "Не выбрана модель генерации.",
+  "app.status.queued": "Запрос отправлен — жду первый результат.",
+  "app.status.streaming": "Получаю результат… уже изображений: {count}.",
+  "app.status.failed": "Запрос завершился ошибкой: {error}",
+  "app.status.done": "Готово — получено изображений: {count}.",
+  "app.status.batchQueued": "Мульти-запрос создан — начинаю очередь.",
+  "app.status.batchRunning": "Мульти-генерация идёт: готово изображений {done} / {total}.",
+  "app.status.batchDone": "Мульти-генерация завершена — получено изображений: {count}.",
+  "app.errorUnknown": "неизвестная ошибка",
+  "app.retryWaiting": "Попытка {attempt}/{total} через {seconds}с. Последняя ошибка: {error}",
+  "app.cancelled": "Запрос отменён.",
+  "app.status.sending": "Отправляю запрос провайдеру…",
+  "app.status.cancelled": "Запрос отменён."
+}

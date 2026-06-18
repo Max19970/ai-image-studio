@@ -1,0 +1,402 @@
+.stage {
+  min-height: calc(100vh - 180px);
+}
+
+.count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 7px 10px;
+  background: rgba(255,255,255,.045);
+}
+
+.count strong {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.count span {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+  padding: 26px;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  contain: layout paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 280px 340px;
+  animation: galleryFadeSlideUp var(--motion-duration-medium) var(--motion-ease-soft);
+}
+
+.openButton {
+  position: relative;
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: rgba(0,0,0,.28);
+  text-align: left;
+  cursor: zoom-in;
+}
+
+.statusCard .openButton {
+  text-align: center;
+}
+
+.slideImage {
+  display: block;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  object-fit: cover;
+  background: rgba(0,0,0,.24);
+}
+
+.slideNext {
+  animation: gallerySlideNext var(--motion-duration-slow) var(--motion-ease-standard);
+}
+
+.slidePrev {
+  animation: gallerySlidePrev var(--motion-duration-slow) var(--motion-ease-standard);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.footerMeta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.footerMeta span {
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.footerMeta strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.footer a {
+  color: var(--text);
+  font-size: 12px;
+  text-decoration: none;
+  opacity: .76;
+}
+
+.footer a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.empty {
+  display: grid;
+  min-height: calc(100vh - 270px);
+  place-items: center;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.empty h3 {
+  margin: 16px 0 0;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 660;
+  letter-spacing: -.02em;
+}
+
+.empty p {
+  max-width: 430px;
+  margin: 7px auto 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.emptyFrame {
+  height: 96px;
+  width: 132px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.12), transparent 38%),
+    rgba(255,255,255,.045);
+  backdrop-filter: blur(18px);
+}
+
+.placeholder {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  gap: 12px;
+  padding: 18px;
+}
+
+.placeholder strong {
+  font-size: 18px;
+  font-weight: 680;
+  letter-spacing: -.02em;
+}
+
+.placeholder p {
+  max-width: 210px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.spinner {
+  height: 28px;
+  width: 28px;
+  border: 2px solid rgba(255,255,255,.16);
+  border-top-color: rgba(255,255,255,.82);
+  border-radius: 999px;
+  animation: gallerySpin .8s linear infinite;
+}
+
+.statusFailed .spinner {
+  animation: none;
+  border-color: rgba(255,154,169,.24);
+  border-top-color: rgba(255,154,169,.95);
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.floatingPill {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  backdrop-filter: blur(12px);
+}
+
+.queued,
+.streaming {
+  border-color: rgba(148,183,255,.26);
+  background: rgba(148,183,255,.12);
+  color: #d9e6ff;
+}
+
+.failed,
+.cancelled {
+  border-color: rgba(255,154,169,.26);
+  background: rgba(255,154,169,.12);
+  color: #ffd6dd;
+}
+
+.succeeded {
+  border-color: rgba(167,228,195,.22);
+  background: rgba(167,228,195,.10);
+  color: #d7f6e5;
+}
+
+.sequenceBadge {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: rgba(0,0,0,.35);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  backdrop-filter: blur(12px);
+}
+
+.deleteButton {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 6;
+  opacity: 0;
+  transform: translateY(-4px) scale(.96);
+}
+
+.card:hover .deleteButton,
+.card:focus-within .deleteButton {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+
+.loadMoreWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 2px 26px 34px;
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.loadMoreButton {
+  min-height: 34px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  padding: 0 13px;
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.loadMoreButton:hover {
+  background: rgba(255,255,255,.10);
+}
+
+.loadMoreButton:focus-visible {
+  border-color: rgba(255,255,255,.28);
+  box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+}
+
+@media (max-width: 1180px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    padding: 10px;
+  }
+
+  .card {
+    border-radius: 17px;
+    contain: layout paint;
+  }
+
+  .openButton {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 1 / 1.20;
+    border-radius: inherit;
+    overflow: hidden;
+  }
+
+  .statusCard .placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 10px 8px;
+    gap: 7px;
+  }
+
+  .statusCard .spinner {
+    width: 21px;
+    height: 21px;
+  }
+
+  .statusCard .placeholder strong {
+    font-size: 12px;
+    line-height: 1.05;
+  }
+
+  .deleteButton {
+    top: 6px;
+    right: 6px;
+    left: auto;
+    opacity: 1;
+    transform: none;
+  }
+
+  .openButton > .floatingPill {
+    top: auto;
+    right: 6px;
+    bottom: 6px;
+    font-size: 7px;
+    padding: 4px 6px;
+  }
+
+  .footer {
+    display: none;
+  }
+
+  .count {
+    display: none;
+  }
+
+  .loadMoreWrap {
+    flex-direction: column;
+    gap: 7px;
+    padding: 4px 10px 24px;
+  }
+
+  .loadMoreButton {
+    width: 100%;
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+@keyframes gallerySpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes galleryFadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gallerySlideNext {
+  from { opacity: .24; transform: translateX(26px) scale(.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes gallerySlidePrev {
+  from { opacity: .24; transform: translateX(-26px) scale(.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}

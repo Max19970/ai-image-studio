@@ -1,0 +1,23 @@
+.requestDrawer {
+  overflow: clip;
+  transition: opacity var(--motion-duration-medium) var(--motion-ease-soft), transform var(--motion-duration-medium) var(--motion-ease-soft);
+}
+
+.open {
+  display: block;
+  margin-top: 16px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.closed {
+  display: none;
+  margin-top: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+
+.requestDrawer > * {
+  min-height: 0;
+}

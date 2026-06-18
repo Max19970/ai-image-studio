@@ -1,0 +1,12 @@
+{
+  "nav.expand": "Expand sidebar",
+  "nav.collapse": "Collapse sidebar",
+  "nav.ariaCollapsed": "Collapsed navigation",
+  "nav.aria": "Studio navigation",
+  "nav.brand": "Image Studio",
+  "nav.workspace": "workspace",
+  "nav.images": "Images",
+  "nav.info": "Info",
+  "nav.settings": "Settings",
+  "nav.sections": "Studio sections"
+}

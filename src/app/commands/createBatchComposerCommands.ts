@@ -1,0 +1,50 @@
+import type { BatchComposerCommands } from '../../interface/context/commands';
+import type { CreateAppCommandsArgs } from './appCommandTypes';
+import { createBatchDraftFromWorkspace } from './commandFactoryHelpers';
+import { submitBatchGenerationCommand } from './generationCommands';
+
+export function createBatchComposerCommands(args: CreateAppCommandsArgs): BatchComposerCommands {
+  const createDraft = (source = {}) => createBatchDraftFromWorkspace(args, source);
+
+  return {
+    setIntervalSeconds: args.setBatchIntervalSeconds,
+    patchDraft: (id, patch) => {
+      args.setBatchDrafts((prev) => prev.map((draft) => draft.id === id ? { ...draft, ...patch } : draft));
+    },
+    patchDraftParams: (id, params) => {
+      args.setBatchDrafts((prev) => prev.map((draft) => draft.id === id ? { ...draft, params } : draft));
+    },
+    addDraft: () => {
+      args.setBatchDrafts((prev) => [
+        ...prev,
+        createDraft({
+          params: prev[prev.length - 1]?.params ?? args.params,
+          selectedModelId: prev[prev.length - 1]?.selectedModelId ?? args.studioSettings.selectedModelId
+        })
+      ]);
+    },
+    duplicateDraft: (id) => {
+      args.setBatchDrafts((prev) => {
+        const source = prev.find((draft) => draft.id === id);
+        return source ? [...prev, createDraft(source)] : prev;
+      });
+    },
+    removeDraft: (id) => {
+      args.setBatchDrafts((prev) => prev.length > 1 ? prev.filter((draft) => draft.id !== id) : prev);
+    },
+    openParameters: args.setBatchParametersDraftId,
+    submit: () => submitBatchGenerationCommand({
+      canSubmit: args.batchCanSubmit,
+      drafts: args.batchDrafts,
+      intervalSeconds: args.batchIntervalSeconds,
+      settings: args.studioSettings,
+      selectedModelId: args.studioSettings.selectedModelId,
+      capabilityReport: args.capabilityReport,
+      taskHistory: args.taskHistory,
+      setBusy: args.setBusy,
+      setBatchComposerOpen: args.setBatchComposerOpen,
+      t: args.t
+    }),
+    close: () => args.setBatchComposerOpen(false)
+  };
+}

@@ -1,0 +1,31 @@
+.root {
+  min-width: 0;
+}
+
+.trigger {
+  min-height: 44px;
+  border-radius: 14px;
+  background: rgba(8,8,8,.36);
+}
+
+.panel {
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .trigger {
+    min-height: 44px;
+  }
+
+  .panel {
+    max-width: calc(100vw - 24px);
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  .trigger {
+    min-height: 44px;
+    border-radius: 15px;
+  }
+}

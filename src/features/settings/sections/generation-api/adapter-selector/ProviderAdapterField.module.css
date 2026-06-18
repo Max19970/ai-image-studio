@@ -1,0 +1,66 @@
+.adapterField {
+  display: grid;
+  gap: 10px;
+}
+
+.adapterProfile {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,.045);
+}
+
+.adapterProfile > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.adapterProfile strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.adapterProfile span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.adapterProfile dl {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.adapterProfile dl > div {
+  display: grid;
+  grid-template-columns: minmax(110px, .32fr) minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+}
+
+.adapterProfile dt {
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.adapterProfile dd {
+  overflow: hidden;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adapterProfile :global(.ui-button) {
+  justify-self: start;
+}

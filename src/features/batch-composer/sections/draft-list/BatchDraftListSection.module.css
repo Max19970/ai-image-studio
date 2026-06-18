@@ -1,0 +1,21 @@
+.draftList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: min(62vh, 760px);
+  overflow: auto;
+  padding: 2px 4px 2px 0;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 860px) {
+  .draftList {
+    display: grid;
+    max-height: none;
+    overflow: visible;
+    gap: 10px;
+    padding: 0 10px;
+    scroll-snap-type: none;
+    touch-action: pan-y pinch-zoom;
+  }
+}

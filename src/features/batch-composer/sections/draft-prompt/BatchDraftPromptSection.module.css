@@ -1,0 +1,64 @@
+.promptWrap {
+  position: relative;
+}
+
+.promptWrap textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: none;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 22px;
+  background: rgba(6, 8, 18, 0.58);
+  color: rgb(248, 250, 255);
+  padding: 16px 46px 16px 16px;
+  outline: none;
+  line-height: 1.45;
+}
+
+.promptWrap textarea:focus {
+  border-color: rgba(143, 177, 255, 0.45);
+  box-shadow: 0 0 0 4px rgba(82, 121, 255, 0.08);
+}
+
+.clearPromptButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.clearPromptButton:hover {
+  border-color: var(--line-strong);
+  background: rgba(255,255,255,.14);
+  transform: scale(1.03);
+}
+
+@media (max-width: 860px) {
+  .promptWrap textarea {
+    min-height: 92px;
+    max-height: 168px;
+    border-radius: 18px;
+    padding: 13px 42px 13px 13px;
+    font-size: 15px;
+    line-height: 1.38;
+  }
+}
+
+@media (max-width: 620px) {
+  .clearPromptButton {
+    top: 9px;
+    right: 9px;
+    width: 28px;
+    height: 28px;
+  }
+}

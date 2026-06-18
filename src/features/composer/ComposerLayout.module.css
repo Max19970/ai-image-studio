@@ -1,0 +1,407 @@
+.dock {
+  position: fixed;
+  left: calc(var(--sidebar-width) + max(22px, (100vw - var(--sidebar-width) - 760px) / 2));
+  bottom: 18px;
+  z-index: 30;
+  width: min(760px, calc(100vw - var(--sidebar-width) - 44px));
+  max-width: calc(100vw - var(--sidebar-width) - 44px);
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  padding: 8px;
+  background: rgba(49, 51, 59, .78);
+  box-shadow: 0 22px 70px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter: blur(28px) saturate(145%);
+  animation: composerFadeSlideUp var(--motion-duration-slow) var(--motion-ease-soft);
+}
+
+.main {
+  display: grid;
+  gap: 7px;
+}
+
+.attachmentStrip {
+  padding: 0 0 8px;
+}
+
+.promptWrap {
+  position: relative;
+}
+
+.promptWrap textarea {
+  width: 100%;
+  min-height: 44px;
+  max-height: 190px;
+  resize: none;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  padding: 11px 40px 11px 13px;
+  outline: none;
+  background: rgba(18,19,24,.86);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.48;
+}
+
+.promptWrap textarea::placeholder {
+  color: rgba(244,244,241,.38);
+}
+
+.clearPromptButton {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.clearPromptButton:hover {
+  border-color: var(--line-strong);
+  background: rgba(255,255,255,.14);
+  color: var(--text);
+  transform: scale(1.03);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.actions input {
+  display: none;
+}
+
+.actionsLeft,
+.actionsRight {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 7px;
+}
+
+.actionsLeft {
+  flex: 1 1 auto;
+}
+
+.actionsRight {
+  flex: 0 0 auto;
+}
+
+.modelSelect {
+  display: inline-flex;
+  flex: 0 1 230px;
+  width: 230px;
+  max-width: 38vw;
+  min-width: 165px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  padding: 2px 4px 2px 8px;
+  background:
+    radial-gradient(circle at 85% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 45%),
+    rgba(255,255,255,.045);
+}
+
+.modelSelect > span {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.modelPopover {
+  width: 100%;
+}
+
+.modelTrigger {
+  min-height: 26px;
+  border: 0;
+  border-radius: 999px;
+  padding: 4px 7px;
+  background: rgba(255,255,255,.055);
+}
+
+.modelTrigger :global(.popover-select-copy strong) {
+  max-width: 128px;
+  font-size: 11px;
+}
+
+.modelTrigger :global(.popover-select-copy small) {
+  display: none;
+}
+
+.modelTrigger :global(.popover-select-chevron) {
+  font-size: 10px;
+}
+
+.modelPanel {
+  width: min(320px, calc(100vw - 42px));
+}
+
+.modelPanel :global(.popover-select-option-copy strong) {
+  font-size: 12px;
+}
+
+.modelPanel :global(.popover-select-option-copy small) {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.toolCluster {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hint,
+.note {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.hint {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.note {
+  margin: 7px 2px 0;
+}
+
+.noteStrong {
+  color: var(--text);
+}
+
+.sendButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: 1px solid rgba(255,255,255,.38);
+  border-radius: 999px;
+  padding: 0;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 16px;
+  font-weight: 620;
+  line-height: 1;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.sendButton:hover:not(:disabled) {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 8px 2px 2px;
+}
+
+@media (max-width: 1100px) {
+  .hint {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .dock {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .dock {
+    border-radius: 24px;
+    padding: 8px;
+    background:
+      radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 42%),
+      rgba(28, 29, 36, .88);
+  }
+
+  .promptWrap textarea {
+    min-height: 50px;
+    max-height: 34dvh;
+    border-radius: 17px;
+    padding: 13px 44px 13px 14px;
+    font-size: 16px;
+    line-height: 1.42;
+  }
+
+  .clearPromptButton {
+    top: 11px;
+    right: 11px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 9px;
+    min-height: 0;
+  }
+
+  .actionsLeft,
+  .actionsRight {
+    width: auto;
+    gap: 8px;
+  }
+
+  .actionsLeft {
+    flex-wrap: wrap;
+  }
+
+  .actionsRight {
+    justify-content: flex-end;
+  }
+
+  .modelSelect {
+    order: -2;
+    flex: 1 0 100%;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    border-radius: 16px;
+  }
+
+  .modelTrigger {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .toolCluster {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .sendButton {
+    min-width: 74px;
+    width: 74px;
+    height: 38px;
+    border-radius: 14px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .hint {
+    display: none;
+  }
+
+  .statusRow {
+    margin-top: 7px;
+  }
+
+  .note {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+}
+
+@media (max-width: 460px) {
+  .promptWrap textarea {
+    max-height: 112px;
+    border-radius: 17px;
+    padding: 12px 42px 12px 13px;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .clearPromptButton {
+    top: 9px;
+    right: 9px;
+  }
+
+  .actions {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+  }
+
+  .actionsLeft {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .modelSelect {
+    min-height: 38px;
+    border-radius: 16px;
+    padding: 4px 6px 4px 10px;
+  }
+
+  .modelSelect > span {
+    display: none;
+  }
+
+  .modelTrigger {
+    min-height: 36px;
+  }
+
+  .toolCluster {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .sendButton {
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+    border-radius: 15px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .sendButton::before {
+    content: '↑';
+    color: var(--accent-ink);
+    font-size: 18px;
+  }
+
+  .actionsRight {
+    width: 66px;
+  }
+
+  .statusRow {
+    max-height: 34px;
+    overflow: auto;
+    margin-top: 4px;
+    padding: 0 3px 2px;
+  }
+
+  .note {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+}
+
+@keyframes composerFadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,138 @@
+@media (max-width: 860px) {
+  :root {
+    --mobile-page-gutter: 10px;
+    --mobile-composer-space: 158px;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    min-width: 0;
+    min-height: 100%;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .studio-app,
+  .studio-app.sidebar-is-collapsed {
+    --sidebar-width: 0px;
+    display: block;
+    min-height: 100dvh;
+  }
+
+  .studio-app,
+  .studio-app.sidebar-is-collapsed,
+  .studio-main,
+  .batch-composer-is-open .studio-main {
+    height: auto;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  .studio-main {
+    grid-column: auto;
+    min-height: 100dvh;
+    padding-top: 0;
+    padding-bottom: calc(var(--mobile-composer-space) + env(safe-area-inset-bottom));
+  }
+
+  .batch-composer-is-open .studio-main {
+    padding-top: 0;
+    padding-bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+
+  .gallery-spinner {
+    width: 22px;
+    height: 22px;
+  }
+
+  .status-pill.floating {
+    top: auto;
+    right: 5px;
+    bottom: 5px;
+    max-width: calc(100% - 10px);
+    border-radius: 999px;
+    padding: 4px 6px;
+    font-size: 7.5px;
+    letter-spacing: .075em;
+  }
+
+  .empty-gallery {
+    min-height: calc(100dvh - 210px);
+    padding: 22px 18px 32px;
+  }
+
+  .empty-frame {
+    width: 118px;
+    height: 82px;
+  }
+
+  .field-input {
+    min-height: 40px;
+    border-radius: 13px;
+    padding: 0 11px;
+    font-size: 14px;
+  }
+
+  .field-label {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  textarea.field-input {
+    min-height: 82px;
+    padding-block: 11px;
+  }
+
+  .code-panel {
+    max-width: 100%;
+    overflow: auto;
+    font-size: 11px;
+  }
+
+  .detail-card {
+    border-radius: 22px;
+    padding: 10px;
+  }
+
+  .detail-card summary {
+    min-height: 50px;
+    padding: 0 12px;
+  }
+
+  .detail-card h3,
+  .detail-card summary h3 {
+    font-size: 18px;
+    line-height: 1.1;
+  }
+
+  .metadata-grid,
+  .detail-row {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .detail-row {
+    min-width: 0;
+  }
+
+  .detail-row strong {
+    overflow-wrap: anywhere;
+  }
+
+  .inspector-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .control-card {
+    border-radius: 15px;
+    padding: 10px;
+  }
+}

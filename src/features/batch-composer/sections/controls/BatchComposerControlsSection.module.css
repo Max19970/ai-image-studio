@@ -1,0 +1,119 @@
+.controls {
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.5fr) 1fr;
+  gap: 14px;
+}
+
+.intervalField,
+.summaryCard {
+  min-height: 86px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 14px 16px;
+}
+
+.intervalField {
+  display: grid;
+  grid-template-columns: 1fr 86px;
+  gap: 6px 12px;
+}
+
+.intervalField span,
+.summaryCard span {
+  color: rgba(236, 238, 255, 0.58);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.intervalField input {
+  grid-row: span 2;
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(5, 7, 18, 0.56);
+  color: rgb(248, 250, 255);
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+}
+
+.intervalField small {
+  color: rgba(236, 238, 255, 0.5);
+  line-height: 1.35;
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.summaryCard strong {
+  margin-top: 8px;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 860px) {
+  .controls {
+    display: grid;
+    grid-template-columns: 108px minmax(0, 1fr);
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .intervalField,
+  .summaryCard {
+    min-height: 76px;
+    border-radius: 20px;
+    padding: 10px;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.026)),
+      rgba(18,19,24,.74);
+  }
+
+  .intervalField {
+    grid-template-columns: minmax(0, 1fr) 42px;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .intervalField span,
+  .summaryCard span {
+    font-size: 9px;
+    line-height: 1.15;
+    letter-spacing: .16em;
+  }
+
+  .intervalField small {
+    display: none;
+  }
+
+  .intervalField input {
+    grid-row: span 1;
+    height: 50px;
+    border-radius: 16px;
+    font-size: 22px;
+  }
+
+  .summaryCard {
+    justify-content: center;
+  }
+
+  .summaryCard strong {
+    margin: 6px 0 0;
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: -.02em;
+  }
+}
+
+@media (max-width: 380px) {
+  .controls {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+}

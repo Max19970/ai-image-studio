@@ -1,0 +1,60 @@
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: space-between;
+  position: sticky;
+  bottom: 12px;
+  z-index: 4;
+  min-height: 66px;
+  margin-top: 4px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 12px 14px;
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--accent) 12%, transparent), transparent 42%),
+    rgba(28,29,36,.84);
+  box-shadow: 0 -10px 34px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+
+.submitButton {
+  min-width: min(100%, 260px);
+}
+
+@media (max-width: 860px) {
+  .footer {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    z-index: 92;
+    display: grid;
+    grid-template-columns: .95fr 1.05fr;
+    align-items: center;
+    gap: 7px;
+    min-height: 58px;
+    margin: 0;
+    border-radius: 20px;
+    padding: 7px;
+    background:
+      radial-gradient(circle at 100% 0, color-mix(in srgb, var(--accent) 14%, transparent), transparent 44%),
+      rgba(28,29,36,.92);
+    box-shadow: 0 -14px 44px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.10);
+    backdrop-filter: blur(24px) saturate(145%);
+  }
+
+  .footer :global(.btn-secondary),
+  .submitButton {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    border-radius: 16px;
+    padding: 0 10px;
+    font-size: 13px;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

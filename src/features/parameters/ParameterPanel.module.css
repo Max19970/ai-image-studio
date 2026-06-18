@@ -1,0 +1,257 @@
+.workbench {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 14px;
+  min-height: 520px;
+}
+
+.heading {
+  display: none;
+}
+
+.tabRail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 20px;
+  padding: 10px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.045), transparent 42%),
+    rgba(0,0,0,.17);
+}
+
+.tabButton {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 12px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease, color .16s ease;
+}
+
+.tabButton:hover {
+  transform: translateX(2px);
+  border-color: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.045);
+  color: var(--text);
+}
+
+.tabButtonActive {
+  border-color: color-mix(in srgb, var(--accent) 42%, rgba(255,255,255,.12));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 52%),
+    rgba(255,255,255,.06);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.tabLabel {
+  font-size: 13px;
+  font-weight: 780;
+  letter-spacing: -.01em;
+}
+
+.tabStat {
+  overflow: hidden;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tabMain {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 20px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 28%),
+    rgba(0,0,0,.12);
+}
+
+.infoStrip {
+  border: 1px solid rgba(148,183,255,.22);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(148,183,255,.08);
+  color: #cddcff;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.tabPanel {
+  border-radius: 18px;
+  border-color: rgba(255,255,255,.10);
+  background: rgba(255,255,255,.025);
+  animation: parameterFadeSlideUp .2s ease;
+}
+
+.retryTabPanel {
+  overflow: hidden;
+}
+
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 14px 4px;
+}
+
+.panelTitle {
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -.025em;
+  list-style: none;
+}
+
+.panelTitle::-webkit-details-marker {
+  display: none;
+}
+
+.panelHint {
+  max-width: 520px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.fieldGrid {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+}
+
+@media (max-width: 860px) {
+  .workbench {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .tabRail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panelHead {
+    display: grid;
+  }
+
+  .panelHint {
+    text-align: left;
+  }
+}
+
+@media (max-width: 700px) {
+  .tabRail {
+    display: flex;
+    overflow-x: auto;
+    grid-template-columns: none;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabRail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabButton {
+    flex: 0 0 min(72vw, 240px);
+  }
+}
+
+@media (max-width: 640px) {
+  .heading {
+    display: none !important;
+  }
+
+  .workbench {
+    gap: 8px !important;
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .tabRail {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 6px !important;
+    min-height: auto !important;
+    overflow-x: auto !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 2px 4px !important;
+    background: transparent !important;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabRail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabButton {
+    display: grid !important;
+    flex: 0 0 132px !important;
+    width: 132px !important;
+    min-height: 52px !important;
+    gap: 3px !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    border-radius: 15px !important;
+    padding: 8px 9px !important;
+    background: rgba(255,255,255,.035) !important;
+    text-align: left !important;
+  }
+
+  .tabButtonActive {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, transparent), rgba(255,255,255,.055)) !important;
+  }
+
+  .tabLabel {
+    font-size: 12px !important;
+  }
+
+  .tabStat {
+    font-size: 9px !important;
+  }
+
+  .tabMain {
+    border: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  .tabPanel {
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: 17px !important;
+    padding: 10px !important;
+    background: rgba(0,0,0,.16) !important;
+  }
+
+  .panelHint {
+    display: none !important;
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+}
+
+@keyframes parameterFadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

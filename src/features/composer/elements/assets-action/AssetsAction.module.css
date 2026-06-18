@@ -1,0 +1,8 @@
+.wrapper {
+  --slot-contribution-kind: assets;
+  position: relative;
+}
+
+.open {
+  --composer-popover-open: 1;
+}

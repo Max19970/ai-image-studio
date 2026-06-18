@@ -1,0 +1,23 @@
+.page {
+  padding: 18px clamp(12px, 2vw, 28px) 220px;
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  width: min(1520px, 100%);
+  max-width: 1520px;
+  margin: 0 auto;
+}
+
+@media (max-width: 760px) {
+  .page {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-inline: 10px;
+  }
+}

@@ -1,0 +1,59 @@
+@media (max-width: 860px) {
+  .mobile-settings-stack {
+    display: grid;
+    gap: 8px;
+    padding: 0 10px 22px;
+  }
+
+  .mobile-card {
+    display: grid;
+    gap: 11px;
+    overflow: hidden;
+    border-radius: 22px;
+    padding: 12px;
+  }
+
+  .mobile-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    margin-bottom: 10px;
+  }
+
+  .mobile-card-head.compact {
+    align-items: center;
+  }
+
+  .mobile-card-head h3 {
+    margin: 2px 0 3px;
+    color: var(--text);
+    font-size: 21px;
+    font-weight: 820;
+    line-height: 1.05;
+    letter-spacing: -.045em;
+  }
+
+  .mobile-card-head p,
+  .mobile-muted {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .mobile-card-head.compact p {
+    display: none;
+  }
+
+  .mobile-theme-strip {
+    display: flex;
+    gap: 8px;
+    margin-inline: -2px;
+    overflow-x: auto;
+    padding-bottom: 3px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+}

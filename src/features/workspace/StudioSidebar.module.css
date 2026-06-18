@@ -1,0 +1,329 @@
+.rail {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  grid-column: 1;
+  display: flex;
+  height: 100vh;
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  background: var(--sidebar);
+  padding: 12px;
+  backdrop-filter: blur(24px) saturate(135%);
+  box-shadow: 18px 0 52px rgba(0,0,0,.20);
+  contain: layout paint style;
+  transition: background var(--motion-duration-fast) var(--motion-ease-soft), border-color var(--motion-duration-fast) var(--motion-ease-soft), box-shadow var(--motion-duration-medium) var(--motion-ease-soft);
+}
+
+.collapsed {
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+  padding: 12px 8px;
+}
+
+.head {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 4px 2px 8px;
+}
+
+.projectDot {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.projectCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft), transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.projectCopy strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectCopy span {
+  overflow: hidden;
+  color: var(--faint);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.railMark {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  transition: background .16s ease, border-color .16s ease, color .16s ease;
+}
+
+.railMark:hover {
+  border-color: var(--line);
+  background: rgba(255,255,255,.07);
+  color: var(--text);
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0 10px;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft), transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.collapsed .tabs {
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  border-bottom: 0;
+  padding: 6px 0;
+}
+
+
+.spacer {
+  flex: 1 1 auto;
+  min-height: 8px;
+}
+
+.footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft), transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.collapsedFooter {
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  margin-top: 0;
+  place-items: center;
+  gap: 12px;
+  border-top: 0;
+  padding: 0;
+}
+
+.railWord {
+  margin-top: auto;
+  margin-bottom: 10px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .32em;
+  text-transform: uppercase;
+}
+
+.collapsed > .railMark {
+  align-self: center;
+  justify-self: center;
+}
+
+.collapsed :global([data-workspace-tab]) {
+  margin-inline: auto;
+}
+
+.mobileTrigger,
+.backdrop,
+.drawer {
+  display: none;
+}
+
+.mobileCard {
+  margin-top: auto;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255,255,255,.04);
+}
+
+.mobileCard p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (min-width: 861px) {
+  .rail {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  .collapsed {
+    width: var(--sidebar-width);
+  }
+
+  :global(.studio-app.sidebar-is-collapsed) .rail .projectCopy,
+  :global(.studio-app.sidebar-is-collapsed) .rail .tabs,
+  :global(.studio-app.sidebar-is-collapsed) .rail .footer:not(.collapsedFooter) {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+@media (max-width: 860px) {
+  .rail,
+  .collapsed {
+    display: none !important;
+  }
+
+  .mobileTrigger {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    left: var(--mobile-page-gutter, 12px);
+    z-index: 120;
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 0;
+    background:
+      radial-gradient(circle at 30% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 54%),
+      rgba(20, 21, 26, .84);
+    color: var(--text);
+    box-shadow: 0 12px 32px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.12);
+    backdrop-filter: blur(22px) saturate(145%);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1;
+    transition: transform var(--motion-duration-fast) var(--motion-ease-soft), background var(--motion-duration-fast) var(--motion-ease-soft), border-color var(--motion-duration-fast) var(--motion-ease-soft);
+  }
+
+  .mobileTriggerActive,
+  .mobileTrigger:active {
+    transform: scale(.96);
+    border-color: color-mix(in srgb, var(--accent) 50%, rgba(255,255,255,.18));
+    background:
+      radial-gradient(circle at 30% 0%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 58%),
+      rgba(31, 32, 38, .92);
+  }
+
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 108;
+    display: block;
+    border: 0;
+    padding: 0;
+    pointer-events: none;
+    background: rgba(0,0,0,0);
+    opacity: 0;
+    transition: opacity var(--motion-duration-medium) var(--motion-ease-soft), background var(--motion-duration-medium) var(--motion-ease-soft);
+    will-change: opacity;
+  }
+
+  .backdropOpen {
+    pointer-events: auto;
+    opacity: 1;
+    background: rgba(0,0,0,.48);
+    touch-action: none;
+  }
+
+  .drawer {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 112;
+    display: flex;
+    width: min(82vw, 304px);
+    min-width: 0;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-right: 1px solid var(--line-strong);
+    padding: calc(max(14px, env(safe-area-inset-top)) + 48px) 14px max(18px, env(safe-area-inset-bottom));
+    background:
+      radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 38%),
+      var(--sidebar);
+    box-shadow: 28px 0 70px rgba(0,0,0,.42), inset -1px 0 0 rgba(255,255,255,.04);
+    backdrop-filter: blur(28px) saturate(145%);
+    transform: translateX(calc(-100% - 18px));
+    contain: layout paint;
+    transition: transform var(--motion-duration-slow) var(--motion-ease-standard);
+    will-change: transform;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .drawerOpen {
+    transform: translateX(0);
+  }
+
+  .mobileHead {
+    min-height: 52px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px;
+    padding: 10px;
+    background: rgba(255,255,255,.045);
+  }
+
+  .mobileHead .railMark {
+    border-color: rgba(255,255,255,.12);
+    background: rgba(0,0,0,.18);
+    color: var(--text);
+    font-size: 18px;
+  }
+
+  .mobileTabs {
+    display: grid;
+    gap: 8px;
+    border: 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 370px) {
+  .mobileTrigger {
+    width: 42px;
+    height: 42px;
+    font-size: 12px;
+  }
+}
+
+.collapsed :global([data-ui-slot="sidebar/main-tabs"]),
+.collapsedFooter :global([data-ui-slot="sidebar/footer-tabs"]) {
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  gap: 10px;
+}

@@ -1,0 +1,61 @@
+.editor {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(0,0,0,.14);
+}
+
+.editorHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.editorHead strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.checkCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(0,0,0,.13);
+}
+
+.checkCard.wide {
+  grid-column: 1 / -1;
+}
+
+.checkCard :global(.inline-check) {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.mobileFieldStack {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 860px) {
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+}

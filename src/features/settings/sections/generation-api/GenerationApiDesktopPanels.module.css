@@ -1,0 +1,135 @@
+.focusLayout {
+  display: grid;
+  grid-template-columns: minmax(280px, .48fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.listPanel,
+.inspectorPanel,
+.activeModelCard,
+.emptyCard {
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(0,0,0,.14);
+}
+
+.listPanel,
+.inspectorPanel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.columnHead,
+.activeModelCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.columnHead h4 {
+  margin: 0 0 5px;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 760;
+}
+
+.columnHead p,
+.activeModelCard p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.entityList {
+  display: grid;
+  gap: 8px;
+  max-height: 250px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.entityCard {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 15px;
+  padding: 11px 12px;
+  background: rgba(0,0,0,.14);
+  color: var(--muted);
+  text-align: left;
+}
+
+.entityCard:hover {
+  border-color: rgba(255,255,255,.16);
+  background: rgba(255,255,255,.055);
+  color: var(--text);
+}
+
+.entityCard.active {
+  border-color: rgba(255,255,255,.24);
+  background: rgba(255,255,255,.10);
+  color: var(--text);
+}
+
+.entityCard strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entityCard span {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entityCard small {
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.activeModelCard {
+  align-items: center;
+}
+
+.activeModelCard strong,
+.emptyCard strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.activeModelCard :global(.section-kicker) {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.emptyCard {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.emptyCard span {
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 1180px) {
+  .focusLayout {
+    grid-template-columns: 1fr;
+  }
+}
