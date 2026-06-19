@@ -193,9 +193,13 @@ export function FloatingPopover({
     };
 
     const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (anchorRef.current?.contains(target)) return;
-      if (panelRef.current?.contains(target)) return;
+      const target = event.target;
+      const targetNode = target instanceof Node ? target : null;
+      const targetElement = target instanceof Element ? target : null;
+      if (targetNode && anchorRef.current?.contains(targetNode)) return;
+      if (targetNode && panelRef.current?.contains(targetNode)) return;
+      const foreignFloatingLayer = targetElement?.closest('[data-floating-popover-layer="true"]');
+      if (foreignFloatingLayer) return;
       dismiss('outside-pointer');
     };
 
@@ -238,6 +242,7 @@ export function FloatingPopover({
       aria-describedby={ariaDescribedBy}
       className={`${styles.layer} ${className ?? ''}`}
       style={floating.style}
+      data-floating-popover-layer="true"
       data-side={floating.side}
       data-ready={floating.ready ? 'true' : 'false'}
       onPointerDown={(event) => event.stopPropagation()}

@@ -40,7 +40,9 @@ export interface SettingsSelectionContext {
 }
 
 export interface RestoreRequestCommands extends WorkspaceNavigationCommands {
+  t: TranslateFn;
   setMode: StateSetter<GenerationRequestSnapshot['mode']>;
+  setCompatibilityNotice: StateSetter<string | null>;
   setParams: StateSetter<ImageParams>;
   settings: StudioSettings;
   setSettings: StateSetter<StudioSettings>;

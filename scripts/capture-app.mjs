@@ -80,7 +80,8 @@ async function seed(page, scenario) {
   await page.evaluateOnNewDocument((data, tasks) => {
     localStorage.setItem(data.tasksKey, JSON.stringify(tasks));
     localStorage.setItem(data.paramsKey, JSON.stringify({ ...data.params, ...data.paramsOverride }));
-  }, { ...seedData, paramsOverride: scenario.seedParams ?? {} }, scenario.seedTasks ?? seedData.tasks);
+    if (data.settingsKey && data.settingsOverride) localStorage.setItem(data.settingsKey, JSON.stringify(data.settingsOverride));
+  }, { ...seedData, paramsOverride: scenario.seedParams ?? {}, settingsOverride: scenario.seedSettings ?? null }, scenario.seedTasks ?? seedData.tasks);
 }
 
 async function visibleHandles(page, selector) {

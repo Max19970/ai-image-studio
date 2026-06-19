@@ -1,8 +1,11 @@
 import type { Dispatch, KeyboardEventHandler, RefObject, SetStateAction } from 'react';
 import type { AttachmentPreviewItem } from '../../shared/image';
 import type { ProviderModelOption } from '../../entities/provider/modelOptions';
-import type { GenerationModel } from '../../domain/providerSettings';
+import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
+import type { ImageParams } from '../../domain/imageParams';
+import type { StudioSettings } from '../../domain/studioSettings';
+import type { ProviderControlSurfaceDefinition } from '../../entities/provider/types';
 
 export type ComposerPopoverId = string | null;
 
@@ -10,6 +13,12 @@ export interface ComposerActionContext {
   mode: WorkMode;
   attachmentsCount: number;
   hasMask: boolean;
+  params: ImageParams;
+  provider: ProviderSettings;
+  studioSettings: StudioSettings;
+  controlSurface: ProviderControlSurfaceDefinition;
+  models: GenerationModel[];
+  providers: GenerationProvider[];
   selectedModel: GenerationModel | null;
   modelOptions: ComposerModelOption[];
   openPopover: ComposerPopoverId;
@@ -21,6 +30,7 @@ export interface ComposerActionContext {
   actions: {
     setMode: (mode: WorkMode) => void;
     changeModel: (modelId: string) => void;
+    changeParams: (params: ImageParams) => void;
     openBatchComposer: () => void;
     openParameters: () => void;
     clearAttachments: () => void;
@@ -40,6 +50,12 @@ export interface ComposerLayoutContext {
   canSubmit: boolean;
   hasImageAttachments: boolean;
   attachments: AttachmentPreviewItem[];
+  params: ImageParams;
+  provider: ProviderSettings;
+  studioSettings: StudioSettings;
+  controlSurface: ProviderControlSurfaceDefinition;
+  models: GenerationModel[];
+  providers: GenerationProvider[];
   selectedModel: GenerationModel | null;
   modelOptions: ComposerModelOption[];
   statusText?: string | null;
@@ -49,6 +65,7 @@ export interface ComposerLayoutContext {
   actions: {
     changePrompt: (prompt: string) => void;
     changeModel: (modelId: string) => void;
+    changeParams: (params: ImageParams) => void;
     setExpanded: (expanded: boolean) => void;
     toggleExpanded: () => void;
     submit: () => void;

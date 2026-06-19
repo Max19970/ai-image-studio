@@ -12,6 +12,38 @@ export const openAiCompatibleProviderDefinition: ProviderAdapterDefinition = {
   defaultGenerationEndpoint: 'https://api.openai.com/v1/images/generations',
   defaultEditEndpoint: 'https://api.openai.com/v1/images/edits',
   supportsMultipartEdit: true,
+  capabilities: {
+    supportsGenerate: true,
+    supportsEdit: true,
+    supportsImageAttachments: true,
+    supportsMask: true,
+    supportsStreaming: true,
+    usesLocalWorkflow: false,
+    hasLiveResources: false
+  },
+  resources: {
+    kinds: []
+  },
+  generationSurface: {
+    id: 'openai-compatible.logical-params',
+    kind: 'logical-params',
+    description: 'Uses the shared logical generation parameter registry.'
+  },
+  detailDescriptor: {
+    id: 'openai-compatible.request-snapshot',
+    kind: 'request-snapshot',
+    label: 'OpenAI-compatible request parameters'
+  },
+  controlSurface: {
+    id: 'openai-compatible.api-image-controls',
+    kind: 'api-image',
+    showModeSwitcher: true,
+    showImageAttachments: true,
+    showMask: true,
+    showLoraRegistry: false,
+    showParameters: true,
+    showBatch: true
+  },
   settingsFields: openAiCompatibleSettingsFields,
   generationParams: openAiCompatibleGenerationParamProfile,
   capabilitiesFromProbe: modelCapabilitiesFromProbeReport,

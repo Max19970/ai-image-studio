@@ -10,7 +10,9 @@ export function createDetailCommands(args: CreateAppCommandsArgs): DetailCommand
     },
     selectImage: (image) => args.setSelectedImageId(image.id),
     restoreRequest: (snapshot) => restoreRequestToWorkspaceCommand(snapshot, {
+      t: args.t,
       setMode: args.setMode,
+      setCompatibilityNotice: args.setCompatibilityNotice,
       setBatchComposerOpen: args.setBatchComposerOpen,
       setParams: args.setParams,
       settings: args.studioSettings,

@@ -4,6 +4,7 @@ import { ParameterPanel } from './ParameterPanel';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
+import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import { useI18n } from '../../i18n';
 import { Button, IconButton } from '../../shared/ui';
@@ -15,12 +16,13 @@ interface Props {
   params: ImageParams;
   provider: ProviderSettings;
   capabilityReport: ProviderProbeReport | null;
+  studioSettings?: StudioSettings;
   warnings: string[];
   onClose: () => void;
   onChange: (params: ImageParams) => void;
 }
 
-export function ParametersModal({ open, mode, params, provider, capabilityReport, warnings, onClose, onChange }: Props) {
+export function ParametersModal({ open, mode, params, provider, capabilityReport, studioSettings, warnings, onClose, onChange }: Props) {
   const { t } = useI18n();
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export function ParametersModal({ open, mode, params, provider, capabilityReport
         )}
 
         <div className={styles.body}>
-          <ParameterPanel mode={mode} params={params} provider={provider} capabilityReport={capabilityReport} onChange={onChange} />
+          <ParameterPanel mode={mode} params={params} provider={provider} capabilityReport={capabilityReport} studioSettings={studioSettings} onChange={onChange} />
         </div>
 
         <footer className={styles.footer}>

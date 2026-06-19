@@ -109,6 +109,22 @@ export function SettingsPage({
     patchProvider: generationApi.patchProvider,
     patchModel: generationApi.patchModel,
     firstModelForProvider: generationApi.firstModelForProvider,
+    comfyUiData: generationApi.comfyUiData,
+    comfyUiProviders: generationApi.comfyUiProviders,
+    selectedComfyUiProviderId: generationApi.selectedComfyUiProviderId,
+    selectedComfyUiProvider: generationApi.selectedComfyUiProvider,
+    setSelectedComfyUiProviderId: generationApi.setSelectedComfyUiProviderId,
+    comfyUiCheckpointCache: generationApi.comfyUiCheckpointCache,
+    comfyUiLoraCache: generationApi.comfyUiLoraCache,
+    comfyUiSamplerCache: generationApi.comfyUiSamplerCache,
+    comfyUiSchedulerCache: generationApi.comfyUiSchedulerCache,
+    comfyUiResourcesLoading: generationApi.comfyUiResourcesLoading,
+    comfyUiResourcesError: generationApi.comfyUiResourcesError,
+    refreshComfyUiResources: generationApi.refreshComfyUiResources,
+    addComfyUiProvider: generationApi.addComfyUiProvider,
+    addComfyUiLora: generationApi.addComfyUiLora,
+    removeComfyUiLora: generationApi.removeComfyUiLora,
+    patchComfyUiLora: generationApi.patchComfyUiLora,
     commands
   };
 

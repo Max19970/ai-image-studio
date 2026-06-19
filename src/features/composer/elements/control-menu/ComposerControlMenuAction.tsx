@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { BottomSheet, FloatingPopover, PopoverSelect } from '../../../../shared/ui';
+import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
 import { useI18n } from '../../../../i18n';
 import type { ComposerActionContext } from '../../composerTypes';
+import { ProviderModelPicker } from '../../../../entities/provider/ui';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import styles from './ComposerControlMenu.module.css';
 import popoverStyles from '../../ui/ComposerPopover.module.css';
@@ -55,26 +56,29 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
   };
 
   return (
-    <div className={styles.menu}>
-      <div className={styles.group}>
-        <span className={styles.groupTitle}>{t('composer.mode')}</span>
-        <div className={styles.modeGrid}>
-          <button type="button" className={styles.modeButton} data-testid="composer-mode-generate" data-active={context.mode === 'generate'} onClick={() => setMode('generate')}>
-            <strong>{t('composer.generate')}</strong>
-            <small>{t('composer.modeGenerateDescription')}</small>
-          </button>
-          <button type="button" className={styles.modeButton} data-testid="composer-mode-edit" data-active={context.mode === 'edit'} onClick={() => setMode('edit')}>
-            <strong>{t('composer.edit')}</strong>
-            <small>{t('composer.modeEditDescription')}</small>
-          </button>
+    <div className={styles.menu} data-control-surface={context.controlSurface.id}>
+      {context.controlSurface.showModeSwitcher && (
+        <div className={styles.group}>
+          <span className={styles.groupTitle}>{t('composer.mode')}</span>
+          <div className={styles.modeGrid}>
+            <button type="button" className={styles.modeButton} data-testid="composer-mode-generate" data-active={context.mode === 'generate'} onClick={() => setMode('generate')}>
+              <strong>{t('composer.generate')}</strong>
+              <small>{t('composer.modeGenerateDescription')}</small>
+            </button>
+            <button type="button" className={styles.modeButton} data-testid="composer-mode-edit" data-active={context.mode === 'edit'} onClick={() => setMode('edit')}>
+              <strong>{t('composer.edit')}</strong>
+              <small>{t('composer.modeEditDescription')}</small>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className={styles.group}>
         <span className={styles.groupTitle}>{t('composer.model')}</span>
-        <PopoverSelect
+        <ProviderModelPicker
           value={context.selectedModel?.id ?? ''}
-          options={context.modelOptions}
+          models={context.models}
+          providers={context.providers}
           onChange={context.actions.changeModel}
           ariaLabel={t('composer.model')}
           placeholder={t('detail.notSet')}
@@ -82,28 +86,33 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
           className={styles.menuModelSelect}
           triggerClassName={styles.menuModelTrigger}
           panelClassName={styles.menuModelPanel}
-          matchAnchorWidth={false}
-          minWidth={280}
+          minWidth={340}
+          testId="composer-model-picker"
         />
       </div>
 
+
       <div className={styles.group}>
         <span className={styles.groupTitle}>{t('composer.actions')}</span>
-        <button type="button" className={styles.action} data-testid="composer-add-attachments" onClick={openAttachments}>
-          <span className={styles.icon} aria-hidden="true">＋</span>
-          <span className={styles.copy}>
-            <strong>{t('composer.addImages')}</strong>
-            <small>{t('composer.addImagesDescription')}</small>
-          </span>
-        </button>
-        <button type="button" className={styles.action} data-testid="composer-add-mask" onClick={openMask}>
-          <span className={styles.icon} aria-hidden="true">◌</span>
-          <span className={styles.copy}>
-            <strong>{context.hasMask ? t('composer.replaceMask') : t('composer.addMask')}</strong>
-            <small>{t('composer.addMaskDescription')}</small>
-          </span>
-        </button>
-        {context.hasMask && (
+        {context.controlSurface.showImageAttachments && (
+          <button type="button" className={styles.action} data-testid="composer-add-attachments" onClick={openAttachments}>
+            <span className={styles.icon} aria-hidden="true">＋</span>
+            <span className={styles.copy}>
+              <strong>{t('composer.addImages')}</strong>
+              <small>{t('composer.addImagesDescription')}</small>
+            </span>
+          </button>
+        )}
+        {context.controlSurface.showMask && (
+          <button type="button" className={styles.action} data-testid="composer-add-mask" onClick={openMask}>
+            <span className={styles.icon} aria-hidden="true">◌</span>
+            <span className={styles.copy}>
+              <strong>{context.hasMask ? t('composer.replaceMask') : t('composer.addMask')}</strong>
+              <small>{t('composer.addMaskDescription')}</small>
+            </span>
+          </button>
+        )}
+        {context.controlSurface.showMask && context.hasMask && (
           <button type="button" className={styles.action} data-testid="composer-clear-mask" onClick={clearMask}>
             <span className={styles.icon} aria-hidden="true">−</span>
             <span className={styles.copy}>
@@ -112,21 +121,25 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
             </span>
           </button>
         )}
-        <button type="button" className={styles.action} data-testid="composer-parameters" onClick={openParameters}>
-          <span className={styles.icon} aria-hidden="true">⚙</span>
-          <span className={styles.copy}>
-            <strong>{t('composer.paramsTitle')}</strong>
-            <small>{t('composer.paramsDescription')}</small>
-          </span>
-        </button>
-        <button type="button" className={styles.action} data-testid="composer-batch" onClick={openBatch}>
-          <span className={styles.icon} aria-hidden="true">☷</span>
-          <span className={styles.copy}>
-            <strong>{t('batch.open')}</strong>
-            <small>{t('composer.batchDescription')}</small>
-          </span>
-        </button>
-        {context.attachmentsCount > 0 && (
+        {context.controlSurface.showParameters && (
+          <button type="button" className={styles.action} data-testid="composer-parameters" onClick={openParameters}>
+            <span className={styles.icon} aria-hidden="true">⚙</span>
+            <span className={styles.copy}>
+              <strong>{t('composer.paramsTitle')}</strong>
+              <small>{t('composer.paramsDescription')}</small>
+            </span>
+          </button>
+        )}
+        {context.controlSurface.showBatch && (
+          <button type="button" className={styles.action} data-testid="composer-batch" onClick={openBatch}>
+            <span className={styles.icon} aria-hidden="true">☷</span>
+            <span className={styles.copy}>
+              <strong>{t('batch.open')}</strong>
+              <small>{t('composer.batchDescription')}</small>
+            </span>
+          </button>
+        )}
+        {(context.controlSurface.showImageAttachments || context.controlSurface.showMask) && context.attachmentsCount > 0 && (
           <button type="button" className={`${styles.action} ${styles.danger}`} onClick={clearAttachments}>
             <span className={styles.icon} aria-hidden="true">×</span>
             <span className={styles.copy}>

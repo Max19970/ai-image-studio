@@ -117,7 +117,8 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     }
   }, [activeBatchDraft, state.studioSettings, state.capabilityReport, t]);
 
-  const composerStatusText = rawJsonError || (currentTask?.status === 'succeeded' ? null : getStatusText(currentTask, t));
+  const taskStatusText = currentTask?.status === 'succeeded' ? null : getStatusText(currentTask, t);
+  const composerStatusText = rawJsonError || taskStatusText || state.compatibilityNotice;
 
   return {
     activeModel,

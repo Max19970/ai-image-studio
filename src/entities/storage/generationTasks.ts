@@ -25,10 +25,14 @@ function sanitizeRequestSnapshot(snapshot: Partial<GenerationTask['request']>): 
     prompt: snapshot.prompt || '',
     endpoint: snapshot.endpoint || '',
     providerLabel: snapshot.providerLabel || '',
+    providerAdapterId: typeof snapshot.providerAdapterId === 'string' ? snapshot.providerAdapterId : undefined,
     model: snapshot.model || '',
     modelLabel: snapshot.modelLabel || '',
     payload: snapshot.payload && typeof snapshot.payload === 'object' ? snapshot.payload as Record<string, unknown> : {},
     warnings: Array.isArray(snapshot.warnings) ? snapshot.warnings.map(String) : [],
+    surfaceId: typeof snapshot.surfaceId === 'string' ? snapshot.surfaceId : undefined,
+    providerParams: snapshot.providerParams && typeof snapshot.providerParams === 'object' && !Array.isArray(snapshot.providerParams) ? snapshot.providerParams as Record<string, unknown> : undefined,
+    parameterSummary: snapshot.parameterSummary && typeof snapshot.parameterSummary === 'object' && !Array.isArray(snapshot.parameterSummary) ? snapshot.parameterSummary as any : undefined,
     attachments: Array.isArray(snapshot.attachments) ? snapshot.attachments.map((item) => sanitizeAttachment(item as Partial<AttachmentSummary>)) : [],
     params: sanitizeGenerationRequestParamsSnapshot(snapshot.params)
   };

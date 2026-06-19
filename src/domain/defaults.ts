@@ -5,6 +5,8 @@ type DefaultsFile = {
   providerSettings: ProviderSettings;
   generationProvider: GenerationProvider;
   generationModel: GenerationModel;
+  comfyUiGenerationProvider?: GenerationProvider;
+  comfyUiGenerationModel?: GenerationModel;
   studioSettings: Pick<StudioSettings, 'selectedModelId' | 'interfaceTheme'>;
   imageParams: ImageParams;
   sizePresets: string[];
@@ -20,10 +22,12 @@ const data = defaultsData as DefaultsFile;
 export const defaultProviderSettings: ProviderSettings = data.providerSettings;
 export const defaultGenerationProvider: GenerationProvider = data.generationProvider;
 export const defaultGenerationModel: GenerationModel = data.generationModel;
+export const defaultComfyUiGenerationProvider: GenerationProvider | null = data.comfyUiGenerationProvider ?? null;
+export const defaultComfyUiGenerationModel: GenerationModel | null = data.comfyUiGenerationModel ?? null;
 
 export const defaultStudioSettings: StudioSettings = {
-  providers: [defaultGenerationProvider],
-  models: [defaultGenerationModel],
+  providers: [defaultGenerationProvider, ...(defaultComfyUiGenerationProvider ? [defaultComfyUiGenerationProvider] : [])],
+  models: [defaultGenerationModel, ...(defaultComfyUiGenerationModel ? [defaultComfyUiGenerationModel] : [])],
   selectedModelId: data.studioSettings.selectedModelId,
   interfaceTheme: data.studioSettings.interfaceTheme
 };

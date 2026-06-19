@@ -49,5 +49,14 @@
   "composer.replaceMask": "Replace mask",
   "composer.addMaskDescription": "Select a PNG mask to limit the editable area.",
   "composer.clearMask": "Remove mask",
-  "composer.clearMaskDescription": "Keep the images but remove the PNG mask."
+  "composer.clearMaskDescription": "Keep the images but remove the PNG mask.",
+  "composer.provider": "Provider",
+  "composer.providersList": "Providers",
+  "composer.modelsList": "Models",
+  "composer.modelPickerTitle": "Choose provider and model",
+  "composer.modelPickerDescription": "Pick a provider first, then select one of its models.",
+  "composer.noProviderModels": "This provider has no registered models yet.",
+  "composer.compatibilityAdjustedRequest": "The request was adjusted for the selected provider: unsupported modes or attachments were cleared.",
+  "composer.comfy.loras": "LoRA presets",
+  "composer.comfy.noLoras": "No registered LoRA yet. Add one in Settings → Generation API → ComfyUI."
 }

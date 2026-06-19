@@ -6,6 +6,8 @@ import type { BatchComposerLayoutContext, BatchDraftLayoutContext } from '../../
 import type { I18nContextValue } from '../../../../shared/i18n/types';
 import { useI18n } from '../../../../i18n';
 import { getProviderModelOptions } from '../../../../entities/provider/modelOptions';
+import { resolveProviderControlSurface } from '../../../../entities/provider/controlSurface';
+import { toProviderSettings } from '../../../../entities/studio-settings';
 import styles from './BatchDraftListSection.module.css';
 import queueStyles from './BatchQueueRail.module.css';
 import editorStyles from './BatchSelectedEditor.module.css';
@@ -69,13 +71,23 @@ function createDraftContext(
   index: number,
   modelOptions: BatchDraftLayoutContext['modelOptions']
 ): BatchDraftLayoutContext {
+  const controlContext = resolveProviderControlSurface({
+    settings: context.studioSettings,
+    modelId: draft.selectedModelId,
+    models: context.models,
+    providers: context.providers
+  });
+
   return {
     draft,
     index,
     canRemove: context.drafts.length > 1,
     models: context.models,
     providers: context.providers,
-    selectedModel: context.models.find((model) => model.id === draft.selectedModelId) ?? context.models[0] ?? null,
+    provider: toProviderSettings(controlContext.provider, controlContext.model),
+    studioSettings: context.studioSettings,
+    controlSurface: controlContext.surface,
+    selectedModel: controlContext.model,
     modelOptions,
     attachments: [],
     attachmentsCount: 0,
@@ -114,6 +126,7 @@ export function BatchDraftListSection({ context }: ElementDefinitionProps<BatchC
       context.drafts.length,
       context.models,
       context.providers,
+      context.studioSettings,
       selectedDraft,
       selectedIndex,
       modelOptions

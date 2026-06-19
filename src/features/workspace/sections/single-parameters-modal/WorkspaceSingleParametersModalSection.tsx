@@ -10,6 +10,7 @@ export function WorkspaceSingleParametersModalSection({ context }: ElementDefini
       params={context.singleParameters.params}
       provider={context.singleParameters.provider}
       capabilityReport={context.singleParameters.capabilityReport}
+      studioSettings={context.singleParameters.studioSettings}
       warnings={context.singleParameters.warnings}
       onClose={context.singleParameters.commands.closeSingle}
       onChange={context.singleParameters.commands.changeSingle}

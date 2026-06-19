@@ -17,6 +17,7 @@ export function createMainContext({ state, derived, commands }: WorkspaceContext
       canSubmit: derived.batchCanSubmit,
       models: state.studioSettings.models,
       providers: state.studioSettings.providers,
+      studioSettings: state.studioSettings,
       commands: commands.batchComposer
     },
     info: {},

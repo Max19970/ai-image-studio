@@ -110,25 +110,16 @@
   background: rgba(255,255,255,.055);
 }
 
-.menuModelTrigger :global(.popover-select-copy strong) {
+.menuModelTrigger strong {
   font-size: 12px;
 }
 
-.menuModelTrigger :global(.popover-select-copy small) {
+.menuModelTrigger small {
   font-size: 10px;
 }
 
 .menuModelPanel {
-  width: min(320px, calc(100vw - 42px));
-}
-
-.menuModelPanel :global(.popover-select-option-copy strong) {
-  font-size: 12px;
-}
-
-.menuModelPanel :global(.popover-select-option-copy small) {
-  white-space: normal;
-  line-height: 1.35;
+  width: min(560px, calc(100vw - 42px));
 }
 
 .icon {

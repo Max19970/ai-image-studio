@@ -49,5 +49,14 @@
   "composer.replaceMask": "Заменить маску",
   "composer.addMaskDescription": "Выбрать PNG-маску для ограничения области редактирования.",
   "composer.clearMask": "Убрать маску",
-  "composer.clearMaskDescription": "Оставить изображения, но убрать PNG-маску."
+  "composer.clearMaskDescription": "Оставить изображения, но убрать PNG-маску.",
+  "composer.provider": "Провайдер",
+  "composer.providersList": "Провайдеры",
+  "composer.modelsList": "Модели",
+  "composer.modelPickerTitle": "Выбор провайдера и модели",
+  "composer.modelPickerDescription": "Сначала выбери провайдера, затем модель внутри него.",
+  "composer.noProviderModels": "У этого провайдера пока нет зарегистрированных моделей.",
+  "composer.compatibilityAdjustedRequest": "Запрос обновлён под возможности выбранного провайдера: неподдерживаемые режимы или вложения очищены.",
+  "composer.comfy.loras": "LoRA-пресеты",
+  "composer.comfy.noLoras": "LoRA пока не зарегистрированы. Добавь их в Настройки → API генерации → ComfyUI."
 }

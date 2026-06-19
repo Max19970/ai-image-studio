@@ -1,0 +1,55 @@
+import { modelCapabilitiesFromProbeReport } from '../../entities/provider/capabilities';
+import type { ProviderAdapterDefinition } from '../../entities/provider/types';
+import { comfyUiRequestAdapter } from './requestAdapter';
+import { comfyUiResponseAdapter } from './responseAdapter';
+import { comfyUiSettingsFields } from './settingsSchema';
+
+export const comfyUiProviderDefinition: ProviderAdapterDefinition = {
+  id: 'comfyui',
+  label: 'ComfyUI Local Workflow',
+  description: 'Local text-to-image workflow generation through a running ComfyUI server.',
+  defaultGenerationEndpoint: 'http://127.0.0.1:8188',
+  defaultEditEndpoint: 'http://127.0.0.1:8188',
+  supportsMultipartEdit: false,
+  capabilities: {
+    supportsGenerate: true,
+    supportsEdit: false,
+    supportsImageAttachments: false,
+    supportsMask: false,
+    supportsStreaming: false,
+    usesLocalWorkflow: true,
+    hasLiveResources: true
+  },
+  resources: {
+    kinds: ['models', 'checkpoints', 'loras', 'samplers', 'schedulers']
+  },
+  generationSurface: {
+    id: 'comfyui.text-to-image',
+    kind: 'provider-owned',
+    description: 'Uses a provider-owned ComfyUI text-to-image workflow surface.'
+  },
+  detailDescriptor: {
+    id: 'comfyui.workflow-summary',
+    kind: 'provider-owned',
+    label: 'ComfyUI workflow parameters'
+  },
+  controlSurface: {
+    id: 'comfyui.local-workflow-controls',
+    kind: 'local-workflow',
+    showModeSwitcher: false,
+    showImageAttachments: false,
+    showMask: false,
+    showLoraRegistry: true,
+    showParameters: true,
+    showBatch: true
+  },
+  settingsFields: comfyUiSettingsFields,
+  modelResourceKind: 'checkpoints',
+  generationParams: {
+    id: 'comfyui.provider-owned',
+    include: ['generationParam.retryPolicy']
+  },
+  capabilitiesFromProbe: modelCapabilitiesFromProbeReport,
+  request: comfyUiRequestAdapter,
+  response: comfyUiResponseAdapter
+};

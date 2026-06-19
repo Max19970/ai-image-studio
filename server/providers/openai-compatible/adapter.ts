@@ -9,6 +9,18 @@ export const openAiCompatibleProviderAdapter: ProviderAdapterDefinition = {
   label: 'OpenAI-compatible Images API',
   resolveEndpoint: resolveOpenAiCompatibleEndpoint,
   fingerprint: providerFingerprint,
+  capabilities: {
+    supportsGenerate: true,
+    supportsEdit: true,
+    supportsImageAttachments: true,
+    supportsMask: true,
+    supportsStreaming: true,
+    usesLocalWorkflow: false,
+    hasLiveResources: false
+  },
+  resources: {
+    kinds: []
+  },
   fetchGenerate: fetchOpenAiCompatibleGenerate,
   fetchEdit: fetchOpenAiCompatibleEdit,
   quickCheck: quickCheckOpenAiCompatibleProvider,

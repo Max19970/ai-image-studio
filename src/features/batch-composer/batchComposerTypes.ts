@@ -1,9 +1,11 @@
 import type { RefObject } from 'react';
 import type { AttachmentPreviewItem } from '../../shared/image';
 import type { BatchComposerDraft } from '../../domain/generationTask';
-import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
+import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderModelOption } from '../../entities/provider/modelOptions';
+import type { StudioSettings } from '../../domain/studioSettings';
+import type { ProviderControlSurfaceDefinition } from '../../entities/provider/types';
 
 export interface BatchComposerLayoutContext {
   drafts: BatchComposerDraft[];
@@ -12,6 +14,7 @@ export interface BatchComposerLayoutContext {
   canSubmit: boolean;
   models: GenerationModel[];
   providers: GenerationProvider[];
+  studioSettings: StudioSettings;
   totalImages: number;
   validDrafts: number;
   selectedDraftId: string | null;
@@ -36,6 +39,9 @@ export interface BatchDraftLayoutContext {
   canRemove: boolean;
   models: GenerationModel[];
   providers: GenerationProvider[];
+  provider: ProviderSettings;
+  studioSettings: StudioSettings;
+  controlSurface: ProviderControlSurfaceDefinition;
   selectedModel: GenerationModel | null;
   modelOptions: ProviderModelOption[];
   attachments: AttachmentPreviewItem[];

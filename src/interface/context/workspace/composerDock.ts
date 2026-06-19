@@ -3,6 +3,7 @@ import type { GenerationModel, GenerationProvider, ProviderSettings } from '../.
 import type { BatchComposerDraft } from '../../../domain/generationTask';
 import type { ProviderProbeReport } from '../../../domain/providerProbe';
 import type { WorkMode } from '../../../domain/workMode';
+import type { StudioSettings } from '../../../domain/studioSettings';
 import type { ComposerCommands, ParameterModalCommands } from '../commands';
 import type { WorkspaceTab } from './tabs';
 
@@ -11,6 +12,9 @@ export interface WorkspaceComposerDockContext {
   batchComposerOpen: boolean;
   mode: WorkMode;
   prompt: string;
+  params: ImageParams;
+  provider: ProviderSettings;
+  studioSettings: StudioSettings;
   busy: boolean;
   canSubmit: boolean;
   targetImage: File | null;
@@ -30,6 +34,7 @@ export interface WorkspaceModalsContext {
     params: ImageParams;
     provider: ProviderSettings;
     capabilityReport: ProviderProbeReport | null;
+    studioSettings: StudioSettings;
     warnings: string[];
     commands: ParameterModalCommands;
   };
@@ -37,6 +42,7 @@ export interface WorkspaceModalsContext {
     draft: BatchComposerDraft | null;
     provider: ProviderSettings;
     capabilityReport: ProviderProbeReport | null;
+    studioSettings: StudioSettings;
     warnings: string[];
     commands: ParameterModalCommands;
   };

@@ -12,6 +12,7 @@ import type {
 } from './types';
 import { resolveGenerationParamProfileAvailability } from './availability';
 import type { ProviderGenerationParamProfile } from './types';
+import { normalizeProviderParamBucket } from './providerState';
 import { sizeParam } from './fields/size/param';
 import { nParam } from './fields/n/param';
 import { qualityParam } from './fields/quality/param';
@@ -69,7 +70,8 @@ export function buildOpenAiCompatibleParamPayload(params: ImageParams, provider:
 export function normalizeImageParamsFromDefinitions(value: Partial<ImageParams> | null | undefined): ImageParams {
   let current: ImageParams = {
     ...defaultImageParams,
-    ...(value ?? {})
+    ...(value ?? {}),
+    providerParams: normalizeProviderParamBucket((value as Partial<ImageParams> | null | undefined)?.providerParams)
   };
 
   for (const definition of logicalGenerationParamDefinitions) {
@@ -103,7 +105,11 @@ export function restoreImageParamsFromRequestSnapshot(previous: ImageParams, sna
   let next = normalizeImageParamsFromDefinitions({
     ...previous,
     prompt: snapshot.prompt,
-    ...(snapshot.params ?? {})
+    ...(snapshot.params ?? {}),
+    providerParams: {
+      ...normalizeProviderParamBucket(previous.providerParams),
+      ...(snapshot.providerParams ? { [snapshot.surfaceId || 'openai-compatible']: snapshot.providerParams } : {})
+    }
   } as Partial<ImageParams>);
 
   for (const definition of logicalGenerationParamDefinitions) {

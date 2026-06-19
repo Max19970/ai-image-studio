@@ -2,6 +2,7 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 import { useI18n } from '../../../../i18n';
 import type { SettingsSectionContext, SettingsSectionVariant } from '../../settingsTypes';
 import styles from './GenerationApiSettingsSection.module.css';
+import { ComfyUiSettingsPanel } from './comfyui-settings/ComfyUiSettingsPanel';
 import { ModelsDesktop } from './model-list/ModelsDesktop';
 import { ModelsMobile } from './model-list/ModelsMobile';
 import { ProvidersDesktop } from './provider-list/ProvidersDesktop';
@@ -31,9 +32,10 @@ function GenerationApiDesktop({ context }: { context: SettingsSectionContext }) 
       <div className={styles.focusSwitch} data-testid="settings-api-focus" role="tablist" aria-label={t('settings.apiTitle')}>
         <button type="button" className={apiFocus === 'providers' ? styles.active : ''} onClick={() => setApiFocus('providers')}>{t('settings.providers')}</button>
         <button type="button" className={apiFocus === 'models' ? styles.active : ''} onClick={() => setApiFocus('models')}>{t('settings.models')}</button>
+        <button type="button" className={apiFocus === 'comfyui' ? styles.active : ''} onClick={() => setApiFocus('comfyui')}>{t('settings.comfy.shortTab')}</button>
       </div>
 
-      {apiFocus === 'providers' ? <ProvidersDesktop context={context} /> : <ModelsDesktop context={context} />}
+      {apiFocus === 'providers' ? <ProvidersDesktop context={context} /> : apiFocus === 'models' ? <ModelsDesktop context={context} /> : <ComfyUiSettingsPanel context={context} />}
     </div>
   );
 }
@@ -47,15 +49,16 @@ function GenerationApiMobile({ context }: { context: SettingsSectionContext }) {
       <header className={styles.mobileApiHeader}>
         <div className={styles.mobileApiTitle}>
           <span className="section-kicker">{t('settings.tab.generationApi')}</span>
-          <h3>{apiFocus === 'providers' ? t('settings.providers') : t('settings.models')}</h3>
+          <h3>{apiFocus === 'providers' ? t('settings.providers') : apiFocus === 'models' ? t('settings.models') : t('settings.comfy.shortTab')}</h3>
         </div>
         <div className={styles.mobileApiSwitch} data-testid="settings-api-focus" role="tablist" aria-label={t('settings.apiTitle')}>
           <button type="button" className={apiFocus === 'providers' ? styles.active : ''} onClick={() => setApiFocus('providers')}>{t('settings.providers')}</button>
           <button type="button" className={apiFocus === 'models' ? styles.active : ''} onClick={() => setApiFocus('models')}>{t('settings.models')}</button>
+          <button type="button" className={apiFocus === 'comfyui' ? styles.active : ''} onClick={() => setApiFocus('comfyui')}>{t('settings.comfy.shortTab')}</button>
         </div>
       </header>
 
-      {apiFocus === 'providers' ? <ProvidersMobile context={context} /> : <ModelsMobile context={context} />}
+      {apiFocus === 'providers' ? <ProvidersMobile context={context} /> : apiFocus === 'models' ? <ModelsMobile context={context} /> : <ComfyUiSettingsPanel context={context} />}
     </section>
   );
 }

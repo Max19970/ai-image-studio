@@ -10,12 +10,12 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
   const { fileInputs } = context.actionContext;
 
   const addAttachmentsFromInput = (event: ChangeEvent<HTMLInputElement>) => {
-    context.actions.addAttachments(Array.from(event.target.files ?? []));
+    if (context.controlSurface.showImageAttachments) context.actions.addAttachments(Array.from(event.target.files ?? []));
     event.currentTarget.value = '';
   };
 
   const addMaskFromInput = (event: ChangeEvent<HTMLInputElement>) => {
-    context.actionContext.actions.setMask(event.target.files?.[0] ?? null);
+    if (context.controlSurface.showMask) context.actionContext.actions.setMask(event.target.files?.[0] ?? null);
     event.currentTarget.value = '';
   };
 

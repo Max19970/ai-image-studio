@@ -13,7 +13,7 @@
   position: relative;
   display: flex;
   width: min(1180px, calc(100vw - 36px));
-  max-height: min(84dvh, 760px);
+  height: min(84dvh, 760px);
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
@@ -56,8 +56,9 @@
 }
 
 .body {
+  flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .body :global(.panel-heading) {
@@ -134,7 +135,7 @@
 
   .body {
     min-height: 0;
-    overflow: auto;
+    overflow: hidden;
     padding: 10px 12px 0;
   }
 

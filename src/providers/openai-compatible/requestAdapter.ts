@@ -2,14 +2,13 @@ import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
-import { buildOpenAiCompatibleParamPayload } from '../../entities/generation-params/logicalRegistry';
+import { buildOpenAiCompatibleRequestSurfacePayload } from '../../entities/generation-params/requestSurface';
 import {
   getOpenAiCompatibleSize,
   parseOpenAiCompatibleRawJson,
   shouldSendOutputFormat
 } from '../../entities/generation-params/serializers/openAiCompatible';
 import type { ProviderRequestAdapter, ProviderSubmitProxyRequestInput, ProviderSubmitProxyRequestConfig } from '../../entities/provider/types';
-import { openAiCompatibleGenerationParamProfile } from './parameterProfile';
 
 export function getOpenAiCompatibleSizeFromParams(params: ImageParams): string | undefined {
   return getOpenAiCompatibleSize(params);
@@ -28,10 +27,7 @@ export function validateOpenAiCompatibleCustomSize(width: number, height: number
 }
 
 export function buildOpenAiCompatibleImagePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode): Record<string, unknown> {
-  return {
-    prompt: params.prompt.trim(),
-    ...buildOpenAiCompatibleParamPayload(params, provider, mode, openAiCompatibleGenerationParamProfile)
-  };
+  return buildOpenAiCompatibleRequestSurfacePayload(params, provider, mode);
 }
 
 export function explainOpenAiCompatiblePayloadWarnings(

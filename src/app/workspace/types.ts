@@ -17,6 +17,8 @@ export type StateSetter<T> = Dispatch<SetStateAction<T>>;
 export interface WorkspaceState {
   mode: WorkMode;
   setMode: StateSetter<WorkMode>;
+  compatibilityNotice: string | null;
+  setCompatibilityNotice: StateSetter<string | null>;
   studioSettings: StudioSettings;
   setStudioSettings: StateSetter<StudioSettings>;
   params: ImageParams;

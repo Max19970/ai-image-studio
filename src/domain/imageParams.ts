@@ -5,6 +5,8 @@ export type Moderation = '' | 'auto' | 'low';
 export type ResponseFormat = '' | 'b64_json' | 'url';
 export type InputFidelity = '' | 'low' | 'high';
 
+export type ProviderParamsBySurface = Record<string, Record<string, unknown>>;
+
 export interface ImageParams {
   prompt: string;
   n: number;
@@ -39,4 +41,5 @@ export interface ImageParams {
   includeInputFidelity: boolean;
   includeUser: boolean;
   includeStyle: boolean;
+  providerParams?: ProviderParamsBySurface;
 }

@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
-import { BottomSheet, FloatingPopover, PopoverSelect } from '../../../../shared/ui';
+import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
 import type { BatchDraftLayoutContext } from '../../batchComposerTypes';
+import { ProviderModelPicker } from '../../../../entities/provider/ui';
 import { useI18n } from '../../../../i18n';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import styles from './BatchDraftToolbarSection.module.css';
@@ -52,26 +53,29 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
   };
 
   return (
-    <div className={menuStyles.menu}>
-      <div className={menuStyles.group}>
-        <span className={menuStyles.groupTitle}>{t('composer.mode')}</span>
-        <div className={menuStyles.modeGrid}>
-          <button type="button" className={menuStyles.modeButton} data-active={context.draft.mode === 'generate'} onClick={() => setMode('generate')}>
-            <strong>{t('composer.generate')}</strong>
-            <small>{t('composer.modeGenerateDescription')}</small>
-          </button>
-          <button type="button" className={menuStyles.modeButton} data-active={context.draft.mode === 'edit'} onClick={() => setMode('edit')}>
-            <strong>{t('composer.edit')}</strong>
-            <small>{t('composer.modeEditDescription')}</small>
-          </button>
+    <div className={menuStyles.menu} data-control-surface={context.controlSurface.id}>
+      {context.controlSurface.showModeSwitcher && (
+        <div className={menuStyles.group}>
+          <span className={menuStyles.groupTitle}>{t('composer.mode')}</span>
+          <div className={menuStyles.modeGrid}>
+            <button type="button" className={menuStyles.modeButton} data-active={context.draft.mode === 'generate'} onClick={() => setMode('generate')}>
+              <strong>{t('composer.generate')}</strong>
+              <small>{t('composer.modeGenerateDescription')}</small>
+            </button>
+            <button type="button" className={menuStyles.modeButton} data-active={context.draft.mode === 'edit'} onClick={() => setMode('edit')}>
+              <strong>{t('composer.edit')}</strong>
+              <small>{t('composer.modeEditDescription')}</small>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className={menuStyles.group}>
         <span className={menuStyles.groupTitle}>{t('composer.model')}</span>
-        <PopoverSelect
+        <ProviderModelPicker
           value={context.selectedModel?.id ?? ''}
-          options={context.modelOptions}
+          models={context.models}
+          providers={context.providers}
           onChange={(modelId) => context.actions.patchDraft({ selectedModelId: modelId })}
           ariaLabel={t('composer.model')}
           placeholder={t('detail.notSet')}
@@ -79,28 +83,33 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
           className={menuStyles.menuModelSelect}
           triggerClassName={menuStyles.menuModelTrigger}
           panelClassName={menuStyles.menuModelPanel}
-          matchAnchorWidth={false}
-          minWidth={280}
+          minWidth={340}
+          testId="batch-draft-model-picker"
         />
       </div>
 
+
       <div className={menuStyles.group}>
         <span className={menuStyles.groupTitle}>{t('composer.actions')}</span>
-        <button type="button" className={menuStyles.action} onClick={openImages}>
-          <span className={menuStyles.icon} aria-hidden="true">＋</span>
-          <span className={menuStyles.copy}>
-            <strong>{t('composer.addImages')}</strong>
-            <small>{t('composer.addImagesDescription')}</small>
-          </span>
-        </button>
-        <button type="button" className={menuStyles.action} onClick={openMask}>
-          <span className={menuStyles.icon} aria-hidden="true">◌</span>
-          <span className={menuStyles.copy}>
-            <strong>{context.draft.mask ? t('composer.replaceMask') : t('composer.addMask')}</strong>
-            <small>{t('composer.addMaskDescription')}</small>
-          </span>
-        </button>
-        {context.draft.mask && (
+        {context.controlSurface.showImageAttachments && (
+          <button type="button" className={menuStyles.action} onClick={openImages}>
+            <span className={menuStyles.icon} aria-hidden="true">＋</span>
+            <span className={menuStyles.copy}>
+              <strong>{t('composer.addImages')}</strong>
+              <small>{t('composer.addImagesDescription')}</small>
+            </span>
+          </button>
+        )}
+        {context.controlSurface.showMask && (
+          <button type="button" className={menuStyles.action} onClick={openMask}>
+            <span className={menuStyles.icon} aria-hidden="true">◌</span>
+            <span className={menuStyles.copy}>
+              <strong>{context.draft.mask ? t('composer.replaceMask') : t('composer.addMask')}</strong>
+              <small>{t('composer.addMaskDescription')}</small>
+            </span>
+          </button>
+        )}
+        {context.controlSurface.showMask && context.draft.mask && (
           <button type="button" className={menuStyles.action} onClick={clearMask}>
             <span className={menuStyles.icon} aria-hidden="true">−</span>
             <span className={menuStyles.copy}>
@@ -109,13 +118,15 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
             </span>
           </button>
         )}
-        <button type="button" className={menuStyles.action} onClick={openParameters}>
-          <span className={menuStyles.icon} aria-hidden="true">⚙</span>
-          <span className={menuStyles.copy}>
-            <strong>{t('composer.paramsTitle')}</strong>
-            <small>{t('composer.paramsDescription')}</small>
-          </span>
-        </button>
+        {context.controlSurface.showParameters && (
+          <button type="button" className={menuStyles.action} onClick={openParameters}>
+            <span className={menuStyles.icon} aria-hidden="true">⚙</span>
+            <span className={menuStyles.copy}>
+              <strong>{t('composer.paramsTitle')}</strong>
+              <small>{t('composer.paramsDescription')}</small>
+            </span>
+          </button>
+        )}
         <button type="button" className={menuStyles.action} onClick={duplicateDraft}>
           <span className={menuStyles.icon} aria-hidden="true">⧉</span>
           <span className={menuStyles.copy}>
@@ -132,7 +143,7 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
             </span>
           </button>
         )}
-        {context.attachmentsCount > 0 && (
+        {(context.controlSurface.showImageAttachments || context.controlSurface.showMask) && context.attachmentsCount > 0 && (
           <button type="button" className={`${menuStyles.action} ${menuStyles.danger}`} onClick={clearAttachments}>
             <span className={menuStyles.icon} aria-hidden="true">×</span>
             <span className={menuStyles.copy}>
@@ -154,12 +165,12 @@ export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<Bat
   const close = () => setOpen(false);
 
   const addAttachmentsFromInput = (event: ChangeEvent<HTMLInputElement>) => {
-    context.actions.addAttachments(Array.from(event.target.files ?? []));
+    if (context.controlSurface.showImageAttachments) context.actions.addAttachments(Array.from(event.target.files ?? []));
     event.currentTarget.value = '';
   };
 
   const addMaskFromInput = (event: ChangeEvent<HTMLInputElement>) => {
-    context.actions.patchDraft({ mask: event.target.files?.[0] ?? null, mode: 'edit' });
+    if (context.controlSurface.showMask) context.actions.patchDraft({ mask: event.target.files?.[0] ?? null, mode: 'edit' });
     event.currentTarget.value = '';
   };
 

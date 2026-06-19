@@ -14,7 +14,61 @@ export interface ModelCapabilities {
   edit: Partial<Record<CapabilityKey, CapabilityEntry>>;
 }
 
-export type ProviderAdapterKind = 'openai-compatible';
+export type ProviderAdapterKind = 'openai-compatible' | 'comfyui';
+export type ProviderResourceKind = 'models' | 'checkpoints' | 'loras' | 'samplers' | 'schedulers' | (string & {});
+
+export interface ProviderRuntimeCapabilities {
+  supportsGenerate: boolean;
+  supportsEdit: boolean;
+  supportsImageAttachments: boolean;
+  supportsMask: boolean;
+  supportsStreaming: boolean;
+  usesLocalWorkflow: boolean;
+  hasLiveResources: boolean;
+}
+
+export interface ProviderResourceDescriptor {
+  kinds: readonly ProviderResourceKind[];
+}
+
+export interface ProviderResourceEntry {
+  id: string;
+  name: string;
+  nativeName?: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ProviderResourceList {
+  kind: ProviderResourceKind;
+  providerLabel: string;
+  createdAt: number;
+  items: ProviderResourceEntry[];
+  warning?: string;
+}
+
+export interface ProviderGenerationSurfaceDefinition {
+  id: string;
+  kind: 'logical-params' | 'provider-owned';
+  description: string;
+}
+
+export interface ProviderDetailDescriptorDefinition {
+  id: string;
+  kind: 'request-snapshot' | 'provider-owned';
+  label: string;
+}
+
+export interface ProviderControlSurfaceDefinition {
+  id: string;
+  kind: 'api-image' | 'local-workflow';
+  showModeSwitcher: boolean;
+  showImageAttachments: boolean;
+  showMask: boolean;
+  showLoraRegistry: boolean;
+  showParameters: boolean;
+  showBatch: boolean;
+}
 
 export interface ProviderSubmitProxyRequestInput {
   provider: ProviderSettings;
@@ -72,7 +126,13 @@ export interface ProviderAdapterDefinition {
   defaultGenerationEndpoint: string;
   defaultEditEndpoint: string;
   supportsMultipartEdit: boolean;
+  capabilities: ProviderRuntimeCapabilities;
+  resources: ProviderResourceDescriptor;
+  generationSurface: ProviderGenerationSurfaceDefinition;
+  detailDescriptor: ProviderDetailDescriptorDefinition;
+  controlSurface: ProviderControlSurfaceDefinition;
   settingsFields: ProviderAdapterSettingsField[];
+  modelResourceKind?: ProviderResourceKind;
   generationParams: ProviderGenerationParamProfile;
   capabilitiesFromProbe(report: ProviderProbeReport): ModelCapabilities;
   request: ProviderRequestAdapter;

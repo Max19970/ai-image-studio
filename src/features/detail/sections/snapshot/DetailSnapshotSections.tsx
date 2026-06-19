@@ -4,7 +4,7 @@ import { useI18n } from '../../../../i18n';
 import { AttachmentImageStrip } from '../../../../shared/ui';
 import type { AttachmentPreviewItem } from '../../../../shared/ui';
 import { cx, expectedImageCount } from '../../model/detailHelpers';
-import { sentParameters } from '../../sentParameters';
+import { createDetailDescriptorContext, getProviderDetailDescriptor, type DetailDataRow } from '../../model/detailDescriptors';
 import styles from './DetailSnapshotSections.module.css';
 
 export type DetailInspectorTab = 'prompt' | 'params' | 'files' | 'technical';
@@ -97,28 +97,50 @@ function RunStatusRows({ task }: { task: GenerationTask }) {
   );
 }
 
-function RequestMetaRows({ snapshot }: { snapshot: GenerationRequestSnapshot }) {
-  const { t } = useI18n();
+function DetailRows({ rows }: { rows: DetailDataRow[] }) {
   return (
     <div className={styles.detailGrid}>
-      <DataRow label={t('detail.mode')} value={t(`gallery.mode.${snapshot.mode}`)} />
-      <DataRow label={t('detail.model')} value={snapshot.modelLabel || snapshot.model || t('detail.notSet')} />
-      <DataRow label={t('detail.provider')} value={snapshot.providerLabel || t('detail.notSet')} />
-      <DataRow label={t('detail.endpoint')} value={snapshot.endpoint || t('detail.notSet')} />
-      <DataRow label={t('detail.created')} value={new Date(snapshot.createdAt).toLocaleString()} />
+      {rows.map((row) => <DataRow key={row.id || row.label} label={row.label} value={row.value} />)}
     </div>
   );
 }
 
-function SentParamsRows({ snapshot }: { snapshot: GenerationRequestSnapshot }) {
+function RequestMetaRows({ snapshot }: { snapshot: GenerationRequestSnapshot }) {
   const { t } = useI18n();
-  const sent = sentParameters(snapshot, t);
+  const descriptor = getProviderDetailDescriptor(snapshot);
+  const rows = descriptor.getMetadataRows(createDetailDescriptorContext({ snapshot, t }));
+  return <DetailRows rows={rows} />;
+}
 
-  if (sent.length === 0) return <p className="muted-copy">{t('detail.onlyPrompt')}</p>;
+function SentParamsRows({ snapshot, raw }: { snapshot: GenerationRequestSnapshot; raw?: unknown }) {
+  const { t } = useI18n();
+  const descriptor = getProviderDetailDescriptor(snapshot);
+  const rows = descriptor.getParameterRows(createDetailDescriptorContext({ snapshot, raw, t }));
 
+  if (rows.length === 0) return <p className="muted-copy">{t('detail.onlyPrompt')}</p>;
+
+  return <DetailRows rows={rows} />;
+}
+
+function RuntimeRows({ snapshot, raw }: { snapshot: GenerationRequestSnapshot; raw?: unknown }) {
+  const { t } = useI18n();
+  const descriptor = getProviderDetailDescriptor(snapshot);
+  const rows = descriptor.getRuntimeRows?.(createDetailDescriptorContext({ snapshot, raw, t })) ?? [];
+  if (rows.length === 0 || !descriptor.runtimeTitleKey) return null;
   return (
-    <div className={styles.detailGrid}>
-      {sent.map((param) => <DataRow key={param.label} label={param.label} value={param.value} />)}
+    <InspectorGroup title={t(descriptor.runtimeTitleKey)} kicker={descriptor.runtimeKickerKey ? t(descriptor.runtimeKickerKey) : undefined}>
+      <DetailRows rows={rows} />
+    </InspectorGroup>
+  );
+}
+
+function TechnicalBlocks({ snapshot, raw, activeImage }: { snapshot: GenerationRequestSnapshot; raw?: unknown; activeImage?: GeneratedImage | null }) {
+  const { t } = useI18n();
+  const descriptor = getProviderDetailDescriptor(snapshot);
+  const blocks = descriptor.getTechnicalBlocks(createDetailDescriptorContext({ snapshot, raw, activeImage, t }));
+  return (
+    <div className={styles.technicalStack}>
+      {blocks.map((block) => <TechnicalDetails key={block.id} title={block.title} value={block.value} defaultOpen={block.defaultOpen} />)}
     </div>
   );
 }
@@ -154,10 +176,11 @@ function SingleSnapshotSections({ task, activeImage, activeMobileTab }: { task: 
             <RunStatusRows task={task} />
             {task.error && <div className="error-strip compact">{task.error}</div>}
           </InspectorGroup>
-          <InspectorGroup title={t('detail.sentParams')} kicker={t('detail.parameters')}>
-            <SentParamsRows snapshot={snapshot} />
+          <InspectorGroup title={t(getProviderDetailDescriptor(snapshot).parameterTitleKey)} kicker={t(getProviderDetailDescriptor(snapshot).parameterKickerKey)}>
+            <SentParamsRows snapshot={snapshot} raw={task.raw} />
           </InspectorGroup>
-          <InspectorGroup title={t('detail.meta')} kicker={t('detail.request')}>
+          <RuntimeRows snapshot={snapshot} raw={task.raw} />
+          <InspectorGroup title={t(getProviderDetailDescriptor(snapshot).metadataTitleKey)} kicker={t(getProviderDetailDescriptor(snapshot).metadataKickerKey)}>
             <RequestMetaRows snapshot={snapshot} />
           </InspectorGroup>
         </>
@@ -165,11 +188,7 @@ function SingleSnapshotSections({ task, activeImage, activeMobileTab }: { task: 
 
       {visible(activeMobileTab, 'technical') && (
         <InspectorGroup title={t('detail.technical')} kicker={t('detail.developerData')}>
-          <div className={styles.technicalStack}>
-            <TechnicalDetails title={t('detail.payloadJson')} value={snapshot.payload} />
-            <TechnicalDetails title={t('detail.responsePayload')} value={task.raw} />
-            <TechnicalDetails title={t('detail.imageRaw')} value={activeImage?.raw} />
-          </div>
+          <TechnicalBlocks snapshot={snapshot} raw={task.raw} activeImage={activeImage} />
         </InspectorGroup>
       )}
     </div>
@@ -221,16 +240,14 @@ function BatchRequestCard({ item, activeMobileTab }: { item: BatchGenerationItem
               <DataRow label={t('detail.model')} value={item.request.modelLabel || item.request.model || t('detail.notSet')} />
               <DataRow label={t('detail.endpoint')} value={item.request.endpoint || t('detail.notSet')} />
             </div>
-            <SentParamsRows snapshot={item.request} />
+            <SentParamsRows snapshot={item.request} raw={item.raw} />
+            <RuntimeRows snapshot={item.request} raw={item.raw} />
           </BatchRequestSection>
         )}
 
         {showTechnical && (
           <BatchRequestSection title={t('detail.technical')}>
-            <div className={styles.technicalStack}>
-              <TechnicalDetails title={t('detail.payloadJson')} value={item.request.payload} />
-              <TechnicalDetails title={t('detail.responsePayload')} value={item.raw} />
-            </div>
+            <TechnicalBlocks snapshot={item.request} raw={item.raw} />
           </BatchRequestSection>
         )}
       </div>

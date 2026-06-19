@@ -1,12 +1,13 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
+import type { ComfyUiLoraRegistration, ComfyUiResourceCacheEntry, ComfyUiSettingsData } from '../../domain/comfyUiSettings';
 import type { InterfaceTheme, StudioSettings } from '../../domain/studioSettings';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
 import type { SettingsCommands } from '../../interface/context/commands';
 import type { Locale } from '../../i18n';
 
 export type SettingsTab = 'interface' | 'generationApi';
-export type ApiFocus = 'providers' | 'models';
+export type ApiFocus = 'providers' | 'models' | 'comfyui';
 export type SettingsSectionVariant = 'desktop' | 'mobile';
 
 export type SettingsSelectOption = {
@@ -50,6 +51,23 @@ export interface SettingsSectionContext {
   patchProvider: (key: keyof GenerationProvider, value: GenerationProvider[keyof GenerationProvider]) => void;
   patchModel: (key: keyof GenerationModel, value: GenerationModel[keyof GenerationModel]) => void;
   firstModelForProvider: (settings: StudioSettings, providerId: string) => GenerationModel | null;
+
+  comfyUiData: ComfyUiSettingsData;
+  comfyUiProviders: GenerationProvider[];
+  selectedComfyUiProviderId: string;
+  selectedComfyUiProvider: GenerationProvider | null;
+  setSelectedComfyUiProviderId: Dispatch<SetStateAction<string>>;
+  comfyUiCheckpointCache: ComfyUiResourceCacheEntry | null;
+  comfyUiLoraCache: ComfyUiResourceCacheEntry | null;
+  comfyUiSamplerCache: ComfyUiResourceCacheEntry | null;
+  comfyUiSchedulerCache: ComfyUiResourceCacheEntry | null;
+  comfyUiResourcesLoading: boolean;
+  comfyUiResourcesError: string | null;
+  refreshComfyUiResources: (providerId?: string) => Promise<void>;
+  addComfyUiProvider: () => void;
+  addComfyUiLora: () => void;
+  removeComfyUiLora: (id: string) => void;
+  patchComfyUiLora: <K extends keyof ComfyUiLoraRegistration>(id: string, key: K, value: ComfyUiLoraRegistration[K]) => void;
   commands: SettingsCommands;
 }
 

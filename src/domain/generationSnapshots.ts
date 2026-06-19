@@ -1,6 +1,5 @@
 import { getActiveModel, getProviderForModel, toProviderSettings } from '../entities/studio-settings';
-import { captureGenerationRequestParamsSnapshot } from '../entities/generation-params/logicalRegistry';
-import { getProviderAdapterForSettings } from '../entities/provider';
+import { getProviderGenerationRequestSurface } from '../entities/generation-params/requestSurface';
 import type {
   AttachmentSummary,
   BatchGenerationItem,
@@ -34,7 +33,12 @@ export function summarizeAttachments(targetImage: File | null, referenceImages: 
 }
 
 export function cloneParams(params: ImageParams): ImageParams {
-  return { ...params };
+  return {
+    ...params,
+    providerParams: params.providerParams ? Object.fromEntries(
+      Object.entries(params.providerParams).map(([key, value]) => [key, { ...value }])
+    ) : undefined
+  };
 }
 
 export function providerContextForModel(settings: StudioSettings, modelId: string) {
@@ -66,18 +70,25 @@ export function captureRequestSnapshot(args: {
   fallbackProviderLabel: string;
 }): GenerationRequestSnapshot {
   const { mode, params, provider, activeProvider, activeModel, payload, warnings, targetImage, referenceImages, mask, fallbackProviderLabel } = args;
+  const surface = getProviderGenerationRequestSurface(provider);
+  const snapshotContext = { params, provider, mode, payload };
+
   return {
     createdAt: Date.now(),
     mode,
     prompt: params.prompt.trim(),
     endpoint: mode === 'generate' ? provider.generationEndpoint : provider.editEndpoint,
     providerLabel: activeProvider?.name || provider.generationEndpoint || provider.editEndpoint || fallbackProviderLabel,
+    providerAdapterId: provider.adapterId,
     model: provider.modelId,
     modelLabel: activeModel?.name || provider.modelId,
     payload,
     warnings,
+    surfaceId: surface.id,
+    providerParams: surface.captureProviderParamsSnapshot(snapshotContext),
+    parameterSummary: surface.captureParameterSummary(snapshotContext),
     attachments: summarizeAttachments(targetImage, referenceImages, mask),
-    params: captureGenerationRequestParamsSnapshot(params, provider, mode, getProviderAdapterForSettings(provider).generationParams)
+    params: surface.captureParamsSnapshot(snapshotContext)
   };
 }
 

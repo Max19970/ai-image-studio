@@ -17,6 +17,32 @@ const sampleImage = (seed) => {
 export const seedData = {
   paramsKey: 'gpt-image-2-studio.params.v2',
   tasksKey: 'image-studio.generation-tasks.v1',
+  settingsKey: 'image-studio.settings.v1',
+  comfySettings: {
+    providers: [{
+      id: 'p-comfy-shot',
+      name: 'Local ComfyUI',
+      adapterId: 'comfyui',
+      generationEndpoint: 'http://127.0.0.1:8188',
+      editEndpoint: '',
+      responsesEndpoint: '',
+      apiKey: '',
+      authHeaderName: '',
+      authScheme: '',
+      customHeadersJson: '',
+      timeoutMs: 300000,
+      persistApiKey: false
+    }],
+    models: [{ id: 'm-comfy-shot', name: 'Dream local checkpoint', providerId: 'p-comfy-shot', modelId: 'dream-local.safetensors', notes: '' }],
+    selectedModelId: 'm-comfy-shot',
+    interfaceTheme: 'glass',
+    adapterData: {
+      comfyui: {
+        loras: [{ id: 'lora-soft-shot', displayName: 'Soft painterly style', loraName: 'soft-painterly.safetensors', notes: 'Screenshot fixture', defaultStrengthModel: 0.75, defaultStrengthClip: 0.65 }],
+        resourceCache: {}
+      }
+    }
+  },
   params: {
     prompt: '',
     n: 1,
@@ -85,6 +111,103 @@ export const seedData = {
   })
 };
 
+
+const comfyDetailRequest = {
+  createdAt: now,
+  mode: 'generate',
+  prompt: 'Local ComfyUI cinematic fox in a rainy neon alley',
+  endpoint: 'http://127.0.0.1:8188',
+  providerLabel: 'Local ComfyUI',
+  providerAdapterId: 'comfyui',
+  model: 'dream-local.safetensors',
+  modelLabel: 'Dream local checkpoint',
+  surfaceId: 'comfyui.text-to-image',
+  providerParams: {
+    width: 1024,
+    height: 1536,
+    batchSize: 1,
+    steps: 28,
+    cfg: 6.5,
+    samplerName: 'euler',
+    scheduler: 'normal',
+    seedMode: 'fixed',
+    seed: 424242,
+    denoise: 1,
+    negativePrompt: 'blurry, low quality',
+    filenamePrefix: 'ImageStudio',
+    loras: [{ name: 'soft-painterly.safetensors', strengthModel: 0.75, strengthClip: 0.65, enabled: true }]
+  },
+  parameterSummary: {
+    surfaceId: 'comfyui.text-to-image',
+    title: 'ComfyUI workflow parameters',
+    entries: [
+      { id: 'checkpoint', label: 'Checkpoint', value: 'dream-local.safetensors' },
+      { id: 'size', label: 'Size', value: '1024×1536' },
+      { id: 'batchSize', label: 'Batch size', value: '1' },
+      { id: 'steps', label: 'Steps', value: '28' },
+      { id: 'cfg', label: 'CFG', value: '6.5' },
+      { id: 'sampler', label: 'Sampler', value: 'euler' },
+      { id: 'scheduler', label: 'Scheduler', value: 'normal' },
+      { id: 'seed', label: 'Seed', value: '424242' },
+      { id: 'denoise', label: 'Denoise', value: '1' },
+      { id: 'filenamePrefix', label: 'Filename prefix', value: 'ImageStudio' },
+      { id: 'loras', label: 'LoRA stack', value: 'soft-painterly.safetensors (0.75/0.65)' },
+      { id: 'negativePrompt', label: 'Negative prompt', value: 'blurry, low quality' }
+    ]
+  },
+  payload: {
+    prompt: 'Local ComfyUI cinematic fox in a rainy neon alley',
+    checkpoint: 'dream-local.safetensors',
+    width: 1024,
+    height: 1536,
+    batch_size: 1,
+    steps: 28,
+    cfg: 6.5,
+    sampler_name: 'euler',
+    scheduler: 'normal',
+    seed: 424242,
+    denoise: 1,
+    filename_prefix: 'ImageStudio',
+    negative_prompt: 'blurry, low quality',
+    loras: [{ lora_name: 'soft-painterly.safetensors', strength_model: 0.75, strength_clip: 0.65 }]
+  },
+  warnings: [],
+  attachments: [],
+  params: { n: 1, sizeMode: 'preset', sizePreset: '1024x1536', width: 1024, height: 1536, quality: 'auto', background: 'auto', moderation: 'auto', outputFormat: 'png', outputCompression: 100, stream: false, partialImages: 0, inputFidelity: '', style: '', retryAttempts: 1, retryDelaySeconds: 10 }
+};
+
+const comfyDetailRaw = {
+  provider: 'comfyui',
+  output_format: 'png',
+  comfyui: {
+    prompt_id: 'shot-comfy-prompt-001',
+    checkpoint: 'dream-local.safetensors',
+    seed: 424242,
+    images: [{ filename: 'ImageStudio_00001_.png', subfolder: '', type: 'output' }],
+    workflow: {
+      '1': { class_type: 'CheckpointLoaderSimple' },
+      '2': { class_type: 'LoraLoader' },
+      '3': { class_type: 'CLIPTextEncode' },
+      '4': { class_type: 'KSampler' },
+      '5': { class_type: 'VAEDecode' },
+      '6': { class_type: 'SaveImage' }
+    },
+    history: { outputs: { '6': { images: [{ filename: 'ImageStudio_00001_.png', subfolder: '', type: 'output' }] } } }
+  }
+};
+
+const comfyDetailTasks = [{
+  id: 'sample-comfy-task',
+  kind: 'single',
+  status: 'succeeded',
+  createdAt: now,
+  updatedAt: now,
+  request: comfyDetailRequest,
+  images: [{ id: 'sample-comfy-image', taskId: 'sample-comfy-task', src: sampleImage(91), format: 'png', kind: 'final', index: 0, createdAt: now, raw: { comfyui: { filename: 'ImageStudio_00001_.png', type: 'output' } }, request: comfyDetailRequest }],
+  raw: comfyDetailRaw,
+  error: null
+}];
+
 export const scenarios = [
   { name: 'gallery', steps: [{ type: 'screenshot' }] },
   {
@@ -143,6 +266,21 @@ export const scenarios = [
       { type: 'screenshot' }
     ]
   },
+
+  {
+    name: 'composer-comfy-controls',
+    seedSettings: seedData.comfySettings,
+    seedParams: {
+      providerParams: { comfyui: { checkpoint: 'dream-local.safetensors', width: 1024, height: 1024, batchSize: 1, steps: 24, cfg: 6.5, samplerName: 'euler', scheduler: 'normal', seedMode: 'random', seed: 1, denoise: 1, negativePrompt: '', filenamePrefix: 'ImageStudio', loras: [] } }
+    },
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-comfy-loras"]' },
+      { type: 'wait', ms: 240 },
+      { type: 'screenshot' }
+    ]
+  },
   {
     name: 'composer-edit-status',
     steps: [
@@ -151,6 +289,17 @@ export const scenarios = [
       { type: 'waitForSelector', selector: '[data-testid="composer-mode-edit"]' },
       { type: 'click', selector: '[data-testid="composer-mode-edit"]' },
       { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-model-picker',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-model-picker"]' },
+      { type: 'click', selector: '[data-testid="composer-model-picker"]' },
+      { type: 'wait', ms: 260 },
       { type: 'screenshot' }
     ]
   },
@@ -276,6 +425,38 @@ export const scenarios = [
       { type: 'screenshot' }
     ]
   },
+
+  {
+    name: 'batch-comfy-controls',
+    seedSettings: seedData.comfySettings,
+    seedParams: {
+      providerParams: { comfyui: { checkpoint: 'dream-local.safetensors', width: 1024, height: 1024, batchSize: 1, steps: 24, cfg: 6.5, samplerName: 'euler', scheduler: 'normal', seedMode: 'random', seed: 1, denoise: 1, negativePrompt: '', filenamePrefix: 'ImageStudio', loras: [] } }
+    },
+    steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
+      { type: 'click', selector: '[data-testid="composer-batch"]' },
+      { type: 'waitForSelector', selector: '[data-testid="batch-draft-controls"]' },
+      { type: 'click', selector: '[data-testid="batch-draft-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="batch-draft-comfy-loras"]' },
+      { type: 'wait', ms: 260 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'batch-model-picker',
+    steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
+      { type: 'click', selector: '[data-testid="composer-batch"]' },
+      { type: 'waitForSelector', selector: '[data-testid="batch-draft-controls"]' },
+      { type: 'click', selector: '[data-testid="batch-draft-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="batch-draft-model-picker"]' },
+      { type: 'click', selector: '[data-testid="batch-draft-model-picker"]' },
+      { type: 'wait', ms: 260 },
+      { type: 'screenshot' }
+    ]
+  },
   {
     name: 'settings-api',
     steps: [
@@ -311,6 +492,34 @@ export const scenarios = [
     ]
   },
   {
+    name: 'settings-comfyui',
+    steps: [
+      { type: 'openTab', tab: 'settings' },
+      { type: 'click', selector: '[data-testid="mobile-drawer-backdrop"]', optional: true },
+      { type: 'waitForSelector', selector: '[data-testid="settings-page"], .workspace-settings-page' },
+      { type: 'click', selector: '[data-testid="settings-mobile-tabs"] button:nth-child(2), [data-testid="settings-tab-rail"] button:nth-child(2)', optional: true },
+      { type: 'click', selector: '[data-testid="settings-api-focus"] button:nth-child(3)', optional: true },
+      { type: 'wait', ms: 260 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'settings-comfyui-provider',
+    steps: [
+      { type: 'openTab', tab: 'settings' },
+      { type: 'click', selector: '[data-testid="mobile-drawer-backdrop"]', optional: true },
+      { type: 'waitForSelector', selector: '[data-testid="settings-page"], .workspace-settings-page' },
+      { type: 'click', selector: '[data-testid="settings-mobile-tabs"] button:nth-child(2), [data-testid="settings-tab-rail"] button:nth-child(2)', optional: true },
+      { type: 'click', selector: '[data-testid="settings-api-focus"] button:nth-child(3)', optional: true },
+      { type: 'waitForSelector', selector: '[data-testid="settings-comfy-add-provider"]' },
+      { type: 'click', selector: '[data-testid="settings-comfy-add-provider"]' },
+      { type: 'waitForSelector', selector: '[data-testid="settings-comfy-add-lora"]' },
+      { type: 'click', selector: '[data-testid="settings-comfy-add-lora"]' },
+      { type: 'wait', ms: 260 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
     name: 'info',
     steps: [
       { type: 'openTab', tab: 'info' },
@@ -332,6 +541,34 @@ export const scenarios = [
       { type: 'click', selector: '[data-testid="attachment-preview-open"]' },
       { type: 'waitForSelector', selector: '[role="dialog"]' },
       { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+
+  {
+    name: 'detail-comfy',
+    seedTasks: comfyDetailTasks,
+    seedSettings: seedData.comfySettings,
+    steps: [
+      { type: 'openTab', tab: 'images' },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-card-open"]' },
+      { type: 'click', selector: '[data-testid="gallery-card-open"]' },
+      { type: 'waitForSelector', selector: '[data-testid="detail-page"]' },
+      { type: 'wait', ms: 240 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'detail-comfy-technical',
+    seedTasks: comfyDetailTasks,
+    seedSettings: seedData.comfySettings,
+    steps: [
+      { type: 'openTab', tab: 'images' },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-card-open"]' },
+      { type: 'click', selector: '[data-testid="gallery-card-open"]' },
+      { type: 'waitForSelector', selector: '[data-testid="detail-page"]' },
+      { type: 'click', selector: '[data-testid="detail-tab-technical"]', optional: true },
+      { type: 'wait', ms: 240 },
       { type: 'screenshot' }
     ]
   },

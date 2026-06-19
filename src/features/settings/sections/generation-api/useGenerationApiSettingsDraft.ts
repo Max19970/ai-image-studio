@@ -3,8 +3,10 @@ import { defaultGenerationProvider } from '../../../../domain/defaults';
 import type { GenerationModel, GenerationProvider } from '../../../../domain/providerSettings';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../../../domain/providerProbe';
 import type { StudioSettings } from '../../../../domain/studioSettings';
+import { getProviderAdapterForSettings } from '../../../../entities/provider/registry';
 import type { ApiFocus, SettingsSelectOption } from '../../settingsTypes';
 import { firstModelForProvider, resolveInitialModelId, resolveInitialProviderId } from '../../model/settingsDraftSelection';
+import { useComfyUiSettingsDraft } from './comfyui-settings/useComfyUiSettingsDraft';
 
 interface UseGenerationApiSettingsDraftArgs {
   settings: StudioSettings;
@@ -31,16 +33,16 @@ function makeProvider(): GenerationProvider {
   };
 }
 
-function makeModel(providerId: string): GenerationModel {
+function makeModel(providerId: string, adapterId = 'openai-compatible'): GenerationModel {
+  const isComfy = adapterId === 'comfyui';
   return {
     id: uid('model'),
-    name: 'New model',
+    name: isComfy ? 'ComfyUI checkpoint' : 'New model',
     providerId,
-    modelId: 'model-id',
+    modelId: isComfy ? '' : 'model-id',
     notes: ''
   };
 }
-
 
 export function useGenerationApiSettingsDraft({
   settings,
@@ -55,9 +57,19 @@ export function useGenerationApiSettingsDraft({
   const [selectedProviderId, setSelectedProviderId] = useState<string>(() => resolveInitialProviderId(settings));
   const [selectedModelId, setSelectedModelId] = useState<string>(() => resolveInitialModelId(settings));
 
+  const comfyUi = useComfyUiSettingsDraft({
+    draft,
+    setDraft,
+    markDirty,
+    setSelectedProviderId,
+    setSelectedModelId,
+    setApiFocus
+  });
+
   const resetSelectionFrom = (nextSettings: StudioSettings) => {
     setSelectedModelId(resolveInitialModelId(nextSettings));
     setSelectedProviderId(resolveInitialProviderId(nextSettings));
+    comfyUi.resetComfyUiSelectionFrom(nextSettings);
   };
 
   useEffect(() => {
@@ -130,7 +142,9 @@ export function useGenerationApiSettingsDraft({
   const addModel = () => {
     const providerId = selectedProvider?.id ?? draft.providers[0]?.id;
     if (!providerId) return;
-    const model = makeModel(providerId);
+    const provider = draft.providers.find((item) => item.id === providerId) ?? null;
+    const adapterId = getProviderAdapterForSettings(provider).id;
+    const model = makeModel(providerId, adapterId);
     markDirty();
     setDraft((prev) => ({ ...prev, models: [...prev.models, model], selectedModelId: model.id }));
     setSelectedModelId(model.id);
@@ -189,6 +203,7 @@ export function useGenerationApiSettingsDraft({
     patchProvider,
     patchModel,
     firstModelForProvider,
-    resetSelectionFrom
+    resetSelectionFrom,
+    ...comfyUi
   };
 }

@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { capabilityOrder } from '../../domain/defaults';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
+import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import { useI18n } from '../../i18n';
-import { capabilityLabel, generationParamTabs, generationParamTabsById, getHiddenCapabilityKeys, getHiddenProviderParamDefinitions, getGenerationParamPrimaryLabelKey, renderGenerationParamSlot, type GenerationParamTab } from '../../entities/generation-params';
+import { capabilityLabel, type GenerationParamTab } from '../../entities/generation-params';
+import { getProviderGenerationSurface } from '../../entities/generation-params/surfaceRegistry';
+import { readProviderParamState, writeProviderParamState } from '../../entities/generation-params/providerState';
+import type { ProviderParamState } from '../../entities/generation-params/surfaceTypes';
 import styles from './ParameterPanel.module.css';
 
 interface Props {
@@ -13,42 +16,59 @@ interface Props {
   params: ImageParams;
   provider: ProviderSettings;
   capabilityReport: ProviderProbeReport | null;
+  studioSettings?: StudioSettings;
   onChange: (params: ImageParams) => void;
 }
 
-const tabs = generationParamTabs.map((tab) => tab.id);
-
-export function ParameterPanel({ mode, params, provider, capabilityReport, onChange }: Props) {
+export function ParameterPanel({ mode, params, provider, capabilityReport, studioSettings, onChange }: Props) {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<GenerationParamTab>('frame');
+  const surface = useMemo(() => getProviderGenerationSurface(provider), [provider]);
+  const surfaceContext = useMemo(() => ({ mode, params, provider, capabilityReport, studioSettings }), [mode, params, provider, capabilityReport, studioSettings]);
+  const surfaceTabs = useMemo(() => surface.getTabs(surfaceContext), [surface, surfaceContext]);
+  const [activeTab, setActiveTab] = useState<GenerationParamTab>(() => surface.getInitialTab(surfaceContext));
   const tabRailRef = useRef<HTMLElement | null>(null);
+
   const patch = <K extends keyof ImageParams>(key: K, value: ImageParams[K]) => onChange({ ...params, [key]: value });
+  const setProviderParams = (next: ProviderParamState) => onChange(writeProviderParamState(params, provider, surface.normalizeState(next, provider)));
+  const patchProviderParam = (key: string, value: unknown) => {
+    setProviderParams({
+      ...readProviderParamState(params, provider, surface.getDefaultState(provider)),
+      [key]: value
+    });
+  };
 
-  const hiddenCapabilityParams = getHiddenCapabilityKeys({ mode, capabilityReport }, capabilityOrder);
-  const hiddenProviderParams = getHiddenProviderParamDefinitions({ mode, params, provider, capabilityReport, patch });
-  const hiddenParamsCount = hiddenCapabilityParams.length + hiddenProviderParams.length;
+  const fieldContext = useMemo(() => ({
+    ...surfaceContext,
+    patch,
+    setProviderParams,
+    patchProviderParam
+  }), [surfaceContext, patch, setProviderParams, patchProviderParam]);
 
-  const tabStats = useMemo<Record<GenerationParamTab, string>>(() => ({
-    frame: params.sizeMode === 'custom' ? `${params.width}×${params.height}` : params.sizeMode === 'preset' ? params.sizePreset : 'auto',
-    render: [params.quality || 'omit', params.background || 'omit'].join(' · '),
-    output: `${params.outputFormat}${params.stream ? ' · stream' : ''}`,
-    service: params.rawJson.trim() ? 'raw JSON' : 'payload',
-    retry: params.retryAttempts > 0 ? `${params.retryAttempts}× / ${params.retryDelaySeconds}s` : t('params.retryOff')
-  }), [params, t]);
+  const hiddenSummary = surface.getHiddenSummary(fieldContext);
+  const hiddenParamsCount = hiddenSummary.capabilityKeys.length + hiddenSummary.paramLabelKeys.length;
 
-  const fieldContext = useMemo(() => ({ mode, params, provider, capabilityReport, patch }), [mode, params, provider, capabilityReport]);
-  const activeTabMeta = generationParamTabsById.get(activeTab) ?? generationParamTabs[0];
-  const activeTabFields = renderGenerationParamSlot(activeTabMeta.slot, fieldContext);
+  const tabStats = useMemo(
+    () => surface.getTabStats(surfaceContext, { retryOff: t('params.retryOff') }),
+    [surface, surfaceContext, t]
+  );
+
+  useEffect(() => {
+    if (surfaceTabs.some((tab) => tab.id === activeTab)) return;
+    setActiveTab(surface.getInitialTab(surfaceContext));
+  }, [activeTab, surface, surfaceContext, surfaceTabs]);
+
+  const activeTabMeta = surfaceTabs.find((tab) => tab.id === activeTab) ?? surfaceTabs[0];
+  const activeTabFields = activeTabMeta ? surface.renderSlot(activeTabMeta.slot, fieldContext) : [];
 
   useEffect(() => {
     const rail = tabRailRef.current;
     if (!rail || window.matchMedia('(min-width: 641px)').matches) return;
-    const active = rail.querySelector<HTMLElement>('[data-active=\"true\"]');
+    const active = rail.querySelector<HTMLElement>('[data-active="true"]');
     active?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
   }, [activeTab]);
 
   return (
-    <section className={styles.workbench}>
+    <section className={styles.workbench} data-generation-surface={surface.id}>
       <div className={`panel-heading ${styles.heading}`}>
         <span className="section-kicker">{t('params.controlRoom')}</span>
         <h2>{t('params.title')}</h2>
@@ -56,10 +76,10 @@ export function ParameterPanel({ mode, params, provider, capabilityReport, onCha
       </div>
 
       <aside ref={tabRailRef} className={styles.tabRail} aria-label={t('params.tabsAria')}>
-        {tabs.map((tab) => (
-          <button key={tab} type="button" className={`${styles.tabButton} ${activeTab === tab ? styles.tabButtonActive : ''}`.trim()} data-param-tab={tab} data-active={activeTab === tab ? 'true' : 'false'} onClick={() => setActiveTab(tab)}>
-            <span className={styles.tabLabel}>{t((generationParamTabsById.get(tab) ?? generationParamTabs[0]).labelKey)}</span>
-            <small className={styles.tabStat}>{tabStats[tab]}</small>
+        {surfaceTabs.map((tab) => (
+          <button key={tab.id} type="button" className={`${styles.tabButton} ${activeTab === tab.id ? styles.tabButtonActive : ''}`.trim()} data-param-tab={tab.id} data-active={activeTab === tab.id ? 'true' : 'false'} onClick={() => setActiveTab(tab.id)}>
+            <span className={styles.tabLabel}>{t(tab.labelKey)}</span>
+            <small className={styles.tabStat}>{tabStats[tab.id]}</small>
           </button>
         ))}
       </aside>
@@ -67,20 +87,22 @@ export function ParameterPanel({ mode, params, provider, capabilityReport, onCha
       <div className={styles.tabMain}>
         {hiddenParamsCount > 0 && (
           <div className={styles.infoStrip}>
-            {hiddenCapabilityParams.length > 0 && <p>{t('params.hiddenList', { items: hiddenCapabilityParams.map((key) => capabilityLabel(key)).join(', ') })}</p>}
-            {hiddenProviderParams.length > 0 && <p>{t('params.hiddenProviderList', { items: hiddenProviderParams.map((definition) => t(getGenerationParamPrimaryLabelKey(definition))).join(', ') })}</p>}
+            {hiddenSummary.capabilityKeys.length > 0 && <p>{t('params.hiddenList', { items: hiddenSummary.capabilityKeys.map((key) => capabilityLabel(key)).join(', ') })}</p>}
+            {hiddenSummary.paramLabelKeys.length > 0 && <p>{t('params.hiddenProviderList', { items: hiddenSummary.paramLabelKeys.map((key) => t(key)).join(', ') })}</p>}
           </div>
         )}
 
-        <section className={`inspector-group ${styles.tabPanel} ${activeTabMeta.panelClassKey ? styles[activeTabMeta.panelClassKey] : ''}`.trim()} data-param-slot={activeTabMeta.slot}>
-          <header className={styles.panelHead}>
-            <h3 className={styles.panelTitle}>{t(activeTabMeta.labelKey)}</h3>
-            <p className={styles.panelHint}>{t(activeTabMeta.hintKey)}</p>
-          </header>
-          <div className={styles.fieldGrid}>
-            {activeTabFields}
-          </div>
-        </section>
+        {activeTabMeta && (
+          <section className={`inspector-group ${styles.tabPanel} ${activeTabMeta.panelClassKey ? styles[activeTabMeta.panelClassKey] : ''}`.trim()} data-param-slot={activeTabMeta.slot}>
+            <header className={styles.panelHead}>
+              <h3 className={styles.panelTitle}>{t(activeTabMeta.labelKey)}</h3>
+              <p className={styles.panelHint}>{t(activeTabMeta.hintKey)}</p>
+            </header>
+            <div className={styles.fieldGrid}>
+              {activeTabFields}
+            </div>
+          </section>
+        )}
       </div>
     </section>
   );

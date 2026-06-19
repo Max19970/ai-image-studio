@@ -1,0 +1,246 @@
+.root {
+  position: relative;
+  min-width: 0;
+}
+
+.trigger {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,.18);
+  color: var(--text);
+  text-align: left;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.trigger:hover,
+.trigger:focus-visible,
+.triggerOpen {
+  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.075);
+}
+
+.triggerOpen {
+  transform: translateY(-1px);
+}
+
+.triggerCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.triggerCopy small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerCopy strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex: 0 0 auto;
+  color: var(--faint);
+  font-size: 14px;
+}
+
+.panel {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 40%),
+    rgb(15,16,20);
+  box-shadow: 0 26px 70px rgba(0,0,0,.38);
+  animation: pickerIn var(--motion-duration-fast) var(--motion-ease-soft) both;
+}
+
+.panelLayout {
+  display: grid;
+  grid-template-columns: minmax(116px, .58fr) minmax(170px, 1fr);
+  gap: 4px;
+  min-width: min(340px, calc(100vw - 24px));
+  padding: 4px;
+}
+
+.providerColumn,
+.modelColumn {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.providerColumn {
+  border-right: 1px solid rgba(255,255,255,.075);
+  padding-right: 4px;
+}
+
+.columnTitle {
+  margin: 1px 4px 0;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+
+.providerList,
+.modelList {
+  display: grid;
+  min-width: 0;
+  max-height: min(260px, var(--floating-available-height, 300px) - 28px);
+  align-content: start;
+  align-items: start;
+  overflow-y: auto;
+  gap: 3px;
+}
+
+.providerButton,
+.modelButton {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border: 0;
+  border-radius: 10px;
+  min-height: 34px;
+  padding: 6px 7px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  transition: background .16s ease, box-shadow .16s ease, opacity .16s ease;
+}
+
+.providerButton:hover:not(:disabled),
+.providerButton:focus-visible,
+.providerButtonActive,
+.modelButton:hover,
+.modelButton:focus-visible,
+.modelButtonActive {
+  background: rgba(255,255,255,.085);
+}
+
+.providerButtonActive,
+.modelButtonActive {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+.providerButton:disabled {
+  cursor: not-allowed;
+  opacity: .44;
+}
+
+
+.providerCopy,
+.modelCopy {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.providerCopy strong,
+.modelCopy strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.providerCopy small,
+.modelCopy small,
+.empty {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.providerCount {
+  display: grid;
+  flex: 0 0 auto;
+  min-width: 17px;
+  height: 17px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  background: rgba(255,255,255,.045);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.check {
+  flex: 0 0 auto;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.empty {
+  padding: 10px;
+  white-space: normal;
+}
+
+@keyframes pickerIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 860px) {
+  .panelLayout {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .providerColumn {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,255,255,.075);
+    padding: 0 0 8px;
+  }
+
+  .providerList {
+    display: flex;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 6px;
+    padding-bottom: 1px;
+  }
+
+  .providerButton {
+    flex: 0 0 min(150px, 58vw);
+  }
+
+  .modelList {
+    max-height: min(38dvh, 320px);
+  }
+
+  .modelButton,
+  .providerButton,
+  .trigger {
+    min-height: 44px;
+  }
+}

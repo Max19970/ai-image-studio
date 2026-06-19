@@ -14,6 +14,7 @@ export function createModalsContext({ state, derived, commands }: WorkspaceConte
       params: state.params,
       provider: derived.provider,
       capabilityReport: state.capabilityReport,
+      studioSettings: state.studioSettings,
       warnings: derived.warnings,
       commands: commands.parameters
     },
@@ -23,6 +24,7 @@ export function createModalsContext({ state, derived, commands }: WorkspaceConte
       capabilityReport: derived.activeBatchDraft?.selectedModelId === state.studioSettings.selectedModelId
         ? state.capabilityReport
         : null,
+      studioSettings: state.studioSettings,
       warnings: derived.batchWarnings,
       commands: commands.parameters
     }

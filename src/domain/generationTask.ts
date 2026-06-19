@@ -19,16 +19,33 @@ export interface AttachmentSummary {
   previewUrl?: string;
 }
 
+export interface ProviderRequestParameterSummaryEntry {
+  id: string;
+  label: string;
+  value: string;
+  rawValue?: unknown;
+}
+
+export interface ProviderRequestParameterSummary {
+  surfaceId: string;
+  title: string;
+  entries: ProviderRequestParameterSummaryEntry[];
+}
+
 export interface GenerationRequestSnapshot {
   createdAt: number;
   mode: WorkMode;
   prompt: string;
   endpoint: string;
   providerLabel: string;
+  providerAdapterId?: string;
   model: string;
   modelLabel: string;
   payload: Record<string, unknown>;
   warnings: string[];
+  surfaceId?: string;
+  providerParams?: Record<string, unknown>;
+  parameterSummary?: ProviderRequestParameterSummary;
   attachments: AttachmentSummary[];
   params: Pick<
     ImageParams,

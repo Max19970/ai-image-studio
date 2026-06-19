@@ -1,10 +1,12 @@
 import { openAiCompatibleProviderDefinition } from '../../providers/openai-compatible/definition';
+import { comfyUiProviderDefinition } from '../../providers/comfyui/definition';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { ProviderAdapterDefinition } from './types';
 
 export { openAiCompatibleProviderDefinition } from '../../providers/openai-compatible/definition';
+export { comfyUiProviderDefinition } from '../../providers/comfyui/definition';
 
-export const providerAdapterDefinitions = [openAiCompatibleProviderDefinition] satisfies ProviderAdapterDefinition[];
+export const providerAdapterDefinitions = [openAiCompatibleProviderDefinition, comfyUiProviderDefinition] satisfies ProviderAdapterDefinition[];
 export const providerAdapterDefinitionsById = new Map(providerAdapterDefinitions.map((definition) => [definition.id, definition]));
 
 export function listProviderAdapterDefinitions(): ProviderAdapterDefinition[] {

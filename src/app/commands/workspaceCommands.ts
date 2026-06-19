@@ -1,5 +1,6 @@
 import { cloneParams } from '../../domain/generationSnapshots';
-import { restoreImageParamsFromRequestSnapshot } from '../../entities/generation-params/logicalRegistry';
+import { sanitizeGenerationDraftForModel } from '../../entities/provider/compatibility';
+import { getProviderGenerationRequestSurfaceById } from '../../entities/generation-params/requestSurface';
 import type { BatchComposerDraft, GenerationRequestSnapshot } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { StudioSettings } from '../../domain/studioSettings';
@@ -69,11 +70,20 @@ export function openBatchComposerCommand(args: {
 }
 
 export function restoreRequestToWorkspaceCommand(snapshot: GenerationRequestSnapshot, commands: RestoreRequestCommands) {
-  commands.setMode(snapshot.mode);
-  commands.setBatchComposerOpen(false);
-  commands.setParams((prev) => restoreImageParamsFromRequestSnapshot(prev, snapshot));
-
   const modelFromHistory = commands.settings.models.find((model) => model.modelId === snapshot.model || model.name === snapshot.modelLabel);
+  const selectedModelId = modelFromHistory?.id ?? commands.settings.selectedModelId;
+  const sanitized = sanitizeGenerationDraftForModel({
+    mode: snapshot.mode,
+    targetImage: null,
+    referenceImages: [],
+    mask: null
+  }, commands.settings, selectedModelId);
+
+  commands.setMode(sanitized.value.mode);
+  commands.setCompatibilityNotice(sanitized.changed ? commands.t('composer.compatibilityAdjustedRequest') : null);
+  commands.setBatchComposerOpen(false);
+  commands.setParams((prev) => getProviderGenerationRequestSurfaceById(snapshot.surfaceId).restoreParamsFromSnapshot({ previous: prev, snapshot }));
+
   if (modelFromHistory) {
     commands.setSettings((prev: StudioSettings) => normalizeSelectedModel({ ...prev, selectedModelId: modelFromHistory.id }));
   }

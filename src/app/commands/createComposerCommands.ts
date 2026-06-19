@@ -1,5 +1,10 @@
 import type { ImageParams } from '../../domain/imageParams';
 import type { ComposerCommands } from '../../interface/context/commands';
+import {
+  applyComposerCompatibilityForModel,
+  setComposerDraftWithCompatibility,
+  setComposerModeWithCompatibility,
+} from './providerCompatibilityCommands';
 import type { CreateAppCommandsArgs } from './appCommandTypes';
 import { submitSingleGenerationCommand } from './generationCommands';
 import { openBatchComposerCommand } from './workspaceCommands';
@@ -8,9 +13,13 @@ export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCom
   const patchParams = (patch: Partial<ImageParams>) => args.setParams((prev) => ({ ...prev, ...patch }));
 
   return {
-    setMode: args.setMode,
-    setModel: (modelId) => args.setStudioSettings((prev) => ({ ...prev, selectedModelId: modelId })),
+    setMode: (mode) => setComposerModeWithCompatibility(args, mode),
+    setModel: (modelId) => {
+      args.setStudioSettings((prev) => args.normalizeSettings({ ...prev, selectedModelId: modelId }));
+      applyComposerCompatibilityForModel(args, args.studioSettings, modelId);
+    },
     setPrompt: (prompt) => patchParams({ prompt }),
+    patchParams: args.setParams,
     submit: () => submitSingleGenerationCommand({
       canSubmit: args.canSubmit,
       mode: args.mode,
@@ -40,16 +49,28 @@ export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCom
       setWorkspaceTab: args.setWorkspaceTab
     }),
     setTargetImage: (file) => {
-      args.setTargetImage(file);
-      if (file) args.setMode('edit');
+      setComposerDraftWithCompatibility(args, {
+        mode: file ? 'edit' : args.mode,
+        targetImage: file,
+        referenceImages: args.referenceImages,
+        mask: args.mask
+      });
     },
     setReferenceImages: (files) => {
-      args.setReferenceImages(files);
-      if (files.length > 0) args.setMode('edit');
+      setComposerDraftWithCompatibility(args, {
+        mode: files.length > 0 ? 'edit' : args.mode,
+        targetImage: args.targetImage,
+        referenceImages: files,
+        mask: args.mask
+      });
     },
     setMask: (file) => {
-      args.setMask(file);
-      if (file) args.setMode('edit');
+      setComposerDraftWithCompatibility(args, {
+        mode: file ? 'edit' : args.mode,
+        targetImage: args.targetImage,
+        referenceImages: args.referenceImages,
+        mask: file
+      });
     }
   };
 }

@@ -37,6 +37,7 @@ export interface CreateAppCommandsArgs {
   taskHistory: TaskHistoryCommands;
   providerProbeState: ProviderProbeCommandState;
   setMode: StateSetter<WorkMode>;
+  setCompatibilityNotice: StateSetter<string | null>;
   setParams: StateSetter<ImageParams>;
   setStudioSettings: StateSetter<StudioSettings>;
   setParametersOpen: StateSetter<boolean>;

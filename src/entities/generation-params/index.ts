@@ -43,3 +43,31 @@ export {
   parseOpenAiCompatibleRawJson,
   shouldSendOutputFormat
 } from './serializers/openAiCompatible';
+
+export {
+  getProviderParamStateKey,
+  normalizeProviderParamBucket,
+  readProviderParamBucket,
+  readProviderParamState,
+  writeProviderParamState
+} from './providerState';
+export {
+  buildOpenAiCompatibleRequestSurfacePayload,
+  getProviderGenerationRequestSurface,
+  getProviderGenerationRequestSurfaceById,
+  openAiCompatibleGenerationRequestSurface,
+  providerGenerationRequestSurfaces,
+  providerGenerationRequestSurfacesById
+} from './requestSurface';
+export type {
+  ProviderGenerationRequestSurface,
+  ProviderGenerationRequestSurfacePayloadContext,
+  ProviderGenerationRequestSurfaceRestoreContext,
+  ProviderGenerationRequestSurfaceSnapshotContext
+} from './requestSurface';
+export type {
+  ProviderParamState,
+  ProviderParamStateBucket
+} from './surfaceTypes';
+export { comfyUiGenerationSurface, comfyUiGenerationRequestSurface } from './comfyui';
+export type { ComfyUiParamState, ComfyUiLoraSelection } from './comfyui';

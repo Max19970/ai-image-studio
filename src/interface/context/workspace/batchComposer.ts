@@ -1,4 +1,5 @@
 import type { GenerationModel, GenerationProvider } from '../../../domain/providerSettings';
+import type { StudioSettings } from '../../../domain/studioSettings';
 import type { BatchComposerDraft } from '../../../domain/generationTask';
 import type { BatchComposerCommands } from '../commands';
 
@@ -9,5 +10,6 @@ export interface WorkspaceBatchComposerContext {
   canSubmit: boolean;
   models: GenerationModel[];
   providers: GenerationProvider[];
+  studioSettings: StudioSettings;
   commands: BatchComposerCommands;
 }

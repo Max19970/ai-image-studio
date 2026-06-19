@@ -13,6 +13,7 @@ export function WorkspaceBatchParametersModalSection({ context }: ElementDefinit
       params={draft.params}
       provider={context.batchParameters.provider}
       capabilityReport={context.batchParameters.capabilityReport}
+      studioSettings={context.batchParameters.studioSettings}
       warnings={context.batchParameters.warnings}
       onClose={context.batchParameters.commands.closeBatch}
       onChange={context.batchParameters.commands.changeBatch}

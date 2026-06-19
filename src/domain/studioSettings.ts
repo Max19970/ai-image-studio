@@ -7,4 +7,5 @@ export interface StudioSettings {
   models: GenerationModel[];
   selectedModelId: string;
   interfaceTheme: InterfaceTheme;
+  adapterData?: Record<string, unknown>;
 }

@@ -11,6 +11,11 @@ export function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : [];
 }
 
+function normalizeAdapterData(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return { ...(value as Record<string, unknown>) };
+}
+
 export function normalizeInterfaceTheme(value: unknown): InterfaceTheme {
   return value === 'midnight' || value === 'ember' || value === 'meadow' || value === 'mono' || value === 'glass' ? value : 'glass';
 }
@@ -37,7 +42,7 @@ export function normalizeModel(model: Partial<GenerationModel>, providerId: stri
     id: model.id || fallback.id || createStorageUid('model'),
     name: model.name || fallback.name || model.modelId || 'Model',
     providerId: model.providerId || providerId,
-    modelId: model.modelId || fallback.modelId || defaultProviderSettings.modelId,
+    modelId: model.modelId ?? fallback.modelId ?? defaultProviderSettings.modelId,
     notes: model.notes ?? fallback.notes ?? ''
   };
 }
@@ -63,11 +68,14 @@ export function normalizeStudioSettings(value: Partial<StudioSettings> | null | 
     if (!provider.persistApiKey) provider.apiKey = '';
   });
 
+  const adapterData = normalizeAdapterData(value.adapterData);
+
   return {
     providers: safeProviders,
     models: safeModels,
     selectedModelId,
-    interfaceTheme: normalizeInterfaceTheme(value.interfaceTheme)
+    interfaceTheme: normalizeInterfaceTheme(value.interfaceTheme),
+    ...(adapterData ? { adapterData } : {})
   };
 }
 

@@ -13,6 +13,7 @@ export interface ComposerCommands {
   setMode: (mode: WorkMode) => void;
   setModel: (modelId: string) => void;
   setPrompt: (prompt: string) => void;
+  patchParams: (params: ImageParams) => void;
   submit: () => Promise<void>;
   openParameters: () => void;
   openBatchComposer: () => void;

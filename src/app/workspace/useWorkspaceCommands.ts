@@ -34,6 +34,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
       setQuickCheckResults: state.setQuickCheckResults
     },
     setMode: state.setMode,
+    setCompatibilityNotice: state.setCompatibilityNotice,
     setParams: state.setParams,
     setStudioSettings: state.setStudioSettings,
     setParametersOpen: state.setParametersOpen,

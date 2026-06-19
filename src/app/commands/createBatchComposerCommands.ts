@@ -1,4 +1,5 @@
 import type { BatchComposerCommands } from '../../interface/context/commands';
+import { sanitizeBatchDraftForSettings } from '../../entities/provider/compatibility';
 import type { CreateAppCommandsArgs } from './appCommandTypes';
 import { createBatchDraftFromWorkspace } from './commandFactoryHelpers';
 import { submitBatchGenerationCommand } from './generationCommands';
@@ -9,7 +10,10 @@ export function createBatchComposerCommands(args: CreateAppCommandsArgs): BatchC
   return {
     setIntervalSeconds: args.setBatchIntervalSeconds,
     patchDraft: (id, patch) => {
-      args.setBatchDrafts((prev) => prev.map((draft) => draft.id === id ? { ...draft, ...patch } : draft));
+      args.setBatchDrafts((prev) => prev.map((draft) => {
+        if (draft.id !== id) return draft;
+        return sanitizeBatchDraftForSettings({ ...draft, ...patch }, args.studioSettings).value;
+      }));
     },
     patchDraftParams: (id, params) => {
       args.setBatchDrafts((prev) => prev.map((draft) => draft.id === id ? { ...draft, params } : draft));
@@ -17,16 +21,16 @@ export function createBatchComposerCommands(args: CreateAppCommandsArgs): BatchC
     addDraft: () => {
       args.setBatchDrafts((prev) => [
         ...prev,
-        createDraft({
+        sanitizeBatchDraftForSettings(createDraft({
           params: prev[prev.length - 1]?.params ?? args.params,
           selectedModelId: prev[prev.length - 1]?.selectedModelId ?? args.studioSettings.selectedModelId
-        })
+        }), args.studioSettings).value
       ]);
     },
     duplicateDraft: (id) => {
       args.setBatchDrafts((prev) => {
         const source = prev.find((draft) => draft.id === id);
-        return source ? [...prev, createDraft(source)] : prev;
+        return source ? [...prev, sanitizeBatchDraftForSettings(createDraft(source), args.studioSettings).value] : prev;
       });
     },
     removeDraft: (id) => {

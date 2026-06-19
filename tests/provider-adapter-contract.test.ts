@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { openAiCompatibleProviderDefinition } from '../src/providers/openai-compatible/definition';
+import { comfyUiProviderDefinition } from '../src/providers/comfyui/definition';
 import { openAiCompatibleSettingsFields } from '../src/providers/openai-compatible/settingsSchema';
 import { openAiCompatibleProviderAdapter } from '../server/providers/openai-compatible/adapter';
+import { comfyUiProviderAdapter } from '../server/providers/comfyui/adapter';
 import { buildOpenAiCompatibleHeaders } from '../server/providers/openai-compatible/auth';
 import { providerFingerprint, resolveOpenAiCompatibleEndpoint } from '../server/providers/openai-compatible/endpoints';
 import { describeFetchFailure, extractUpstreamMessage, isRetryableNetworkError } from '../server/providers/openai-compatible/errorNormalizer';
@@ -36,6 +38,18 @@ function withMockFetch<T>(handler: typeof fetch, run: () => Promise<T>): Promise
 test('provider adapter definitions expose stable client/server contracts', () => {
   assert.equal(openAiCompatibleProviderDefinition.id, openAiCompatibleProviderAdapter.id);
   assert.equal(openAiCompatibleProviderDefinition.supportsMultipartEdit, true);
+  assert.deepEqual(openAiCompatibleProviderDefinition.capabilities, openAiCompatibleProviderAdapter.capabilities);
+  assert.equal(openAiCompatibleProviderDefinition.capabilities.supportsGenerate, true);
+  assert.equal(openAiCompatibleProviderDefinition.capabilities.supportsEdit, true);
+  assert.equal(openAiCompatibleProviderDefinition.capabilities.hasLiveResources, false);
+  assert.deepEqual(openAiCompatibleProviderDefinition.resources.kinds, []);
+  assert.equal(openAiCompatibleProviderDefinition.generationSurface.kind, 'logical-params');
+  assert.equal(openAiCompatibleProviderDefinition.detailDescriptor.kind, 'request-snapshot');
+  assert.equal(openAiCompatibleProviderDefinition.controlSurface.kind, 'api-image');
+  assert.equal(openAiCompatibleProviderDefinition.controlSurface.showModeSwitcher, true);
+  assert.equal(openAiCompatibleProviderDefinition.controlSurface.showImageAttachments, true);
+  assert.equal(openAiCompatibleProviderDefinition.controlSurface.showMask, true);
+  assert.equal(openAiCompatibleProviderDefinition.controlSurface.showLoraRegistry, false);
   assert.ok(openAiCompatibleProviderDefinition.settingsFields.length >= 6);
   assert.equal(openAiCompatibleProviderDefinition.generationParams.id, 'openai-compatible.default');
   assert.equal(openAiCompatibleProviderDefinition.generationParams.include, 'all');
@@ -46,9 +60,36 @@ test('provider adapter definitions expose stable client/server contracts', () =>
   assert.ok(openAiCompatibleSettingsFields.some((field) => field.key === 'editEndpoint' && field.operation === 'edit'));
   assert.ok(openAiCompatibleSettingsFields.some((field) => field.key === 'apiKey' && field.sensitive));
 
+  assert.deepEqual(openAiCompatibleProviderAdapter.resources.kinds, []);
+  assert.equal(openAiCompatibleProviderAdapter.capabilities.supportsStreaming, true);
+  assert.equal(openAiCompatibleProviderAdapter.capabilities.usesLocalWorkflow, false);
+  assert.equal(openAiCompatibleProviderAdapter.fetchResources, undefined);
+
   const parsed = openAiCompatibleProviderAdapter.settingsSchema.parse(provider);
   assert.equal(parsed.adapterId, 'openai-compatible');
   assert.equal(parsed.modelId, 'image-model');
+});
+
+
+
+test('ComfyUI client and server adapter contracts stay aligned', () => {
+  assert.equal(comfyUiProviderDefinition.id, comfyUiProviderAdapter.id);
+  assert.equal(comfyUiProviderDefinition.supportsMultipartEdit, false);
+  assert.deepEqual(comfyUiProviderDefinition.capabilities, comfyUiProviderAdapter.capabilities);
+  assert.equal(comfyUiProviderDefinition.capabilities.supportsGenerate, true);
+  assert.equal(comfyUiProviderDefinition.capabilities.supportsEdit, false);
+  assert.equal(comfyUiProviderDefinition.capabilities.usesLocalWorkflow, true);
+  assert.equal(comfyUiProviderDefinition.capabilities.hasLiveResources, true);
+  assert.deepEqual(comfyUiProviderDefinition.resources.kinds, comfyUiProviderAdapter.resources.kinds);
+  assert.equal(comfyUiProviderDefinition.generationSurface.kind, 'provider-owned');
+  assert.equal(comfyUiProviderDefinition.generationSurface.id, 'comfyui.text-to-image');
+  assert.equal(comfyUiProviderDefinition.detailDescriptor.kind, 'provider-owned');
+  assert.equal(comfyUiProviderDefinition.controlSurface.kind, 'local-workflow');
+  assert.equal(comfyUiProviderDefinition.controlSurface.showModeSwitcher, false);
+  assert.equal(comfyUiProviderDefinition.controlSurface.showImageAttachments, false);
+  assert.equal(comfyUiProviderDefinition.controlSurface.showMask, false);
+  assert.equal(comfyUiProviderDefinition.controlSurface.showLoraRegistry, true);
+  assert.ok(comfyUiProviderDefinition.settingsFields.some((field) => field.key === 'generationEndpoint'));
 });
 
 test('OpenAI-compatible server adapter resolves endpoints and auth/custom headers predictably', () => {

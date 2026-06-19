@@ -24,7 +24,38 @@ export class HttpError extends Error {
 }
 
 export type ProviderOperationKind = 'generate' | 'edit';
+export type ProviderResourceKind = 'models' | 'checkpoints' | 'loras' | 'samplers' | 'schedulers' | (string & {});
 export type ProbeStatus = 'accepted' | 'rejected' | 'error' | 'unknown';
+
+export interface ProviderRuntimeCapabilities {
+  supportsGenerate: boolean;
+  supportsEdit: boolean;
+  supportsImageAttachments: boolean;
+  supportsMask: boolean;
+  supportsStreaming: boolean;
+  usesLocalWorkflow: boolean;
+  hasLiveResources: boolean;
+}
+
+export interface ProviderResourceDescriptor {
+  kinds: readonly ProviderResourceKind[];
+}
+
+export interface ProviderResourceEntry {
+  id: string;
+  name: string;
+  nativeName?: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ProviderResourceList {
+  kind: ProviderResourceKind;
+  providerLabel: string;
+  createdAt: number;
+  items: ProviderResourceEntry[];
+  warning?: string;
+}
 
 export type ProbeEntry = {
   supported: boolean;
@@ -60,17 +91,29 @@ export type UpstreamRequestResult = {
   upstream: Response;
 };
 
+export interface ProviderFetchContext {
+  signal?: AbortSignal;
+}
+
 export interface ProviderAdapterDefinition {
   id: string;
   label: string;
   resolveEndpoint(provider: ProviderSettings, kind: ProviderOperationKind): string;
   fingerprint(provider: ProviderSettings): string;
-  fetchGenerate(provider: ProviderSettings, payload: Record<string, unknown>): Promise<UpstreamRequestResult>;
-  fetchEdit(provider: ProviderSettings, payload: Record<string, unknown>, files: UploadedFile[]): Promise<UpstreamRequestResult>;
+  capabilities: ProviderRuntimeCapabilities;
+  resources: ProviderResourceDescriptor;
+  fetchGenerate(provider: ProviderSettings, payload: Record<string, unknown>, context?: ProviderFetchContext): Promise<UpstreamRequestResult>;
+  fetchEdit(provider: ProviderSettings, payload: Record<string, unknown>, files: UploadedFile[], context?: ProviderFetchContext): Promise<UpstreamRequestResult>;
+  fetchResources?(provider: ProviderSettings, kind: ProviderResourceKind): Promise<ProviderResourceList>;
   quickCheck(provider: ProviderSettings): Promise<ProviderQuickCheckResult>;
   probe(provider: ProviderSettings): Promise<ProbeReport>;
   settingsSchema: z.ZodType<ProviderSettings>;
 }
+
+export const ProviderResourceRequestSchema = z.object({
+  provider: z.unknown(),
+  kind: z.string().min(1)
+});
 
 export function env(name: string, fallback = ''): string {
   return process.env[name] || fallback;

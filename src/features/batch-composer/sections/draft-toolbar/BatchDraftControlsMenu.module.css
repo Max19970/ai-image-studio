@@ -55,8 +55,14 @@
   border-radius: 12px;
   background: rgba(255,255,255,.055);
 }
+.menuModelTrigger strong {
+  font-size: 12px;
+}
+.menuModelTrigger small {
+  font-size: 10px;
+}
 .menuModelPanel {
-  width: min(320px, calc(100vw - 42px));
+  width: min(560px, calc(100vw - 42px));
 }
 .icon {
   display: grid;

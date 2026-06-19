@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { BatchComposerDraft } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
+import type { StudioSettings } from '../../domain/studioSettings';
 import type { BatchComposerCommands } from '../../interface/context/commands';
 import { useI18n } from '../../i18n';
 import { SlotHost } from '../../interface/SlotHost';
@@ -15,6 +16,7 @@ interface Props {
   canSubmit: boolean;
   models: GenerationModel[];
   providers: GenerationProvider[];
+  studioSettings: StudioSettings;
   commands: BatchComposerCommands;
 }
 
@@ -25,6 +27,7 @@ export function MultiImageComposer({
   canSubmit,
   models,
   providers,
+  studioSettings,
   commands
 }: Props) {
   const { t } = useI18n();
@@ -93,6 +96,7 @@ export function MultiImageComposer({
     canSubmit,
     models,
     providers,
+    studioSettings,
     totalImages,
     validDrafts,
     selectedDraftId,
@@ -105,6 +109,7 @@ export function MultiImageComposer({
     canSubmit,
     models,
     providers,
+    studioSettings,
     totalImages,
     validDrafts,
     selectedDraftId,

@@ -1,7 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
-import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
+import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
+import type { ImageParams } from '../../domain/imageParams';
+import type { StudioSettings } from '../../domain/studioSettings';
 import type { ComposerCommands } from '../../interface/context/commands';
 import { useI18n } from '../../i18n';
 import { SlotHost } from '../../interface/SlotHost';
@@ -10,6 +12,7 @@ import type { AttachmentPreviewItem } from '../../shared/image';
 import type { ComposerActionContext, ComposerLayoutContext, ComposerModelOption, ComposerPopoverId } from './composerTypes';
 import { getReferenceAttachmentId, useFlatAttachmentPreviewItems } from '../../shared/image';
 import { getProviderModelOptions, getSelectedModel } from '../../entities/provider/modelOptions';
+import { resolveProviderControlSurface } from '../../entities/provider/controlSurface';
 import styles from './ComposerLayout.module.css';
 
 function cx(...values: Array<string | false | null | undefined>) {
@@ -19,6 +22,9 @@ function cx(...values: Array<string | false | null | undefined>) {
 interface Props {
   mode: WorkMode;
   prompt: string;
+  params: ImageParams;
+  provider: ProviderSettings;
+  studioSettings: StudioSettings;
   busy: boolean;
   canSubmit: boolean;
   targetImage: File | null;
@@ -34,6 +40,9 @@ interface Props {
 export function ImageComposer({
   mode,
   prompt,
+  params,
+  provider,
+  studioSettings,
   busy,
   canSubmit,
   targetImage,
@@ -51,9 +60,11 @@ export function ImageComposer({
   const attachmentsRef = useRef<HTMLInputElement | null>(null);
   const maskRef = useRef<HTMLInputElement | null>(null);
   const selectedModel = useMemo(() => getSelectedModel(models, selectedModelId), [models, selectedModelId]);
+  const controlSurface = useMemo(() => resolveProviderControlSurface({ settings: studioSettings, modelId: selectedModelId, models, providers }).surface, [models, providers, selectedModelId, studioSettings]);
   const setMode = useEventCallback(commands.setMode);
   const setModel = useEventCallback(commands.setModel);
   const setPrompt = useEventCallback(commands.setPrompt);
+  const changeParams = useEventCallback(commands.patchParams);
   const submit = useEventCallback(commands.submit);
   const openParameters = useEventCallback(commands.openParameters);
   const openBatchComposer = useEventCallback(commands.openBatchComposer);
@@ -114,6 +125,32 @@ export function ImageComposer({
     if (merged.length > 0) setMode('edit');
   }, [setMode, setReferenceImages, setTargetImage, referenceImages]);
 
+  useEffect(() => {
+    const shouldClearImages = !controlSurface.showImageAttachments && (Boolean(targetImage) || referenceImages.length > 0);
+    const shouldClearMask = !controlSurface.showMask && Boolean(mask);
+    if (!shouldClearImages && !shouldClearMask) return;
+
+    if (shouldClearImages) {
+      setTargetImage(null);
+      setReferenceImages([]);
+    }
+    if (shouldClearMask) setMask(null);
+    if (!controlSurface.showModeSwitcher && mode !== 'generate') setMode('generate');
+    setOpenPopover(null);
+  }, [
+    controlSurface.showImageAttachments,
+    controlSurface.showMask,
+    controlSurface.showModeSwitcher,
+    mask,
+    mode,
+    referenceImages.length,
+    setMask,
+    setMode,
+    setReferenceImages,
+    setTargetImage,
+    targetImage
+  ]);
+
   const toggleExpanded = useCallback(() => {
     setExpanded((value) => !value);
   }, []);
@@ -129,6 +166,12 @@ export function ImageComposer({
     mode,
     attachmentsCount: attachments.length,
     hasMask: Boolean(mask),
+    params,
+    provider,
+    studioSettings,
+    controlSurface,
+    models,
+    providers,
     selectedModel,
     modelOptions,
     openPopover,
@@ -140,6 +183,7 @@ export function ImageComposer({
     actions: {
       setMode,
       changeModel: setModel,
+      changeParams,
       openBatchComposer,
       openParameters,
       clearAttachments,
@@ -152,11 +196,18 @@ export function ImageComposer({
     mode,
     attachments.length,
     mask,
+    params,
+    provider,
+    studioSettings,
+    controlSurface,
+    models,
+    providers,
     selectedModel,
     modelOptions,
     openPopover,
     setMode,
     setModel,
+    changeParams,
     openBatchComposer,
     openParameters,
     clearAttachments,
@@ -171,6 +222,12 @@ export function ImageComposer({
     canSubmit,
     hasImageAttachments,
     attachments,
+    params,
+    provider,
+    studioSettings,
+    controlSurface,
+    models,
+    providers,
     selectedModel,
     modelOptions,
     statusText,
@@ -180,6 +237,7 @@ export function ImageComposer({
     actions: {
       changePrompt: setPrompt,
       changeModel: setModel,
+      changeParams,
       setExpanded,
       toggleExpanded,
       submit,
@@ -194,6 +252,12 @@ export function ImageComposer({
     canSubmit,
     hasImageAttachments,
     attachments,
+    params,
+    provider,
+    studioSettings,
+    controlSurface,
+    models,
+    providers,
     selectedModel,
     modelOptions,
     statusText,
@@ -201,6 +265,7 @@ export function ImageComposer({
     composerActionContext,
     setPrompt,
     setModel,
+    changeParams,
     toggleExpanded,
     submit,
     submitOnEnter,
