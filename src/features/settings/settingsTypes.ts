@@ -6,7 +6,8 @@ import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain
 import type { SettingsCommands } from '../../interface/context/commands';
 import type { Locale } from '../../i18n';
 
-export type SettingsTab = 'interface' | 'generationApi';
+// Keep this union at the settings-tab level only. Concrete integration state stays inside integration feature owners.
+export type SettingsTab = 'interface' | 'generationApi' | 'integrations';
 export type ApiFocus = 'providers' | 'models' | 'comfyui';
 export type SettingsSectionVariant = 'desktop' | 'mobile';
 

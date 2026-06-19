@@ -11,6 +11,7 @@ import { storageSchemaVersion } from './schema';
 export const studioSettingsBucket = 'studio-settings.v2';
 export const imageParamsBucket = 'image-params.v2';
 export const providerProbeCacheBucket = 'provider-probe-cache.v2';
+export const integrationSettingsBucket = 'integration-settings.v1';
 export const currentDocumentKey = 'current';
 
 export interface AppDocumentStorageStats {

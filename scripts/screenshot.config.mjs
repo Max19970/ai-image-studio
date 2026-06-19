@@ -14,6 +14,78 @@ const sampleImage = (seed) => {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 };
 
+
+const telegramDefinition = {
+  id: 'telegram',
+  label: 'Телеграм',
+  description: 'Бот и Mini App, открывающее Image Studio внутри Telegram.',
+  kind: 'messaging',
+  order: 10,
+  capabilities: {
+    supportsRuntime: true,
+    supportsSecrets: true,
+    supportsMiniApp: true,
+    supportsActions: true,
+    secrets: [{ id: 'botToken', label: 'Токен бота', required: true }],
+    actions: [
+      { id: 'validate-token', label: 'Проверить токен', kind: 'diagnostic', requiresConfiguredSecret: true },
+      { id: 'apply-menu-button', label: 'Настроить кнопку меню', kind: 'config', requiresConfiguredSecret: true },
+      { id: 'start-runtime', label: 'Запустить бота', kind: 'runtime', requiresConfiguredSecret: true },
+      { id: 'stop-runtime', label: 'Остановить бота', kind: 'runtime' },
+      { id: 'send-test-message', label: 'Отправить тестовое сообщение', kind: 'diagnostic', requiresConfiguredSecret: true }
+    ]
+  }
+};
+
+const telegramStatus = (state = 'stopped', message = 'Telegram bot runtime is stopped.') => ({
+  id: 'telegram',
+  state,
+  startedAt: state === 'running' ? now - 30000 : null,
+  updatedAt: now,
+  message,
+  metadata: state === 'running' ? { launchMode: 'polling', username: 'image_studio_demo_bot' } : undefined
+});
+
+const telegramConfigSnapshot = ({ tokenConfigured = false, tokenPreview = '123456…T0kN', enabled = false, running = false } = {}) => ({
+  definition: telegramDefinition,
+  config: {
+    id: 'telegram',
+    enabled,
+    values: {
+      miniAppUrl: enabled ? 'https://studio.example.com' : '',
+      menuButtonText: 'Open Image Studio',
+      startMessage: 'Open Image Studio from the button below.',
+      allowedUserIds: enabled ? '123456789, 987654321' : '',
+      pollingIntervalMs: 1500
+    },
+    secrets: {
+      botToken: {
+        configured: tokenConfigured,
+        preview: tokenConfigured ? tokenPreview : undefined,
+        updatedAt: tokenConfigured ? now - 60000 : null
+      }
+    },
+    createdAt: now - 120000,
+    updatedAt: now - 60000
+  },
+  status: running ? telegramStatus('running', 'Telegram bot polling is active.') : telegramStatus()
+});
+
+const telegramApiFixture = ({ saved = false, running = false, validationFails = false } = {}) => ({
+  integrations: [telegramDefinition],
+  snapshot: telegramConfigSnapshot({ tokenConfigured: saved, enabled: saved, running }),
+  actionResults: {
+    'validate-token': validationFails
+      ? { ok: false, message: 'settings.telegram.validationMockFailed', status: telegramStatus('error', 'Bot API returned 401 Unauthorized.') }
+      : { ok: true, message: 'settings.telegram.validationMockOk', data: { username: 'image_studio_demo_bot' } },
+    'apply-menu-button': { ok: true, message: 'Telegram menu button configured.' },
+    'start-runtime': { ok: true, message: 'Telegram bot started.', status: telegramStatus('running', 'Telegram bot polling is active.') },
+    'stop-runtime': { ok: true, message: 'Telegram bot stopped.', status: telegramStatus('stopped', 'Telegram bot stopped.') },
+    'send-test-message': { ok: true, message: 'Telegram test message sent.' }
+  },
+  miniAppValidation: { ok: false, message: 'Telegram initData hash is invalid.' }
+});
+
 export const seedData = {
   paramsKey: 'gpt-image-2-studio.params.v2',
   tasksKey: 'image-studio.generation-tasks.v1',
@@ -455,6 +527,50 @@ export const scenarios = [
       { type: 'click', selector: '[data-testid="batch-draft-model-picker"]' },
       { type: 'wait', ms: 260 },
       { type: 'screenshot' }
+    ]
+  },
+
+  {
+    name: 'settings-integrations-empty',
+    integrationApiFixture: telegramApiFixture(),
+    steps: [
+      { type: 'openTab', tab: 'settings' },
+      { type: 'click', selector: '[data-testid="mobile-drawer-backdrop"]', optional: true },
+      { type: 'waitForSelector', selector: '[data-testid="settings-page"], .workspace-settings-page' },
+      { type: 'click', selector: '[data-testid="settings-mobile-tabs"] button:nth-child(3), [data-testid="settings-tab-rail"] button:nth-child(3)', optional: true },
+      { type: 'waitForSelector', selector: '[data-testid="settings-telegram-panel"]' },
+      { type: 'wait', ms: 320 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'settings-integrations',
+    integrationApiFixture: telegramApiFixture({ saved: true, running: true }),
+    steps: [
+      { type: 'openTab', tab: 'settings' },
+      { type: 'click', selector: '[data-testid="mobile-drawer-backdrop"]', optional: true },
+      { type: 'waitForSelector', selector: '[data-testid="settings-page"], .workspace-settings-page' },
+      { type: 'click', selector: '[data-testid="settings-mobile-tabs"] button:nth-child(3), [data-testid="settings-tab-rail"] button:nth-child(3)', optional: true },
+      { type: 'waitForSelector', selector: '[data-testid="settings-telegram-panel"]' },
+      { type: 'wait', ms: 320 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'settings-integrations-validation-error',
+    integrationApiFixture: telegramApiFixture({ saved: true, validationFails: true }),
+    steps: [
+      { type: 'openTab', tab: 'settings' },
+      { type: 'click', selector: '[data-testid="mobile-drawer-backdrop"]', optional: true },
+      { type: 'waitForSelector', selector: '[data-testid="settings-page"], .workspace-settings-page' },
+      { type: 'click', selector: '[data-testid="settings-mobile-tabs"] button:nth-child(3), [data-testid="settings-tab-rail"] button:nth-child(3)', optional: true },
+      { type: 'waitForSelector', selector: '[data-testid="settings-telegram-panel"]' },
+      { type: 'click', selector: '[data-testid="settings-telegram-validate-token"]' },
+      { type: 'wait', ms: 420 },
+      { type: 'scrollToSelector', selector: '[data-testid="settings-telegram-validate-token"]' },
+      { type: 'wait', ms: 180 },
+      { type: 'screenshot' },
+      { type: 'scroll', y: 0 }
     ]
   },
   {

@@ -1,0 +1,74 @@
+.cardNote {
+  margin: 0;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  background: rgba(255,255,255,.035);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.readinessList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.readinessItem {
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  background: rgba(0,0,0,.12);
+}
+
+.readinessItem strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.readinessItem span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.state_ok { border-color: rgba(110,231,183,.24); }
+.state_warn { border-color: rgba(250,204,21,.24); }
+.state_error { border-color: rgba(248,113,113,.28); }
+
+.diagnosticFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.authArea { grid-template-columns: minmax(0, 1fr) auto; }
+
+.authArea textarea {
+  min-height: 74px;
+}
+
+@media (max-width: 860px) {
+  .readinessList,
+  .diagnosticFields,
+  .authArea { grid-template-columns: 1fr; }
+}
+
+.diagnosticFields button {
+  border: 1px solid var(--surface-border-soft);
+  border-radius: 999px;
+  padding: 10px 13px;
+  background: var(--surface-workspace-strong);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.diagnosticFields button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}

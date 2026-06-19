@@ -76,6 +76,40 @@ const listen = () => new Promise((resolve) => server.listen(port, host, resolve)
 const stop = () => new Promise((resolve) => server.close(resolve));
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+
+function createIntegrationApiMockResponse(request, fixture) {
+  if (!fixture) return null;
+  const url = new URL(request.url());
+  if (!url.pathname.startsWith('/api/integrations')) return null;
+  const method = request.method().toUpperCase();
+  const json = (body, status = 200) => ({ status, contentType: 'application/json; charset=utf-8', body: JSON.stringify(body) });
+
+  if (url.pathname === '/api/integrations' && method === 'GET') {
+    return json({ integrations: fixture.integrations ?? [] });
+  }
+
+  if (url.pathname === '/api/integrations/telegram/config') {
+    if (method === 'GET' || method === 'PUT') return json(fixture.snapshot);
+  }
+
+  if (url.pathname === '/api/integrations/telegram/status' && method === 'GET') {
+    return json(fixture.snapshot?.status ?? { id: 'telegram', state: 'stopped', startedAt: null, updatedAt: Date.now() });
+  }
+
+  const actionMatch = url.pathname.match(/^\/api\/integrations\/telegram\/actions\/([^/]+)$/);
+  if (actionMatch && method === 'POST') {
+    const actionId = decodeURIComponent(actionMatch[1]);
+    const result = fixture.actionResults?.[actionId] ?? { ok: true, message: `Mocked integration action: ${actionId}` };
+    return json(result);
+  }
+
+  if (url.pathname === '/api/integrations/telegram/mini-app/validate' && method === 'POST') {
+    return json(fixture.miniAppValidation ?? { ok: false, message: 'Mini App mock is not configured.' });
+  }
+
+  return json({ error: { message: `Unhandled integration screenshot mock route: ${method} ${url.pathname}` } }, 404);
+}
+
 async function seed(page, scenario) {
   await page.evaluateOnNewDocument((data, tasks) => {
     localStorage.setItem(data.tasksKey, JSON.stringify(tasks));
@@ -131,6 +165,13 @@ async function runStep(page, step, viewportName, scenarioName) {
   if (step.type === 'click') await clickFirstVisible(page, step.selector, Boolean(step.optional));
   if (step.type === 'openTab') await openTab(page, step.tab);
   if (step.type === 'scroll') await page.evaluate((y) => window.scrollTo(0, y), step.y ?? 0);
+  if (step.type === 'scrollToSelector') {
+    await page.evaluate((selector) => {
+      const element = document.querySelector(selector);
+      if (!element) throw new Error(`No element for scrollToSelector: ${selector}`);
+      element.scrollIntoView({ block: 'center', inline: 'nearest' });
+    }, step.selector);
+  }
   if (step.type === 'clearTasks') {
     await page.evaluate((key) => localStorage.setItem(key, '[]'), seedData.tasksKey);
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 20000 });
@@ -159,6 +200,11 @@ async function bootPage(browser, viewportName, scenario) {
     await page.setViewport(viewport);
     await page.setRequestInterception(true);
     page.on('request', (request) => {
+      const apiMock = createIntegrationApiMockResponse(request, scenario.integrationApiFixture);
+      if (apiMock) {
+        request.respond(apiMock);
+        return;
+      }
       const url = request.url();
       if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) request.abort();
       else request.continue();

@@ -5,6 +5,7 @@ import type { ButtonProps } from '../../../../shared/ui';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { ImageDownloadActionContext } from '../../../../interface/context/adapters/imageDownload';
 import { loadGenerationTaskAsset } from '../../../../infrastructure/storage/remoteGenerationTaskHistoryStore';
+import { requestTelegramMiniAppImageDownload, shouldUseTelegramMiniAppDownload } from '../../../../integrations/telegram-mini-app';
 import styles from './DownloadImageAction.module.css';
 
 type DownloadImageActionProps = {
@@ -30,10 +31,30 @@ function triggerDownload(href: string, filename: string) {
 export function DownloadImageAction({ context, props }: ElementDefinitionProps<ImageDownloadActionContext, DownloadImageActionProps>) {
   const { t } = useI18n();
   if (!context.href) return null;
+  const href = context.href;
   const label = t(props.labelKey ?? 'gallery.download');
 
   const handleClick = async (event: MouseEvent<HTMLElement>) => {
     context.onClick?.(event);
+
+    if (shouldUseTelegramMiniAppDownload()) {
+      event.preventDefault();
+      try {
+        const handled = await requestTelegramMiniAppImageDownload({ href, filename: context.filename, storageAssetKey: context.storageAssetKey });
+        if (handled) return;
+      } catch (error) {
+        console.warn('Telegram Mini App file action was not completed.', error);
+      }
+
+      if (context.storageAssetKey && context.storageAssetLoaded === false) {
+        const fullImage = await loadGenerationTaskAsset(context.storageAssetKey);
+        if (fullImage?.src) triggerDownload(fullImage.src, context.filename);
+      } else {
+        triggerDownload(href, context.filename);
+      }
+      return;
+    }
+
     if (!context.storageAssetKey || context.storageAssetLoaded !== false) return;
 
     event.preventDefault();
@@ -43,7 +64,7 @@ export function DownloadImageAction({ context, props }: ElementDefinitionProps<I
 
   if (props.presentation === 'link') {
     return (
-      <a className={styles.link} href={context.href} download={context.filename} onClick={handleClick}>
+      <a className={styles.link} href={href} download={context.filename} onClick={handleClick}>
         {label}
       </a>
     );
@@ -55,7 +76,7 @@ export function DownloadImageAction({ context, props }: ElementDefinitionProps<I
       size={props.size ?? 'default'}
       tone={props.tone ?? 'neutral'}
       fullWidth={Boolean(props.fullWidth)}
-      href={context.href}
+      href={href}
       download={context.filename}
       onClick={handleClick}
     >

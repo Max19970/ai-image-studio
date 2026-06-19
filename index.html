@@ -4,6 +4,55 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Studio</title>
+
+    <script>
+      (function () {
+        var telegramScriptUrl = 'https://telegram.org/js/telegram-web-app.js';
+        var launchParams = String(window.location.search || '') + '&' + String(window.location.hash || '');
+        var shouldUseTelegramBridge = /tgWebAppData|tgWebAppVersion|tgWebAppPlatform|tgWebAppThemeParams/.test(launchParams) || /Telegram/i.test(window.navigator.userAgent || '');
+
+        if (!shouldUseTelegramBridge) return;
+
+        function notifyTelegramReady() {
+          try {
+            var webApp = window.Telegram && window.Telegram.WebApp;
+            if (!webApp) return;
+            webApp.ready();
+            webApp.expand();
+          } catch (error) {
+            console.warn('Telegram Mini App early ready failed:', error);
+          }
+        }
+
+        function ensureTelegramScript() {
+          if (window.Telegram && window.Telegram.WebApp) {
+            notifyTelegramReady();
+            return;
+          }
+
+          var existingScript = document.querySelector('script[src="' + telegramScriptUrl + '"]');
+          if (existingScript) {
+            existingScript.addEventListener('load', notifyTelegramReady, { once: true });
+            return;
+          }
+
+          var script = document.createElement('script');
+          script.src = telegramScriptUrl;
+          script.async = true;
+          script.onload = notifyTelegramReady;
+          script.onerror = function () {
+            console.warn('Telegram Mini App bridge script failed to load.');
+          };
+          document.head.appendChild(script);
+        }
+
+        ensureTelegramScript();
+        window.addEventListener('DOMContentLoaded', notifyTelegramReady);
+        window.addEventListener('load', notifyTelegramReady);
+        window.setTimeout(notifyTelegramReady, 300);
+        window.setTimeout(notifyTelegramReady, 1200);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

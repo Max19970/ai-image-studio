@@ -4,6 +4,7 @@ import { SlotHost } from '../interface/SlotHost';
 import type { WorkspaceComposerDockContext, WorkspaceModalsContext } from '../interface/context/workspace/composerDock';
 import type { WorkspaceMainContext } from '../interface/context/workspace/main';
 import type { WorkspaceSidebarContext } from '../interface/context/workspace/sidebar';
+import { useTelegramMiniApp } from '../integrations/telegram-mini-app';
 import { useWorkspaceViewModel } from './workspace/useWorkspaceViewModel';
 
 const ImageDetailPage = lazy(() =>
@@ -12,6 +13,7 @@ const ImageDetailPage = lazy(() =>
 
 export function App() {
   const { t } = useI18n();
+  const telegramMiniApp = useTelegramMiniApp();
   const workspace = useWorkspaceViewModel(t);
   const { state, derived, commands, contexts } = workspace;
   const [motionLock, setMotionLock] = useState(false);
@@ -54,8 +56,11 @@ export function App() {
 
   return (
     <main
-      className={`studio-app ${state.sidebarCollapsed ? 'sidebar-is-collapsed' : ''} ${state.batchComposerOpen ? 'batch-composer-is-open' : ''} ${motionLock ? 'motion-is-transitioning' : ''} ${documentHidden ? 'motion-is-backgrounded' : ''}`}
+      className={`studio-app ${state.sidebarCollapsed ? 'sidebar-is-collapsed' : ''} ${state.batchComposerOpen ? 'batch-composer-is-open' : ''} ${motionLock ? 'motion-is-transitioning' : ''} ${documentHidden ? 'motion-is-backgrounded' : ''} ${telegramMiniApp.available ? 'telegram-mini-app' : ''}`}
       data-theme={state.studioSettings.interfaceTheme}
+      data-telegram-mini-app={telegramMiniApp.available ? 'true' : undefined}
+      data-telegram-platform={telegramMiniApp.platform ?? undefined}
+      data-telegram-auth-state={telegramMiniApp.authState}
     >
       <div className="studio-noise" aria-hidden="true" />
 

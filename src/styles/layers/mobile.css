@@ -158,3 +158,59 @@
     padding: 10px;
   }
 }
+/* Telegram Mini App scoped runtime overrides */
+:root[data-telegram-mini-app="true"] {
+    --telegram-safe-area-top: 0px;
+    --telegram-safe-area-right: 0px;
+    --telegram-safe-area-bottom: 0px;
+    --telegram-safe-area-left: 0px;
+    --telegram-content-safe-area-top: 0px;
+    --telegram-content-safe-area-right: 0px;
+    --telegram-content-safe-area-bottom: 0px;
+    --telegram-content-safe-area-left: 0px;
+  }
+
+  .studio-app.telegram-mini-app {
+    min-height: var(--telegram-viewport-stable-height, 100dvh);
+    background: var(--telegram-theme-bg-color, var(--bg));
+    color: var(--telegram-theme-text-color, var(--text));
+  }
+
+  .studio-app.telegram-mini-app .studio-main {
+    min-height: var(--telegram-viewport-stable-height, 100dvh);
+    padding-top: max(0px, var(--telegram-safe-area-top, 0px));
+  }
+
+  .studio-app.telegram-mini-app input,
+  .studio-app.telegram-mini-app textarea,
+  .studio-app.telegram-mini-app select {
+    color-scheme: var(--telegram-color-scheme, dark);
+  }
+
+  @media (max-width: 860px) {
+    .studio-app.telegram-mini-app,
+    .studio-app.telegram-mini-app.sidebar-is-collapsed {
+      min-height: var(--telegram-viewport-stable-height, 100dvh);
+    }
+
+    .studio-app.telegram-mini-app .studio-main {
+      min-height: var(--telegram-viewport-stable-height, 100dvh);
+      padding-left: max(var(--mobile-page-gutter, 10px), var(--telegram-safe-area-left, 0px));
+      padding-right: max(var(--mobile-page-gutter, 10px), var(--telegram-safe-area-right, 0px));
+      padding-bottom: calc(
+        var(--mobile-composer-space) +
+        var(--mobile-bottom-nav-space) +
+        max(10px, env(safe-area-inset-bottom)) +
+        var(--telegram-safe-area-bottom, 0px) +
+        var(--telegram-content-safe-area-bottom, 0px)
+      );
+    }
+
+    .telegram-mini-app.batch-composer-is-open .studio-main {
+      padding-bottom: calc(
+        max(10px, env(safe-area-inset-bottom)) +
+        var(--telegram-safe-area-bottom, 0px) +
+        var(--telegram-content-safe-area-bottom, 0px)
+      );
+    }
+  }

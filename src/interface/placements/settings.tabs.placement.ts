@@ -1,7 +1,7 @@
 import type { ElementPlacement } from '../registry/types';
 import type { SettingsTabContext } from '../context/workspace/tabs';
 
-type SettingsTab = 'interface' | 'generationApi';
+type SettingsTab = 'interface' | 'generationApi' | 'integrations';
 
 export default [
   {
@@ -26,5 +26,16 @@ export default [
       hintKey: 'settings.tab.generationApiHint'
     },
     requiresFeature: 'providerProbing'
+  },
+  {
+    id: 'settings.tabs.integrations',
+    slot: 'settings/tabs',
+    use: 'settings.tab',
+    order: 30,
+    props: {
+      tab: 'integrations',
+      labelKey: 'settings.tab.integrations',
+      hintKey: 'settings.tab.integrationsHint'
+    }
   }
 ] satisfies ElementPlacement<SettingsTabContext<SettingsTab>>[];

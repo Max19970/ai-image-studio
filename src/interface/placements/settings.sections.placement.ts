@@ -33,5 +33,21 @@ export const placements: ElementPlacement<SettingsSectionContext>[] = [
     order: 20,
     props: { variant: 'mobile' },
     enabled: (context) => context.activeTab === 'generationApi' && context.variant === 'mobile'
+  },
+  {
+    id: 'settings.sections.integrations.desktop',
+    slot: 'settings/sections',
+    use: 'settingsSections.integrations',
+    order: 30,
+    props: { variant: 'desktop' },
+    enabled: (context) => context.activeTab === 'integrations' && context.variant === 'desktop'
+  },
+  {
+    id: 'settings.sections.integrations.mobile',
+    slot: 'settings/sections',
+    use: 'settingsSections.integrations',
+    order: 30,
+    props: { variant: 'mobile' },
+    enabled: (context) => context.activeTab === 'integrations' && context.variant === 'mobile'
   }
 ];

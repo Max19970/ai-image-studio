@@ -16,6 +16,7 @@ The app is built for personal workflows: image generation, image editing, multi-
 - Gallery, carousel view, detail page, request payload preview, downloads, localization, theme previews, and mobile layouts.
 - SSE partial-image streaming support for providers that return OpenAI-like event streams.
 - Architecture safety checks, strict debt budgets, unit tests, storage audit, and repeatable screenshot smoke checks.
+- Telegram bot + Mini App integration for opening Image Studio inside Telegram, with server-side token storage and runtime controls.
 
 ## Requirements
 
@@ -82,12 +83,16 @@ Optional storage, CORS, and development settings:
 IMAGE_STUDIO_DB_PATH=./data/image-studio.sqlite
 IMAGE_STUDIO_STORAGE_KEY_FILE=./data/storage.key
 IMAGE_STUDIO_STORAGE_KEY=
+IMAGE_STUDIO_PUBLIC_URL=
+IMAGE_STUDIO_ALLOWED_HOSTS=
 IMAGE_STUDIO_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 IMAGE_STUDIO_JSON_LIMIT=256mb
 IMAGE_STUDIO_PROXY_TARGET=http://127.0.0.1:8787
 ```
 
 `IMAGE_STUDIO_STORAGE_KEY` can be a 32-byte base64 key or a 64-character hex key. If it is not provided, Image Studio creates `data/storage.key` automatically.
+
+`npm run start` loads `.env`, `.env.local`, and environment-specific `.env.*` files automatically. For Cloudflare Tunnel / Telegram Mini App, add your public HTTPS origin to `IMAGE_STUDIO_ALLOWED_ORIGINS` and optionally set `IMAGE_STUDIO_PUBLIC_URL`, for example `https://comfybottg.space`.
 
 ## Provider setup
 
@@ -144,6 +149,8 @@ The project is organized around small owner modules rather than a central compon
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the current architecture map.
 
+See [`docs/TELEGRAM_INTEGRATION.md`](docs/TELEGRAM_INTEGRATION.md) for setup and security notes for the Telegram bot/Mini App integration.
+
 ## Validation
 
 Run static checks before changing or publishing the project:
@@ -185,7 +192,7 @@ docs/RELEASE_READINESS.md
 Useful focused screenshot runs:
 
 ```bash
-npm run capture:screenshots -- --viewports=desktop,mobile --scenarios=gallery,settings-api --out=artifacts/desktop-checks
+npm run capture:screenshots -- --viewports=desktop,mobile --scenarios=gallery,settings-api,settings-integrations --out=artifacts/desktop-checks
 npm run capture:mobile
 FULL_PAGE=1 npm run capture:screenshots
 ```
