@@ -13,6 +13,7 @@ type DownloadImageActionProps = {
   variant?: ButtonProps['variant'];
   size?: ButtonProps['size'];
   tone?: ButtonProps['tone'];
+  fullWidth?: ButtonProps['fullWidth'];
 };
 
 function triggerDownload(href: string, filename: string) {
@@ -53,6 +54,7 @@ export function DownloadImageAction({ context, props }: ElementDefinitionProps<I
       variant={props.variant ?? 'secondary'}
       size={props.size ?? 'default'}
       tone={props.tone ?? 'neutral'}
+      fullWidth={Boolean(props.fullWidth)}
       href={context.href}
       download={context.filename}
       onClick={handleClick}

@@ -13,5 +13,6 @@
   "app.retryWaiting": "Attempt {attempt}/{total} in {seconds}s. Last error: {error}",
   "app.cancelled": "Request cancelled.",
   "app.status.sending": "Sending request to the provider…",
-  "app.status.cancelled": "Request cancelled."
+  "app.status.cancelled": "Request cancelled.",
+  "app.warningEditNeedsImage": "Edit mode needs at least one attached image."
 }

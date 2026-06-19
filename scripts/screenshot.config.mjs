@@ -1,6 +1,7 @@
 const now = Date.now();
 
 export const viewports = {
+  narrowMobile: { width: 360, height: 800, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
   mobile: { width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
   tablet: { width: 820, height: 1180, deviceScaleFactor: 1.5, isMobile: true, hasTouch: true },
   desktop: { width: 1440, height: 1000, deviceScaleFactor: 1, isMobile: false, hasTouch: false },
@@ -87,9 +88,85 @@ export const seedData = {
 export const scenarios = [
   { name: 'gallery', steps: [{ type: 'screenshot' }] },
   {
+    name: 'gallery-empty',
+    seedTasks: [],
+    steps: [
+      { type: 'waitForSelector', selector: '[data-gallery-slot="empty"]' },
+      { type: 'wait', ms: 180 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-compact',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-dock"][data-composer-expanded="false"]' },
+      { type: 'wait', ms: 180 },
+      { type: 'screenshot' }
+    ]
+  },
+
+  {
+    name: 'composer-long-prompt',
+    seedParams: {
+      prompt: 'Длинный тестовый prompt для проверки compact composer на узком телефоне. Он должен оставаться в одну компактную строку и не раздувать нижний dock до четверти экрана до явного раскрытия панели запроса.'
+    },
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-dock"][data-composer-expanded="false"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-attachments',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-attachments-input"]' },
+      { type: 'upload', selector: '[data-testid="composer-attachments-input"]', files: ['scripts/fixtures/sample-upload.png'] },
+      { type: 'wait', ms: 260 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-mask',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-mask-input"]' },
+      { type: 'upload', selector: '[data-testid="composer-mask-input"]', files: ['scripts/fixtures/sample-upload.png'] },
+      { type: 'wait', ms: 260 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-controls',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-edit-status',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-mode-edit"]' },
+      { type: 'click', selector: '[data-testid="composer-mode-edit"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'gallery-quick-actions',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="gallery-quick-actions"]' },
+      { type: 'click', selector: '[data-testid="gallery-quick-actions"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
     name: 'sidebar-collapsed',
     steps: [
-      { type: 'click', selector: '[data-testid="sidebar-collapse"], [data-testid="mobile-drawer-trigger"]' },
+      { type: 'click', selector: '[data-testid="sidebar-collapse"], [data-testid="mobile-drawer-trigger"]', optional: true },
       { type: 'wait', ms: 220 },
       { type: 'screenshot' }
     ]
@@ -97,6 +174,8 @@ export const scenarios = [
   {
     name: 'parameters',
     steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-parameters"]' },
       { type: 'click', selector: '[data-testid="composer-parameters"]' },
       { type: 'waitForSelector', selector: '[data-testid="parameters-modal"]' },
       { type: 'wait', ms: 220 },
@@ -108,6 +187,8 @@ export const scenarios = [
   {
     name: 'parameters-render',
     steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-parameters"]' },
       { type: 'click', selector: '[data-testid="composer-parameters"]' },
       { type: 'waitForSelector', selector: '[data-testid="parameters-modal"]' },
       { type: 'click', selector: '[data-param-tab="render"]' },
@@ -120,6 +201,8 @@ export const scenarios = [
   {
     name: 'parameters-output',
     steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-parameters"]' },
       { type: 'click', selector: '[data-testid="composer-parameters"]' },
       { type: 'waitForSelector', selector: '[data-testid="parameters-modal"]' },
       { type: 'click', selector: '[data-param-tab="output"]' },
@@ -132,6 +215,8 @@ export const scenarios = [
   {
     name: 'parameters-service',
     steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-parameters"]' },
       { type: 'click', selector: '[data-testid="composer-parameters"]' },
       { type: 'waitForSelector', selector: '[data-testid="parameters-modal"]' },
       { type: 'click', selector: '[data-param-tab="service"]' },
@@ -144,6 +229,8 @@ export const scenarios = [
   {
     name: 'parameters-retry',
     steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-parameters"]' },
       { type: 'click', selector: '[data-testid="composer-parameters"]' },
       { type: 'waitForSelector', selector: '[data-testid="parameters-modal"]' },
       { type: 'click', selector: '[data-param-tab="retry"]' },
@@ -156,6 +243,8 @@ export const scenarios = [
   {
     name: 'batch-composer',
     steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
       { type: 'click', selector: '[data-testid="composer-batch"]' },
       { type: 'waitForSelector', selector: '[data-testid="batch-composer-stage"], .batch-composer-stage' },
       { type: 'wait', ms: 250 },
@@ -165,6 +254,7 @@ export const scenarios = [
   {
     name: 'batch-composer-scrolled',
     steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]', optional: true },
       { type: 'click', selector: '[data-testid="composer-batch"]', optional: true },
       { type: 'waitForSelector', selector: '[data-testid="batch-composer-stage"], .batch-composer-stage' },
       { type: 'scroll', y: 420 },
@@ -172,6 +262,18 @@ export const scenarios = [
       { type: 'screenshot' },
       { type: 'scroll', y: 0 },
       { type: 'click', selector: '[data-testid="batch-composer-close"], .batch-composer-topbar > .btn-secondary', optional: true }
+    ]
+  },
+  {
+    name: 'batch-composer-controls',
+    steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
+      { type: 'click', selector: '[data-testid="composer-batch"]' },
+      { type: 'waitForSelector', selector: '[data-testid="batch-draft-controls"]' },
+      { type: 'click', selector: '[data-testid="batch-draft-controls"]' },
+      { type: 'wait', ms: 240 },
+      { type: 'screenshot' }
     ]
   },
   {
@@ -225,6 +327,7 @@ export const scenarios = [
       { type: 'waitForSelector', selector: '[data-testid="gallery-card-open"]' },
       { type: 'click', selector: '[data-testid="gallery-card-open"]' },
       { type: 'waitForSelector', selector: '[data-testid="detail-page"]' },
+      { type: 'click', selector: '[data-testid="detail-tab-files"]', optional: true },
       { type: 'waitForSelector', selector: '[data-testid="attachment-preview-open"]' },
       { type: 'click', selector: '[data-testid="attachment-preview-open"]' },
       { type: 'waitForSelector', selector: '[role="dialog"]' },
@@ -239,6 +342,18 @@ export const scenarios = [
       { type: 'waitForSelector', selector: '[data-testid="gallery-card-open"]' },
       { type: 'click', selector: '[data-testid="gallery-card-open"]' },
       { type: 'waitForSelector', selector: '[data-testid="detail-page"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'detail-technical',
+    steps: [
+      { type: 'openTab', tab: 'images' },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-card-open"]' },
+      { type: 'click', selector: '[data-testid="gallery-card-open"]' },
+      { type: 'waitForSelector', selector: '[data-testid="detail-page"]' },
+      { type: 'click', selector: '[data-testid="detail-tab-technical"]', optional: true },
       { type: 'wait', ms: 220 },
       { type: 'screenshot' }
     ]

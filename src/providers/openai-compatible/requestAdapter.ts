@@ -81,8 +81,8 @@ export function createOpenAiCompatibleSubmitProxyRequest(input: ProviderSubmitPr
   const form = new FormData();
   form.append('provider', JSON.stringify(input.provider));
   form.append('payload', JSON.stringify(input.payload));
-  if (input.targetImage) form.append('image_target', input.targetImage, input.targetImage.name);
-  input.referenceImages?.forEach((file) => form.append('image_reference', file, file.name));
+  const images = [input.targetImage, ...(input.referenceImages ?? [])].filter((file): file is File => Boolean(file));
+  images.forEach((file) => form.append('image', file, file.name));
   if (input.mask) form.append('mask', input.mask, input.mask.name);
 
   return {

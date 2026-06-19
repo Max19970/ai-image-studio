@@ -27,7 +27,8 @@
 }
 
 @layer components {
-  .studio-app.motion-is-transitioning {
+  .studio-app.motion-is-transitioning,
+  .studio-app.motion-is-backgrounded {
     --ambient-animation-play-state: paused;
   }
 }

@@ -3,7 +3,7 @@
   "batch.aria": "Batch generation composer",
   "batch.kicker": "Batch mode",
   "batch.title": "Batch generation",
-  "batch.mobileTitle": "Batch",
+  "batch.mobileTitle": "Queue",
   "batch.mobileClose": "Gallery",
   "batch.mobileSubmit": "Run",
   "batch.subtitle": "Build several normal requests into one queue: generation, editing, targets, refs, masks and parameters stay separate for each item.",
@@ -24,5 +24,17 @@
   "batch.submit": "Run batch generation",
   "batch.aggregatePrompt": "Batch request: {count} requests",
   "batch.multiProviderLabel": "batch generation",
-  "batch.itemError": "Request {index}: {error}"
+  "batch.itemError": "Request {index}: {error}",
+  "batch.queueLabel": "Batch request queue",
+  "batch.queueKicker": "Timeline queue",
+  "batch.queueTitle": "Requests",
+  "batch.selectedEditorLabel": "Selected batch request editor",
+  "batch.selectedKicker": "Selected request",
+  "batch.ready": "Ready",
+  "batch.needsPrompt": "Needs prompt",
+  "batch.needsImages": "Needs images",
+  "batch.queueImagesValue": "{count} img",
+  "batch.queueAttachmentsValue": "{count} files",
+  "batch.emptyQueueTitle": "No requests in queue",
+  "batch.emptyQueueText": "Add a request to start building a batch generation queue."
 }

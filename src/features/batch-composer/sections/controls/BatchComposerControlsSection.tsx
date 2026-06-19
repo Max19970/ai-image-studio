@@ -10,7 +10,9 @@ export function BatchComposerControlsSection({ context }: ElementDefinitionProps
   return (
     <div className={styles.controls}>
       <label className={styles.intervalField}>
-        <span><span className={layoutStyles.actionFull}>{t('batch.interval')}</span><span className={layoutStyles.actionMobile}>{t('batch.mobileInterval')}</span></span>
+        <div className={styles.intervalLabel}>
+          <span><span className={layoutStyles.actionFull}>{t('batch.interval')}</span><span className={layoutStyles.actionMobile}>{t('batch.mobileInterval')}</span></span>
+          </div>
         <input
           type="number"
           min={0}
@@ -19,7 +21,6 @@ export function BatchComposerControlsSection({ context }: ElementDefinitionProps
           value={context.intervalSeconds}
           onChange={(event) => context.actions.changeIntervalSeconds(Math.max(0, Number(event.target.value) || 0))}
         />
-        <small>{t('batch.intervalHint')}</small>
       </label>
       <div className={styles.summaryCard}>
         <span>{t('batch.summary')}</span>

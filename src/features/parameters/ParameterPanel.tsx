@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { capabilityOrder } from '../../domain/defaults';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
@@ -21,6 +21,7 @@ const tabs = generationParamTabs.map((tab) => tab.id);
 export function ParameterPanel({ mode, params, provider, capabilityReport, onChange }: Props) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<GenerationParamTab>('frame');
+  const tabRailRef = useRef<HTMLElement | null>(null);
   const patch = <K extends keyof ImageParams>(key: K, value: ImageParams[K]) => onChange({ ...params, [key]: value });
 
   const hiddenCapabilityParams = getHiddenCapabilityKeys({ mode, capabilityReport }, capabilityOrder);
@@ -39,15 +40,22 @@ export function ParameterPanel({ mode, params, provider, capabilityReport, onCha
   const activeTabMeta = generationParamTabsById.get(activeTab) ?? generationParamTabs[0];
   const activeTabFields = renderGenerationParamSlot(activeTabMeta.slot, fieldContext);
 
+  useEffect(() => {
+    const rail = tabRailRef.current;
+    if (!rail || window.matchMedia('(min-width: 641px)').matches) return;
+    const active = rail.querySelector<HTMLElement>('[data-active=\"true\"]');
+    active?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }, [activeTab]);
+
   return (
-    <section className={`panel-stack ${styles.workbench}`}>
+    <section className={styles.workbench}>
       <div className={`panel-heading ${styles.heading}`}>
         <span className="section-kicker">{t('params.controlRoom')}</span>
         <h2>{t('params.title')}</h2>
         <p>{hiddenParamsCount > 0 ? t('params.hiddenCount', { count: hiddenParamsCount }) : t('params.fullSet')}</p>
       </div>
 
-      <aside className={styles.tabRail} aria-label={t('params.tabsAria')}>
+      <aside ref={tabRailRef} className={styles.tabRail} aria-label={t('params.tabsAria')}>
         {tabs.map((tab) => (
           <button key={tab} type="button" className={`${styles.tabButton} ${activeTab === tab ? styles.tabButtonActive : ''}`.trim()} data-param-tab={tab} data-active={activeTab === tab ? 'true' : 'false'} onClick={() => setActiveTab(tab)}>
             <span className={styles.tabLabel}>{t((generationParamTabsById.get(tab) ?? generationParamTabs[0]).labelKey)}</span>
@@ -66,7 +74,7 @@ export function ParameterPanel({ mode, params, provider, capabilityReport, onCha
 
         <section className={`inspector-group ${styles.tabPanel} ${activeTabMeta.panelClassKey ? styles[activeTabMeta.panelClassKey] : ''}`.trim()} data-param-slot={activeTabMeta.slot}>
           <header className={styles.panelHead}>
-            <summary className={styles.panelTitle}>{t(activeTabMeta.labelKey)}</summary>
+            <h3 className={styles.panelTitle}>{t(activeTabMeta.labelKey)}</h3>
             <p className={styles.panelHint}>{t(activeTabMeta.hintKey)}</p>
           </header>
           <div className={styles.fieldGrid}>

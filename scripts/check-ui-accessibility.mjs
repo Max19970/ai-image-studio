@@ -64,7 +64,7 @@ requireIncludes('src/interface/primitives/WorkspaceTabButton.tsx', [
 
 requireRegex('src/shared/ui/PopoverSelect/PopoverSelect.module.css', /@media \(pointer: coarse\)[\s\S]*\.trigger[\s\S]*min-height:\s*44px[\s\S]*\.option[\s\S]*min-height:\s*44px/, 'coarse-pointer 44px select touch targets');
 requireRegex('src/shared/ui/IconButton/IconButton.module.css', /@media \(pointer: coarse\)[\s\S]*\.button,[\s\S]*\.micro[\s\S]*min-height:\s*44px/, 'coarse-pointer 44px icon button touch targets');
-requireRegex('src/features/composer/ui/ActionIconButton.module.css', /@media \(pointer: coarse\)[\s\S]*\.button[\s\S]*min-height:\s*44px/, 'coarse-pointer 44px composer action touch targets');
+requireRegex('src/features/composer/elements/control-menu/ComposerControlMenu.module.css', /@media \(pointer: coarse\)[\s\S]*\.trigger,[\s\S]*\.action,[\s\S]*\.modeButton[\s\S]*min-height:\s*44px/, 'coarse-pointer 44px composer controls touch targets');
 requireRegex('src/features/settings/components/SettingsPopoverSelect.module.css', /@media \(max-width: 520px\)[\s\S]*\.trigger[\s\S]*min-height:\s*44px/, 'mobile settings select touch targets');
 
 if (failures.length) {

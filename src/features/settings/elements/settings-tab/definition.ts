@@ -1,6 +1,6 @@
 import type { ElementDefinition } from '../../../../interface/registry/types';
 import type { SettingsTabContext } from '../../../../interface/context/workspace/tabs';
-import { SettingsTabElement } from './SettingsTabElement';
+import { lazyElementComponent } from '../../../../interface/registry/lazyElement';
 
 type SettingsTabElementProps = {
   tab: string;
@@ -11,5 +11,5 @@ type SettingsTabElementProps = {
 export default {
   id: 'settings.tab',
   label: 'Settings tab',
-  Component: SettingsTabElement
+  Component: lazyElementComponent(() => import('./SettingsTabElement'), 'SettingsTabElement')
 } satisfies ElementDefinition<SettingsTabContext<string>, SettingsTabElementProps>;

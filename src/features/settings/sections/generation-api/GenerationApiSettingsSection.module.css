@@ -1,12 +1,23 @@
 .subpage {
   display: grid;
-  gap: 18px;
+  gap: 14px;
+  min-width: 0;
+}
+
+.heading {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  background: var(--surface-workspace);
+  box-shadow: var(--surface-shadow-soft);
 }
 
 .heading h3 {
-  margin: 4px 0 8px;
+  margin: 0;
   color: var(--text);
-  font-size: clamp(24px, 2vw, 34px);
+  font-size: clamp(22px, 1.8vw, 30px);
   font-weight: 760;
   letter-spacing: -.04em;
 }
@@ -15,8 +26,8 @@
   max-width: 820px;
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .focusSwitch,
@@ -24,8 +35,8 @@
   display: inline-flex;
   width: max-content;
   max-width: 100%;
-  gap: 6px;
-  border: 1px solid rgba(255,255,255,.10);
+  gap: 4px;
+  border: 1px solid var(--surface-border-soft);
   border-radius: 999px;
   padding: 4px;
   background: rgba(0,0,0,.18);
@@ -35,7 +46,7 @@
 .mobileApiSwitch button {
   border: 0;
   border-radius: 999px;
-  padding: 9px 13px;
+  padding: 8px 12px;
   background: transparent;
   color: var(--muted);
   font-size: 12px;
@@ -44,21 +55,52 @@
 
 .focusSwitch button.active,
 .mobileApiSwitch button.active {
-  background: rgba(255,255,255,.12);
+  background: var(--surface-workspace-strong);
   color: var(--text);
 }
 
 .mobileStack {
   display: grid;
-  gap: 14px;
+  gap: 10px;
+}
+
+.mobileApiHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: 18px;
+  padding: 9px;
+  background: var(--surface-workspace);
+}
+
+.mobileApiTitle {
+  min-width: 0;
+}
+
+.mobileApiTitle h3 {
+  margin: 3px 0 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 780;
+  letter-spacing: -.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {
+  .mobileApiHeader {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
   .mobileApiSwitch {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
-    border-radius: 18px;
+    border-radius: 16px;
   }
 
   .mobileApiSwitch button {

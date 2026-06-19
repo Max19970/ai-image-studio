@@ -1,0 +1,219 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  position: relative;
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 13px;
+  padding: 0;
+  background: rgba(255,255,255,.052);
+  color: var(--text);
+  font-size: 15px;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.trigger:hover,
+.trigger[data-open='true'] {
+  border-color: rgba(255,255,255,.23);
+  background: rgba(255,255,255,.11);
+  transform: translateY(-1px);
+}
+
+.trigger em {
+  position: absolute;
+  right: -4px;
+  top: -5px;
+  min-width: 16px;
+  height: 16px;
+  border: 1px solid rgba(255,255,255,.20);
+  border-radius: 999px;
+  padding: 1px 4px 0;
+  background: rgba(8,8,8,.78);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-style: normal;
+  line-height: 13px;
+}
+
+.menu {
+  display: grid;
+  gap: 7px;
+  min-width: 292px;
+}
+
+.group {
+  display: grid;
+  gap: 5px;
+}
+
+.groupTitle {
+  margin: 4px 3px 0;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.action,
+.modeButton {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  width: 100%;
+  align-items: start;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+
+.modeButton {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
+.action:hover,
+.modeButton:hover,
+.modeButton[data-active='true'] {
+  background: rgba(255,255,255,.085);
+}
+
+.modeButton[data-active='true'] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.menuModelSelect {
+  width: 100%;
+}
+
+.menuModelTrigger {
+  min-height: 42px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.055);
+}
+
+.menuModelTrigger :global(.popover-select-copy strong) {
+  font-size: 12px;
+}
+
+.menuModelTrigger :global(.popover-select-copy small) {
+  font-size: 10px;
+}
+
+.menuModelPanel {
+  width: min(320px, calc(100vw - 42px));
+}
+
+.menuModelPanel :global(.popover-select-option-copy strong) {
+  font-size: 12px;
+}
+
+.menuModelPanel :global(.popover-select-option-copy small) {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.icon {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 9px;
+  background: rgba(255,255,255,.045);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.copy strong,
+.modeButton strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy small,
+.modeButton small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.danger:hover {
+  background: rgba(255,154,169,.08);
+  color: #ffd8de;
+}
+
+.sheetBody {
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 620px) {
+  .trigger {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    border-radius: 15px;
+  }
+
+  .menu {
+    min-width: 0;
+  }
+
+  .modeGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .action,
+  .modeButton {
+    min-height: 44px;
+    border-radius: 13px;
+    padding: 9px 10px;
+  }
+
+  .copy strong,
+  .modeButton strong {
+    font-size: 12px;
+  }
+
+  .copy small,
+  .modeButton small {
+    font-size: 10px;
+    line-height: 1.25;
+  }
+}
+
+@media (pointer: coarse) {
+  .trigger,
+  .action,
+  .modeButton {
+    min-height: 44px;
+  }
+}

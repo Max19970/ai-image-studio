@@ -1,103 +1,90 @@
-import type { ProviderProbeReport } from '../../domain/providerProbe';
-import type { ProviderSettings } from '../../domain/providerSettings';
-import type { WorkMode } from '../../domain/workMode';
 import { useI18n } from '../../i18n';
 import styles from './StudioInfoPage.module.css';
 
-interface Props {
-  mode: WorkMode;
-  provider: ProviderSettings;
-  capabilityReport: ProviderProbeReport | null;
-  onOpenSettings: () => void;
+type Props = Record<string, never>;
+
+const guideIds = ['generate', 'edit', 'batch', 'details', 'providers', 'probe'] as const;
+type GuideId = typeof guideIds[number];
+
+function GuideLink({ guide, index }: { guide: GuideId; index: number }) {
+  const { t } = useI18n();
+  const number = String(index + 1).padStart(2, '0');
+  return (
+    <a className={styles.guideLink} href={`#info-guide-${guide}`}>
+      <span>{number}</span>
+      <strong>{t(`info.guide.${guide}.title`)}</strong>
+    </a>
+  );
 }
 
-function ProviderStatus({ report }: { report: ProviderProbeReport | null }) {
+function GuideArticle({ guide, index }: { guide: GuideId; index: number }) {
   const { t } = useI18n();
-  if (!report) return <>{t('info.notChecked')}</>;
-  return <>{t('info.checkedAt', { date: new Date(report.createdAt).toLocaleString() })}</>;
+  const number = String(index + 1).padStart(2, '0');
+  return (
+    <article id={`info-guide-${guide}`} className={styles.guideArticle}>
+      <div className={styles.guideArticleHeader}>
+        <span className={styles.guideNumber}>{number}</span>
+        <div>
+          <h3>{t(`info.guide.${guide}.title`)}</h3>
+          <p>{t(`info.guide.${guide}.text`)}</p>
+        </div>
+      </div>
+      <ol className={styles.steps}>
+        <li>{t(`info.guide.${guide}.step1`)}</li>
+        <li>{t(`info.guide.${guide}.step2`)}</li>
+        <li>{t(`info.guide.${guide}.step3`)}</li>
+      </ol>
+    </article>
+  );
 }
 
-export function StudioInfoPage({ mode, provider, capabilityReport, onOpenSettings }: Props) {
+export function StudioInfoPage(_: Props) {
   const { t } = useI18n();
-  const endpoint = mode === 'generate' ? provider.generationEndpoint : provider.editEndpoint;
-  const guides = ['generate', 'edit', 'batch', 'details', 'providers', 'probe'];
 
   return (
-    <section className={`${styles.page} workspace-info-page`}>
-      <header className={`${styles.hero} glass-panel`}>
-        <p className="section-kicker">{t('info.kicker')}</p>
-        <h2>{t('info.title')}</h2>
-        <p>{t('info.text')}</p>
-        <div className={styles.actions}>
-          <button type="button" className="btn-primary" onClick={onOpenSettings}>{t('info.openSettings')}</button>
-          <span className="status-pill neutral">{t(`gallery.mode.${mode}`)}</span>
+    <section className={`${styles.page} workspace-info-page`} data-testid="info-page">
+      <header className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <p className="section-kicker">{t('info.kicker')}</p>
+          <h2>{t('info.title')}</h2>
+          <p>{t('info.text')}</p>
         </div>
       </header>
 
-      <div className={styles.grid}>
-        <article className={`detail-card ${styles.card}`}>
-          <span className="section-kicker">{t('info.provider')}</span>
-          <h3>{provider.modelId || t('info.noModel')}</h3>
-          <div className="detail-grid">
-            <div className="detail-row"><span>{t('info.activeEndpoint')}</span><strong>{endpoint || t('info.notSet')}</strong></div>
-            <div className="detail-row"><span>{t('info.capabilities')}</span><strong><ProviderStatus report={capabilityReport} /></strong></div>
-          </div>
-        </article>
+      <section className={styles.quickSection} aria-labelledby="info-quick-title">
+        <div className={styles.sectionIntro}>
+          <p className="section-kicker">{t('info.quickKicker')}</p>
+          <h3 id="info-quick-title">{t('info.quickTitle')}</h3>
+          <p>{t('info.quickText')}</p>
+        </div>
+        <div className={styles.quickList}>
+          <article className={styles.quickItem}>
+            <strong>{t('info.quick.model.title')}</strong>
+            <p>{t('info.quick.model.text')}</p>
+          </article>
+          <article className={styles.quickItem}>
+            <strong>{t('info.quick.images.title')}</strong>
+            <p>{t('info.quick.images.text')}</p>
+          </article>
+          <article className={styles.quickItem}>
+            <strong>{t('info.quick.trace.title')}</strong>
+            <p>{t('info.quick.trace.text')}</p>
+          </article>
+        </div>
+      </section>
 
-        <article className={`detail-card ${styles.card}`}>
-          <span className="section-kicker">{t('info.attachmentRoles')}</span>
-          <h3>{t('info.attachmentTitle')}</h3>
-          <p className="muted-copy">{t('info.attachmentText')}</p>
-        </article>
-
-        <article className={`detail-card ${styles.card}`}>
-          <span className="section-kicker">{t('info.flow')}</span>
-          <h3>{t('info.flowTitle')}</h3>
-          <p className="muted-copy">{t('info.flowText')}</p>
-        </article>
-      </div>
-
-      <section className={`${styles.guidesSection} glass-panel`}>
-        <div className={styles.guidesHead}>
+      <section className={styles.guidesWorkspace} aria-labelledby="info-guides-title">
+        <aside className={styles.guideRail}>
           <p className="section-kicker">{t('info.guidesKicker')}</p>
-          <h3>{t('info.guidesTitle')}</h3>
+          <h3 id="info-guides-title">{t('info.guidesTitle')}</h3>
           <p>{t('info.guidesText')}</p>
-        </div>
+          <nav className={styles.guideNav} aria-label={t('info.guidesTitle')}>
+            {guideIds.map((guide, index) => <GuideLink key={guide} guide={guide} index={index} />)}
+          </nav>
+        </aside>
 
-        <div className={styles.guidesGrid}>
-          {guides.map((guide) => (
-            <article className={styles.guideCard} key={guide}>
-              <span className={styles.guideNumber}>{String(guides.indexOf(guide) + 1).padStart(2, '0')}</span>
-              <div>
-                <h4>{t(`info.guide.${guide}.title`)}</h4>
-                <p>{t(`info.guide.${guide}.text`)}</p>
-              </div>
-              <ol>
-                <li>{t(`info.guide.${guide}.step1`)}</li>
-                <li>{t(`info.guide.${guide}.step2`)}</li>
-                <li>{t(`info.guide.${guide}.step3`)}</li>
-              </ol>
-            </article>
-          ))}
-        </div>
-
-        <div className={styles.mobileGuideList}>
-          {guides.map((guide, index) => (
-            <details className={styles.mobileGuideDetails} key={guide} open={index === 0}>
-              <summary>
-                <span className={styles.guideNumber}>{String(index + 1).padStart(2, '0')}</span>
-                <span>
-                  <strong>{t(`info.guide.${guide}.title`)}</strong>
-                  <small>{t(`info.guide.${guide}.text`)}</small>
-                </span>
-              </summary>
-              <ol>
-                <li>{t(`info.guide.${guide}.step1`)}</li>
-                <li>{t(`info.guide.${guide}.step2`)}</li>
-                <li>{t(`info.guide.${guide}.step3`)}</li>
-              </ol>
-            </details>
-          ))}
+        <div className={styles.guideStack}>
+          {guideIds.map((guide, index) => <GuideArticle key={guide} guide={guide} index={index} />)}
         </div>
       </section>
     </section>

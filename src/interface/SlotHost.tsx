@@ -1,4 +1,4 @@
-import type { ElementType } from 'react';
+import { Suspense, type ElementType } from 'react';
 import { isFeatureEnabled } from '../shared/features';
 import { getSlotContributions } from './registry';
 import { isCapabilitySatisfied } from './registry/capabilityFilters';
@@ -19,7 +19,11 @@ export function SlotHost<TContext>({ slot, context, className, as: Host = 'div',
 
   const children = contributions.map((contribution) => {
     const Contribution = contribution.Component;
-    return <Contribution key={`${contribution.sourcePath}:${contribution.id}`} context={context} slot={slot} />;
+    return (
+      <Suspense key={`${contribution.sourcePath}:${contribution.id}`} fallback={null}>
+        <Contribution context={context} slot={slot} />
+      </Suspense>
+    );
   });
 
   if (Host === null) return <>{children}</>;

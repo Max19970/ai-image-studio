@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { InterfaceTheme, StudioSettings } from '../../domain/studioSettings';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
 import type { SettingsCommands } from '../../interface/context/commands';
@@ -67,6 +67,13 @@ export function SettingsPage({
   };
 
   const isDirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(settings), [draft, settings]);
+
+  useEffect(() => {
+    if (!saved || isDirty) return undefined;
+    const timeout = window.setTimeout(() => setSaved(false), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [isDirty, saved]);
+
   const activeTheme = draft.interfaceTheme ?? 'glass';
 
   const sectionContext: Omit<SettingsSectionContext, 'variant'> = {

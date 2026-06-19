@@ -1,11 +1,11 @@
 import type { ElementDefinition } from '../../../../interface/registry/types';
 import type { SettingsLayoutZoneContext } from '../../settingsTypes';
-import { SettingsPageHeadingSection } from './SettingsPageHeadingSection';
+import { lazyElementComponent } from '../../../../interface/registry/lazyElement';
 
 const definition: ElementDefinition<SettingsLayoutZoneContext> = {
   id: 'settingsLayout.header',
   label: 'Settings page heading',
-  Component: SettingsPageHeadingSection
+  Component: lazyElementComponent(() => import('./SettingsPageHeadingSection'), 'SettingsPageHeadingSection')
 };
 
 export default definition;

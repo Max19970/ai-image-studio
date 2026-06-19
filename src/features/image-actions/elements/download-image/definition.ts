@@ -8,6 +8,7 @@ type DownloadImageActionProps = {
   variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'default' | 'compact' | 'micro';
   tone?: 'neutral' | 'danger' | 'accent';
+  fullWidth?: boolean;
 };
 
 export default {

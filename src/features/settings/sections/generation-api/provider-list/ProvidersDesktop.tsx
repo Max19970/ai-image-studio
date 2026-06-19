@@ -1,5 +1,5 @@
 import { useI18n } from '../../../../../i18n';
-import { Button } from '../../../../../shared/ui';
+import { Button, EntityList, EntityListItem, SideInspector } from '../../../../../shared/ui';
 import { EmptyState } from '../../../components/SettingsControls';
 import type { SettingsSectionContext } from '../../../settingsTypes';
 import styles from '../GenerationApiDesktopPanels.module.css';
@@ -25,42 +25,46 @@ export function ProvidersDesktop({ context }: { context: SettingsSectionContext 
             <h4>{t('settings.providers')}</h4>
             <p>{t('settings.providersHint')}</p>
           </div>
-          <Button variant="secondary" onClick={addProvider}>+ {t('settings.addProvider')}</Button>
+          <Button variant="secondary" size="micro" onClick={addProvider}>+ {t('settings.addProvider')}</Button>
         </div>
 
-        <div className={styles.entityList}>
+        <EntityList density="comfortable" className={styles.entityList}>
           {draft.providers.map((provider) => {
             const relatedModels = draft.models.filter((model) => model.providerId === provider.id).length;
             return (
-              <button
-                type="button"
+              <EntityListItem
                 key={provider.id}
-                className={`${styles.entityCard} ${provider.id === selectedProvider?.id ? styles.active : ''}`}
+                title={provider.name || t('settings.unnamedProvider')}
+                description={provider.generationEndpoint || t('detail.notSet')}
+                meta={t('settings.modelsCount', { count: relatedModels })}
+                leading={<span className={styles.entityMarker} aria-hidden="true" />}
+                selected={provider.id === selectedProvider?.id}
                 onClick={() => {
                   setSelectedProviderId(provider.id);
                   const model = firstModelForProvider(draft, provider.id);
                   if (model) setSelectedModelId(model.id);
                 }}
-              >
-                <strong>{provider.name || t('settings.unnamedProvider')}</strong>
-                <span>{provider.generationEndpoint || t('detail.notSet')}</span>
-                <small>{t('settings.modelsCount', { count: relatedModels })}</small>
-              </button>
+              />
             );
           })}
-        </div>
+        </EntityList>
       </section>
 
-      <section className={styles.inspectorPanel}>
+      <SideInspector
+        className={styles.inspectorPanel}
+        density="compact"
+        title={selectedProvider ? (selectedProvider.name || t('settings.unnamedProvider')) : t('settings.providerEditor')}
+        description={selectedProvider ? selectedProvider.generationEndpoint || t('detail.notSet') : t('settings.noProvidersText')}
+      >
         {selectedProvider ? (
-          <>
+          <div className={styles.inspectorBody}>
             <ProviderEditor context={context} />
             <ProviderCheckCard context={context} />
-          </>
+          </div>
         ) : (
           <EmptyState title={t('settings.noProviders')} text={t('settings.noProvidersText')} />
         )}
-      </section>
+      </SideInspector>
     </div>
   );
 }

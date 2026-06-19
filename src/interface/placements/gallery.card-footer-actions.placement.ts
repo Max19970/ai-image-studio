@@ -4,13 +4,16 @@ import { galleryCardToImageDownload, type ImageDownloadActionContext } from '../
 
 export default [
   {
-    id: 'gallery.card-footer.download-image',
-    slot: 'gallery/card-footer-actions',
+    id: 'gallery.card-menu.download-image',
+    slot: 'gallery/card-menu-actions',
     use: 'imageActions.downloadImage',
     order: 10,
     props: {
-      labelKey: 'gallery.download',
-      presentation: 'link'
+      labelKey: 'gallery.actionDownload',
+      presentation: 'button',
+      variant: 'ghost',
+      size: 'compact',
+      fullWidth: true
     },
     enabled: (context) => Boolean(context.activeImage),
     adaptContext: galleryCardToImageDownload

@@ -76,11 +76,11 @@ const listen = () => new Promise((resolve) => server.listen(port, host, resolve)
 const stop = () => new Promise((resolve) => server.close(resolve));
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function seed(page) {
-  await page.evaluateOnNewDocument((data) => {
-    localStorage.setItem(data.tasksKey, JSON.stringify(data.tasks));
-    localStorage.setItem(data.paramsKey, JSON.stringify(data.params));
-  }, seedData);
+async function seed(page, scenario) {
+  await page.evaluateOnNewDocument((data, tasks) => {
+    localStorage.setItem(data.tasksKey, JSON.stringify(tasks));
+    localStorage.setItem(data.paramsKey, JSON.stringify({ ...data.params, ...data.paramsOverride }));
+  }, { ...seedData, paramsOverride: scenario.seedParams ?? {} }, scenario.seedTasks ?? seedData.tasks);
 }
 
 async function visibleHandles(page, selector) {
@@ -130,15 +130,27 @@ async function runStep(page, step, viewportName, scenarioName) {
   if (step.type === 'click') await clickFirstVisible(page, step.selector, Boolean(step.optional));
   if (step.type === 'openTab') await openTab(page, step.tab);
   if (step.type === 'scroll') await page.evaluate((y) => window.scrollTo(0, y), step.y ?? 0);
+  if (step.type === 'clearTasks') {
+    await page.evaluate((key) => localStorage.setItem(key, '[]'), seedData.tasksKey);
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 20000 });
+    await wait(step.waitMs ?? 450);
+    await page.waitForSelector('.studio-app, [data-testid="detail-page"]');
+  }
   if (step.type === 'closeModal') {
     await page.evaluate((selector) => document.querySelector(selector)?.dispatchEvent(new MouseEvent('click', { bubbles: true })), step.selector).catch(() => {});
     await wait(160);
   }
   if (step.type === 'keyboard') await page.keyboard.press(step.key);
+  if (step.type === 'upload') {
+    const input = await page.$(step.selector);
+    if (!input) throw new Error(`No input element for upload selector: ${step.selector}`);
+    const files = Array.isArray(step.files) ? step.files : [step.file];
+    await input.uploadFile(...files.map((file) => path.resolve(root, file)));
+  }
   if (step.type === 'screenshot') await screenshot(page, viewportName, scenarioName);
 }
 
-async function bootPage(browser, viewportName) {
+async function bootPage(browser, viewportName, scenario) {
   const page = await browser.newPage();
   try {
     page.setDefaultTimeout(15000);
@@ -150,7 +162,7 @@ async function bootPage(browser, viewportName) {
       if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) request.abort();
       else request.continue();
     });
-    await seed(page);
+    await seed(page, scenario);
     await page.goto(`http://${host}:${port}/`, { waitUntil: 'domcontentloaded', timeout: 20000 });
     await wait(450);
     await page.waitForSelector('.studio-app, [data-testid="detail-page"]');
@@ -163,14 +175,14 @@ async function bootPage(browser, viewportName) {
 
 function isRecoverableCaptureError(error) {
   const message = `${String(error?.message || error)} ${String(error?.cause?.message || '')}`;
-  return /detached Frame|Attempted to use detached Frame|frame got detached|Target closed|Session closed|Connection closed/i.test(message);
+  return /detached Frame|Attempted to use detached Frame|frame got detached|Navigating frame was detached|Target closed|Session closed|Connection closed/i.test(message);
 }
 
 async function launchBrowser() {
   return puppeteer.launch({
     executablePath: process.env.CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
     headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--font-render-hinting=none', '--proxy-server=direct://', '--proxy-bypass-list=*', '--disable-features=BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessSendPreflights']
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--font-render-hinting=none', '--proxy-server=direct://', '--proxy-bypass-list=*', '--disable-features=BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessSendPreflights']
   });
 }
 
@@ -181,7 +193,7 @@ async function captureScenario(viewportName, scenario) {
     let page;
     try {
       browser = await launchBrowser();
-      page = await bootPage(browser, viewportName);
+      page = await bootPage(browser, viewportName, scenario);
       for (const step of scenario.steps) await runStep(page, step, viewportName, scenario.name);
       return;
     } catch (error) {
@@ -197,19 +209,47 @@ async function captureScenario(viewportName, scenario) {
   }
 }
 
+const unknownViewports = selectedViewportNames.filter((viewportName) => !viewports[viewportName]);
+if (unknownViewports.length) {
+  console.error(`Unknown viewport(s): ${unknownViewports.join(', ')}. Available: ${Object.keys(viewports).join(', ')}`);
+  process.exit(1);
+}
+
+const scenarioByName = new Map(scenarios.map((scenario) => [scenario.name, scenario]));
+const unknownScenarios = selectedScenarioNames.filter((scenarioName) => !scenarioByName.has(scenarioName));
+if (unknownScenarios.length) {
+  console.error(`Unknown scenario(s): ${unknownScenarios.join(', ')}. Available: ${scenarios.map((item) => item.name).join(', ')}`);
+  process.exit(1);
+}
+
+const failures = [];
+const completed = [];
+
 await listen();
 try {
   for (const viewportName of selectedViewportNames) {
-    if (!viewports[viewportName]) throw new Error(`Unknown viewport: ${viewportName}. Available: ${Object.keys(viewports).join(', ')}`);
     for (const scenarioName of selectedScenarioNames) {
-      const scenario = scenarios.find((item) => item.name === scenarioName);
-      if (!scenario) throw new Error(`Unknown scenario: ${scenarioName}. Available: ${scenarios.map((item) => item.name).join(', ')}`);
+      const scenario = scenarioByName.get(scenarioName);
       console.log(`Capturing ${viewportName}/${scenario.name}...`);
-      await captureScenario(viewportName, scenario);
-      console.log(`Captured ${viewportName}/${scenario.name}`);
+      try {
+        await captureScenario(viewportName, scenario);
+        completed.push(`${viewportName}/${scenario.name}`);
+        console.log(`Captured ${viewportName}/${scenario.name}`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        failures.push({ viewportName, scenarioName: scenario.name, message });
+        console.error(`Failed ${viewportName}/${scenario.name}: ${message}`);
+      }
     }
   }
+
   console.log(`Screenshots saved to ${outDir}`);
+  console.log(`Screenshot capture summary: ${completed.length} completed, ${failures.length} failed.`);
+  if (failures.length) {
+    console.error('Failed screenshot scenarios:');
+    failures.forEach((failure) => console.error(`  - ${failure.viewportName}/${failure.scenarioName}: ${failure.message}`));
+    process.exitCode = 1;
+  }
 } finally {
   await stop();
 }

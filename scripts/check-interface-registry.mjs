@@ -19,8 +19,12 @@ function walk(dir, predicate = () => true) {
   return out;
 }
 
+function toPosixPath(file) {
+  return file.replace(/[\\/]+/g, '/');
+}
+
 function rel(file) {
-  return path.relative(root, file).replaceAll(path.sep, '/');
+  return toPosixPath(path.relative(root, file));
 }
 
 function stripComments(source) {
@@ -53,7 +57,7 @@ function duplicateEntries(items) {
   return duplicates;
 }
 
-const definitionFiles = walk(featuresDir, (file) => file.endsWith('/definition.ts'));
+const definitionFiles = walk(featuresDir, (file) => toPosixPath(file).endsWith('/definition.ts'));
 const definitions = definitionFiles.map((file) => ({
   file: rel(file),
   id: matchStringProperty(fs.readFileSync(file, 'utf8'), 'id')
@@ -89,8 +93,10 @@ const reusableDefinitionIds = Array.from(
   }, new Map())
 ).filter(([, count]) => count > 1).sort(([a], [b]) => a.localeCompare(b));
 
-const legacySlotRuntimeFiles = walk(legacySlotsDir, (file) => !file.endsWith('/types.ts') && !file.endsWith('types.ts'))
-  .filter((file) => !rel(file).endsWith('src/interface/slots/types.ts'));
+const legacySlotRuntimeFiles = walk(
+  legacySlotsDir,
+  (file) => !toPosixPath(file).endsWith('/types.ts') && !toPosixPath(file).endsWith('types.ts')
+).filter((file) => !rel(file).endsWith('src/interface/slots/types.ts'));
 
 const issues = [
   ...missingDefinitionIds.map((item) => `Definition without stable id: ${item.file}`),

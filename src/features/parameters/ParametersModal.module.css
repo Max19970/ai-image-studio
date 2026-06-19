@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 1000;
   display: grid;
   place-items: center;
   padding: 18px;
@@ -10,13 +10,19 @@
 }
 
 .shell {
-  width: min(900px, calc(100vw - 36px));
-  max-height: 92vh;
-  overflow: auto;
+  position: relative;
+  display: flex;
+  width: min(1180px, calc(100vw - 36px));
+  max-height: min(84dvh, 760px);
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--line-strong);
-  border-radius: 18px;
-  padding: 20px;
-  background: rgba(31,31,31,.82);
+  border-radius: 24px;
+  padding: 0;
+  background:
+    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 30%),
+    rgba(25,25,27,.88);
   box-shadow: 0 30px 100px rgba(0,0,0,.48), 0 24px 80px rgba(0,0,0,.32);
   backdrop-filter: blur(28px) saturate(135%);
 }
@@ -26,7 +32,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 14px;
+  border-bottom: 1px solid var(--surface-border-soft);
+  padding: 18px 20px 16px;
+  background: rgba(255,255,255,.028);
 }
 
 .subcopy {
@@ -36,13 +44,20 @@
 }
 
 .warningStack {
-  margin-bottom: 12px;
+  margin: 12px 20px 0;
+}
+
+.closeButton {
+  flex: 0 0 auto;
+}
+
+.doneButton {
+  min-width: 82px;
 }
 
 .body {
-  max-height: min(68vh, 720px);
+  min-height: 0;
   overflow: auto;
-  padding-right: 4px;
 }
 
 .body :global(.panel-heading) {
@@ -63,7 +78,79 @@
 }
 
 .footer {
+  position: relative;
+  z-index: 4;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  margin-top: 18px;
+  min-height: 62px;
+  border-top: 1px solid var(--surface-border-soft);
+  padding: 10px 20px 14px;
+  background: color-mix(in srgb, rgba(25,25,27,.94) 92%, transparent);
+  box-shadow: 0 -18px 34px rgba(0,0,0,.18);
+}
+
+
+@media (max-width: 860px) {
+  .backdrop {
+    place-items: stretch;
+    padding: 0;
+    background: rgba(0,0,0,.64);
+  }
+
+  .shell {
+    width: 100%;
+    max-height: none;
+    height: 100dvh;
+    border-inline: 0;
+    border-radius: 0;
+    padding: 0;
+    background: var(--surface-floating);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    align-items: flex-start;
+    padding: 14px 12px 12px;
+    border-bottom: 1px solid var(--surface-border-soft);
+    background: color-mix(in srgb, var(--surface-floating) 92%, transparent);
+    backdrop-filter: var(--surface-blur-strong);
+  }
+
+  .closeButton {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 16px;
+    font-size: 18px;
+  }
+
+  .subcopy {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .body {
+    min-height: 0;
+    overflow: auto;
+    padding: 10px 12px 0;
+  }
+
+  .doneButton {
+    min-width: 96px;
+    min-height: 38px;
+    border-radius: 13px;
+  }
+
+  .footer {
+    position: relative;
+    min-height: 58px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--surface-border-soft);
+    background: color-mix(in srgb, var(--surface-floating) 94%, transparent);
+    box-shadow: 0 -12px 28px rgba(0,0,0,.18);
+    backdrop-filter: var(--surface-blur-strong);
+  }
 }

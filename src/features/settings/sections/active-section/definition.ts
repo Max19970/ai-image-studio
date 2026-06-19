@@ -1,11 +1,11 @@
 import type { ElementDefinition } from '../../../../interface/registry/types';
 import type { SettingsLayoutZoneContext } from '../../settingsTypes';
-import { SettingsActiveSection } from './SettingsActiveSection';
+import { lazyElementComponent } from '../../../../interface/registry/lazyElement';
 
 const definition: ElementDefinition<SettingsLayoutZoneContext> = {
   id: 'settingsLayout.activeSection',
   label: 'Settings active section',
-  Component: SettingsActiveSection
+  Component: lazyElementComponent(() => import('./SettingsActiveSection'), 'SettingsActiveSection')
 };
 
 export default definition;

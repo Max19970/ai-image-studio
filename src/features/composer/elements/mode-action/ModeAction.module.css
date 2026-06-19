@@ -1,8 +1,0 @@
-.wrapper {
-  --slot-contribution-kind: mode;
-  position: relative;
-}
-
-.open {
-  --composer-popover-open: 1;
-}

@@ -1,11 +1,11 @@
 import type { ElementDefinition } from '../../../../interface/registry/types';
 import type { SettingsLayoutZoneContext } from '../../settingsTypes';
-import { SettingsDesktopContentSection } from './SettingsDesktopContentSection';
+import { lazyElementComponent } from '../../../../interface/registry/lazyElement';
 
 const definition: ElementDefinition<SettingsLayoutZoneContext> = {
   id: 'settingsLayout.desktopContent',
   label: 'Settings desktop content shell',
-  Component: SettingsDesktopContentSection,
+  Component: lazyElementComponent(() => import('./SettingsDesktopContentSection'), 'SettingsDesktopContentSection'),
   enabled: (context) => context.variant === 'desktop'
 };
 

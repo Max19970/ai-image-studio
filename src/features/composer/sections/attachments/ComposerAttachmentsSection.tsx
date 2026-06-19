@@ -13,9 +13,9 @@ export function ComposerAttachmentsSection({ context }: ElementDefinitionProps<C
     <AttachmentImageStrip
       items={context.attachments}
       onRemove={context.actions.removeAttachment}
-      className={styles.attachmentStrip}
+      className={styles.attachmentTray}
       ariaLabel={t('composer.attachmentsAria')}
-      size="regular"
+      size={context.expanded ? 'regular' : 'compact'}
     />
   );
 }

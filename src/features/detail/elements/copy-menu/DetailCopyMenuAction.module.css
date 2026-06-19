@@ -1,0 +1,44 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.menuPanel {
+  overflow: hidden;
+  border: 1px solid var(--surface-border-strong);
+  border-radius: 18px;
+  padding: 6px;
+  background: var(--surface-floating);
+  box-shadow: var(--surface-shadow-floating);
+  backdrop-filter: var(--surface-blur-strong);
+}
+
+.actionList {
+  display: grid;
+  gap: 3px;
+  min-width: 188px;
+}
+
+.actionList button {
+  justify-content: flex-start;
+  min-height: 36px;
+  border-radius: 12px;
+  padding-inline: 10px;
+  text-align: left;
+}
+
+.mobileSheet .actionList {
+  gap: 4px;
+}
+
+.mobileSheet .actionList button {
+  min-height: 42px;
+  border-radius: 13px;
+  font-size: 13px;
+}
+
+@media (max-width: 860px) {
+  .menuPanel {
+    display: none;
+  }
+}

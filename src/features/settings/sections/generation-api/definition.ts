@@ -1,6 +1,6 @@
 import type { ElementDefinition } from '../../../../interface/registry/types';
 import type { SettingsSectionContext, SettingsSectionVariant } from '../../settingsTypes';
-import { GenerationApiSettingsSection } from './GenerationApiSettingsSection';
+import { lazyElementComponent } from '../../../../interface/registry/lazyElement';
 
 type GenerationApiSettingsSectionProps = {
   variant: SettingsSectionVariant;
@@ -9,7 +9,7 @@ type GenerationApiSettingsSectionProps = {
 const definition: ElementDefinition<SettingsSectionContext, GenerationApiSettingsSectionProps> = {
   id: 'settingsSections.generationApi',
   label: 'Generation API settings section',
-  Component: GenerationApiSettingsSection,
+  Component: lazyElementComponent(() => import('./GenerationApiSettingsSection'), 'GenerationApiSettingsSection'),
   defaultProps: {
     variant: 'desktop'
   }

@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { BatchComposerDraft } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
 import type { BatchComposerCommands } from '../../interface/context/commands';
 import { useI18n } from '../../i18n';
 import { SlotHost } from '../../interface/SlotHost';
+import { useEventCallback } from '../../shared/hooks/useEventCallback';
 import type { BatchComposerLayoutContext } from './batchComposerTypes';
 import styles from './MultiImageComposer.module.css';
 
@@ -27,8 +28,63 @@ export function MultiImageComposer({
   commands
 }: Props) {
   const { t } = useI18n();
-  const totalImages = drafts.reduce((sum, draft) => sum + Math.max(1, Number(draft.params.n || 1)), 0);
-  const validDrafts = drafts.filter((draft) => draft.params.prompt.trim() && (draft.mode === 'generate' || draft.targetImage)).length;
+  const [selectedDraftId, setSelectedDraftId] = useState<string | null>(() => drafts[0]?.id ?? null);
+
+  useEffect(() => {
+    if (drafts.length === 0) {
+      setSelectedDraftId(null);
+      return;
+    }
+    if (!selectedDraftId || !drafts.some((draft) => draft.id === selectedDraftId)) {
+      setSelectedDraftId(drafts[0].id);
+    }
+  }, [drafts, selectedDraftId]);
+
+  const setIntervalSeconds = useEventCallback(commands.setIntervalSeconds);
+  const patchDraft = useEventCallback(commands.patchDraft);
+  const patchDraftParams = useEventCallback(commands.patchDraftParams);
+  const addDraft = useEventCallback(commands.addDraft);
+  const duplicateDraft = useEventCallback(commands.duplicateDraft);
+  const removeDraft = useEventCallback(commands.removeDraft);
+  const openParameters = useEventCallback(commands.openParameters);
+  const submit = useEventCallback(commands.submit);
+  const close = useEventCallback(commands.close);
+
+  const totalImages = useMemo(
+    () => drafts.reduce((sum, draft) => sum + Math.max(1, Number(draft.params.n || 1)), 0),
+    [drafts]
+  );
+
+  const validDrafts = useMemo(() => drafts.filter((draft) => {
+    const hasPrompt = Boolean(draft.params.prompt.trim());
+    const hasImages = Boolean(draft.targetImage) || draft.referenceImages.length > 0 || Boolean(draft.mask);
+    return hasPrompt && (draft.mode === 'generate' || hasImages);
+  }).length, [drafts]);
+
+  const selectedDraftIndex = useMemo(() => drafts.findIndex((draft) => draft.id === selectedDraftId), [drafts, selectedDraftId]);
+
+  const contextActions = useMemo<BatchComposerLayoutContext['actions']>(() => ({
+    changeIntervalSeconds: setIntervalSeconds,
+    changeDraft: patchDraft,
+    changeDraftParams: patchDraftParams,
+    selectDraft: setSelectedDraftId,
+    addDraft,
+    duplicateDraft,
+    removeDraft,
+    openParameters,
+    submit,
+    cancel: close
+  }), [
+    setIntervalSeconds,
+    patchDraft,
+    patchDraftParams,
+    addDraft,
+    duplicateDraft,
+    removeDraft,
+    openParameters,
+    submit,
+    close
+  ]);
 
   const context = useMemo<BatchComposerLayoutContext>(() => ({
     drafts,
@@ -39,17 +95,9 @@ export function MultiImageComposer({
     providers,
     totalImages,
     validDrafts,
-    actions: {
-      changeIntervalSeconds: commands.setIntervalSeconds,
-      changeDraft: commands.patchDraft,
-      changeDraftParams: commands.patchDraftParams,
-      addDraft: commands.addDraft,
-      duplicateDraft: commands.duplicateDraft,
-      removeDraft: commands.removeDraft,
-      openParameters: commands.openParameters,
-      submit: commands.submit,
-      cancel: commands.close
-    }
+    selectedDraftId,
+    selectedDraftIndex,
+    actions: contextActions
   }), [
     drafts,
     intervalSeconds,
@@ -59,15 +107,9 @@ export function MultiImageComposer({
     providers,
     totalImages,
     validDrafts,
-    commands.setIntervalSeconds,
-    commands.patchDraft,
-    commands.patchDraftParams,
-    commands.addDraft,
-    commands.duplicateDraft,
-    commands.removeDraft,
-    commands.openParameters,
-    commands.submit,
-    commands.close
+    selectedDraftId,
+    selectedDraftIndex,
+    contextActions
   ]);
 
   return (

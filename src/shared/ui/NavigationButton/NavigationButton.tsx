@@ -6,7 +6,7 @@ const cx = (...values: Array<string | false | null | undefined>) => values.filte
 export interface NavigationButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
   icon?: ReactNode;
-  variant?: 'list' | 'rail' | 'card' | 'mobile';
+  variant?: 'list' | 'rail' | 'card' | 'mobile' | 'bottom';
 }
 
 export function NavigationButton({

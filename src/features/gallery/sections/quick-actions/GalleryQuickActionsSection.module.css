@@ -1,0 +1,91 @@
+.trigger {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(8,8,8,.52);
+  color: var(--text);
+  backdrop-filter: blur(12px) saturate(125%);
+  box-shadow: 0 10px 24px rgba(0,0,0,.20);
+  cursor: pointer;
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-soft), background var(--motion-duration-fast) var(--motion-ease-soft), transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+
+.dotsIcon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  opacity: .92;
+}
+
+.trigger:hover,
+.trigger:focus-visible,
+.trigger[aria-expanded="true"] {
+  border-color: rgba(255,255,255,.30);
+  background: rgba(255,255,255,.14);
+  transform: translateY(-1px);
+}
+
+.menuPanel {
+  overflow: hidden;
+  border: 1px solid var(--surface-border-strong);
+  border-radius: 18px;
+  padding: 6px;
+  background: var(--surface-floating);
+  box-shadow: var(--surface-shadow-floating);
+  backdrop-filter: var(--surface-blur-strong);
+}
+
+.actionList {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.actionList :global(a),
+.actionList :global(button),
+.actionItem {
+  justify-content: flex-start;
+  min-height: 34px;
+  border-radius: 12px;
+  padding-inline: 10px;
+  text-align: left;
+  text-decoration: none;
+}
+
+.actionList :global(a) {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobileSheet .actionList {
+  gap: 4px;
+}
+
+.mobileSheet .actionList :global(a),
+.mobileSheet .actionList :global(button) {
+  min-height: 42px;
+  border-radius: 13px;
+  font-size: 13px;
+}
+
+@media (max-width: 860px) {
+  .trigger {
+    width: 34px;
+    height: 34px;
+  }
+
+  .menuPanel {
+    display: none;
+  }
+}
+
+.mobileSheet {
+  max-height: min(38dvh, 330px);
+}

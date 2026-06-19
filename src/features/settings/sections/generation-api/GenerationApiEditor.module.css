@@ -2,10 +2,6 @@
   display: grid;
   gap: 12px;
   min-width: 0;
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 18px;
-  padding: 14px;
-  background: rgba(0,0,0,.14);
 }
 
 .editorHead {
@@ -13,6 +9,8 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  border-bottom: 1px solid var(--surface-border-soft);
+  padding-bottom: 10px;
 }
 
 .editorHead strong {
@@ -24,7 +22,7 @@
 .fieldGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
 .checkCard {
@@ -34,10 +32,10 @@
   align-items: start;
   gap: 8px;
   min-width: 0;
-  border: 1px solid rgba(255,255,255,.085);
-  border-radius: 16px;
-  padding: 12px;
-  background: rgba(0,0,0,.13);
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px 11px;
+  background: rgba(0,0,0,.10);
 }
 
 .checkCard.wide {

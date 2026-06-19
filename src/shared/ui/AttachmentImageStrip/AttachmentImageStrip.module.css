@@ -1,8 +1,9 @@
 .strip {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   overflow-x: auto;
+  overflow-y: visible;
   padding: 0;
 }
 
@@ -45,9 +46,9 @@
 }
 
 .compact {
-  flex-basis: 58px;
-  width: 58px;
-  height: 58px;
+  flex-basis: 48px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
 }
 
@@ -61,7 +62,8 @@
   box-shadow: 0 0 0 1px rgba(255,210,143,.08), 0 12px 28px rgba(0,0,0,.20);
 }
 
-.roleReference {
+.roleReference,
+.roleImage {
   border-color: rgba(255,255,255,.20);
   box-shadow: 0 0 0 1px rgba(255,255,255,.035), 0 12px 28px rgba(0,0,0,.18);
 }
@@ -94,8 +96,7 @@
 }
 
 .chip:hover .openButton img {
-  transform: scale(1.045);
-  filter: saturate(1.04);
+  transform: scale(1.025);
 }
 
 .removeButton {
@@ -185,13 +186,14 @@
   color: #ffe4bb;
 }
 
-.badgeReference {
+.badgeReference,
+.badgeImage {
   border-color: rgba(255,255,255,.24);
   background: rgba(24,24,24,.68);
   color: rgba(244,244,241,.9);
 }
 
-@media (max-width: 620px) {
+@media (max-width: 620px), (pointer: coarse) {
   .strip {
     gap: 7px;
     scroll-snap-type: x proximity;
@@ -199,9 +201,24 @@
   }
 
   .chip {
-    flex-basis: 64px;
-    width: 64px;
-    height: 64px;
+    flex-basis: 56px;
+    width: 56px;
+    height: 56px;
+  }
+
+  .compact {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .removeButton {
+    top: 5px;
+    right: 5px;
+    width: 22px;
+    height: 22px;
+    opacity: 1;
+    transform: none;
   }
 }
 

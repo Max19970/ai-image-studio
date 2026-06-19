@@ -18,6 +18,7 @@ interface StripProps {
 function roleBadge(role: AttachmentPreviewItem['role'], t: (key: string) => string) {
   if (role === 'target') return t('attachment.badge.target');
   if (role === 'mask') return t('attachment.badge.mask');
+  if (role === 'image') return t('attachment.badge.image');
   return t('attachment.badge.reference');
 }
 
@@ -28,12 +29,14 @@ function cx(...values: Array<string | false | null | undefined>) {
 function roleClass(role: AttachmentPreviewItem['role']) {
   if (role === 'target') return styles.roleTarget;
   if (role === 'mask') return styles.roleMask;
+  if (role === 'image') return styles.roleImage;
   return styles.roleReference;
 }
 
 function badgeClass(role: AttachmentPreviewItem['role']) {
   if (role === 'target') return styles.badgeTarget;
   if (role === 'mask') return styles.badgeMask;
+  if (role === 'image') return styles.badgeImage;
   return styles.badgeReference;
 }
 

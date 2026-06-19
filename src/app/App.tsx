@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { ImageDetailPage } from '../features/detail/ImageDetailPage';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useI18n } from '../i18n';
 import { SlotHost } from '../interface/SlotHost';
 import type { WorkspaceComposerDockContext, WorkspaceModalsContext } from '../interface/context/workspace/composerDock';
@@ -7,12 +6,25 @@ import type { WorkspaceMainContext } from '../interface/context/workspace/main';
 import type { WorkspaceSidebarContext } from '../interface/context/workspace/sidebar';
 import { useWorkspaceViewModel } from './workspace/useWorkspaceViewModel';
 
+const ImageDetailPage = lazy(() =>
+  import('../features/detail/ImageDetailPage').then((module) => ({ default: module.ImageDetailPage }))
+);
+
 export function App() {
   const { t } = useI18n();
   const workspace = useWorkspaceViewModel(t);
   const { state, derived, commands, contexts } = workspace;
   const [motionLock, setMotionLock] = useState(false);
+  const [documentHidden, setDocumentHidden] = useState(false);
   const mountedRef = useRef(false);
+
+
+  useEffect(() => {
+    const syncVisibility = () => setDocumentHidden(document.visibilityState === 'hidden');
+    syncVisibility();
+    document.addEventListener('visibilitychange', syncVisibility);
+    return () => document.removeEventListener('visibilitychange', syncVisibility);
+  }, []);
 
   useEffect(() => {
     if (!mountedRef.current) {
@@ -30,17 +42,19 @@ export function App() {
 
   if (derived.selectedTask) {
     return (
-      <ImageDetailPage
-        task={derived.selectedTask}
-        image={derived.selectedImage}
-        commands={commands.detail}
-      />
+      <Suspense fallback={null}>
+        <ImageDetailPage
+          task={derived.selectedTask}
+          image={derived.selectedImage}
+          commands={commands.detail}
+        />
+      </Suspense>
     );
   }
 
   return (
     <main
-      className={`studio-app ${state.sidebarCollapsed ? 'sidebar-is-collapsed' : ''} ${state.batchComposerOpen ? 'batch-composer-is-open' : ''} ${motionLock ? 'motion-is-transitioning' : ''}`}
+      className={`studio-app ${state.sidebarCollapsed ? 'sidebar-is-collapsed' : ''} ${state.batchComposerOpen ? 'batch-composer-is-open' : ''} ${motionLock ? 'motion-is-transitioning' : ''} ${documentHidden ? 'motion-is-backgrounded' : ''}`}
       data-theme={state.studioSettings.interfaceTheme}
     >
       <div className="studio-noise" aria-hidden="true" />

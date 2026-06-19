@@ -5,10 +5,16 @@ import type { WorkMode } from '../../domain/workMode';
 import type { ComposerCommands } from '../../interface/context/commands';
 import { useI18n } from '../../i18n';
 import { SlotHost } from '../../interface/SlotHost';
-import type { AttachmentPreviewItem } from '../../shared/image/attachmentPreviewTypes';
+import { useEventCallback } from '../../shared/hooks/useEventCallback';
+import type { AttachmentPreviewItem } from '../../shared/image';
 import type { ComposerActionContext, ComposerLayoutContext, ComposerModelOption, ComposerPopoverId } from './composerTypes';
-import { getReferenceAttachmentId, useAttachmentPreviewItems } from '../../shared/image/useAttachmentPreviewItems';
+import { getReferenceAttachmentId, useFlatAttachmentPreviewItems } from '../../shared/image';
+import { getProviderModelOptions, getSelectedModel } from '../../entities/provider/modelOptions';
 import styles from './ComposerLayout.module.css';
+
+function cx(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(' ');
+}
 
 interface Props {
   mode: WorkMode;
@@ -41,47 +47,76 @@ export function ImageComposer({
 }: Props) {
   const { t } = useI18n();
   const [openPopover, setOpenPopover] = useState<ComposerPopoverId>(null);
-  const targetRef = useRef<HTMLInputElement | null>(null);
-  const refsRef = useRef<HTMLInputElement | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const attachmentsRef = useRef<HTMLInputElement | null>(null);
   const maskRef = useRef<HTMLInputElement | null>(null);
-  const selectedModel = models.find((model) => model.id === selectedModelId) ?? models[0] ?? null;
+  const selectedModel = useMemo(() => getSelectedModel(models, selectedModelId), [models, selectedModelId]);
+  const setMode = useEventCallback(commands.setMode);
+  const setModel = useEventCallback(commands.setModel);
+  const setPrompt = useEventCallback(commands.setPrompt);
+  const submit = useEventCallback(commands.submit);
+  const openParameters = useEventCallback(commands.openParameters);
+  const openBatchComposer = useEventCallback(commands.openBatchComposer);
+  const setTargetImage = useEventCallback(commands.setTargetImage);
+  const setReferenceImages = useEventCallback(commands.setReferenceImages);
+  const setMask = useEventCallback(commands.setMask);
 
-  const attachmentLabels = useMemo(() => ({
-    target: t('composer.role.target'),
-    reference: (index: number) => t('composer.role.ref', { index }),
-    mask: t('composer.role.mask')
-  }), [t]);
+  const flatImages = useMemo(() => [
+    ...(targetImage ? [{ id: 'target', file: targetImage, role: 'image' as const }] : []),
+    ...referenceImages.map((file, index) => ({ id: getReferenceAttachmentId(file, index), file, role: 'image' as const })),
+    ...(mask ? [{ id: 'mask', file: mask, role: 'mask' as const, label: t('composer.mask') }] : [])
+  ], [targetImage, referenceImages, mask, t]);
 
-  const attachments = useAttachmentPreviewItems({ targetImage, referenceImages, mask, labels: attachmentLabels });
+  const getAttachmentLabel = useCallback((index: number) => t('composer.imageAttachmentLabel', { index }), [t]);
 
-  const modelOptions = useMemo<ComposerModelOption[]>(() => models.map((model) => {
-    const provider = providers.find((item) => item.id === model.providerId);
-    return {
-      value: model.id,
-      label: model.name || model.modelId,
-      description: [model.modelId, provider?.name].filter(Boolean).join(' · ')
-    };
-  }), [models, providers]);
+  const attachments = useFlatAttachmentPreviewItems({
+    images: flatImages,
+    label: getAttachmentLabel
+  });
+  const hasImageAttachments = attachments.length > 0;
+  const hasStatusContent = Boolean(statusText) || (mode === 'edit' && !hasImageAttachments);
+  const revealSecondary = expanded || hasStatusContent;
+
+  const modelOptions = useMemo<ComposerModelOption[]>(() => getProviderModelOptions(models, providers), [models, providers]);
 
   const removeAttachment = useCallback((item: AttachmentPreviewItem) => {
-    if (item.role === 'target') commands.setTargetImage(null);
-    if (item.role === 'mask') commands.setMask(null);
-    if (item.role === 'reference') {
-      commands.setReferenceImages(referenceImages.filter((file, index) => item.id !== getReferenceAttachmentId(file, index)));
+    if (item.id === 'target') {
+      setTargetImage(null);
+      return;
     }
-  }, [commands.setMask, commands.setReferenceImages, commands.setTargetImage, referenceImages]);
+    if (item.id === 'mask') {
+      setMask(null);
+      return;
+    }
+    setReferenceImages(referenceImages.filter((file, index) => item.id !== getReferenceAttachmentId(file, index)));
+  }, [setMask, setReferenceImages, setTargetImage, referenceImages]);
 
   const clearAttachments = useCallback(() => {
-    commands.setTargetImage(null);
-    commands.setReferenceImages([]);
-    commands.setMask(null);
+    setTargetImage(null);
+    setReferenceImages([]);
+    setMask(null);
     setOpenPopover(null);
-  }, [commands.setMask, commands.setReferenceImages, commands.setTargetImage]);
+  }, [setMask, setReferenceImages, setTargetImage]);
 
-  const addReferences = useCallback((files: File[]) => {
-    const merged = [...referenceImages, ...files].slice(0, 15);
-    commands.setReferenceImages(merged);
-  }, [commands.setReferenceImages, referenceImages]);
+  const setMaskAttachment = useCallback((file: File | null) => {
+    setMask(file);
+    if (file) setMode('edit');
+  }, [setMask, setMode]);
+
+  const clearMask = useCallback(() => {
+    setMask(null);
+  }, [setMask]);
+
+  const addAttachments = useCallback((files: File[]) => {
+    const merged = [...referenceImages, ...files].slice(0, 16);
+    setTargetImage(null);
+    setReferenceImages(merged);
+    if (merged.length > 0) setMode('edit');
+  }, [setMode, setReferenceImages, setTargetImage, referenceImages]);
+
+  const toggleExpanded = useCallback(() => {
+    setExpanded((value) => !value);
+  }, []);
 
   const submitOnEnter = useCallback((event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
@@ -92,80 +127,106 @@ export function ImageComposer({
 
   const composerActionContext = useMemo<ComposerActionContext>(() => ({
     mode,
-    targetImage,
-    referenceImages,
-    mask,
-    attachments,
+    attachmentsCount: attachments.length,
+    hasMask: Boolean(mask),
+    selectedModel,
+    modelOptions,
     openPopover,
     setOpenPopover,
     fileInputs: {
-      target: targetRef,
-      references: refsRef,
+      attachments: attachmentsRef,
       mask: maskRef
     },
     actions: {
-      setMode: commands.setMode,
-      openBatchComposer: commands.openBatchComposer,
-      openParameters: commands.openParameters,
+      setMode,
+      changeModel: setModel,
+      openBatchComposer,
+      openParameters,
       clearAttachments,
-      openTargetPicker: () => targetRef.current?.click(),
-      openReferencePicker: () => refsRef.current?.click(),
+      setMask: setMaskAttachment,
+      clearMask,
+      openAttachmentPicker: () => attachmentsRef.current?.click(),
       openMaskPicker: () => maskRef.current?.click()
     }
-  }), [mode, targetImage, referenceImages, mask, attachments, openPopover, commands.setMode, commands.openBatchComposer, commands.openParameters, clearAttachments]);
+  }), [
+    mode,
+    attachments.length,
+    mask,
+    selectedModel,
+    modelOptions,
+    openPopover,
+    setMode,
+    setModel,
+    openBatchComposer,
+    openParameters,
+    clearAttachments,
+    setMaskAttachment,
+    clearMask
+  ]);
 
   const composerLayoutContext = useMemo<ComposerLayoutContext>(() => ({
     mode,
     prompt,
     busy,
     canSubmit,
-    targetImage,
+    hasImageAttachments,
     attachments,
     selectedModel,
     modelOptions,
     statusText,
+    expanded,
+    attachmentsCount: attachments.length,
     actionContext: composerActionContext,
     actions: {
-      changePrompt: commands.setPrompt,
-      changeModel: commands.setModel,
-      submit: commands.submit,
+      changePrompt: setPrompt,
+      changeModel: setModel,
+      setExpanded,
+      toggleExpanded,
+      submit,
       handlePromptKeyDown: submitOnEnter,
       removeAttachment,
-      addReferences,
-      setTargetImage: commands.setTargetImage,
-      setMask: commands.setMask
+      addAttachments
     }
   }), [
     mode,
     prompt,
     busy,
     canSubmit,
-    targetImage,
+    hasImageAttachments,
     attachments,
     selectedModel,
     modelOptions,
     statusText,
+    expanded,
     composerActionContext,
-    commands.setPrompt,
-    commands.setModel,
-    commands.submit,
+    setPrompt,
+    setModel,
+    toggleExpanded,
+    submit,
     submitOnEnter,
     removeAttachment,
-    addReferences,
-    commands.setTargetImage,
-    commands.setMask
+    addAttachments
   ]);
 
   return (
-    <section className={styles.dock} aria-label={t('composer.aria')}>
-      <SlotHost<ComposerLayoutContext> slot="composer/attachments" context={composerLayoutContext} as={null} />
-
-      <div className={styles.main}>
-        <SlotHost<ComposerLayoutContext> slot="composer/input" context={composerLayoutContext} as={null} />
-        <SlotHost<ComposerLayoutContext> slot="composer/actions" context={composerLayoutContext} as={null} />
+    <section
+      className={cx(styles.dock, (revealSecondary || hasImageAttachments) && styles.expanded)}
+      aria-label={t('composer.aria')}
+      data-testid="composer-dock"
+      data-composer-expanded={revealSecondary ? 'true' : 'false'}
+      data-composer-attachments={attachments.length}
+    >
+      <div className={styles.commandSurface}>
+        <SlotHost<ComposerLayoutContext> slot="composer/attachments" context={composerLayoutContext} as={null} />
+        <div className={styles.promptRail}>
+          <SlotHost<ComposerLayoutContext> slot="composer/input" context={composerLayoutContext} as={null} />
+          <SlotHost<ComposerLayoutContext> slot="composer/actions" context={composerLayoutContext} as={null} />
+        </div>
       </div>
 
-      <SlotHost<ComposerLayoutContext> slot="composer/status" context={composerLayoutContext} as={null} />
+      <div className={styles.secondarySurface} hidden={!revealSecondary}>
+        <SlotHost<ComposerLayoutContext> slot="composer/status" context={composerLayoutContext} as={null} />
+      </div>
     </section>
   );
 }

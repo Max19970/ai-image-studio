@@ -28,6 +28,7 @@ export interface GalleryCardActionContext {
   task: GenerationTask;
   activeImage: GeneratedImage | null;
   galleryIndex: number;
+  onOpenTask: (image?: GeneratedImage) => void;
   onDeleteTask: () => void;
 }
 

@@ -18,29 +18,41 @@
   backdrop-filter: blur(18px) saturate(135%);
 }
 
+.footer :global(.btn-secondary),
+.submitButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.footer :global(.btn-secondary) {
+  gap: 6px;
+}
+
 .submitButton {
   min-width: min(100%, 260px);
 }
 
 @media (max-width: 860px) {
   .footer {
-    position: fixed;
-    left: 10px;
-    right: 10px;
-    bottom: max(8px, env(safe-area-inset-bottom));
-    z-index: 92;
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: 4;
     display: grid;
     grid-template-columns: .95fr 1.05fr;
     align-items: center;
     gap: 7px;
     min-height: 58px;
-    margin: 0;
+    margin: 4px 10px 0;
     border-radius: 20px;
     padding: 7px;
     background:
       radial-gradient(circle at 100% 0, color-mix(in srgb, var(--accent) 14%, transparent), transparent 44%),
       rgba(28,29,36,.92);
-    box-shadow: 0 -14px 44px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.10);
+    box-shadow: 0 12px 34px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.10);
     backdrop-filter: blur(24px) saturate(145%);
   }
 

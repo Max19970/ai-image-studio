@@ -3,7 +3,8 @@ import type { GeneratedImage, GenerationTask } from '../../../../domain/generati
 import { useI18n } from '../../../../i18n';
 import { isTerminalGenerationStatus } from '../../../../domain/generationStatus';
 import { useOptimizedImageSrc } from '../../../../shared/image';
-import { cx, expectedImageCount, statusPillToneClass } from '../../model/detailHelpers';
+import { cx, expectedImageCount } from '../../model/detailHelpers';
+import { getVisibleCarouselSlides, type CarouselSlidePlacement } from './carouselWindow';
 import styles from './DetailResultCarousel.module.css';
 
 type CarouselSlide = { type: 'image'; image: GeneratedImage } | { type: 'pending'; id: string };
@@ -30,12 +31,10 @@ function ResultCarouselSlide({ slide, className, onClick }: { slide: CarouselSli
 export function ResultCarousel({
   task,
   initialImage,
-  label,
   onSelectImage
 }: {
   task: GenerationTask;
   initialImage: GeneratedImage | null;
-  label: string;
   onSelectImage?: (image: GeneratedImage) => void;
 }) {
   const { t } = useI18n();
@@ -78,25 +77,22 @@ export function ResultCarousel({
 
   const go = (delta: number) => selectIndex(activeIndex + delta);
 
-  const activeSlide = slides[activeIndex];
-  const activeImage = activeSlide?.type === 'image' ? activeSlide.image : null;
+  const visibleSlides = useMemo(() => getVisibleCarouselSlides(slides, activeIndex), [slides, activeIndex]);
 
-  const slideClass = (index: number) => {
-    if (index === activeIndex) return styles.carouselActive;
-    if (index === (activeIndex - 1 + slides.length) % slides.length) return styles.carouselPrev;
-    if (index === (activeIndex + 1) % slides.length) return styles.carouselNext;
-    return styles.carouselHidden;
+  const placementClass = (placement: CarouselSlidePlacement) => {
+    if (placement === 'active') return styles.carouselActive;
+    if (placement === 'prev') return styles.carouselPrev;
+    return styles.carouselNext;
   };
 
   return (
     <div className={styles.carouselStage}>
-      <div className={`status-pill floating ${statusPillToneClass(task.status)} ${task.status}`}>{activeImage?.kind === 'partial' ? t('detail.partialImage') : label}</div>
       <div className={styles.carouselViewport} aria-label={t('detail.carouselAria')}>
-        {slides.map((slide, index) => (
+        {visibleSlides.map(({ slide, index, placement }) => (
           <ResultCarouselSlide
             key={slide.type === 'image' ? slide.image.id : slide.id}
             slide={slide}
-            className={slideClass(index)}
+            className={placementClass(placement)}
             onClick={() => selectIndex(index)}
           />
         ))}

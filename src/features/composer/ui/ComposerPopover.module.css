@@ -1,47 +1,61 @@
 .panel {
   display: grid;
-  gap: 8px;
+  gap: 4px;
   min-width: 250px;
-  padding: 10px;
+  max-height: calc(var(--floating-available-height, 80vh) - 8px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 7px;
   border: 1px solid rgba(255,255,255,.11);
-  border-radius: 16px;
-  background: rgba(16,17,22,.96);
+  border-radius: 15px;
+  background: rgba(15,16,21,.97);
   box-shadow: 0 18px 42px rgba(0,0,0,.30);
   animation: composerPopoverIn var(--motion-duration-fast) var(--motion-ease-soft) both;
 }
 
 .choice {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2px;
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 13px;
-  background: rgba(255,255,255,.035);
+  border: 0;
+  border-radius: 11px;
+  padding: 9px 10px;
+  background: transparent;
   color: var(--text);
   text-align: left;
+  transition: background .16s ease, color .16s ease;
 }
 
 .choice:hover,
 .choice.active {
-  background: rgba(255,255,255,.10);
-  border-color: rgba(255,255,255,.16);
+  background: rgba(255,255,255,.085);
+}
+
+.choice.active {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 68%, white 10%);
 }
 
 .choice strong {
+  overflow: hidden;
   font-size: 13px;
   font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .choice small {
+  overflow: hidden;
   color: var(--muted);
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1.36;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .choice.danger:hover {
-  border-color: rgba(255,154,169,.32);
   background: rgba(255,154,169,.08);
+  color: #ffd8de;
 }
 
 .active {
@@ -55,12 +69,12 @@
 @media (max-width: 780px) {
   .panel {
     min-width: 224px;
-    padding: 8px;
+    padding: 6px;
     border-radius: 14px;
   }
 
   .choice {
-    padding: 8px 10px;
+    padding: 9px 10px;
     border-radius: 11px;
   }
 

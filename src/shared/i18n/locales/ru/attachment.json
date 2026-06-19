@@ -21,5 +21,8 @@
   "attachment.unknown": "неизвестно",
   "attachment.size": "размер",
   "attachment.dimensions": "разрешение",
-  "attachment.modified": "изменен"
+  "attachment.modified": "изменен",
+  "attachment.badge.image": "ИЗОБР",
+  "attachment.role.image": "Изображение",
+  "attachment.hint.image": "Это прикрепленное изображение будет отправлено модели вместе с промптом."
 }

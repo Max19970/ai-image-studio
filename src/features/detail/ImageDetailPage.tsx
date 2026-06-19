@@ -15,7 +15,6 @@ interface Props {
 }
 
 export function ImageDetailPage({ task, image, commands }: Props) {
-  const [requestOpen, setRequestOpen] = useState(true);
   const expected = expectedImageCount(task);
   const hasPendingSlide = !isTerminalGenerationStatus(task.status) && task.images.length < expected;
   const shouldUseCarousel = Boolean(task.batch) || task.images.length > 1 || hasPendingSlide;
@@ -33,21 +32,21 @@ export function ImageDetailPage({ task, image, commands }: Props) {
     activeImage: hydrated.activeImage,
     fallbackActiveImage: hydrated.activeImage ?? fallbackActiveImage,
     label,
-    requestOpen,
     shouldUseCarousel,
     onBack: commands.backToGallery,
     onSelectImage: commands.selectImage,
     onRestoreRequest: commands.restoreRequest,
-    setActiveImage,
-    setRequestOpen
+    setActiveImage
   };
 
   return (
     <main className={styles.page} data-testid="detail-page">
       <div className={styles.shell}>
         <SlotHost<DetailLayoutContext> slot="detail/topbar" context={layoutContext} as={null} />
-        <SlotHost<DetailLayoutContext> slot="detail/hero" context={layoutContext} as={null} />
-        <SlotHost<DetailLayoutContext> slot="detail/request-drawer" context={layoutContext} as={null} />
+        <div className={styles.workspace} data-detail-workspace>
+          <SlotHost<DetailLayoutContext> slot="detail/hero" context={layoutContext} className={styles.stageColumn} />
+          <SlotHost<DetailLayoutContext> slot="detail/request-drawer" context={layoutContext} className={styles.inspectorColumn} />
+        </div>
       </div>
     </main>
   );

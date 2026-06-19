@@ -1,9 +1,9 @@
 import type { ElementDefinition } from '../../../../interface/registry/types';
 import type { BatchDraftLayoutContext } from '../../batchComposerTypes';
-import { BatchDraftPromptSection } from './BatchDraftPromptSection';
+import { lazyElementComponent } from '../../../../interface/registry/lazyElement';
 
 export default {
   id: 'batchComposer.sections.draftPrompt',
   label: 'Batch composer draft prompt section',
-  Component: BatchDraftPromptSection
+  Component: lazyElementComponent(() => import('./BatchDraftPromptSection'), 'BatchDraftPromptSection')
 } satisfies ElementDefinition<BatchDraftLayoutContext>;

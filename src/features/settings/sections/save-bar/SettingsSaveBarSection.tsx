@@ -7,6 +7,8 @@ import styles from '../../../settings/SettingsPage.module.css';
 
 export function SettingsSaveBarSection({ context }: ElementDefinitionProps<SettingsLayoutZoneContext>) {
   const { t } = useI18n();
+  if (!context.isDirty && !context.saved) return null;
+
   const className = context.variant === 'mobile'
     ? `${styles.mobileSaveStrip} glass-panel`
     : `${styles.saveBar} glass-panel`;

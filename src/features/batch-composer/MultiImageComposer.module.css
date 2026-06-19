@@ -1,12 +1,16 @@
 .stage {
+  display: flex;
   width: min(1120px, calc(100vw - 180px));
   max-width: 100%;
+  min-height: 100vh;
   margin: 0 auto;
   padding: 28px 16px 42px;
+  align-items: center;
 }
 
 .shell {
   display: flex;
+  width: 100%;
   flex-direction: column;
   gap: 18px;
   padding: clamp(18px, 2vw, 28px);
@@ -26,10 +30,12 @@
 
 @media (max-width: 860px) {
   .stage {
+    display: block;
     width: 100%;
     max-width: none;
+    min-height: auto;
     margin: 0;
-    padding: 0 0 calc(84px + env(safe-area-inset-bottom));
+    padding: 0 0 max(10px, env(safe-area-inset-bottom));
   }
 
   .shell {

@@ -5,5 +5,5 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 
 export function LoadComposerAction({ context }: ElementDefinitionProps<DetailActionContext>) {
   const { t } = useI18n();
-  return <Button variant="secondary" tone="accent" onClick={() => context.onRestoreRequest?.(context.snapshot)}>{t('detail.loadComposer')}</Button>;
+  return <Button variant="primary" onClick={() => context.onRestoreRequest?.(context.snapshot)}>{t('detail.loadComposer')}</Button>;
 }

@@ -3,13 +3,13 @@ import { SlotHost } from '../../../../interface/SlotHost';
 import type { DetailActionContext, DetailLayoutContext } from '../../../../interface/context/workspace/detail';
 import { useI18n } from '../../../../i18n';
 import { ResultCarousel } from '../carousel/DetailResultCarousel';
-import { cx, statusPillToneClass } from '../../model/detailHelpers';
+import { cx } from '../../model/detailHelpers';
 import { DetailThumb } from './DetailThumb';
 import styles from './DetailHeroSection.module.css';
 
 export function DetailHeroSection({ context }: ElementDefinitionProps<DetailLayoutContext>) {
   const { t } = useI18n();
-  const { task, activeImage, fallbackActiveImage, label, shouldUseCarousel, requestOpen } = context;
+  const { task, activeImage, fallbackActiveImage, label, shouldUseCarousel } = context;
   const snapshot = task.request;
   const detailActionContext: DetailActionContext = {
     activeImage,
@@ -33,12 +33,10 @@ export function DetailHeroSection({ context }: ElementDefinitionProps<DetailLayo
             <ResultCarousel
               task={task}
               initialImage={fallbackActiveImage}
-              label={label}
               onSelectImage={selectImage}
             />
           ) : activeImage ? (
             <>
-              <div className={`status-pill floating ${statusPillToneClass(task.status)} ${task.status}`}>{label}</div>
               <img className={styles.singleImage} src={activeImage.src} alt={t('detail.generatedAlt', { index: activeImage.index + 1 })} loading="eager" decoding="async" />
             </>
           ) : (
@@ -48,16 +46,6 @@ export function DetailHeroSection({ context }: ElementDefinitionProps<DetailLayo
               <p>{task.status === 'failed' ? (task.error || t('detail.failedFallback')) : t('detail.processingFallback')}</p>
             </div>
           )}
-
-          <button
-            type="button"
-            className={cx(styles.foldoutButton, requestOpen && styles.open)}
-            onClick={() => context.setRequestOpen((value) => !value)}
-            aria-expanded={requestOpen}
-          >
-            <span>{requestOpen ? t('detail.hideDetails') : t('detail.showDetails')}</span>
-            <strong aria-hidden="true">⌄</strong>
-          </button>
         </div>
 
         {task.images.length > 1 && (

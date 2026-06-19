@@ -1,0 +1,79 @@
+.inspector {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-inspector);
+  box-shadow: var(--surface-shadow-inspector);
+  backdrop-filter: var(--surface-blur-soft);
+}
+
+.sticky {
+  position: sticky;
+  top: 18px;
+  align-self: start;
+  max-height: calc(100dvh - 36px);
+}
+
+.header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--surface-border-soft);
+}
+
+.copy {
+  min-width: 0;
+}
+
+.copy h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 690;
+  letter-spacing: -.02em;
+}
+
+.copy p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.comfortable .header,
+.comfortable .body {
+  padding: var(--density-comfortable-padding);
+}
+
+.compact .header,
+.compact .body {
+  padding: var(--density-compact-padding);
+}
+
+.compact .copy h2 {
+  font-size: 13px;
+}
+
+.compact .copy p {
+  font-size: 11px;
+}

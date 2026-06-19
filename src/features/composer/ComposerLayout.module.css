@@ -1,45 +1,82 @@
 .dock {
   position: fixed;
-  left: calc(var(--sidebar-width) + max(22px, (100vw - var(--sidebar-width) - 760px) / 2));
+  left: calc(var(--sidebar-width) + max(20px, (100vw - var(--sidebar-width) - 860px) / 2));
   bottom: 18px;
   z-index: 30;
-  width: min(760px, calc(100vw - var(--sidebar-width) - 44px));
-  max-width: calc(100vw - var(--sidebar-width) - 44px);
-  border: 1px solid var(--line-strong);
-  border-radius: 18px;
-  padding: 8px;
-  background: rgba(49, 51, 59, .78);
-  box-shadow: 0 22px 70px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+  width: min(860px, calc(100vw - var(--sidebar-width) - 40px));
+  max-width: calc(100vw - var(--sidebar-width) - 40px);
+  border: 1px solid color-mix(in srgb, var(--line-strong) 88%, transparent);
+  border-radius: 22px;
+  padding: 7px;
+  background:
+    radial-gradient(circle at 92% 0%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 42%),
+    rgba(32, 33, 39, .80);
+  box-shadow: 0 22px 70px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08);
   backdrop-filter: blur(28px) saturate(145%);
   animation: composerFadeSlideUp var(--motion-duration-slow) var(--motion-ease-soft);
 }
 
-.main {
-  display: grid;
-  gap: 7px;
+
+:global(.batch-composer-is-open) .dock {
+  display: none;
 }
 
-.attachmentStrip {
-  padding: 0 0 8px;
+.expanded {
+  background:
+    radial-gradient(circle at 92% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 42%),
+    rgba(35, 36, 43, .86);
+}
+
+.commandSurface {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 18px;
+  padding: 5px;
+  background: rgba(13, 14, 18, .52);
+}
+
+.promptRail {
+  display: grid;
+  grid-template-columns: 38px minmax(240px, 1fr) 38px;
+  grid-template-areas: 'controls prompt send';
+  align-items: end;
+  gap: 6px;
 }
 
 .promptWrap {
   position: relative;
+  grid-area: prompt;
+  min-width: 0;
 }
 
 .promptWrap textarea {
+  display: block;
   width: 100%;
   min-height: 44px;
-  max-height: 190px;
+  max-height: none;
   resize: none;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
-  padding: 11px 40px 11px 13px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 15px;
+  padding: 12px 42px 12px 13px;
   outline: none;
-  background: rgba(18,19,24,.86);
+  background: rgba(0,0,0,.18);
   color: var(--text);
   font-size: 13px;
-  line-height: 1.48;
+  line-height: 1.45;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+
+.promptWrap textarea[data-prompt-state='collapsed'],
+.promptWrap textarea[data-prompt-state='focused'] {
+  white-space: pre-wrap;
+}
+
+.promptWrap textarea:focus {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent);
 }
 
 .promptWrap textarea::placeholder {
@@ -51,31 +88,27 @@
   top: 9px;
   right: 9px;
   display: grid;
-  width: 24px;
-  height: 24px;
+  width: 25px;
+  height: 25px;
   place-items: center;
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 999px;
-  background: rgba(255,255,255,.07);
+  padding: 0;
+  background: rgba(255,255,255,.065);
   color: var(--text);
   font-size: 15px;
   line-height: 1;
-  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
 }
 
 .clearPromptButton:hover {
   border-color: var(--line-strong);
   background: rgba(255,255,255,.14);
-  color: var(--text);
   transform: scale(1.03);
 }
 
 .actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 32px;
+  display: contents;
 }
 
 .actions input {
@@ -84,126 +117,37 @@
 
 .actionsLeft,
 .actionsRight {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  gap: 7px;
-}
-
-.actionsLeft {
-  flex: 1 1 auto;
-}
-
-.actionsRight {
-  flex: 0 0 auto;
-}
-
-.modelSelect {
-  display: inline-flex;
-  flex: 0 1 230px;
-  width: 230px;
-  max-width: 38vw;
-  min-width: 165px;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 999px;
-  padding: 2px 4px 2px 8px;
-  background:
-    radial-gradient(circle at 85% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 45%),
-    rgba(255,255,255,.045);
-}
-
-.modelSelect > span {
-  color: var(--faint);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .09em;
-  text-transform: uppercase;
-}
-
-.modelPopover {
-  width: 100%;
-}
-
-.modelTrigger {
-  min-height: 26px;
-  border: 0;
-  border-radius: 999px;
-  padding: 4px 7px;
-  background: rgba(255,255,255,.055);
-}
-
-.modelTrigger :global(.popover-select-copy strong) {
-  max-width: 128px;
-  font-size: 11px;
-}
-
-.modelTrigger :global(.popover-select-copy small) {
-  display: none;
-}
-
-.modelTrigger :global(.popover-select-chevron) {
-  font-size: 10px;
-}
-
-.modelPanel {
-  width: min(320px, calc(100vw - 42px));
-}
-
-.modelPanel :global(.popover-select-option-copy strong) {
-  font-size: 12px;
-}
-
-.modelPanel :global(.popover-select-option-copy small) {
-  white-space: normal;
-  line-height: 1.35;
+  display: contents;
 }
 
 .toolCluster {
+  grid-area: controls;
   display: flex;
+  align-self: end;
+  justify-self: start;
   align-items: center;
   gap: 5px;
 }
 
-.hint,
-.note {
-  color: var(--faint);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.hint {
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-.note {
-  margin: 7px 2px 0;
-}
-
-.noteStrong {
-  color: var(--text);
-}
 
 .sendButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
+  grid-area: send;
+  display: inline-grid;
+  align-self: end;
+  justify-self: end;
   flex: none;
+  width: 34px;
+  height: 34px;
+  place-items: center;
   border: 1px solid rgba(255,255,255,.38);
-  border-radius: 999px;
   padding: 0;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+  border-radius: 999px;
   background: var(--accent);
   color: var(--accent-ink);
   font-size: 16px;
-  font-weight: 620;
+  font-weight: 700;
   line-height: 1;
-  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
 }
 
 .sendButton:hover:not(:disabled) {
@@ -211,24 +155,61 @@
   transform: translateY(-1px);
 }
 
+.sendButton:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+
+.secondarySurface {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 5px 2px;
+}
+
+.secondarySurface[hidden] {
+  display: none;
+}
+
+.attachmentTray {
+  min-width: 0;
+  max-height: 52px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 1px 2px 0;
+}
+
 .statusRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
-  padding: 8px 2px 2px;
+  justify-content: flex-start;
+  gap: 6px;
+  min-width: 0;
 }
 
-@media (max-width: 1100px) {
-  .hint {
-    display: none;
-  }
+.note {
+  margin: 0;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: rgba(255,255,255,.035);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.noteStrong {
+  color: var(--text);
 }
 
 @media (max-width: 860px) {
   .dock {
     left: 12px;
     right: 12px;
-    bottom: 12px;
+    bottom: calc(var(--mobile-bottom-nav-space, 72px) + 4px);
     width: auto;
     max-width: none;
   }
@@ -236,168 +217,157 @@
 
 @media (max-width: 620px) {
   .dock {
-    border-radius: 24px;
-    padding: 8px;
+    max-height: min(46dvh, 420px);
+    border-radius: 24px 24px 20px 20px;
+    padding: 6px;
+    overflow: hidden;
     background:
-      radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 42%),
-      rgba(28, 29, 36, .88);
+      radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 42%),
+      rgba(28, 29, 36, .90);
+  }
+
+  
+:global(.batch-composer-is-open) .dock {
+  display: none;
+}
+
+.expanded {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .commandSurface {
+    gap: 4px;
+    border-radius: 19px;
+    padding: 4px;
+  }
+
+  .promptRail {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    grid-template-areas: 'controls prompt send';
+    align-items: end;
+    gap: 5px;
+  }
+
+  .promptWrap {
+    grid-area: prompt;
   }
 
   .promptWrap textarea {
-    min-height: 50px;
-    max-height: 34dvh;
-    border-radius: 17px;
-    padding: 13px 44px 13px 14px;
-    font-size: 16px;
-    line-height: 1.42;
+    min-height: 42px;
+    max-height: none;
+    border-radius: 15px;
+    padding: 10px 37px 10px 13px;
+    font-size: 15px;
+    line-height: 1.35;
+    overflow-y: auto;
+    scrollbar-width: none;
   }
 
-  .clearPromptButton {
-    top: 11px;
-    right: 11px;
-    width: 28px;
-    height: 28px;
-  }
-
-  .actions {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: end;
-    gap: 9px;
-    min-height: 0;
-  }
-
-  .actionsLeft,
-  .actionsRight {
-    width: auto;
-    gap: 8px;
-  }
-
-  .actionsLeft {
-    flex-wrap: wrap;
-  }
-
-  .actionsRight {
-    justify-content: flex-end;
-  }
-
-  .modelSelect {
-    order: -2;
-    flex: 1 0 100%;
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-    border-radius: 16px;
-  }
-
-  .modelTrigger {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .toolCluster {
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .sendButton {
-    min-width: 74px;
-    width: 74px;
-    height: 38px;
-    border-radius: 14px;
-    padding: 0 12px;
-    font-size: 12px;
-  }
-
-  .hint {
+  .promptWrap textarea::-webkit-scrollbar {
     display: none;
   }
 
-  .statusRow {
-    margin-top: 7px;
-  }
-
-  .note {
-    font-size: 11px;
-    line-height: 1.35;
-  }
-}
-
-@media (max-width: 460px) {
-  .promptWrap textarea {
-    max-height: 112px;
-    border-radius: 17px;
-    padding: 12px 42px 12px 13px;
-    font-size: 14px;
-    line-height: 1.35;
+  .promptWrap textarea:focus {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
   }
 
   .clearPromptButton {
     top: 9px;
     right: 9px;
+    width: 26px;
+    height: 26px;
   }
 
-  .actions {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 7px;
+  .actions,
+  .actionsLeft,
+  .actionsRight {
+    display: contents;
   }
 
-  .actionsLeft {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 7px;
-  }
-
-  .modelSelect {
-    min-height: 38px;
-    border-radius: 16px;
-    padding: 4px 6px 4px 10px;
-  }
-
-  .modelSelect > span {
-    display: none;
-  }
-
-  .modelTrigger {
-    min-height: 36px;
-  }
 
   .toolCluster {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 7px;
+    grid-area: controls;
+    display: flex;
+    min-width: 0;
   }
 
   .sendButton {
-    width: 100%;
-    min-width: 0;
-    height: 38px;
-    border-radius: 15px;
-    padding: 0;
+    grid-area: send;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    border-radius: 999px;
     font-size: 0;
   }
 
   .sendButton::before {
     content: '↑';
     color: var(--accent-ink);
-    font-size: 18px;
+    font-size: 19px;
   }
 
-  .actionsRight {
-    width: 66px;
+  .secondarySurface {
+    align-items: stretch;
+    gap: 8px;
+    padding: 9px 2px 1px;
   }
+
+  .attachmentTray {
+    max-height: 50px;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 0 1px;
+  }
+
 
   .statusRow {
-    max-height: 34px;
+    justify-content: flex-start;
+    min-width: 0;
+    max-height: 48px;
     overflow: auto;
-    margin-top: 4px;
-    padding: 0 3px 2px;
   }
 
   .note {
-    margin: 0;
-    font-size: 11px;
-    line-height: 1.25;
+    border-radius: 12px;
+    font-size: 10px;
+    line-height: 1.3;
+    text-transform: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .dock {
+    left: 7px;
+    right: 7px;
+    bottom: calc(var(--mobile-bottom-nav-space, 72px) + 4px);
+    border-radius: 22px;
+  }
+
+  .promptRail {
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    gap: 5px;
+  }
+
+  .promptWrap textarea {
+    max-height: none;
+    border-radius: 15px;
+    padding: 10px 37px 10px 14px;
+    font-size: 14px;
+    line-height: 1.34;
+    white-space: pre;
+  }
+
+  .clearPromptButton {
+    top: 8px;
+    right: 8px;
+  }
+
+  .sendButton {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
   }
 }
 

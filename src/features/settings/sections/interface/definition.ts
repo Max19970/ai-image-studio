@@ -1,6 +1,6 @@
 import type { ElementDefinition } from '../../../../interface/registry/types';
 import type { SettingsSectionContext, SettingsSectionVariant } from '../../settingsTypes';
-import { InterfaceSettingsSection } from './InterfaceSettingsSection';
+import { lazyElementComponent } from '../../../../interface/registry/lazyElement';
 
 type InterfaceSettingsSectionProps = {
   variant: SettingsSectionVariant;
@@ -9,7 +9,7 @@ type InterfaceSettingsSectionProps = {
 const definition: ElementDefinition<SettingsSectionContext, InterfaceSettingsSectionProps> = {
   id: 'settingsSections.interface',
   label: 'Interface settings section',
-  Component: InterfaceSettingsSection,
+  Component: lazyElementComponent(() => import('./InterfaceSettingsSection'), 'InterfaceSettingsSection'),
   defaultProps: {
     variant: 'desktop'
   }

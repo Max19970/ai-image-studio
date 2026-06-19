@@ -1,19 +1,23 @@
 .topbar {
-  position: sticky;
-  top: 12px;
-  z-index: 30;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 12px 14px;
-  background: rgba(31,31,31,.78);
-  box-shadow: 0 18px 64px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06);
-  animation: fadeSlideDown .24s ease both;
-  backdrop-filter: blur(22px) saturate(130%);
+  gap: 10px;
+  min-height: 56px;
+  margin-bottom: 14px;
+  padding: 8px 10px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.06), transparent 46%),
+    var(--surface-workspace);
+  box-shadow: var(--surface-shadow-floating);
+  animation: fadeSlideDown .22s ease both;
+}
+
+.backButton,
+.statusPill {
+  flex: 0 0 auto;
 }
 
 .titleBlock {
@@ -23,46 +27,77 @@
 
 .titleBlock h1 {
   margin: 0;
-  font-size: 20px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 690;
+  letter-spacing: -.025em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .titleBlock p {
-  margin: 4px 0 0;
-}
-
-@media (max-width: 860px) {
-  .topbar {
-    top: max(8px, env(safe-area-inset-top));
-  }
+  margin: 3px 0 0;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 760px) {
   .topbar {
-    position: static;
-    align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px 10px;
+    min-height: 0;
+    margin-bottom: 10px;
+    padding: 9px;
+  }
+
+  .backButton {
+    justify-self: start;
+    min-width: 0;
+  }
+
+  .statusPill {
+    justify-self: end;
   }
 
   .titleBlock {
+    grid-column: 1 / -1;
     text-align: left;
+  }
+
+  .titleBlock h1 {
+    overflow: visible;
+    font-size: 20px;
+    font-weight: 780;
+    line-height: 1.08;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .titleBlock p {
+    margin-top: 4px;
+    white-space: normal;
   }
 }
 
 @media (max-width: 560px) {
+  .statusPill {
+    display: none;
+  }
+
   .topbar {
-    gap: 8px;
-    margin-bottom: 10px;
-    border-radius: 16px;
-    padding: 8px;
+    grid-template-columns: 1fr;
   }
 
   .titleBlock h1 {
-    font-size: 18px;
-    letter-spacing: -.04em;
+    font-size: 19px;
   }
 }
 
 @keyframes fadeSlideDown {
-  from { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }

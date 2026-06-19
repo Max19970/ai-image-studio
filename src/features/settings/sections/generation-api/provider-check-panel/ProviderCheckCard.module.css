@@ -1,11 +1,9 @@
 .providerCheckCard {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 18px;
-  padding: 14px;
-  background: rgba(0,0,0,.14);
+  border-top: 1px solid var(--surface-border-soft);
+  padding-top: 12px;
 }
 
 .providerCheckCard p {
@@ -24,14 +22,14 @@
 .probeActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .quickCheckResult {
   display: grid;
   gap: 4px;
-  border-radius: 14px;
-  padding: 10px 11px;
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
   font-size: 12px;
 }
 

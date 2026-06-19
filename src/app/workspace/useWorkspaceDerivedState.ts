@@ -37,8 +37,9 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     if (state.params.sizeMode === 'custom') {
       payloadWarnings.push(...validateCustomSize(state.params.width, state.params.height));
     }
-    if (state.mode === 'edit' && !state.targetImage) {
-      payloadWarnings.push(t('app.warningEditNeedsTarget'));
+    const hasEditImages = Boolean(state.targetImage) || state.referenceImages.length > 0 || Boolean(state.mask);
+    if (state.mode === 'edit' && !hasEditImages) {
+      payloadWarnings.push(t('app.warningEditNeedsImage'));
     }
     if (!activeModel) {
       payloadWarnings.push(t('app.warningNoModel'));
@@ -53,6 +54,8 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     state.params.width,
     state.params.height,
     state.targetImage,
+    state.referenceImages,
+    state.mask,
     activeModel,
     t
   ]);
@@ -61,7 +64,7 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     Boolean(activeModel) &&
     !rawJsonError &&
     state.params.prompt.trim().length > 0 &&
-    (state.mode === 'generate' || Boolean(state.targetImage));
+    (state.mode === 'generate' || Boolean(state.targetImage) || state.referenceImages.length > 0 || Boolean(state.mask));
 
   const selectedTask = state.selectedTaskId
     ? state.tasks.find((task) => task.id === state.selectedTaskId) ?? null
@@ -80,7 +83,7 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
       const { model, provider: draftProvider } = providerContextForModel(state.studioSettings, draft.selectedModelId);
       if (!model) return false;
       if (!draft.params.prompt.trim()) return false;
-      if (draft.mode === 'edit' && !draft.targetImage) return false;
+      if (draft.mode === 'edit' && !draft.targetImage && draft.referenceImages.length === 0 && !draft.mask) return false;
       try {
         buildImagePayload(draft.params, draftProvider, draft.mode);
         return true;
@@ -104,14 +107,17 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
       if (activeBatchDraft.params.sizeMode === 'custom') {
         draftWarnings.push(...validateCustomSize(activeBatchDraft.params.width, activeBatchDraft.params.height));
       }
-      if (activeBatchDraft.mode === 'edit' && !activeBatchDraft.targetImage) {
-        draftWarnings.push(t('app.warningEditNeedsTarget'));
+      const hasDraftEditImages = Boolean(activeBatchDraft.targetImage) || activeBatchDraft.referenceImages.length > 0 || Boolean(activeBatchDraft.mask);
+      if (activeBatchDraft.mode === 'edit' && !hasDraftEditImages) {
+        draftWarnings.push(t('app.warningEditNeedsImage'));
       }
       return draftWarnings;
     } catch (e) {
       return [e instanceof Error ? e.message : String(e)];
     }
   }, [activeBatchDraft, state.studioSettings, state.capabilityReport, t]);
+
+  const composerStatusText = rawJsonError || (currentTask?.status === 'succeeded' ? null : getStatusText(currentTask, t));
 
   return {
     activeModel,
@@ -127,6 +133,6 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     activeBatchDraft,
     batchCanSubmit,
     batchWarnings,
-    statusText: rawJsonError || getStatusText(currentTask, t)
+    statusText: composerStatusText
   };
 }

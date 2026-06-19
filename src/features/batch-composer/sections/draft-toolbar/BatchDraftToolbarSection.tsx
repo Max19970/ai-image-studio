@@ -1,26 +1,74 @@
+import { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
-import { Button, PopoverSelect } from '../../../../shared/ui';
+import { BottomSheet, FloatingPopover, PopoverSelect } from '../../../../shared/ui';
 import type { BatchDraftLayoutContext } from '../../batchComposerTypes';
 import { useI18n } from '../../../../i18n';
+import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import styles from './BatchDraftToolbarSection.module.css';
+import menuStyles from './BatchDraftControlsMenu.module.css';
 
-export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<BatchDraftLayoutContext>) {
+function MenuContent({ context, close }: { context: BatchDraftLayoutContext; close: () => void }) {
   const { t } = useI18n();
 
-  const addReferencesFromInput = (event: ChangeEvent<HTMLInputElement>) => {
-    context.actions.addReferences(Array.from(event.target.files ?? []));
-    event.currentTarget.value = '';
+  const setMode = (mode: BatchDraftLayoutContext['draft']['mode']) => {
+    context.actions.patchDraft({ mode });
+    close();
+  };
+
+  const openImages = () => {
+    context.fileInputs.attachments.current?.click();
+    close();
+  };
+
+  const openMask = () => {
+    context.fileInputs.mask.current?.click();
+    close();
+  };
+
+  const clearMask = () => {
+    context.actions.patchDraft({ mask: null });
+    close();
+  };
+
+  const openParameters = () => {
+    context.actions.openParameters();
+    close();
+  };
+
+  const duplicateDraft = () => {
+    context.actions.duplicateDraft();
+    close();
+  };
+
+  const removeDraft = () => {
+    context.actions.removeDraft();
+    close();
+  };
+
+  const clearAttachments = () => {
+    context.actions.clearAttachments();
+    close();
   };
 
   return (
-    <div className={styles.toolbar}>
-      <input ref={context.fileInputs.target} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { context.actions.patchDraft({ targetImage: event.target.files?.[0] ?? null, mode: 'edit' }); event.currentTarget.value = ''; }} />
-      <input ref={context.fileInputs.references} type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={addReferencesFromInput} />
-      <input ref={context.fileInputs.mask} type="file" accept="image/png" onChange={(event) => { context.actions.patchDraft({ mask: event.target.files?.[0] ?? null, mode: 'edit' }); event.currentTarget.value = ''; }} />
+    <div className={menuStyles.menu}>
+      <div className={menuStyles.group}>
+        <span className={menuStyles.groupTitle}>{t('composer.mode')}</span>
+        <div className={menuStyles.modeGrid}>
+          <button type="button" className={menuStyles.modeButton} data-active={context.draft.mode === 'generate'} onClick={() => setMode('generate')}>
+            <strong>{t('composer.generate')}</strong>
+            <small>{t('composer.modeGenerateDescription')}</small>
+          </button>
+          <button type="button" className={menuStyles.modeButton} data-active={context.draft.mode === 'edit'} onClick={() => setMode('edit')}>
+            <strong>{t('composer.edit')}</strong>
+            <small>{t('composer.modeEditDescription')}</small>
+          </button>
+        </div>
+      </div>
 
-      <div className={styles.modelSelect}>
-        <span>{t('composer.model')}</span>
+      <div className={menuStyles.group}>
+        <span className={menuStyles.groupTitle}>{t('composer.model')}</span>
         <PopoverSelect
           value={context.selectedModel?.id ?? ''}
           options={context.modelOptions}
@@ -28,19 +76,139 @@ export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<Bat
           ariaLabel={t('composer.model')}
           placeholder={t('detail.notSet')}
           emptyText={t('app.warningNoModel')}
-          className={styles.modelPopover}
+          className={menuStyles.menuModelSelect}
+          triggerClassName={menuStyles.menuModelTrigger}
+          panelClassName={menuStyles.menuModelPanel}
           matchAnchorWidth={false}
-          minWidth={300}
-          triggerClassName={styles.modelTrigger}
-          panelClassName={styles.modelPanel}
+          minWidth={280}
         />
       </div>
 
-      <Button size="micro" className={styles.toolbarButton} onClick={() => context.fileInputs.target.current?.click()}>{t('composer.target')}</Button>
-      <Button size="micro" className={styles.toolbarButton} onClick={() => context.fileInputs.references.current?.click()}>{t('composer.refs')}</Button>
-      <Button size="micro" className={styles.toolbarButton} onClick={() => context.fileInputs.mask.current?.click()}>{t('composer.mask')}</Button>
-      {context.attachmentsCount > 0 && <Button size="micro" tone="danger" className={`${styles.toolbarButton} ${styles.toolbarWideButton}`} onClick={context.actions.clearAttachments}>× {t('composer.clearAttachments')}</Button>}
-      <Button size="micro" tone="accent" className={`${styles.toolbarButton} ${styles.toolbarWideButton}`} onClick={context.actions.openParameters}>{t('composer.params')}</Button>
+      <div className={menuStyles.group}>
+        <span className={menuStyles.groupTitle}>{t('composer.actions')}</span>
+        <button type="button" className={menuStyles.action} onClick={openImages}>
+          <span className={menuStyles.icon} aria-hidden="true">＋</span>
+          <span className={menuStyles.copy}>
+            <strong>{t('composer.addImages')}</strong>
+            <small>{t('composer.addImagesDescription')}</small>
+          </span>
+        </button>
+        <button type="button" className={menuStyles.action} onClick={openMask}>
+          <span className={menuStyles.icon} aria-hidden="true">◌</span>
+          <span className={menuStyles.copy}>
+            <strong>{context.draft.mask ? t('composer.replaceMask') : t('composer.addMask')}</strong>
+            <small>{t('composer.addMaskDescription')}</small>
+          </span>
+        </button>
+        {context.draft.mask && (
+          <button type="button" className={menuStyles.action} onClick={clearMask}>
+            <span className={menuStyles.icon} aria-hidden="true">−</span>
+            <span className={menuStyles.copy}>
+              <strong>{t('composer.clearMask')}</strong>
+              <small>{t('composer.clearMaskDescription')}</small>
+            </span>
+          </button>
+        )}
+        <button type="button" className={menuStyles.action} onClick={openParameters}>
+          <span className={menuStyles.icon} aria-hidden="true">⚙</span>
+          <span className={menuStyles.copy}>
+            <strong>{t('composer.paramsTitle')}</strong>
+            <small>{t('composer.paramsDescription')}</small>
+          </span>
+        </button>
+        <button type="button" className={menuStyles.action} onClick={duplicateDraft}>
+          <span className={menuStyles.icon} aria-hidden="true">⧉</span>
+          <span className={menuStyles.copy}>
+            <strong>{t('batch.duplicate')}</strong>
+            <small>{t('batch.requestLabel', { index: context.index + 1 })}</small>
+          </span>
+        </button>
+        {context.canRemove && (
+          <button type="button" className={`${menuStyles.action} ${menuStyles.danger}`} onClick={removeDraft}>
+            <span className={menuStyles.icon} aria-hidden="true">×</span>
+            <span className={menuStyles.copy}>
+              <strong>{t('batch.remove')}</strong>
+              <small>{t('batch.requestLabel', { index: context.index + 1 })}</small>
+            </span>
+          </button>
+        )}
+        {context.attachmentsCount > 0 && (
+          <button type="button" className={`${menuStyles.action} ${menuStyles.danger}`} onClick={clearAttachments}>
+            <span className={menuStyles.icon} aria-hidden="true">×</span>
+            <span className={menuStyles.copy}>
+              <strong>{t('composer.clearAttachments')}</strong>
+              <small>{t('composer.clearAttachmentsDescription')}</small>
+            </span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<BatchDraftLayoutContext>) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const isMobile = useMediaQuery('(max-width: 860px)');
+  const close = () => setOpen(false);
+
+  const addAttachmentsFromInput = (event: ChangeEvent<HTMLInputElement>) => {
+    context.actions.addAttachments(Array.from(event.target.files ?? []));
+    event.currentTarget.value = '';
+  };
+
+  const addMaskFromInput = (event: ChangeEvent<HTMLInputElement>) => {
+    context.actions.patchDraft({ mask: event.target.files?.[0] ?? null, mode: 'edit' });
+    event.currentTarget.value = '';
+  };
+
+  return (
+    <div className={styles.wrapper} data-slot-contribution="batch-draft-controls">
+      <input ref={context.fileInputs.attachments} data-testid="batch-draft-attachments-input" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={addAttachmentsFromInput} />
+      <input ref={context.fileInputs.mask} data-testid="batch-draft-mask-input" type="file" accept="image/png" onChange={addMaskFromInput} />
+
+      <button
+        ref={buttonRef}
+        type="button"
+        className={styles.trigger}
+        data-testid="batch-draft-controls"
+        data-open={open ? 'true' : 'false'}
+        aria-label={t('composer.controls')}
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span aria-hidden="true">⋯</span>
+        {context.attachmentsCount > 0 && <em>{context.attachmentsCount}</em>}
+      </button>
+
+      {!isMobile && (
+        <FloatingPopover
+          open={open}
+          anchorRef={buttonRef}
+          className={`${styles.popoverPanel} composer-inline-popover`}
+          placement="auto"
+          offset={10}
+          minWidth={310}
+          onDismiss={close}
+        >
+          <MenuContent context={context} close={close} />
+        </FloatingPopover>
+      )}
+
+      {isMobile && (
+        <BottomSheet
+          open={open}
+          title={t('composer.controls')}
+          description={t('composer.controlsDescription')}
+          size="content"
+          onClose={close}
+        >
+          <div className={styles.sheetBody}>
+            <MenuContent context={context} close={close} />
+          </div>
+        </BottomSheet>
+      )}
     </div>
   );
 }

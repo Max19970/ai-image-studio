@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ParameterPanel } from './ParameterPanel';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
@@ -20,7 +22,21 @@ interface Props {
 
 export function ParametersModal({ open, mode, params, provider, capabilityReport, warnings, onClose, onChange }: Props) {
   const { t } = useI18n();
-  if (!open) return null;
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      onClose();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
+
+  if (!open || typeof document === 'undefined') return null;
 
   const summarySize = params.sizeMode === 'custom'
     ? `${params.width}×${params.height}`
@@ -28,16 +44,16 @@ export function ParametersModal({ open, mode, params, provider, capabilityReport
       ? params.sizePreset
       : 'auto';
 
-  return (
-    <div className={styles.backdrop} role="dialog" aria-modal="true">
-      <section className={styles.shell} data-testid="parameters-modal">
+  return createPortal(
+    <div className={styles.backdrop} role="presentation" onMouseDown={onClose}>
+      <section className={styles.shell} data-testid="parameters-modal" role="dialog" aria-modal="true" aria-labelledby="parameters-modal-title" onMouseDown={(event) => event.stopPropagation()}>
         <header className={styles.topbar}>
           <div>
             <p className="section-kicker">{t('params.kicker')}</p>
-            <h2 className="section-title">{t('params.title')}</h2>
+            <h2 id="parameters-modal-title" className="section-title">{t('params.title')}</h2>
             <p className={styles.subcopy}>{t('params.summary', { mode: t(`gallery.mode.${mode}`), size: summarySize, n: params.n })}</p>
           </div>
-          <IconButton data-testid="parameters-modal-close" onClick={onClose} aria-label={t('attachment.close')}>×</IconButton>
+          <IconButton className={styles.closeButton} data-testid="parameters-modal-close" onClick={onClose} aria-label={t('attachment.close')}>×</IconButton>
         </header>
 
         {warnings.length > 0 && (
@@ -51,9 +67,10 @@ export function ParametersModal({ open, mode, params, provider, capabilityReport
         </div>
 
         <footer className={styles.footer}>
-          <Button variant="primary" onClick={onClose}>{t('params.done')}</Button>
+          <Button className={styles.doneButton} variant="primary" size="compact" onClick={onClose}>{t('params.done')}</Button>
         </footer>
       </section>
-    </div>
+    </div>,
+    document.body
   );
 }

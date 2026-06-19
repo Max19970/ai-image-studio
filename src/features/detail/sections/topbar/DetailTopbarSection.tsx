@@ -16,12 +16,12 @@ export function DetailTopbarSection({ context }: ElementDefinitionProps<DetailLa
 
   return (
     <header className={styles.topbar} data-detail-slot="topbar">
-      <Button variant="secondary" onClick={context.onBack}>{t('detail.back')}</Button>
+      <Button className={styles.backButton} variant="secondary" onClick={context.onBack}>{t('detail.back')}</Button>
       <div className={styles.titleBlock}>
         <h1>{title}</h1>
         <p className="muted-copy">{t('detail.statusLine', { status: label, date: new Date(task.createdAt).toLocaleString() })}</p>
       </div>
-      <div className={`status-pill ${statusPillToneClass(task.status)} ${task.status}`}>{label}</div>
+      <div className={`status-pill ${styles.statusPill} ${statusPillToneClass(task.status)} ${task.status}`}>{label}</div>
     </header>
   );
 }

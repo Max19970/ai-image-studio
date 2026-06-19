@@ -13,5 +13,6 @@
   "app.retryWaiting": "Попытка {attempt}/{total} через {seconds}с. Последняя ошибка: {error}",
   "app.cancelled": "Запрос отменён.",
   "app.status.sending": "Отправляю запрос провайдеру…",
-  "app.status.cancelled": "Запрос отменён."
+  "app.status.cancelled": "Запрос отменён.",
+  "app.warningEditNeedsImage": "Для редактирования добавь хотя бы одно изображение."
 }

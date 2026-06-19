@@ -1,13 +1,13 @@
 .workbench {
-  width: min(1240px, calc(100% - 44px));
+  width: min(1520px, calc(100% - 44px));
   margin: 0 auto;
-  padding: 48px 0 220px;
+  padding: 34px 0 220px;
   animation: settingsPageIn var(--motion-duration-medium) var(--motion-ease-soft) both;
 }
 
 .desktopView {
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
 .mobileView {
@@ -39,16 +39,20 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  border-radius: 20px;
-  padding: 12px 14px;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  background: var(--surface-floating);
+  box-shadow: var(--surface-shadow-soft);
+  backdrop-filter: var(--surface-blur-soft);
 }
 
 .saveBar strong,
 .mobileSaveStrip strong {
   display: block;
   color: var(--text);
-  font-size: 14px;
-  font-weight: 760;
+  font-size: 13px;
+  font-weight: 730;
 }
 
 .saveActions,
@@ -62,78 +66,88 @@
 
 .tabbedShell {
   display: grid;
-  grid-template-columns: 238px minmax(0, 1fr);
-  overflow: hidden;
-  border: 1px solid var(--line-strong);
-  border-radius: 24px;
-  background: rgba(31,31,31,.72);
-  backdrop-filter: blur(28px) saturate(135%);
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 620px;
+  padding: 0;
+  background: transparent;
 }
 
 .tabRail {
   display: grid;
   align-content: start;
-  gap: 8px;
-  border-right: 1px solid rgba(255,255,255,.09);
-  padding: 14px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.05), transparent 34%),
-    rgba(0,0,0,.15);
+  gap: 6px;
+  align-self: start;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-lg);
+  padding: 8px;
+  background: var(--surface-workspace);
+  box-shadow: var(--surface-shadow-soft);
+  backdrop-filter: var(--surface-blur-soft);
 }
 
 .tabPage {
   min-width: 0;
-  padding: 22px;
 }
 
 .mobileHero {
   display: grid;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  padding: 18px;
-  background:
-    radial-gradient(circle at 10% 0%, rgba(255,255,255,.10), transparent 38%),
-    rgba(255,255,255,.045);
+  gap: 4px;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: 18px;
+  padding: 11px 12px;
+  background: var(--surface-workspace);
 }
 
 .mobileHero h2 {
   margin: 0;
   color: var(--text);
-  font-size: clamp(26px, 9vw, 42px);
+  font-size: clamp(22px, 6vw, 29px);
   font-weight: 780;
-  letter-spacing: -.055em;
+  letter-spacing: -.052em;
 }
 
 .mobileHero p:not(:global(.section-kicker)) {
+  max-width: 32rem;
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .mobileTabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
   gap: 8px;
+  overflow-x: auto;
+  padding: 0 2px 2px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+}
+
+.mobileTabs::-webkit-scrollbar {
+  display: none;
 }
 
 .mobileSaveStrip {
+  position: sticky;
+  top: max(8px, env(safe-area-inset-top));
+  z-index: 14;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: 10px;
-  border-radius: 18px;
-  padding: 12px;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: 17px;
+  padding: 8px 9px;
+  background: var(--surface-floating);
+  box-shadow: var(--surface-shadow-soft);
 }
 
 @media (max-width: 1180px) {
   .tabbedShell {
-    grid-template-columns: 1fr;
-  }
-
-  .tabRail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-right: 0;
-    border-bottom: 1px solid rgba(255,255,255,.09);
+    grid-template-columns: 188px minmax(0, 1fr);
   }
 }
 
@@ -142,7 +156,7 @@
     width: auto;
     max-width: none;
     margin: 0;
-    padding: 0 var(--mobile-page-gutter, 12px) 22px;
+    padding: max(12px, env(safe-area-inset-top)) var(--mobile-page-gutter, 12px) 22px;
   }
 
   .desktopView {
@@ -151,33 +165,18 @@
 
   .mobileView {
     display: grid;
-    gap: 14px;
-  }
-}
-
-@media (max-width: 760px) {
-  .tabPage {
-    padding: 14px;
-  }
-
-  .tabRail {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 560px) {
-  .mobileTabs {
-    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
 
 .tabRail button {
   display: grid;
-  gap: 5px;
+  gap: 3px;
   width: 100%;
+  min-height: 50px;
   border: 1px solid transparent;
-  border-radius: 16px;
-  padding: 13px 14px;
+  border-radius: var(--radius-sm);
+  padding: 10px 11px;
   background: transparent;
   color: var(--muted);
   text-align: left;
@@ -185,21 +184,21 @@
 }
 
 .tabRail button:hover {
-  border-color: rgba(255,255,255,.12);
-  background: rgba(255,255,255,.055);
+  border-color: var(--surface-border-soft);
+  background: var(--surface-workspace-strong);
   color: var(--text);
 }
 
 .tabRail button:global(.active) {
-  border-color: rgba(255,255,255,.18);
-  background: rgba(255,255,255,.10);
+  border-color: var(--surface-border);
+  background: var(--surface-workspace-strong);
   color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
 
 .tabRail span {
-  font-size: 14px;
-  font-weight: 760;
+  font-size: 13px;
+  font-weight: 730;
 }
 
 .tabRail small {
@@ -210,37 +209,59 @@
 
 .mobileTabs button {
   display: grid;
+  flex: 0 0 min(188px, 58vw);
+  scroll-snap-align: start;
   gap: 3px;
   min-width: 0;
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 16px;
-  padding: 11px 12px;
+  min-height: 46px;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: 15px;
+  padding: 8px 10px;
   background: rgba(0,0,0,.14);
   color: var(--muted);
   text-align: left;
 }
 
 .mobileTabs button:global(.active) {
-  border-color: rgba(255,255,255,.22);
-  background: rgba(255,255,255,.11);
+  border-color: var(--surface-border);
+  background: var(--surface-workspace-strong);
   color: var(--text);
 }
 
 .mobileTabs strong {
   color: var(--text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 760;
 }
 
 .mobileTabs span {
   overflow: hidden;
   color: var(--faint);
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: 10px;
+  line-height: 1.25;
   text-overflow: ellipsis;
 }
 
 @keyframes settingsPageIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+
+@media (max-width: 520px) {
+  .mobileHero p:not(:global(.section-kicker)) {
+    display: none;
+  }
+
+  .mobileSaveStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .mobileSaveActions {
+    justify-content: stretch;
+  }
+
+  .mobileSaveActions > * {
+    flex: 1 1 0;
+  }
 }

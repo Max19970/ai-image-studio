@@ -1,5 +1,5 @@
 export type WorkspaceTab = 'images' | 'info' | 'settings';
-export type SidebarSlotVariant = 'expanded' | 'collapsed' | 'mobile';
+export type SidebarSlotVariant = 'expanded' | 'collapsed' | 'mobile' | 'bottom';
 export type SettingsSlotVariant = 'desktop' | 'mobile';
 
 export interface SidebarTabContext {

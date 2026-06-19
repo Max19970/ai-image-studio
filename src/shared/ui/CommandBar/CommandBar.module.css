@@ -1,0 +1,47 @@
+.bar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: 999px;
+  background: var(--surface-workspace);
+  backdrop-filter: var(--surface-blur-soft);
+}
+
+.comfortable {
+  gap: var(--density-comfortable-gap);
+  min-height: 46px;
+  padding: 6px 8px;
+}
+
+.compact {
+  gap: var(--density-compact-gap);
+  min-height: var(--control-height-compact);
+  padding: 4px 6px;
+}
+
+.touch {
+  gap: var(--density-touch-gap);
+  min-height: var(--control-height-touch);
+  padding: 6px 8px;
+}
+
+.start {
+  justify-content: flex-start;
+}
+
+.center {
+  justify-content: center;
+}
+
+.between {
+  justify-content: space-between;
+}
+
+.end {
+  justify-content: flex-end;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}

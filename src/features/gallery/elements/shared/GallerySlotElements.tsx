@@ -18,7 +18,7 @@ export function GalleryCountPill({ archive, busy }: Pick<GalleryHeaderActionCont
 
 export function GalleryDeleteButton({ className, onClick, ariaLabel }: { className?: string; onClick: (event: MouseEvent<HTMLButtonElement>) => void; ariaLabel: string }) {
   return (
-    <IconButton size="micro" tone="danger" className={cx(styles.deleteButton, className)} onClick={onClick} aria-label={ariaLabel}>
+    <IconButton size="micro" tone="danger" className={cx(styles.deleteButton, className)} data-gallery-action="delete" onClick={onClick} aria-label={ariaLabel}>
       ×
     </IconButton>
   );

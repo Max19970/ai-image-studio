@@ -21,5 +21,8 @@
   "attachment.unknown": "unknown",
   "attachment.size": "size",
   "attachment.dimensions": "dimensions",
-  "attachment.modified": "modified"
+  "attachment.modified": "modified",
+  "attachment.badge.image": "IMG",
+  "attachment.role.image": "Image",
+  "attachment.hint.image": "This attached image will be sent to the model with the prompt."
 }

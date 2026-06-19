@@ -1,31 +1,44 @@
-import { useEffect, useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { ComposerLayoutContext } from '../../composerTypes';
 import { useI18n } from '../../../../i18n';
+import { useAutosizedTextarea } from '../../../../shared/hooks/useAutosizedTextarea';
+import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import styles from '../../ComposerLayout.module.css';
 
 export function ComposerPromptSection({ context }: ElementDefinitionProps<ComposerLayoutContext>) {
   const { t } = useI18n();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [isPromptFocused, setIsPromptFocused] = useState(false);
+  const isMobileCompact = useMediaQuery('(max-width: 620px)');
+  const promptExpanded = isPromptFocused;
 
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    textarea.style.height = '0px';
-    const nextHeight = Math.min(textarea.scrollHeight, 240);
-    textarea.style.height = `${Math.max(52, nextHeight)}px`;
-    textarea.style.overflowY = textarea.scrollHeight > 240 ? 'auto' : 'hidden';
-  }, [context.prompt]);
+  useAutosizedTextarea(textareaRef, {
+    value: context.prompt,
+    focused: promptExpanded,
+    collapsedRows: 1,
+    focusedMinRows: isMobileCompact ? 4 : 5,
+    focusedMaxRows: isMobileCompact ? 6 : 7
+  });
+
+  const placeholder = isMobileCompact
+    ? context.mode === 'generate' ? t('composer.placeholder.generateCompact') : t('composer.placeholder.editCompact')
+    : context.mode === 'generate' ? t('composer.placeholder.generate') : t('composer.placeholder.edit');
 
   return (
     <div className={styles.promptWrap} data-composer-slot="input">
       <textarea
         ref={textareaRef}
         data-testid="composer-prompt"
+        data-prompt-state={promptExpanded ? 'focused' : 'collapsed'}
+        data-prompt-focused={promptExpanded ? 'true' : 'false'}
         value={context.prompt}
         onChange={(event) => context.actions.changePrompt(event.target.value)}
+        onFocus={() => setIsPromptFocused(true)}
+        onBlur={() => setIsPromptFocused(false)}
         onKeyDown={context.actions.handlePromptKeyDown}
-        placeholder={context.mode === 'generate' ? t('composer.placeholder.generate') : t('composer.placeholder.edit')}
+        placeholder={placeholder}
+        wrap="soft"
       />
       {context.prompt.length > 0 && (
         <button

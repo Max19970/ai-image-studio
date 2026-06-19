@@ -53,15 +53,6 @@ export function ModelsMobile({ context }: { context: SettingsSectionContext }) {
             <summary>{t('settings.modelEditor')}</summary>
             <ModelFields context={context} idPrefix="mobile" mobile />
           </details>
-
-          <div className={styles.mobileActiveModelCard}>
-            <div>
-              <span className="section-kicker">{t('settings.activeModel')}</span>
-              <strong>{selectedModel.name || selectedModel.modelId}</strong>
-              <p>{t('settings.activeModelHint')}</p>
-            </div>
-            <Button variant="primary" onClick={() => selectModel(selectedModel)}>{t('settings.useModel')}</Button>
-          </div>
         </article>
       ) : (
         <EmptyState title={t('settings.noModels')} text={t('settings.noModelsText')} />

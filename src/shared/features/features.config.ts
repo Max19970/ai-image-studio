@@ -4,7 +4,6 @@ export const appFeatures = {
   encryptedStorage: true,
   galleryClear: true,
   galleryDelete: true,
-  galleryHistory: true,
   providerProbing: true,
   settings: true,
   studioInfo: true

@@ -4,8 +4,8 @@ This document records the Stage 4 definition/placement state. It is intentionall
 
 ## Summary
 
-- Definitions: **55**
-- Placements: **61**
+- Definitions: **53**
+- Placements: **59**
 - Slots: **40**
 - Reusable definitions used by multiple placements: **5**
 - Active legacy slot runtime files: **0**
@@ -32,7 +32,7 @@ npm run interface:check
 - `composer/attachments` — 1 placement(s)
 - `composer/input` — 1 placement(s)
 - `composer/status` — 1 placement(s)
-- `composer/tools` — 4 placement(s)
+- `composer/tools` — 1 placement(s)
 - `detail/actions` — 5 placement(s)
 - `detail/hero` — 1 placement(s)
 - `detail/request-drawer` — 1 placement(s)
@@ -85,10 +85,7 @@ npm run interface:check
 | `composer.layout.prompt` | `composer/input` | `composer.sections.prompt` | `src/interface/placements/composer.layout.placement.ts` |
 | `composer.layout.actions` | `composer/actions` | `composer.sections.actions` | `src/interface/placements/composer.layout.placement.ts` |
 | `composer.layout.status` | `composer/status` | `composer.sections.status` | `src/interface/placements/composer.layout.placement.ts` |
-| `composer.tools.mode` | `composer/tools` | `composer.modeAction` | `src/interface/placements/composer.tools.placement.ts` |
-| `composer.tools.assets` | `composer/tools` | `composer.assetsAction` | `src/interface/placements/composer.tools.placement.ts` |
-| `composer.tools.batch` | `composer/tools` | `composer.batchAction` | `src/interface/placements/composer.tools.placement.ts` |
-| `composer.tools.parameters` | `composer/tools` | `composer.parametersAction` | `src/interface/placements/composer.tools.placement.ts` |
+| `composer.tools.controls` | `composer/tools` | `composer.controlsAction` | `src/interface/placements/composer.tools.placement.ts` |
 | `detail.actions.download-image` | `detail/actions` | `imageActions.downloadImage` | `src/interface/placements/detail.actions.placement.ts` |
 | `detail.actions.copy-prompt` | `detail/actions` | `detail.copyPrompt` | `src/interface/placements/detail.actions.placement.ts` |
 | `detail.actions.copy-payload` | `detail/actions` | `detail.copyPayload` | `src/interface/placements/detail.actions.placement.ts` |
@@ -100,7 +97,6 @@ npm run interface:check
 | `gallery.card.delete-task` | `gallery/card-actions` | `gallery.deleteTask` | `src/interface/placements/gallery.card-actions.placement.ts` |
 | `gallery.card-footer.download-image` | `gallery/card-footer-actions` | `imageActions.downloadImage` | `src/interface/placements/gallery.card-footer-actions.placement.ts` |
 | `gallery.header.clear-results` | `gallery/header-actions` | `gallery.clearResults` | `src/interface/placements/gallery.header-actions.placement.ts` |
-| `gallery.header.history-link` | `gallery/header-actions` | `gallery.historyLink` | `src/interface/placements/gallery.header-actions.placement.ts` |
 | `gallery.header.result-count` | `gallery/header-actions` | `gallery.resultCount` | `src/interface/placements/gallery.header-actions.placement.ts` |
 | `gallery.layout.header` | `gallery/header` | `gallery.sections.header` | `src/interface/placements/gallery.layout.placement.ts` |
 | `gallery.layout.empty` | `gallery/content` | `gallery.sections.empty` | `src/interface/placements/gallery.layout.placement.ts` |
@@ -147,10 +143,7 @@ npm run interface:check
 | `batchComposer.sections.draftToolbar` | `src/features/batch-composer/sections/draft-toolbar/definition.ts` |
 | `batchComposer.sections.footer` | `src/features/batch-composer/sections/footer/definition.ts` |
 | `batchComposer.sections.header` | `src/features/batch-composer/sections/header/definition.ts` |
-| `composer.assetsAction` | `src/features/composer/elements/assets-action/definition.ts` |
-| `composer.batchAction` | `src/features/composer/elements/batch-action/definition.ts` |
-| `composer.modeAction` | `src/features/composer/elements/mode-action/definition.ts` |
-| `composer.parametersAction` | `src/features/composer/elements/parameters-action/definition.ts` |
+| `composer.controlsAction` | `src/features/composer/elements/control-menu/definition.ts` |
 | `composer.sections.actions` | `src/features/composer/sections/actions/definition.ts` |
 | `composer.sections.attachments` | `src/features/composer/sections/attachments/definition.ts` |
 | `composer.sections.prompt` | `src/features/composer/sections/prompt/definition.ts` |
@@ -164,7 +157,6 @@ npm run interface:check
 | `detail.sections.topbar` | `src/features/detail/sections/topbar/definition.ts` |
 | `gallery.clearResults` | `src/features/gallery/elements/clear-results/definition.ts` |
 | `gallery.deleteTask` | `src/features/gallery/elements/delete-task/definition.ts` |
-| `gallery.historyLink` | `src/features/gallery/elements/history-link/definition.ts` |
 | `gallery.resultCount` | `src/features/gallery/elements/result-count/definition.ts` |
 | `gallery.sections.placeholderCard` | `src/features/gallery/sections/card-placeholder/definition.ts` |
 | `gallery.sections.resultCard` | `src/features/gallery/sections/card-result/definition.ts` |

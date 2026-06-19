@@ -1,44 +1,54 @@
 .focusLayout {
   display: grid;
-  grid-template-columns: minmax(280px, .48fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 560px;
 }
 
-.listPanel,
-.inspectorPanel,
-.activeModelCard,
-.emptyCard {
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 18px;
-  padding: 14px;
-  background: rgba(0,0,0,.14);
+.listPanel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  background: var(--surface-workspace);
+  box-shadow: var(--surface-shadow-soft);
+  backdrop-filter: var(--surface-blur-soft);
 }
 
-.listPanel,
 .inspectorPanel {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.inspectorBody {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
 }
 
-.columnHead,
-.activeModelCard {
+.columnHead {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  padding: 2px 2px 6px;
 }
 
 .columnHead h4 {
-  margin: 0 0 5px;
+  margin: 0 0 4px;
   color: var(--text);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 760;
 }
 
-.columnHead p,
-.activeModelCard p {
+.columnHead p {
   margin: 0;
   color: var(--muted);
   font-size: 12px;
@@ -46,90 +56,28 @@
 }
 
 .entityList {
-  display: grid;
-  gap: 8px;
-  max-height: 250px;
+  min-height: 0;
   overflow: auto;
-  padding-right: 4px;
+  padding-right: 2px;
 }
 
-.entityCard {
-  display: grid;
-  gap: 5px;
-  width: 100%;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 15px;
-  padding: 11px 12px;
-  background: rgba(0,0,0,.14);
-  color: var(--muted);
-  text-align: left;
-}
-
-.entityCard:hover {
-  border-color: rgba(255,255,255,.16);
-  background: rgba(255,255,255,.055);
-  color: var(--text);
-}
-
-.entityCard.active {
-  border-color: rgba(255,255,255,.24);
-  background: rgba(255,255,255,.10);
-  color: var(--text);
-}
-
-.entityCard strong {
-  overflow: hidden;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 760;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.entityCard span {
-  overflow: hidden;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.entityCard small {
-  color: var(--faint);
-  font-size: 11px;
-}
-
-.activeModelCard {
-  align-items: center;
-}
-
-.activeModelCard strong,
-.emptyCard strong {
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 760;
-}
-
-.activeModelCard :global(.section-kicker) {
-  display: block;
-  margin-bottom: 6px;
-}
-
-.emptyCard {
-  display: grid;
-  gap: 6px;
-  color: var(--muted);
-}
-
-.emptyCard span {
-  color: var(--faint);
-  font-size: 12px;
-  line-height: 1.45;
+.entityMarker {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
 @media (max-width: 1180px) {
   .focusLayout {
+    grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .focusLayout {
     grid-template-columns: 1fr;
+    min-height: 0;
   }
 }

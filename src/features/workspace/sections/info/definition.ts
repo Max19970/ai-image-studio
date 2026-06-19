@@ -1,9 +1,9 @@
 import type { ElementDefinition } from '../../../../interface/registry/types';
 import type { WorkspaceMainContext } from '../../../../interface/context/workspace/main';
-import { WorkspaceInfoSection } from './WorkspaceInfoSection';
+import { lazyElementComponent } from '../../../../interface/registry/lazyElement';
 
 export default {
   id: 'workspace.infoPage',
   label: 'Workspace info page',
-  Component: WorkspaceInfoSection
+  Component: lazyElementComponent(() => import('./WorkspaceInfoSection'), 'WorkspaceInfoSection')
 } satisfies ElementDefinition<WorkspaceMainContext>;

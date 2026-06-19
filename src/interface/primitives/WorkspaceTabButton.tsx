@@ -1,6 +1,6 @@
 import type { SidebarTabContext, WorkspaceTab } from '../context/workspace/tabs';
 import { useI18n } from '../../i18n';
-import { NavigationButton } from '../../shared/ui/NavigationButton';
+import { NavigationButton } from '../../shared/ui';
 
 interface WorkspaceTabButtonProps {
   context: SidebarTabContext;
@@ -33,6 +33,14 @@ export function WorkspaceTabButton({ context, tab, icon, labelKey, titleKey = la
     );
   }
 
+  const variant = context.variant === 'bottom'
+    ? 'bottom'
+    : context.variant === 'mobile'
+      ? 'mobile'
+      : tab === 'settings'
+        ? 'card'
+        : 'list';
+
   return (
     <NavigationButton
       active={active}
@@ -40,7 +48,7 @@ export function WorkspaceTabButton({ context, tab, icon, labelKey, titleKey = la
       data-workspace-tab={tab}
       icon={icon}
       onClick={selectTab}
-      variant={context.variant === 'mobile' ? 'mobile' : tab === 'settings' ? 'card' : 'list'}
+      variant={variant}
     >
       {t(labelKey)}
     </NavigationButton>

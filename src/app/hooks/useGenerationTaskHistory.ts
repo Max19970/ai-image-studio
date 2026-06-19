@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GenerationTask } from '../../domain/generationTask';
+import { collectGenerationTasksObjectUrls, revokeBrowserObjectUrls } from '../../domain/generationTaskObjectUrls';
 import { createTaskCancellationRegistry } from '../../processes/generation-task-lifecycle';
 import {
   clearGenerationTaskHistory,
@@ -12,6 +13,7 @@ export function useGenerationTaskHistory() {
   const [tasks, setTasks] = useState<GenerationTask[]>(() => loadGenerationTaskHistoryFallback());
   const taskCancellationRegistryRef = useRef(createTaskCancellationRegistry());
   const historyHydratedRef = useRef(false);
+  const liveTaskObjectUrlsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -22,6 +24,13 @@ export function useGenerationTaskHistory() {
     });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    const nextUrls = collectGenerationTasksObjectUrls(tasks);
+    const staleUrls = [...liveTaskObjectUrlsRef.current].filter((url) => !nextUrls.has(url));
+    revokeBrowserObjectUrls(staleUrls);
+    liveTaskObjectUrlsRef.current = nextUrls;
+  }, [tasks]);
 
   useEffect(() => {
     if (!historyHydratedRef.current) return;

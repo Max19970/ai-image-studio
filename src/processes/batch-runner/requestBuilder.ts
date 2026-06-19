@@ -9,7 +9,7 @@ export function prepareBatchItems(args: BatchGenerationRunInput): PreparedBatchI
     const { model, generationProvider, provider } = providerContextForModel(settings, draft.selectedModelId);
     if (!model) return [];
     if (!draft.params.prompt.trim()) return [];
-    if (draft.mode === 'edit' && !draft.targetImage) return [];
+    if (draft.mode === 'edit' && !draft.targetImage && draft.referenceImages.length === 0 && !draft.mask) return [];
     try {
       const payload = buildImagePayload(draft.params, provider, draft.mode);
       const warnings = explainPayloadWarnings(payload, provider, draft.mode, draft.selectedModelId === selectedModelId ? capabilityReport : null);

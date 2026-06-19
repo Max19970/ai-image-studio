@@ -3,7 +3,7 @@
   "batch.aria": "Композер мульти-генерации",
   "batch.kicker": "Пакетный режим",
   "batch.title": "Мульти-генерация",
-  "batch.mobileTitle": "Мульти",
+  "batch.mobileTitle": "Очередь",
   "batch.mobileClose": "Галерея",
   "batch.mobileSubmit": "Запустить",
   "batch.subtitle": "Собери несколько обычных запросов в одну очередь: генерация, редактирование, исходники, рефы, маски и параметры остаются отдельными для каждого пункта.",
@@ -24,5 +24,17 @@
   "batch.submit": "Запустить мульти-генерацию",
   "batch.aggregatePrompt": "Мульти-запрос: {count} запросов",
   "batch.multiProviderLabel": "мульти-генерация",
-  "batch.itemError": "Запрос {index}: {error}"
+  "batch.itemError": "Запрос {index}: {error}",
+  "batch.queueLabel": "Очередь запросов мульти-генерации",
+  "batch.queueKicker": "Очередь",
+  "batch.queueTitle": "Запросы",
+  "batch.selectedEditorLabel": "Редактор выбранного запроса мульти-генерации",
+  "batch.selectedKicker": "Выбранный запрос",
+  "batch.ready": "Готово",
+  "batch.needsPrompt": "Нужен промпт",
+  "batch.needsImages": "Нужны изображения",
+  "batch.queueImagesValue": "{count} изобр.",
+  "batch.queueAttachmentsValue": "{count} файлов",
+  "batch.emptyQueueTitle": "В очереди нет запросов",
+  "batch.emptyQueueText": "Добавь запрос, чтобы начать собирать очередь мульти-генерации."
 }

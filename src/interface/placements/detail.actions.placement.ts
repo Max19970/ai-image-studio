@@ -4,42 +4,29 @@ import { detailToImageDownload, type ImageDownloadActionContext } from '../conte
 
 export default [
   {
+    id: 'detail.actions.load-composer',
+    slot: 'detail/actions',
+    use: 'detail.loadComposer',
+    order: 10,
+    enabled: (context: DetailActionContext) => !context.isBatchSnapshot && Boolean(context.onRestoreRequest)
+  },
+  {
     id: 'detail.actions.download-image',
     slot: 'detail/actions',
     use: 'imageActions.downloadImage',
-    order: 10,
+    order: 20,
     props: {
       labelKey: 'detail.download',
       presentation: 'button',
-      variant: 'primary'
+      variant: 'secondary'
     },
     enabled: (context) => Boolean(context.activeImage),
     adaptContext: detailToImageDownload
   } satisfies ElementPlacement<DetailActionContext, ImageDownloadActionContext>,
   {
-    id: 'detail.actions.copy-prompt',
+    id: 'detail.actions.copy-menu',
     slot: 'detail/actions',
-    use: 'detail.copyPrompt',
-    order: 20
-  },
-  {
-    id: 'detail.actions.copy-payload',
-    slot: 'detail/actions',
-    use: 'detail.copyPayload',
+    use: 'detail.copyMenu',
     order: 30
-  },
-  {
-    id: 'detail.actions.copy-params',
-    slot: 'detail/actions',
-    use: 'detail.copyParams',
-    order: 40,
-    enabled: (context: DetailActionContext) => !context.isBatchSnapshot
-  },
-  {
-    id: 'detail.actions.load-composer',
-    slot: 'detail/actions',
-    use: 'detail.loadComposer',
-    order: 50,
-    enabled: (context: DetailActionContext) => !context.isBatchSnapshot && Boolean(context.onRestoreRequest)
   }
 ] satisfies ElementPlacement<any, any>[];

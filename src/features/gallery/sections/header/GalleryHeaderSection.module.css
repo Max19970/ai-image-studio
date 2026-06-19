@@ -3,34 +3,56 @@
   top: 0;
   z-index: 12;
   display: grid;
-  gap: 12px;
-  border-bottom: 1px solid var(--line);
-  padding: 16px 26px 14px;
-  background: rgba(31,31,31,.74);
+  gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 16px 24px 12px;
+  background: rgba(21,21,22,.70);
   backdrop-filter: blur(24px) saturate(135%);
 }
 
 .header.hasResults {
-  padding-top: 18px;
+  padding-top: 17px;
   padding-bottom: 12px;
 }
 
 .headerTopline {
   display: flex;
-  min-height: 58px;
+  min-height: 48px;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
+}
+
+.titleRow {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 9px;
 }
 
 .header h2 {
+  margin: 0;
+  color: var(--text);
   font-size: 27px;
+  font-weight: 720;
+  letter-spacing: -.055em;
+  line-height: 1;
+}
+
+.titleCount {
+  flex: none;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 680;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .headerCopy {
@@ -39,7 +61,7 @@
 }
 
 .archiveSummary {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
   color: var(--faint);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -47,82 +69,13 @@
   text-transform: uppercase;
 }
 
-.archiveControls {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(118px, auto)) auto;
-  align-items: end;
-  gap: 8px;
-}
-
-.searchField,
-.controlField {
-  display: grid;
-  min-width: 0;
-  gap: 5px;
-}
-
-.searchField span,
-.controlField span {
-  color: var(--faint);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: 650;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-
-.searchField input,
-.controlField select {
-  min-height: 34px;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px;
-  padding: 0 11px;
-  background: rgba(0,0,0,.22);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-  outline: none;
-}
-
-.searchField input:focus-visible,
-.controlField select:focus-visible,
-.resetFiltersButton:focus-visible {
-  border-color: rgba(255,255,255,.28);
-  box-shadow: 0 0 0 3px rgba(255,255,255,.08);
-}
-
-.resetFiltersButton {
-  min-height: 34px;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 999px;
-  padding: 0 13px;
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.resetFiltersButton:hover {
-  background: rgba(255,255,255,.10);
-}
-
-.deleteFilteredButton {
-  border-color: rgba(255, 130, 150, .26);
-  background: rgba(255, 85, 110, .10);
-  color: #ffd2d9;
-}
-
-.deleteFilteredButton:hover {
-  background: rgba(255, 85, 110, .16);
-}
-
 .clearResultsButton {}
 .historyButton {}
 
 @media (max-width: 860px) {
   .header {
-    padding: max(12px, env(safe-area-inset-top)) 10px 9px 72px;
-    margin: 0 0 6px;
+    padding: max(12px, env(safe-area-inset-top)) 10px 9px;
+    margin: 0 0 4px;
     gap: 8px;
   }
 
@@ -132,22 +85,28 @@
   }
 
   .headerTopline {
-    min-height: 48px;
+    min-height: 42px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
     gap: 8px;
   }
 
+  .titleRow {
+    gap: 7px;
+  }
+
   .header h2 {
-    margin: 0;
     max-width: 100%;
     overflow: hidden;
-    font-size: clamp(24px, 7.2vw, 29px);
+    font-size: clamp(24px, 7vw, 29px);
     line-height: .96;
-    letter-spacing: -.06em;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .titleCount {
+    font-size: 9px;
   }
 
   .headerActions {
@@ -160,73 +119,27 @@
     display: none;
   }
 
-  .archiveControls {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 6px;
-  }
-
-  .searchField {
-    grid-column: 1 / -1;
-  }
-
-  .searchField span,
-  .controlField span {
-    display: none;
-  }
-
-  .searchField input,
-  .controlField select,
-  .resetFiltersButton {
-    min-height: 32px;
-    border-radius: 11px;
-    font-size: 11px;
-  }
-
-  .controlField:nth-of-type(3) {
-    display: none;
-  }
-
-  .resetFiltersButton {
-    width: 32px;
-    padding: 0;
-    overflow: hidden;
-    color: transparent;
-  }
-
-  .resetFiltersButton::after {
-    content: "×";
-    display: grid;
-    place-items: center;
-    color: var(--text);
-    font-size: 17px;
-  }
-
-  .deleteFilteredButton::after {
-    content: "⌫";
-    color: #ffd2d9;
-    font-size: 15px;
-  }
-
   .clearResultsButton {
     position: relative;
-    width: 32px;
-    min-width: 32px;
-    max-width: 32px;
-    height: 32px;
-    min-height: 32px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 44px;
+    min-height: 44px;
     padding: 0;
     overflow: hidden;
+    border-color: color-mix(in srgb, #ff9aaa 38%, transparent);
     color: transparent !important;
   }
 
   .clearResultsButton::after {
-    content: "×";
+    content: "🗑";
     position: absolute;
     inset: 0;
     display: grid;
     place-items: center;
     color: #ffd2d9;
-    font-size: 18px;
+    font-size: 15px;
     line-height: 1;
   }
 

@@ -6,44 +6,51 @@
 
 .infoButton {
   display: grid;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   place-items: center;
-  border: 1px solid rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.12);
   border-radius: 999px;
   padding: 0;
-  background: rgba(255,255,255,.055);
+  background: rgba(255,255,255,.045);
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1;
 }
 
 .infoButton:hover,
 .infoButton.active {
-  border-color: rgba(255,255,255,.28);
-  background: rgba(255,255,255,.13);
+  border-color: rgba(255,255,255,.24);
+  background: rgba(255,255,255,.10);
   color: var(--text);
 }
 
 .infoPopover {
-  color: rgba(244,244,241,.76);
+  max-width: min(320px, calc(100vw - 28px));
+  border: 1px solid var(--surface-border-strong);
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: var(--surface-floating);
+  color: rgba(244,244,241,.82);
   font-size: 12px;
   line-height: 1.5;
   text-transform: none;
   letter-spacing: 0;
+  box-shadow: var(--surface-shadow-floating);
+  backdrop-filter: var(--surface-blur-strong);
 }
 
 .field {
   position: relative;
   display: grid;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
-  border: 1px solid rgba(255,255,255,.085);
-  border-radius: 16px;
-  padding: 12px;
-  background: rgba(0,0,0,.13);
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  background: rgba(0,0,0,.10);
 }
 
 .field.wide {
@@ -60,10 +67,10 @@
 .emptyCard {
   display: grid;
   gap: 6px;
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 18px;
-  padding: 14px;
-  background: rgba(0,0,0,.14);
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  background: rgba(0,0,0,.12);
   color: var(--muted);
 }
 

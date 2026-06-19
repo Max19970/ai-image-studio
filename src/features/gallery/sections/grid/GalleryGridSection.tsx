@@ -9,20 +9,22 @@ export function GalleryGridSection({ context }: ElementDefinitionProps<GalleryLa
 
   return (
     <>
-      <div className={styles.grid} data-gallery-slot="grid">
-        {context.tasks.map((task, index) => (
-          <SlotHost<GalleryTaskCardContext>
-            key={task.id}
-            slot="gallery/card"
-            context={{
-              task,
-              index,
-              onOpenTask: (image) => context.commands.openTaskDetail(task, image),
-              onDeleteTask: () => context.commands.deleteTask(task.id)
-            }}
-            as={null}
-          />
-        ))}
+      <div className={styles.wallWorkspace} data-gallery-slot="workspace">
+        <div className={styles.imageWall} data-gallery-slot="image-wall">
+          {context.tasks.map((task, index) => (
+            <SlotHost<GalleryTaskCardContext>
+              key={task.id}
+              slot="gallery/card"
+              context={{
+                task,
+                index,
+                onOpenTask: (image) => context.commands.openTaskDetail(task, image),
+                onDeleteTask: () => context.commands.deleteTask(task.id)
+              }}
+              as={null}
+            />
+          ))}
+        </div>
       </div>
       {context.archive.hasMore && (
         <div className={styles.loadMoreWrap}>

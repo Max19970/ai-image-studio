@@ -19,12 +19,7 @@ export function createMainContext({ state, derived, commands }: WorkspaceContext
       providers: state.studioSettings.providers,
       commands: commands.batchComposer
     },
-    info: {
-      mode: state.mode,
-      provider: derived.provider,
-      capabilityReport: state.capabilityReport,
-      onOpenSettings: () => commands.workspace.setTab('settings')
-    },
+    info: {},
     settings: {
       settings: state.studioSettings,
       report: state.capabilityReport,

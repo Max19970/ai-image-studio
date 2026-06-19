@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from 'react';
 import type { GeneratedImage, GenerationRequestSnapshot, GenerationTask } from '../../../domain/generationTask';
 
 export interface DetailLayoutContext {
@@ -6,13 +5,11 @@ export interface DetailLayoutContext {
   activeImage: GeneratedImage | null;
   fallbackActiveImage: GeneratedImage | null;
   label: string;
-  requestOpen: boolean;
   shouldUseCarousel: boolean;
   onBack: () => void;
   onSelectImage?: (image: GeneratedImage) => void;
   onRestoreRequest?: (snapshot: GenerationRequestSnapshot) => void;
-  setActiveImage: Dispatch<SetStateAction<GeneratedImage | null>>;
-  setRequestOpen: Dispatch<SetStateAction<boolean>>;
+  setActiveImage: (image: GeneratedImage | null) => void;
 }
 
 export interface DetailActionContext {

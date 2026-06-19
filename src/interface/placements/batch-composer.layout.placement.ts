@@ -32,18 +32,6 @@ export default [
     order: 10
   },
   {
-    id: 'batchComposer.draft.header',
-    slot: 'batch-composer/draft/header',
-    use: 'batchComposer.sections.draftHeader',
-    order: 10
-  },
-  {
-    id: 'batchComposer.draft.mode',
-    slot: 'batch-composer/draft/mode',
-    use: 'batchComposer.sections.draftMode',
-    order: 20
-  },
-  {
     id: 'batchComposer.draft.prompt',
     slot: 'batch-composer/draft/prompt',
     use: 'batchComposer.sections.draftPrompt',

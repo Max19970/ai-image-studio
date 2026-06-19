@@ -1,5 +1,5 @@
 {
-  "requestPreview.title": "Payload и вложения",
+  "requestPreview.title": "JSON запроса и вложения",
   "requestPreview.target": "исходник",
   "requestPreview.refs": "рефы",
   "requestPreview.mask": "маска",

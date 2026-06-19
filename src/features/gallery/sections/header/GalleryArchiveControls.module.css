@@ -1,0 +1,198 @@
+.commandBar {
+  display: grid;
+  border-color: transparent;
+  box-shadow: none;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  border-radius: 18px;
+  padding: 6px;
+}
+
+.searchField,
+.controlField {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.searchField span,
+.controlField span {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 680;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.searchField input {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  padding: 0 10px;
+  background: rgba(0,0,0,.20);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.searchField input:focus-visible,
+.filterTokenButton:focus-visible {
+  border-color: rgba(255,255,255,.28);
+  box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+}
+
+.desktopFilters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(110px, auto));
+  align-items: end;
+  gap: 6px;
+}
+
+.controlSelectTrigger {
+  min-height: 32px;
+  border-radius: 12px;
+  padding: 7px 10px;
+  background: rgba(0,0,0,.20);
+}
+
+.controlSelectTrigger :global(.popover-select-copy) strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.controlSelectTrigger :global(.popover-select-chevron) {
+  font-size: 12px;
+}
+
+.controlSelectPanel {
+  z-index: 220;
+}
+
+.mobileFiltersButton {
+  display: none;
+}
+
+.filterTokens {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 2px;
+  scrollbar-width: none;
+}
+
+.filterTokens::-webkit-scrollbar {
+  display: none;
+}
+
+.filterToken,
+.filterTokenButton {
+  display: inline-flex;
+  flex: none;
+  min-height: 26px;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  padding: 0 9px;
+  background: rgba(255,255,255,.045);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.filterToken {
+  color: var(--text);
+}
+
+.filterTokenButton {
+  color: var(--text);
+  cursor: pointer;
+}
+
+.filterTokenButton:hover {
+  background: rgba(255,255,255,.08);
+}
+
+.deleteFilteredButton {
+  border-color: rgba(255, 130, 150, .24);
+  background: rgba(255, 85, 110, .09);
+  color: #ffd2d9;
+}
+
+.mobileFilterSheet {}
+
+@media (max-width: 1120px) {
+  .desktopFilters {
+    grid-template-columns: repeat(3, minmax(96px, auto));
+  }
+}
+
+@media (max-width: 860px) {
+  .commandBar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+    border-radius: 16px;
+  }
+
+  .desktopFilters {
+    display: none;
+  }
+
+  .mobileFiltersButton {
+    display: inline-flex;
+    min-height: 32px;
+    padding-inline: 11px;
+    font-size: 11px;
+  }
+
+  .searchField span,
+  .controlField span {
+    display: none;
+  }
+
+  .searchField input {
+    min-height: 34px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .filterTokens {
+    padding: 0;
+  }
+
+  .filterToken,
+  .filterTokenButton {
+    min-height: 24px;
+    padding-inline: 8px;
+    font-size: 10px;
+  }
+
+  .mobileFilterSheet {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobileFilterSheet .controlField {
+    gap: 6px;
+  }
+
+  .mobileFilterSheet .controlField span {
+    display: block;
+  }
+
+  .controlSelectTrigger {
+    min-height: 34px;
+    border-radius: 12px;
+    padding-inline: 10px;
+  }
+
+  .controlSelectTrigger :global(.popover-select-copy) strong {
+    font-size: 12px;
+  }
+}

@@ -1,7 +1,9 @@
 @media (max-width: 860px) {
   :root {
     --mobile-page-gutter: 10px;
-    --mobile-composer-space: 158px;
+    --mobile-bottom-nav-height: 62px;
+    --mobile-bottom-nav-space: calc(var(--mobile-bottom-nav-height) + 10px);
+    --mobile-composer-space: 126px;
   }
 
   html,
@@ -39,12 +41,17 @@
     grid-column: auto;
     min-height: 100dvh;
     padding-top: 0;
-    padding-bottom: calc(var(--mobile-composer-space) + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--mobile-composer-space) + var(--mobile-bottom-nav-space) + max(10px, env(safe-area-inset-bottom)));
+  }
+
+  .batch-composer-is-open {
+    --mobile-bottom-nav-space: 0px;
   }
 
   .batch-composer-is-open .studio-main {
+    min-height: auto;
     padding-top: 0;
-    padding-bottom: calc(86px + env(safe-area-inset-bottom));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 
   .gallery-spinner {
@@ -78,6 +85,21 @@
     border-radius: 13px;
     padding: 0 11px;
     font-size: 14px;
+  }
+
+  .studio-app input,
+  .studio-app textarea,
+  .studio-app select {
+    min-width: 0;
+  }
+
+  .studio-app input[type="text"],
+  .studio-app input[type="search"],
+  .studio-app input[type="number"],
+  .studio-app input[type="url"],
+  .studio-app input[type="password"],
+  .studio-app textarea {
+    font-size: max(16px, 1em);
   }
 
   .field-label {

@@ -1,9 +1,9 @@
 import type { ElementDefinition } from '../../../../interface/registry/types';
 import type { SettingsSaveActionContext } from '../../../../interface/context/workspace/settings';
-import { ResetSettingsAction } from './ResetSettingsAction';
+import { lazyElementComponent } from '../../../../interface/registry/lazyElement';
 
 export default {
   id: 'settings.resetChanges',
   label: 'Reset settings changes',
-  Component: ResetSettingsAction
+  Component: lazyElementComponent(() => import('./ResetSettingsAction'), 'ResetSettingsAction')
 } satisfies ElementDefinition<SettingsSaveActionContext>;

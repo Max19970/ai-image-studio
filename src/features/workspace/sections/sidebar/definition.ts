@@ -4,6 +4,6 @@ import { WorkspaceSidebarSection } from './WorkspaceSidebarSection';
 
 export default {
   id: 'workspace.sidebar',
-  label: 'Workspace sidebar shell',
+  label: 'Workspace navigation shell',
   Component: WorkspaceSidebarSection
 } satisfies ElementDefinition<WorkspaceSidebarContext>;

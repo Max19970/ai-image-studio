@@ -44,10 +44,16 @@ function GenerationApiMobile({ context }: { context: SettingsSectionContext }) {
 
   return (
     <section className={styles.mobileStack} data-settings-section="generation-api" data-settings-variant="mobile">
-      <div className={styles.mobileApiSwitch} data-testid="settings-api-focus" role="tablist" aria-label={t('settings.apiTitle')}>
-        <button type="button" className={apiFocus === 'providers' ? styles.active : ''} onClick={() => setApiFocus('providers')}>{t('settings.providers')}</button>
-        <button type="button" className={apiFocus === 'models' ? styles.active : ''} onClick={() => setApiFocus('models')}>{t('settings.models')}</button>
-      </div>
+      <header className={styles.mobileApiHeader}>
+        <div className={styles.mobileApiTitle}>
+          <span className="section-kicker">{t('settings.tab.generationApi')}</span>
+          <h3>{apiFocus === 'providers' ? t('settings.providers') : t('settings.models')}</h3>
+        </div>
+        <div className={styles.mobileApiSwitch} data-testid="settings-api-focus" role="tablist" aria-label={t('settings.apiTitle')}>
+          <button type="button" className={apiFocus === 'providers' ? styles.active : ''} onClick={() => setApiFocus('providers')}>{t('settings.providers')}</button>
+          <button type="button" className={apiFocus === 'models' ? styles.active : ''} onClick={() => setApiFocus('models')}>{t('settings.models')}</button>
+        </div>
+      </header>
 
       {apiFocus === 'providers' ? <ProvidersMobile context={context} /> : <ModelsMobile context={context} />}
     </section>
