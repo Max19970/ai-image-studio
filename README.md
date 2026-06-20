@@ -1,27 +1,30 @@
 # Image Studio
 
-Image Studio is a local-first web UI for OpenAI-compatible image generation APIs. It combines a React + TypeScript client with a small Express proxy so provider keys can stay outside the frontend bundle.
+Image Studio is a local-first web UI for image generation workflows. It combines a React + TypeScript client with a small Express proxy so provider keys, local ComfyUI access, and encrypted history can stay outside the frontend bundle.
 
-The app is built for personal workflows: image generation, image editing, multi-request batches, provider/model profiles, request inspection, local encrypted history, and visual comparison of generated results.
+The app is built for personal workflows: OpenAI-compatible image generation and editing, local ComfyUI text-to-image and Hires Fix runs, multi-request batches, provider/model profiles, request inspection, local encrypted history, and visual comparison of generated results.
 
 ## Features
 
-- Single image generation through OpenAI-compatible `/v1/images/generations` endpoints.
-- Image editing through multipart `/v1/images/edits` endpoints with target, reference, and mask attachments.
-- Multi-request composer with delayed parallel dispatch, retry policy, cancellation, and per-item status tracking.
+- OpenAI-compatible image generation through `/v1/images/generations` endpoints.
+- OpenAI-compatible image editing through multipart `/v1/images/edits` endpoints with target, reference, and mask attachments.
+- Local ComfyUI provider support with server-side workflow execution, checkpoint/LoRA/sampler/scheduler resource discovery, provider-owned parameters, and text-to-image generation.
+- Gallery Hires Fix actions for refining and upscaling an existing result through a ComfyUI workflow, including latent upscale and AI upscaler model modes.
+- Multi-request composer with delayed dispatch, retry policy, cancellation, per-item status tracking, and independent provider/model/parameter state per request.
 - Provider/model profiles with custom endpoints, auth header/scheme, custom headers, timeouts, capability probing, provider cache, adapter-owned settings schemas, and provider-specific parameter profiles.
-- Rich Image API controls: `model`, `prompt`, `n`, `size`, `quality`, `background`, `moderation`, `output_format`, `output_compression`, `stream`, `partial_images`, `response_format`, `input_fidelity`, `user`, `style`, retry policy, raw JSON overrides, and provider-filtered parameter availability.
+- Rich OpenAI Image API controls: `model`, `prompt`, `n`, `size`, `quality`, `background`, `moderation`, `output_format`, `output_compression`, `stream`, `partial_images`, `response_format`, `input_fidelity`, `user`, `style`, retry policy, raw JSON overrides, and provider-filtered parameter availability.
 - Local encrypted Storage v2: SQLite metadata, Brotli-compressed AES-256-GCM documents, separated full image assets, thumbnail assets, lazy asset loading, encrypted settings, encrypted image params, encrypted provider probe cache, diagnostics, audit, and benchmark tooling.
 - Archive-oriented gallery with search, filters, sort, progressive paging, filtered cleanup, thumbnail-first loading, and lazy full-asset hydration.
-- Gallery, carousel view, detail page, request payload preview, downloads, localization, theme previews, and mobile layouts.
+- Gallery, carousel view, detail page, request payload preview, downloads, localization, theme previews, mobile layouts, and repeatable screenshot smoke checks.
 - SSE partial-image streaming support for providers that return OpenAI-like event streams.
-- Architecture safety checks, strict debt budgets, unit tests, storage audit, and repeatable screenshot smoke checks.
+- Architecture safety checks, strict debt budgets, unit tests, storage audit, secret scanning, and release gates.
 - Telegram bot + Mini App integration for opening Image Studio inside Telegram, with server-side token storage and runtime controls.
 
 ## Requirements
 
 - Node.js `22.5.0` or newer. The storage backend uses `node:sqlite`.
-- An API key for OpenAI or another OpenAI-compatible image provider.
+- An API key for OpenAI or another OpenAI-compatible image provider if you use hosted Image API providers.
+- A running ComfyUI server if you use the local ComfyUI provider.
 - Chromium is optional, but needed for visual screenshot checks.
 
 ## Quick start
@@ -96,7 +99,9 @@ IMAGE_STUDIO_PROXY_TARGET=http://127.0.0.1:8787
 
 ## Provider setup
 
-In the app, open **Settings** and configure a provider:
+In the app, open **Settings → API generation** and configure the providers you want to use.
+
+### OpenAI-compatible provider
 
 ```txt
 Generation endpoint: https://api.openai.com/v1/images/generations
@@ -109,6 +114,16 @@ API key:             your key
 ```
 
 If `OPENAI_API_KEY` is set in `.env`, the UI API key field can stay empty.
+
+### ComfyUI provider
+
+1. Start ComfyUI locally with its HTTP API available, usually at `http://127.0.0.1:8188`.
+2. In **Settings → API generation**, create or select a ComfyUI provider.
+3. Use the ComfyUI base URL as the provider endpoint.
+4. Refresh ComfyUI resources to load checkpoints, LoRA, samplers, schedulers, and upscaler models.
+5. Select a checkpoint model, then use the normal composer or the gallery **Hires Fix** action.
+
+The browser never calls ComfyUI directly. Image Studio talks to ComfyUI through the local Express server so the client UI stays provider-agnostic.
 
 ## Project structure
 
@@ -142,9 +157,9 @@ The project is organized around small owner modules rather than a central compon
 - Feature-specific UI lives under the owning `src/features/<feature>` folder.
 - Interface composition uses filesystem-discovered definitions and placements.
 - Generation parameters are self-contained logical modules declared through `defineGenerationParam`.
-- Provider behavior lives in provider adapters.
-- Provider adapters own settings schemas, settings fields, and provider/model-specific parameter availability profiles.
-- Task lifecycle, retry, cancellation, and delayed batch dispatch live in `src/processes/generation-task-lifecycle` and `src/processes/batch-runner`.
+- Provider behavior lives in provider adapters on both the client and server.
+- Provider adapters own settings schemas, settings fields, generation surfaces, detail descriptors, resource discovery, and provider/model-specific parameter availability profiles.
+- Task lifecycle, retry, cancellation, gallery Hires Fix restoration, and delayed batch dispatch live in `src/processes/*` and `src/app/commands/*` rather than inside feature UI.
 - Storage v2 separates task metadata, full assets, thumbnails, app document buckets, diagnostics, and audit tooling.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the current architecture map.
@@ -205,12 +220,21 @@ Do not deploy it publicly as-is. Before exposing it to the internet, add server-
 
 The default server host is `127.0.0.1` to reduce accidental exposure. Use `HOST=0.0.0.0` only when you intentionally want LAN access and understand the risks.
 
-## Notes for GPT Image / OpenAI-compatible models
+## Notes for providers
+
+### GPT Image / OpenAI-compatible models
 
 - Custom sizes use `WIDTHxHEIGHT`; for GPT Image 2 both sides should be divisible by 16.
 - `background: "transparent"` may not be supported by every model/provider.
 - `input_fidelity` is mainly useful for edit-capable models/providers that explicitly support it.
 - `response_format` is kept for older DALL·E-compatible providers.
+
+### ComfyUI
+
+- The current ComfyUI path is built around controlled workflows, not arbitrary user-provided workflow JSON.
+- Text-to-image and gallery Hires Fix are separate provider modes with their own parameter surfaces.
+- Checkpoints, LoRA, samplers, schedulers, and upscaler models are loaded from ComfyUI resources and cached in settings.
+- Image-to-image, inpaint, ControlNet, IPAdapter, and custom workflow presets are future extension areas rather than part of the current README setup path.
 
 ## License
 
