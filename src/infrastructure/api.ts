@@ -1,9 +1,10 @@
 import type { GeneratedImage } from '../domain/generationTask';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../domain/providerProbe';
 import type { ProviderSettings } from '../domain/providerSettings';
+import type { ProviderResourceKind, ProviderResourceList } from '../domain/providerResources';
 import type { WorkMode } from '../domain/workMode';
 import { getProviderAdapterForSettings } from '../entities/provider/registry';
-import type { ProviderResourceKind, ProviderResourceList, ProviderResponseAdapter } from '../entities/provider/types';
+import type { ProviderResponseAdapter } from '../entities/provider/types';
 
 export interface SubmitRequest {
   provider: ProviderSettings;

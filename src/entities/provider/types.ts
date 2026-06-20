@@ -2,6 +2,7 @@ import type { CapabilityEntry, CapabilityKey, ProviderProbeReport } from '../../
 import type { GeneratedImage } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderSettings } from '../../domain/providerSettings';
+import type { ProviderResourceDescriptor, ProviderResourceKind } from '../../domain/providerResources';
 import type { WorkMode } from '../../domain/workMode';
 import type { ProviderGenerationParamProfile } from '../generation-params/types';
 
@@ -15,7 +16,6 @@ export interface ModelCapabilities {
 }
 
 export type ProviderAdapterKind = 'openai-compatible' | 'comfyui';
-export type ProviderResourceKind = 'models' | 'checkpoints' | 'loras' | 'samplers' | 'schedulers' | (string & {});
 
 export interface ProviderRuntimeCapabilities {
   supportsGenerate: boolean;
@@ -25,26 +25,6 @@ export interface ProviderRuntimeCapabilities {
   supportsStreaming: boolean;
   usesLocalWorkflow: boolean;
   hasLiveResources: boolean;
-}
-
-export interface ProviderResourceDescriptor {
-  kinds: readonly ProviderResourceKind[];
-}
-
-export interface ProviderResourceEntry {
-  id: string;
-  name: string;
-  nativeName?: string;
-  description?: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface ProviderResourceList {
-  kind: ProviderResourceKind;
-  providerLabel: string;
-  createdAt: number;
-  items: ProviderResourceEntry[];
-  warning?: string;
 }
 
 export interface ProviderGenerationSurfaceDefinition {

@@ -47,6 +47,25 @@ const rules = [
       ].some((forbiddenTarget) => startsWithPath(target, forbiddenTarget))
   },
   {
+    id: 'no-domain-upward-imports',
+    title: 'Domain modules must stay independent from implementation layers',
+    reason:
+      'src/domain should own stable contracts and pure helpers. Runtime, provider, entity, process, UI, and infrastructure behavior belongs above domain.',
+    matches: ({ source, target }) =>
+      startsWithPath(source, 'src/domain') &&
+      [
+        'src/app',
+        'src/components',
+        'src/entities',
+        'src/features',
+        'src/infrastructure',
+        'src/interface',
+        'src/integrations',
+        'src/processes',
+        'src/providers'
+      ].some((forbiddenTarget) => startsWithPath(target, forbiddenTarget))
+  },
+  {
     id: 'no-entities-to-features-or-app',
     title: 'Entities must not depend on app/features/interface/components',
     reason:

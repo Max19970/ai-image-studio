@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { normalizeSelectedModel } from '../../domain/generationSnapshots';
+import { normalizeSelectedModel } from '../../entities/studio-settings';
 import { createAppCommands } from '../commands/appCommands';
 import type { TranslateFn } from '../commands/types';
 import type { WorkspaceDerivedState, WorkspaceState } from './types';

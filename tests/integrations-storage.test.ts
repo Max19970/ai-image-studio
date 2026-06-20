@@ -17,6 +17,7 @@ function setupStorageEnv(prefix: string) {
 
 test('integration settings store keeps secrets server-side and returns only public metadata', async () => {
   const tempDir = setupStorageEnv('image-studio-integrations-storage-');
+  const encryptedStore = await import('../server/storage/encryptedStore.ts');
   const store = await import(`../server/storage/integrationSettingsStore.ts?case=${Date.now()}`);
   const appStore = await import(`../server/storage/appDocumentStore.ts?case=${Date.now()}`);
   const secretValue = '1234567890:abcDEFghijklmn';
@@ -65,6 +66,7 @@ test('integration settings store keeps secrets server-side and returns only publ
     assert.equal(clearedPublicConfig.secrets.botToken.configured, false);
     assert.equal(store.loadIntegrationRuntimeConfig('telegram').secrets.botToken, undefined);
   } finally {
+    encryptedStore.closeStorageDbForTests();
     rmSync(tempDir, { recursive: true, force: true });
   }
 });
@@ -74,6 +76,7 @@ test('integration routes never echo raw stored secrets to client responses', asy
   const secretValue = '9876543210:routeSecretValue';
   let adapterConfig: IntegrationRuntimeConfig | null = null;
 
+  const encryptedStore = await import('../server/storage/encryptedStore.ts');
   const { createImageStudioApp } = await import(`../server/app.ts?case=${Date.now()}`);
   const integrations = await import(`../server/integrations/index.ts?case=${Date.now()}`);
 
@@ -149,6 +152,7 @@ test('integration routes never echo raw stored secrets to client responses', asy
   } finally {
     integrations.clearIntegrationAdaptersForTests();
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+    encryptedStore.closeStorageDbForTests();
     rmSync(tempDir, { recursive: true, force: true });
   }
 });

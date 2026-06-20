@@ -1,0 +1,7 @@
+[
+  { "id": "glass", "accent": "#f3eee2", "font": "Inter" },
+  { "id": "midnight", "accent": "#9db7ff", "font": "Inter" },
+  { "id": "ember", "accent": "#ffb26b", "font": "Inter" },
+  { "id": "meadow", "accent": "#a7e4c3", "font": "Inter" },
+  { "id": "mono", "accent": "#d9d6c8", "font": "IBM Plex Mono" }
+]

@@ -32,6 +32,12 @@ export interface ProviderRequestParameterSummary {
   entries: ProviderRequestParameterSummaryEntry[];
 }
 
+export interface BatchAggregateRequestSnapshot {
+  kind: 'batch';
+  itemCount: number;
+  intervalMs: number;
+}
+
 export interface GenerationRequestSnapshot {
   createdAt: number;
   mode: WorkMode;
@@ -46,8 +52,9 @@ export interface GenerationRequestSnapshot {
   surfaceId?: string;
   providerParams?: Record<string, unknown>;
   parameterSummary?: ProviderRequestParameterSummary;
+  aggregate?: BatchAggregateRequestSnapshot;
   attachments: AttachmentSummary[];
-  params: Pick<
+  params: Partial<Pick<
     ImageParams,
     | 'n'
     | 'sizeMode'
@@ -68,7 +75,7 @@ export interface GenerationRequestSnapshot {
     | 'rawJson'
     | 'retryAttempts'
     | 'retryDelaySeconds'
-  >;
+  >>;
 }
 
 export interface GeneratedImage {

@@ -18,7 +18,19 @@ function sanitizeAttachment(attachment: Partial<AttachmentSummary>): AttachmentS
   };
 }
 
+function sanitizeBatchAggregate(value: unknown): GenerationTask['request']['aggregate'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const source = value as Record<string, unknown>;
+  if (source.kind !== 'batch') return undefined;
+  return {
+    kind: 'batch',
+    itemCount: Number(source.itemCount ?? 0),
+    intervalMs: Number(source.intervalMs ?? 0)
+  };
+}
+
 function sanitizeRequestSnapshot(snapshot: Partial<GenerationTask['request']>): GenerationTask['request'] {
+  const aggregate = sanitizeBatchAggregate(snapshot.aggregate);
   return {
     createdAt: Number(snapshot.createdAt ?? Date.now()),
     mode: snapshot.mode === 'edit' ? 'edit' : 'generate',
@@ -33,8 +45,9 @@ function sanitizeRequestSnapshot(snapshot: Partial<GenerationTask['request']>): 
     surfaceId: typeof snapshot.surfaceId === 'string' ? snapshot.surfaceId : undefined,
     providerParams: snapshot.providerParams && typeof snapshot.providerParams === 'object' && !Array.isArray(snapshot.providerParams) ? snapshot.providerParams as Record<string, unknown> : undefined,
     parameterSummary: snapshot.parameterSummary && typeof snapshot.parameterSummary === 'object' && !Array.isArray(snapshot.parameterSummary) ? snapshot.parameterSummary as any : undefined,
+    aggregate,
     attachments: Array.isArray(snapshot.attachments) ? snapshot.attachments.map((item) => sanitizeAttachment(item as Partial<AttachmentSummary>)) : [],
-    params: sanitizeGenerationRequestParamsSnapshot(snapshot.params)
+    params: aggregate ? { ...(snapshot.params ?? {}) } : sanitizeGenerationRequestParamsSnapshot(snapshot.params)
   };
 }
 

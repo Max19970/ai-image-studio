@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { getStatusText, providerContextForModel } from '../../domain/generationSnapshots';
+import { getStatusText } from '../../domain/generationSnapshots';
 import { buildImagePayload, explainPayloadWarnings, validateCustomSize } from '../../entities/provider/request';
 import {
   getActiveModel,
   getEffectiveProviderSettings,
-  getProviderForModel
+  getProviderForModel,
+  providerContextForModel
 } from '../../entities/studio-settings';
 import type { TranslateFn } from '../commands/types';
 import type { WorkspaceDerivedState, WorkspaceState } from './types';

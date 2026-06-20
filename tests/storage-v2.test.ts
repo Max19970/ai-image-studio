@@ -9,6 +9,7 @@ test('Storage v2 saves tasks, full assets, thumbnails, lazy modes and app docume
   process.env.IMAGE_STUDIO_DB_PATH = path.join(tempDir, 'storage.sqlite');
   process.env.IMAGE_STUDIO_STORAGE_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
+  const encryptedStore = await import('../server/storage/encryptedStore.ts');
   const taskStore = await import(`../server/storage/generationTaskStore.ts?case=${Date.now()}`);
   const appStore = await import(`../server/storage/appDocumentStore.ts?case=${Date.now()}`);
 
@@ -69,5 +70,6 @@ test('Storage v2 saves tasks, full assets, thumbnails, lazy modes and app docume
   taskStore.clearGenerationTaskHistoryDocuments();
   assert.equal(taskStore.loadGenerationTaskHistoryDocuments().tasks.length, 0);
 
+  encryptedStore.closeStorageDbForTests();
   rmSync(tempDir, { recursive: true, force: true });
 });

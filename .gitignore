@@ -24,7 +24,7 @@ Thumbs.db
 .idea/
 
 # Image Studio local encrypted database and generated local state
-data/
+/data/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal

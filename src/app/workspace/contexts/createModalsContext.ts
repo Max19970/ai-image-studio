@@ -1,4 +1,4 @@
-import { providerContextForModel } from '../../../domain/generationSnapshots';
+import { providerContextForModel } from '../../../entities/studio-settings';
 import type { WorkspaceModalsContext } from '../../../interface/context/workspace/composerDock';
 import type { WorkspaceContextFactoryArgs } from './types';
 

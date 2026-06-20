@@ -92,7 +92,7 @@ function RunStatusRows({ task }: { task: GenerationTask }) {
       <DataRow label={t('detail.status')} value={t(`status.${task.status}`)} />
       <DataRow label={t('detail.images')} value={`${task.images.length} / ${expected}`} />
       <DataRow label={t('detail.updated')} value={new Date(task.updatedAt).toLocaleString()} />
-      <DataRow label={t('detail.retryPolicy')} value={task.request.params.retryAttempts > 0 ? t('detail.retryPolicyValue', { attempts: task.request.params.retryAttempts, seconds: task.request.params.retryDelaySeconds }) : t('detail.retryPolicyOff')} />
+      <DataRow label={t('detail.retryPolicy')} value={(task.request.params.retryAttempts ?? 0) > 0 ? t('detail.retryPolicyValue', { attempts: task.request.params.retryAttempts ?? 0, seconds: task.request.params.retryDelaySeconds ?? 0 }) : t('detail.retryPolicyOff')} />
     </div>
   );
 }

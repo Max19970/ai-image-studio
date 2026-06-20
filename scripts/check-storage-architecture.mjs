@@ -48,7 +48,7 @@ const storageSyncHistory = fs.readFileSync(path.join(root, 'src/processes/storag
 const storageSyncSettings = fs.readFileSync(path.join(root, 'src/processes/storage-sync/studioSettings.ts'), 'utf8');
 const storageSyncParams = fs.readFileSync(path.join(root, 'src/processes/storage-sync/imageParams.ts'), 'utf8');
 const storageSyncProbeCache = fs.readFileSync(path.join(root, 'src/processes/storage-sync/providerProbeCache.ts'), 'utf8');
-const serverApiRoutes = ['server/index.ts', 'server/routes/generationTaskStorageRoutes.ts'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
+const serverApiRoutes = ['server/index.ts', 'server/routes/generationTaskStorageRoutes.ts', 'server/routes/generationTaskAssetRoutes.ts', 'server/routes/generationTaskDiagnosticsRoutes.ts', 'server/routes/generationTaskDownloadRoutes.ts', 'server/routes/generationTaskHistoryRoutes.ts'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
 
 const expectations = [
   ['schema version is v2', /storageSchemaVersion\s*=\s*2/.test(schema)],
