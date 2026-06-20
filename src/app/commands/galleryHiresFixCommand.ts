@@ -5,6 +5,7 @@ import { comfyUiHiresFixModeId } from '../../entities/generation-params/comfyui/
 import { readComfyUiParamState, toComfyUiProviderParamState } from '../../entities/generation-params/comfyui/state';
 import { getProviderGenerationRequestSurfaceById } from '../../entities/generation-params/requestSurface';
 import { writeProviderParamState } from '../../entities/generation-params/providerState';
+import { loadGenerationTaskAsset } from '../../infrastructure/storage/remoteGenerationTaskHistoryStore';
 import { normalizeSelectedModel, providerContextForModel } from '../../entities/studio-settings';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { CreateAppCommandsArgs } from './appCommandTypes';
@@ -40,6 +41,28 @@ async function readImageDimensions(src: string): Promise<ImageDimensions | null>
     image.onerror = () => resolve(null);
     image.src = src;
   });
+}
+
+async function resolveFullImageForHiresFix(image: GeneratedImage): Promise<GeneratedImage> {
+  if (!image.storageAssetKey || image.storageAssetLoaded !== false) return image;
+
+  const loaded = await loadGenerationTaskAsset(image.storageAssetKey);
+  if (!loaded?.src) throw new Error('Full generation asset is unavailable for Hires Fix.');
+
+  return {
+    ...image,
+    ...loaded,
+    id: image.id,
+    taskId: image.taskId ?? loaded.taskId,
+    batchItemId: image.batchItemId ?? loaded.batchItemId,
+    batchItemIndex: image.batchItemIndex ?? loaded.batchItemIndex,
+    index: image.index,
+    request: loaded.request ?? image.request,
+    thumbnailSrc: image.thumbnailSrc ?? loaded.thumbnailSrc,
+    storageAssetKey: image.storageAssetKey,
+    storageThumbnailKey: image.storageThumbnailKey ?? loaded.storageThumbnailKey,
+    storageAssetLoaded: true
+  };
 }
 
 export function findFirstComfyUiModelId(args: Pick<CreateAppCommandsArgs, 'studioSettings'>): string | null {
@@ -84,11 +107,12 @@ export async function startGalleryHiresFixCommand(args: CreateAppCommandsArgs, t
 
   try {
     const { provider } = providerContextForModel(args.studioSettings, comfyModelId);
+    const fullImage = await resolveFullImageForHiresFix(activeImage);
     const [targetFile, sourceSize] = await Promise.all([
-      imageSrcToFile(activeImage.src, `hires-fix-${activeImage.id}`),
-      readImageDimensions(activeImage.src)
+      imageSrcToFile(fullImage.src, `hires-fix-${fullImage.id}`),
+      readImageDimensions(fullImage.src)
     ]);
-    const snapshot = getSnapshotForHiresFix(task, activeImage);
+    const snapshot = getSnapshotForHiresFix(task, fullImage);
     const restoredParams = restoreParamsForHiresFix({ previous: args.params, snapshot, sourceSize, provider });
 
     args.setStudioSettings((prev) => normalizeSelectedModel({ ...prev, selectedModelId: comfyModelId }));

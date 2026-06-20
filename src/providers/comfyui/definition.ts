@@ -25,7 +25,7 @@ export const comfyUiProviderDefinition: ProviderAdapterDefinition = {
     hasLiveResources: true
   },
   resources: {
-    kinds: ['models', 'checkpoints', 'loras', 'samplers', 'schedulers']
+    kinds: ['models', 'checkpoints', 'loras', 'samplers', 'schedulers', 'upscale_models']
   },
   generationSurface: {
     id: 'comfyui.text-to-image',

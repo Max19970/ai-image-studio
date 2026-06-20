@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   cacheKeyForComfyUiResources,
   readComfyUiSettingsData,
@@ -218,7 +219,14 @@ export function HiresUpscaleModelField({ context }: { context: ProviderGeneratio
   const { t } = useI18n();
   const state = readComfyUiParamState(context.params, context.provider);
   const cachedModels = getCachedUpscaleModels(context);
-  const value = state.hiresUpscaleModel || cachedModels[0] || '';
+  const defaultModel = cachedModels[0] || '';
+  const value = state.hiresUpscaleModel || defaultModel;
+
+  useEffect(() => {
+    if (state.hiresUpscaleModel || !defaultModel) return;
+    patchState(context, 'hiresUpscaleModel', defaultModel);
+  }, [context, defaultModel, state.hiresUpscaleModel]);
+
   const options = value
     ? optionList(cachedModels, value)
     : [{ value: '', label: t('params.comfy.hiresUpscaleModel.empty'), disabled: true }];

@@ -1,5 +1,6 @@
 import { useRef, useState, type MouseEvent } from 'react';
 import { Button, BottomSheet, FloatingPopover } from '../../../../shared/ui';
+import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { GalleryCardActionContext } from '../../../../interface/context/workspace/gallery';
 import { SlotHost } from '../../../../interface/SlotHost';
@@ -24,7 +25,7 @@ function GalleryActionList({ context, onAction }: { context: GalleryCardActionCo
   };
 
   return (
-    <div className={styles.actionList} role="menu" aria-label={t('gallery.quickActions')} onClick={closeAfterChildAction}>
+    <div className={styles.actionList} role="menu" aria-label={t('gallery.quickActions')} onClickCapture={closeAfterChildAction}>
       <Button variant="ghost" size="compact" fullWidth className={styles.actionItem} role="menuitem" onClick={openDetails}>
         {t('gallery.actionOpenDetails')}
       </Button>
@@ -37,6 +38,7 @@ export function GalleryQuickActionsSection({ context }: ElementDefinitionProps<G
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const isMobile = useMediaQuery('(max-width: 860px)');
 
   const close = () => setOpen(false);
   const toggle = (event: MouseEvent<HTMLButtonElement>) => {
@@ -62,31 +64,35 @@ export function GalleryQuickActionsSection({ context }: ElementDefinitionProps<G
           <circle cx="18" cy="12" r="1.7" />
         </svg>
       </button>
-      <FloatingPopover
-        open={open}
-        anchorRef={triggerRef}
-        className={styles.menuPanel}
-        placement="auto"
-        offset={8}
-        minWidth={188}
-        role="menu"
-        ariaLabel={t('gallery.quickActions')}
-        returnFocusOnEscape={false}
-        onDismiss={close}
-      >
-        <GalleryActionList context={context} onAction={close} />
-      </FloatingPopover>
-      <BottomSheet
-        open={open}
-        onClose={close}
-        title={t('gallery.quickActions')}
-        size="compact"
-        compactHeader
-        ariaLabel={t('gallery.quickActions')}
-        className={styles.mobileSheet}
-      >
-        <GalleryActionList context={context} onAction={close} />
-      </BottomSheet>
+      {!isMobile && (
+        <FloatingPopover
+          open={open}
+          anchorRef={triggerRef}
+          className={styles.menuPanel}
+          placement="auto"
+          offset={8}
+          minWidth={188}
+          role="menu"
+          ariaLabel={t('gallery.quickActions')}
+          returnFocusOnEscape={false}
+          onDismiss={close}
+        >
+          <GalleryActionList context={context} onAction={close} />
+        </FloatingPopover>
+      )}
+      {isMobile && (
+        <BottomSheet
+          open={open}
+          onClose={close}
+          title={t('gallery.quickActions')}
+          size="compact"
+          compactHeader
+          ariaLabel={t('gallery.quickActions')}
+          className={styles.mobileSheet}
+        >
+          <GalleryActionList context={context} onAction={close} />
+        </BottomSheet>
+      )}
     </>
   );
 }

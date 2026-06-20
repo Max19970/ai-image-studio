@@ -11,8 +11,8 @@ export function BatchComposerFooterSection({ context }: ElementDefinitionProps<B
     <footer className={styles.footer}>
       <button type="button" className="btn-secondary" onClick={context.actions.addDraft}>＋ <span>{t('batch.addRequest')}</span></button>
       <button type="button" className={`btn-primary ${styles.submitButton}`} disabled={!context.canSubmit} onClick={context.actions.submit}>
-        <span className={layoutStyles.actionFull}>{context.busy ? t('batch.busy') : t('batch.submit')}</span>
-        <span className={layoutStyles.actionMobile}>{context.busy ? t('batch.busy') : t('batch.mobileSubmit')}</span>
+        <span className={layoutStyles.actionFull}>{t('batch.submit')}</span>
+        <span className={layoutStyles.actionMobile}>{t('batch.mobileSubmit')}</span>
       </button>
     </footer>
   );

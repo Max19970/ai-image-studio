@@ -36,7 +36,7 @@ export function validateOpenAiCompatibleCustomSize(
   if (Math.max(width, height) > 4096) messages.push('Максимальная сторона изображения — 4096 px.');
   if (Math.min(width, height) < 1) messages.push('Минимальная сторона изображения — 1 px.');
   if (resolved.width !== width || resolved.height !== height) {
-    messages.push(`При отправке размер будет приведён к ${resolved.width}×${resolved.height}.`);
+    messages.push(`Ширина и высота должны быть кратны 16. При отправке размер будет приведён к ${resolved.width}×${resolved.height}.`);
   }
   return messages;
 }

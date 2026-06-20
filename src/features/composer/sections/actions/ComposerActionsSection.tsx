@@ -38,7 +38,7 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
           onClick={context.actions.submit}
           aria-label={context.providerMode.legacyWorkMode !== 'edit' ? t('composer.submitGenerate') : t('composer.submitEdit')}
         >
-          {context.busy ? t('composer.busy') : t('composer.send')}
+          {t('composer.send')}
         </button>
       </div>
     </div>

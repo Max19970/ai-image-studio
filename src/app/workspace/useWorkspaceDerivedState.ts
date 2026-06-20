@@ -86,8 +86,7 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     t
   ]);
 
-  const canSubmit = !state.busy &&
-    Boolean(activeModel) &&
+  const canSubmit = Boolean(activeModel) &&
     !rawJsonError &&
     state.params.prompt.trim().length > 0 &&
     hasProviderModeRequiredAttachments({
@@ -108,7 +107,7 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     : null;
 
   const batchCanSubmit = useMemo(() => {
-    if (state.busy || state.batchDrafts.length === 0) return false;
+    if (state.batchDrafts.length === 0) return false;
     return state.batchDrafts.some((draft) => {
       const { model, provider: draftProvider } = providerContextForModel(state.studioSettings, draft.selectedModelId);
       if (!model) return false;
@@ -132,7 +131,7 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
         return false;
       }
     });
-  }, [state.busy, state.batchDrafts, state.studioSettings]);
+  }, [state.batchDrafts, state.studioSettings]);
 
   const batchWarnings = useMemo(() => {
     if (!activeBatchDraft) return [];
