@@ -28,7 +28,8 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
     activeImage,
     galleryIndex: index,
     onOpenTask: context.onOpenTask,
-    onDeleteTask: context.onDeleteTask
+    onDeleteTask: context.onDeleteTask,
+    onStartHiresFix: () => context.onStartHiresFix(activeImage)
   };
 
   useEffect(() => {

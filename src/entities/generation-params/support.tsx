@@ -1,4 +1,4 @@
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { capabilityLabels } from '../../domain/defaults';
 import type { CapabilityKey } from '../../domain/providerProbe';
 import { isProviderCapabilitySupported } from '../provider';
@@ -6,6 +6,7 @@ import type { GenerationParamFieldContext } from './types';
 import { useI18n } from '../../i18n';
 import { generationParamCopy, generationParamOptions, type GenerationParamCopyKey, type GenerationParamOptionGroup } from './metadata';
 import controls from './ParamControls.module.css';
+import { FloatingPopover } from '../../shared/ui';
 
 export function isParamSupported(context: Pick<GenerationParamFieldContext, 'mode' | 'capabilityReport'>, key: CapabilityKey): boolean {
   return isProviderCapabilitySupported(context.capabilityReport, context.mode, key);
@@ -51,6 +52,45 @@ export function ParamToggle({ checked, onChange }: { checked: boolean; onChange:
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
       <span>{t('params.send')}</span>
     </label>
+  );
+}
+
+export function ParamInfoTip({ text, ariaLabel }: { text: string; ariaLabel: string }) {
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const popoverId = `param-info-${ariaLabel.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+
+  return (
+    <span className={controls.infoWrap}>
+      <button
+        ref={buttonRef}
+        type="button"
+        className={`${controls.infoButton} ${open ? controls.infoButtonActive : ''}`}
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        aria-controls={open ? popoverId : undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen((value) => !value);
+        }}
+      >
+        i
+      </button>
+      <FloatingPopover
+        open={open}
+        anchorRef={buttonRef}
+        id={popoverId}
+        role="tooltip"
+        className={controls.infoPopover}
+        placement="auto"
+        offset={8}
+        minWidth={220}
+        onDismiss={() => setOpen(false)}
+      >
+        {text}
+      </FloatingPopover>
+    </span>
   );
 }
 

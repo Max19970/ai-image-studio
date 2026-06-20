@@ -128,5 +128,14 @@
   "params.comfy.hiresUpscaleModel": "AI upscale model",
   "params.comfy.hiresUpscaleModel.description": "Upscale-модель, которая уйдёт в ComfyUI UpscaleModelLoader для AI Upscale режима.",
   "params.comfy.hiresUpscaleModel.empty": "Upscale-модель не выбрана",
-  "params.comfy.hiresUpscaleModel.cacheHint": "Обнови ComfyUI resources в настройках, чтобы подтянуть доступные upscale-модели. Для Latent Upscale это поле не нужно."
+  "params.comfy.hiresUpscaleModel.cacheHint": "Обнови ComfyUI resources в настройках, чтобы подтянуть доступные upscale-модели. Для Latent Upscale это поле не нужно.",
+  "params.comfy.hiresScale": "Множитель Hires Fix",
+  "params.comfy.hiresScale.description": "Во сколько раз увеличить исходную картинку. При отправке значение будет приведено к допустимому для режима шагу.",
+  "params.comfy.hiresScale.sourceKnown": "Исходный размер: {width}×{height} px.",
+  "params.comfy.hiresScale.sourceUnknown": "Исходный размер ещё неизвестен; если действие Hires Fix запущено из галереи, Image Studio подставит его автоматически.",
+  "params.sizeRules.infoButton": "Показать правила размера",
+  "params.sizeRules.snap.floor": "вниз",
+  "params.sizeRules.snap.round": "к ближайшему",
+  "params.sizeRules.snap.ceil": "вверх",
+  "params.sizeRules.generic": "Текущий режим принимает размер от {min} до {max} px по каждой стороне. При отправке значение будет приведено {snap} к кратности {multiple}."
 }

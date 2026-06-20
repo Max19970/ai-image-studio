@@ -70,8 +70,8 @@ export interface ProviderSubmitProxyRequestConfig {
 }
 
 export interface ProviderRequestAdapter {
-  getSize(params: ImageParams): string | undefined;
-  validateCustomSize(width: number, height: number): string[];
+  getSize(params: ImageParams, providerMode?: ProviderGenerationModeDefinition | null): string | undefined;
+  validateCustomSize(width: number, height: number, providerMode?: ProviderGenerationModeDefinition | null): string[];
   parseRawJson(rawJson: string): Record<string, unknown>;
   buildImagePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode, providerMode?: ProviderGenerationModeDefinition | null): Record<string, unknown>;
   explainPayloadWarnings(

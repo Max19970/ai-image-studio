@@ -23,6 +23,28 @@ export interface ProviderSubmitTransportDefinition {
   path?: string;
 }
 
+export type ProviderNumericSnapMode = 'floor' | 'round' | 'ceil';
+
+export interface ProviderNumericValueConstraint {
+  min: number;
+  max: number;
+  step?: number;
+  snap?: ProviderNumericSnapMode;
+}
+
+export interface ProviderImageSizeConstraint {
+  min: number;
+  max: number;
+  multipleOf?: number;
+  snap?: ProviderNumericSnapMode;
+  infoKey?: string;
+}
+
+export interface ProviderGenerationModeValueConstraints {
+  imageSize?: ProviderImageSizeConstraint;
+  hiresScale?: ProviderNumericValueConstraint;
+}
+
 export interface ProviderGenerationModeDefinition {
   id: ProviderGenerationModeId;
   labelKey: string;
@@ -33,4 +55,5 @@ export interface ProviderGenerationModeDefinition {
   generationSurfaceId: string;
   detailSurfaceId: string;
   submit: ProviderSubmitTransportDefinition;
+  valueConstraints?: ProviderGenerationModeValueConstraints;
 }

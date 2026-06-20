@@ -65,7 +65,7 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
   const warnings = useMemo(() => {
     const payloadWarnings = explainPayloadWarnings(payload, provider, mode, state.capabilityReport, providerMode);
     if (state.params.sizeMode === 'custom') {
-      payloadWarnings.push(...validateCustomSize(state.params.width, state.params.height));
+      payloadWarnings.push(...validateCustomSize(state.params.width, state.params.height, provider, providerMode));
     }
     if (attachmentStatusText) payloadWarnings.push(attachmentStatusText);
     if (!activeModel) {
@@ -154,7 +154,7 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
         draftProviderMode
       );
       if (activeBatchDraft.params.sizeMode === 'custom') {
-        draftWarnings.push(...validateCustomSize(activeBatchDraft.params.width, activeBatchDraft.params.height));
+        draftWarnings.push(...validateCustomSize(activeBatchDraft.params.width, activeBatchDraft.params.height, draftProvider, draftProviderMode));
       }
       const attachmentStatusText = getProviderModeAttachmentStatusText({
         draft: {

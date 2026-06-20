@@ -27,6 +27,7 @@ export interface GalleryCommands {
   clearResults: () => void;
   deleteTask: (taskId: string) => void;
   openTaskDetail: (task: GenerationTask, image?: GeneratedImage) => void;
+  startHiresFix: (task: GenerationTask, image?: GeneratedImage | null) => Promise<void>;
 }
 
 export interface BatchComposerCommands {

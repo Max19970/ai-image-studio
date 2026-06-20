@@ -26,36 +26,28 @@ function useIsMobileComposerControls() {
 
 function MenuContent({ context }: { context: ComposerActionContext }) {
   const { t } = useI18n();
-  const close = () => context.setOpenPopover(null);
   const chooseProviderMode = (providerModeId: string) => {
     context.actions.setProviderMode(providerModeId);
-    close();
   };
   const canUseImages = providerModeAllowsImageAttachments(context.providerMode);
   const canUseMask = providerModeAllowsMask(context.providerMode);
   const openAttachments = () => {
     context.actions.openAttachmentPicker();
-    close();
   };
   const openMask = () => {
     context.actions.openMaskPicker();
-    close();
   };
   const clearMask = () => {
     context.actions.clearMask();
-    close();
   };
   const openParameters = () => {
     context.actions.openParameters();
-    close();
   };
   const openBatch = () => {
     context.actions.openBatchComposer();
-    close();
   };
   const clearAttachments = () => {
     context.actions.clearAttachments();
-    close();
   };
 
   return (

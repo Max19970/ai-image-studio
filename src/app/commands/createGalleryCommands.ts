@@ -1,5 +1,6 @@
 import type { GalleryCommands } from '../../interface/context/commands';
 import type { CreateAppCommandsArgs } from './appCommandTypes';
+import { startGalleryHiresFixCommand } from './galleryHiresFixCommand';
 import { clearTasksCommand, deleteTaskCommand } from './workspaceCommands';
 import type { WorkspaceNavigationCommands } from './types';
 
@@ -15,6 +16,7 @@ export function createGalleryCommands(args: CreateAppCommandsArgs, navigation: W
     openTaskDetail: (task, image) => {
       args.setSelectedTaskId(task.id);
       args.setSelectedImageId(image?.id ?? null);
-    }
+    },
+    startHiresFix: (task, image) => startGalleryHiresFixCommand(args, task, image)
   };
 }

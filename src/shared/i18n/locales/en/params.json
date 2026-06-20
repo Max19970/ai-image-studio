@@ -128,5 +128,14 @@
   "params.comfy.hiresUpscaleModel": "AI upscale model",
   "params.comfy.hiresUpscaleModel.description": "Upscale model passed to ComfyUI UpscaleModelLoader for AI Upscale mode.",
   "params.comfy.hiresUpscaleModel.empty": "No upscale model selected",
-  "params.comfy.hiresUpscaleModel.cacheHint": "Refresh ComfyUI resources in settings to load available upscale models. This field is not needed for Latent Upscale."
+  "params.comfy.hiresUpscaleModel.cacheHint": "Refresh ComfyUI resources in settings to load available upscale models. This field is not needed for Latent Upscale.",
+  "params.comfy.hiresScale": "Hires Fix scale",
+  "params.comfy.hiresScale.description": "Multiplier for the source image. On submit, Image Studio snaps it down to the mode's accepted step.",
+  "params.comfy.hiresScale.sourceKnown": "Source size: {width}×{height} px.",
+  "params.comfy.hiresScale.sourceUnknown": "Source size is not known yet; gallery Hires Fix fills it automatically.",
+  "params.sizeRules.infoButton": "Show size rules",
+  "params.sizeRules.snap.floor": "down",
+  "params.sizeRules.snap.round": "to the nearest value",
+  "params.sizeRules.snap.ceil": "up",
+  "params.sizeRules.generic": "The current mode accepts {min}–{max} px per side. On submit, Image Studio snaps the value {snap} to a multiple of {multiple}."
 }

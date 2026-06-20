@@ -35,7 +35,7 @@ export function prepareBatchItems(args: BatchGenerationRunInput): PreparedBatchI
         draft.selectedModelId === selectedModelId ? capabilityReport : null,
         providerMode
       );
-      if (draft.params.sizeMode === 'custom') warnings.push(...validateCustomSize(draft.params.width, draft.params.height));
+      if (draft.params.sizeMode === 'custom') warnings.push(...validateCustomSize(draft.params.width, draft.params.height, provider, providerMode));
       const snapshot = captureRequestSnapshot({
         mode,
         providerMode,
