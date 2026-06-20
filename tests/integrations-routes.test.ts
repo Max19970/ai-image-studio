@@ -36,6 +36,7 @@ async function createStartedTestServer(adapter: IntegrationRuntimeAdapter) {
 
 test('integration routes read/write config, run start/stop, and redact secrets', async () => {
   const tempDir = setupStorageEnv('image-studio-integrations-routes-');
+  const encryptedStore = await import('../server/storage/encryptedStore.ts');
   const secretValue = '1234567890:routeStartStopSecret';
   const calls: Array<{ action: string; config: IntegrationRuntimeConfig }> = [];
   let state: IntegrationRuntimeStatus['state'] = 'stopped';
@@ -96,6 +97,7 @@ test('integration routes read/write config, run start/stop, and redact secrets',
     assert.equal(JSON.parse(stopText).message, 'stopped ••••');
   } finally {
     await server.close();
+    encryptedStore.closeStorageDbForTests();
     rmSync(tempDir, { recursive: true, force: true });
   }
 });

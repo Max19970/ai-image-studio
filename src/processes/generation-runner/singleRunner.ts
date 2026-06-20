@@ -1,4 +1,4 @@
-import { attachSnapshot, captureRequestSnapshot } from '../../domain/generationSnapshots';
+import { attachSnapshot } from '../../domain/generationSnapshots';
 import type { GenerationTask } from '../../domain/generationTask';
 import { submitImageRequest } from '../../infrastructure/api';
 import { transitionTask } from '../generation-task-lifecycle';
@@ -6,6 +6,7 @@ import { createRunnerAbortController, normalizeRunnerFailure, releaseRunnerAbort
 import type { SingleGenerationEventSink } from './events';
 import { mapSingleGenerationFinalImages } from './resultMapper';
 import { createRunnerRetryPolicy, runWithRetryPolicy } from './retryPolicy';
+import { captureRequestSnapshot } from './requestSnapshots';
 import type { SingleGenerationRunInput } from './types';
 
 export async function runSingleGeneration(input: SingleGenerationRunInput, onEvent?: SingleGenerationEventSink) {

@@ -1,6 +1,7 @@
-import { captureRequestSnapshot, providerContextForModel } from '../../domain/generationSnapshots';
 import type { GenerationRequestSnapshot } from '../../domain/generationTask';
 import { buildImagePayload, explainPayloadWarnings, validateCustomSize } from '../../entities/provider/request';
+import { providerContextForModel } from '../../entities/studio-settings';
+import { captureRequestSnapshot } from '../generation-runner/requestSnapshots';
 import type { BatchGenerationRunInput, PreparedBatchItem } from './types';
 
 export function prepareBatchItems(args: BatchGenerationRunInput): PreparedBatchItem[] {
@@ -56,7 +57,12 @@ export function createAggregateSnapshot(args: {
       requests: prepared.map((item) => item.snapshot.payload)
     },
     warnings: prepared.flatMap((item) => item.snapshot.warnings),
+    aggregate: {
+      kind: 'batch',
+      itemCount: prepared.length,
+      intervalMs
+    },
     attachments: prepared.flatMap((item) => item.snapshot.attachments),
-    params: prepared[0].snapshot.params
+    params: {}
   };
 }

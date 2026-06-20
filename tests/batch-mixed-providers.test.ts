@@ -4,7 +4,7 @@ import type { BatchComposerDraft } from '../src/domain/generationTask';
 import { defaultImageParams, defaultStudioSettings } from '../src/domain/defaults';
 import type { StudioSettings } from '../src/domain/studioSettings';
 import { writeProviderParamState } from '../src/entities/generation-params/providerState';
-import { providerContextForModel } from '../src/domain/generationSnapshots';
+import { providerContextForModel } from '../src/entities/studio-settings';
 import { prepareBatchItems } from '../src/processes/batch-runner/requestBuilder';
 
 function t(key: string, values?: Record<string, unknown>) {

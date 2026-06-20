@@ -4,7 +4,7 @@ import {
   listIntegrationDefinitions,
   requireIntegrationDefinition,
   type IntegrationDefinition
-} from '../../src/entities/integrations';
+} from '../../src/domain/integrations';
 import { sendServerError } from '../http/errors';
 import { getIntegrationAdapter } from '../integrations/registry';
 import type { IntegrationActionResult, IntegrationRuntimeStatus } from '../integrations/types';

@@ -1,36 +1,4 @@
-import { getActiveModel, getProviderForModel, toProviderSettings } from '../entities/studio-settings';
-import { getProviderGenerationRequestSurface } from '../entities/generation-params/requestSurface';
-import type {
-  AttachmentSummary,
-  BatchGenerationItem,
-  GeneratedImage,
-  GenerationModel,
-  GenerationProvider,
-  GenerationRequestSnapshot,
-  GenerationTask,
-  ImageParams,
-  ProviderSettings,
-  StudioSettings,
-  WorkMode
-} from './types';
-
-export function summarizeFile(role: AttachmentSummary['role'], file: File): AttachmentSummary {
-  return {
-    role,
-    name: file.name,
-    size: file.size,
-    type: file.type,
-    previewUrl: URL.createObjectURL(file)
-  };
-}
-
-export function summarizeAttachments(targetImage: File | null, referenceImages: File[], mask: File | null): AttachmentSummary[] {
-  const attachments: AttachmentSummary[] = [];
-  if (targetImage) attachments.push(summarizeFile('target', targetImage));
-  referenceImages.forEach((file) => attachments.push(summarizeFile('reference', file)));
-  if (mask) attachments.push(summarizeFile('mask', mask));
-  return attachments;
-}
+import type { BatchGenerationItem, GeneratedImage, GenerationRequestSnapshot, GenerationTask, ImageParams } from './types';
 
 export function cloneParams(params: ImageParams): ImageParams {
   return {
@@ -38,57 +6,6 @@ export function cloneParams(params: ImageParams): ImageParams {
     providerParams: params.providerParams ? Object.fromEntries(
       Object.entries(params.providerParams).map(([key, value]) => [key, { ...value }])
     ) : undefined
-  };
-}
-
-export function providerContextForModel(settings: StudioSettings, modelId: string) {
-  const model = settings.models.find((item) => item.id === modelId) ?? getActiveModel(settings);
-  const generationProvider = getProviderForModel(settings, model);
-  return {
-    model,
-    generationProvider,
-    provider: toProviderSettings(generationProvider, model)
-  };
-}
-
-export function normalizeSelectedModel(settings: StudioSettings): StudioSettings {
-  if (settings.models.some((model) => model.id === settings.selectedModelId)) return settings;
-  return { ...settings, selectedModelId: settings.models[0]?.id ?? '' };
-}
-
-export function captureRequestSnapshot(args: {
-  mode: WorkMode;
-  params: ImageParams;
-  provider: ProviderSettings;
-  activeProvider: GenerationProvider | null;
-  activeModel: GenerationModel | null;
-  payload: Record<string, unknown>;
-  warnings: string[];
-  targetImage: File | null;
-  referenceImages: File[];
-  mask: File | null;
-  fallbackProviderLabel: string;
-}): GenerationRequestSnapshot {
-  const { mode, params, provider, activeProvider, activeModel, payload, warnings, targetImage, referenceImages, mask, fallbackProviderLabel } = args;
-  const surface = getProviderGenerationRequestSurface(provider);
-  const snapshotContext = { params, provider, mode, payload };
-
-  return {
-    createdAt: Date.now(),
-    mode,
-    prompt: params.prompt.trim(),
-    endpoint: mode === 'generate' ? provider.generationEndpoint : provider.editEndpoint,
-    providerLabel: activeProvider?.name || provider.generationEndpoint || provider.editEndpoint || fallbackProviderLabel,
-    providerAdapterId: provider.adapterId,
-    model: provider.modelId,
-    modelLabel: activeModel?.name || provider.modelId,
-    payload,
-    warnings,
-    surfaceId: surface.id,
-    providerParams: surface.captureProviderParamsSnapshot(snapshotContext),
-    parameterSummary: surface.captureParameterSummary(snapshotContext),
-    attachments: summarizeAttachments(targetImage, referenceImages, mask),
-    params: surface.captureParamsSnapshot(snapshotContext)
   };
 }
 
@@ -117,7 +34,6 @@ export function patchBatchItem(task: GenerationTask, itemId: string, recipe: (it
     }
   };
 }
-
 
 export function getStatusText(task: GenerationTask | null, t: (key: string, vars?: Record<string, string | number | boolean | null | undefined>) => string) {
   if (!task) return null;

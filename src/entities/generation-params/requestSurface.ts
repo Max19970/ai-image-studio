@@ -1,9 +1,9 @@
-import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderSettings } from '../../domain/providerSettings';
-import type { WorkMode } from '../../domain/workMode';
 import { openAiCompatibleGenerationParamProfile } from '../../providers/openai-compatible/parameterProfile';
+import { getProviderAdapterForSettings } from '../provider/registry';
 import { comfyUiGenerationRequestSurface } from './comfyui/requestSurface';
-import { buildOpenAiCompatibleParamPayload, captureGenerationRequestParamsSnapshot, restoreImageParamsFromRequestSnapshot } from './logicalRegistry';
+import { captureGenerationRequestParamsSnapshot, restoreImageParamsFromRequestSnapshot } from './logicalRegistry';
+import { buildOpenAiCompatibleRequestSurfacePayload } from './openAiCompatiblePayload';
 import type {
   ProviderGenerationRequestSurface,
   ProviderGenerationRequestSurfacePayloadContext,
@@ -11,19 +11,14 @@ import type {
   ProviderGenerationRequestSurfaceSnapshotContext
 } from './requestSurfaceTypes';
 
+export { buildOpenAiCompatibleRequestSurfacePayload } from './openAiCompatiblePayload';
+
 export type {
   ProviderGenerationRequestSurface,
   ProviderGenerationRequestSurfacePayloadContext,
   ProviderGenerationRequestSurfaceRestoreContext,
   ProviderGenerationRequestSurfaceSnapshotContext
 } from './requestSurfaceTypes';
-
-export function buildOpenAiCompatibleRequestSurfacePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode): Record<string, unknown> {
-  return {
-    prompt: params.prompt.trim(),
-    ...buildOpenAiCompatibleParamPayload(params, provider, mode, openAiCompatibleGenerationParamProfile)
-  };
-}
 
 export const openAiCompatibleGenerationRequestSurface: ProviderGenerationRequestSurface = {
   id: 'openai-compatible.logical-params',
@@ -44,6 +39,6 @@ export function getProviderGenerationRequestSurfaceById(surfaceId: string | null
 }
 
 export function getProviderGenerationRequestSurface(provider: Pick<ProviderSettings, 'adapterId'> | null | undefined): ProviderGenerationRequestSurface {
-  if (provider?.adapterId === 'comfyui') return comfyUiGenerationRequestSurface;
-  return openAiCompatibleGenerationRequestSurface;
+  const surfaceId = getProviderAdapterForSettings(provider).generationSurface.id;
+  return getProviderGenerationRequestSurfaceById(surfaceId);
 }

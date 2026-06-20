@@ -1,4 +1,4 @@
-import type { ProviderResourceEntry, ProviderResourceKind, ProviderResourceList } from '../entities/provider/types';
+import type { ProviderResourceEntry, ProviderResourceKind, ProviderResourceList } from './providerResources';
 import type { StudioSettings } from './studioSettings';
 
 export const comfyUiAdapterDataKey = 'comfyui';

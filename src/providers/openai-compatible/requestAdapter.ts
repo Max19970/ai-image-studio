@@ -2,7 +2,7 @@ import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
-import { buildOpenAiCompatibleRequestSurfacePayload } from '../../entities/generation-params/requestSurface';
+import { buildOpenAiCompatibleRequestSurfacePayload } from '../../entities/generation-params/openAiCompatiblePayload';
 import {
   getOpenAiCompatibleSize,
   parseOpenAiCompatibleRawJson,

@@ -11,8 +11,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const dataDir = path.resolve(__dirname, '..', '..', 'data');
-export const storageDbPath = env('IMAGE_STUDIO_DB_PATH', path.join(dataDir, 'image-studio.sqlite'));
-const storageKeyPath = env('IMAGE_STUDIO_STORAGE_KEY_FILE', path.join(dataDir, 'storage.key'));
+function resolveStorageDbPath() {
+  return env('IMAGE_STUDIO_DB_PATH', path.join(dataDir, 'image-studio.sqlite'));
+}
+function resolveStorageKeyPath() {
+  return env('IMAGE_STUDIO_STORAGE_KEY_FILE', path.join(dataDir, 'storage.key'));
+}
+export let storageDbPath = resolveStorageDbPath();
+let storageKeyPath = resolveStorageKeyPath();
 export const historyBlobKey = 'generation-tasks.v1';
 export const generationTaskDocumentBucket = 'generation-task.v2';
 export const generationTaskAssetBucket = 'generation-task-asset.v2';
@@ -65,11 +71,23 @@ function getStorageKey(): Buffer {
 }
 
 export function getStorageDb(): DatabaseSync {
-  if (storageDb) return storageDb;
+  const nextStorageDbPath = resolveStorageDbPath();
+  if (storageDb && storageDbPath === nextStorageDbPath) return storageDb;
+  storageDb?.close();
+  storageDbPath = nextStorageDbPath;
+  storageKeyPath = resolveStorageKeyPath();
   ensureDataDir();
   storageDb = new DatabaseSync(storageDbPath);
   runStorageMigrations(storageDb);
   return storageDb;
+}
+
+export function closeStorageDbForTests() {
+  storageDb?.close();
+  storageDb = null;
+  storageKey = null;
+  storageDbPath = resolveStorageDbPath();
+  storageKeyPath = resolveStorageKeyPath();
 }
 
 function compressJson(value: unknown): Buffer {

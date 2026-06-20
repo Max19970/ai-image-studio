@@ -133,6 +133,21 @@ export function toProviderSettings(provider: GenerationProvider | null, model: G
   };
 }
 
+export function providerContextForModel(settings: StudioSettings, modelId: string) {
+  const model = settings.models.find((item) => item.id === modelId) ?? getActiveModel(settings);
+  const generationProvider = getProviderForModel(settings, model);
+  return {
+    model,
+    generationProvider,
+    provider: toProviderSettings(generationProvider, model)
+  };
+}
+
+export function normalizeSelectedModel(settings: StudioSettings): StudioSettings {
+  if (settings.models.some((model) => model.id === settings.selectedModelId)) return settings;
+  return { ...settings, selectedModelId: settings.models[0]?.id ?? '' };
+}
+
 export function getEffectiveProviderSettings(settings: StudioSettings): ProviderSettings {
   const model = getActiveModel(settings);
   return toProviderSettings(getProviderForModel(settings, model), model);

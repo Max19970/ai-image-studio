@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { normalizeSelectedModel } from '../../../domain/generationSnapshots';
+import { normalizeSelectedModel } from '../../../entities/studio-settings';
 import type { ImageParams } from '../../../domain/imageParams';
 import type { StudioSettings } from '../../../domain/studioSettings';
 import {

@@ -1,11 +1,11 @@
 import { cloneParams } from '../../domain/generationSnapshots';
 import { sanitizeGenerationDraftForModel } from '../../entities/provider/compatibility';
+import { normalizeSelectedModel } from '../../entities/studio-settings';
 import { getProviderGenerationRequestSurfaceById } from '../../entities/generation-params/requestSurface';
 import type { BatchComposerDraft, GenerationRequestSnapshot } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
-import { normalizeSelectedModel } from '../../domain/generationSnapshots';
 import type { RestoreRequestCommands, StateSetter, TaskHistoryCommands, WorkspaceNavigationCommands } from './types';
 
 export function deleteTaskCommand(args: {

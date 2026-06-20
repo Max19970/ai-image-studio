@@ -10,10 +10,12 @@ test('generation task storage diagnostics report archive scale and audit broken 
   process.env.IMAGE_STUDIO_DB_PATH = path.join(tempDir, 'storage.sqlite');
   process.env.IMAGE_STUDIO_STORAGE_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
+  let closeDb: (() => void) | null = null;
   try {
     const cacheKey = Date.now();
     const taskStore = await import(`../server/storage/generationTaskStore.ts?diag=${cacheKey}`);
     const encryptedStore = await import('../server/storage/encryptedStore.ts');
+    closeDb = encryptedStore.closeStorageDbForTests;
     const tasks = createGenerationTaskHistoryFixture({ taskCount: 4, imagesPerTask: 2, batchItemsPerTask: 1, batchImagesPerItem: 1, imageBytes: 256 });
 
     taskStore.saveGenerationTaskHistoryDocuments(tasks);
@@ -41,6 +43,7 @@ test('generation task storage diagnostics report archive scale and audit broken 
     assert.equal(brokenAudit.diagnostics.integrity.missingAssetDocuments, 1);
     assert.ok(brokenAudit.issues.some((issue: { kind: string; count: number }) => issue.kind === 'missingAssetDocuments' && issue.count === 1));
   } finally {
+    closeDb?.();
     rmSync(tempDir, { recursive: true, force: true });
   }
 });

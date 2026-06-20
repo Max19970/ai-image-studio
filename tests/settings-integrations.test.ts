@@ -28,7 +28,7 @@ test('Telegram UI state stays outside the central settings page context', () => 
 test('Telegram panel owns UX diagnostics without leaking into generation flows', () => {
   const panelSource = readFileSync(new URL('../src/features/settings/sections/integrations/TelegramIntegrationPanel.tsx', import.meta.url), 'utf8');
   const validationSource = readFileSync(new URL('../src/features/settings/sections/integrations/telegramPanelValidation.ts', import.meta.url), 'utf8');
-  const registrySource = readFileSync(new URL('../src/entities/integrations/registry.ts', import.meta.url), 'utf8');
+  const registrySource = readFileSync(new URL('../src/domain/integrations.ts', import.meta.url), 'utf8');
 
   assert.match(panelSource, /validateTelegramMiniAppSession/);
   assert.match(panelSource, /send-test-message/);
