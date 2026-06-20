@@ -34,7 +34,8 @@ export interface ProviderGenerationParamProfile {
   isAvailable?: (context: GenerationParamAvailabilityContext) => boolean;
 }
 
-export type GenerationParamTab = 'frame' | 'render' | 'output' | 'service' | 'retry';
+export type BuiltInGenerationParamTab = 'frame' | 'render' | 'output' | 'service' | 'retry';
+export type GenerationParamTab = BuiltInGenerationParamTab | (string & {});
 export type GenerationParamSlot = `composer/parameters/${GenerationParamTab}`;
 
 export type GenerationParamCopyKey =

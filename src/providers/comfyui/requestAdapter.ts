@@ -3,7 +3,7 @@ import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
-import { buildComfyUiPayload } from '../../entities/generation-params/comfyui/state';
+import { buildComfyUiPayload } from '../../entities/generation-params/comfyui/payload';
 import type { ProviderRequestAdapter, ProviderSubmitProxyRequestConfig, ProviderSubmitProxyRequestInput } from '../../entities/provider/types';
 import { resolveModeImageSize } from '../../entities/provider/valueConstraints';
 
@@ -40,8 +40,8 @@ export function parseComfyUiRawJson(rawJson: string): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 
-export function buildComfyUiImagePayload(params: ImageParams, provider: ProviderSettings, _mode: WorkMode, providerMode: ProviderGenerationModeDefinition | null = null): Record<string, unknown> {
-  return buildComfyUiPayload(params, provider, providerMode);
+export function buildComfyUiImagePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode, providerMode: ProviderGenerationModeDefinition | null = null): Record<string, unknown> {
+  return buildComfyUiPayload(params, provider, providerMode, mode);
 }
 
 export function explainComfyUiPayloadWarnings(

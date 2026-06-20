@@ -1,4 +1,6 @@
 import { HttpError, type ProviderSettings } from '../types';
+import { applyComfyUiModelConditioningExtensions } from './workflowExtensions';
+import { createComfyUiNodeAllocator, type ComfyUiNodeRef, type ComfyUiWorkflowNodeAllocator } from './workflowExtensionTypes';
 
 export interface ComfyUiLoraInput {
   lora_name?: string;
@@ -176,38 +178,27 @@ function addModelConditioningNodes(workflow: ComfyUiWorkflow, config: ComfyUiRes
     inputs: { ckpt_name: config.checkpoint }
   };
 
-  let modelRef: [string, number] = ['4', 0];
-  let clipRef: [string, number] = ['4', 1];
-  config.loras.forEach((lora, index) => {
-    const nodeId = String(10 + index);
-    workflow[nodeId] = {
-      class_type: 'LoraLoader',
-      inputs: {
-        lora_name: lora.lora_name,
-        strength_model: lora.strength_model,
-        strength_clip: lora.strength_clip,
-        model: modelRef,
-        clip: clipRef
-      }
-    };
-    modelRef = [nodeId, 0];
-    clipRef = [nodeId, 1];
-  });
+  const allocator: ComfyUiWorkflowNodeAllocator = createComfyUiNodeAllocator(workflow, 10);
+  const conditionedRefs = applyComfyUiModelConditioningExtensions(
+    { workflow, config, nextNodeId: allocator.nextNodeId },
+    { modelRef: ['4', 0] as ComfyUiNodeRef, clipRef: ['4', 1] as ComfyUiNodeRef }
+  );
 
   workflow['6'] = {
     class_type: 'CLIPTextEncode',
-    inputs: { text: config.prompt, clip: clipRef }
+    inputs: { text: config.prompt, clip: conditionedRefs.clipRef }
   };
   workflow['7'] = {
     class_type: 'CLIPTextEncode',
-    inputs: { text: config.negativePrompt, clip: clipRef }
+    inputs: { text: config.negativePrompt, clip: conditionedRefs.clipRef }
   };
 
   return {
-    modelRef,
-    vaeRef: ['4', 2] as [string, number],
-    positiveRef: ['6', 0] as [string, number],
-    negativeRef: ['7', 0] as [string, number]
+    modelRef: conditionedRefs.modelRef,
+    vaeRef: ['4', 2] as ComfyUiNodeRef,
+    positiveRef: ['6', 0] as ComfyUiNodeRef,
+    negativeRef: ['7', 0] as ComfyUiNodeRef,
+    nextNodeId: allocator.nextNodeId
   };
 }
 
@@ -251,8 +242,7 @@ export function buildComfyUiHiresFixWorkflow(config: ComfyUiResolvedGenerationCo
   if (!config.inputImageName) throw new HttpError('ComfyUI Hires Fix workflow requires an uploaded input image.', 400);
   const workflow: ComfyUiWorkflow = {};
   const refs = addModelConditioningNodes(workflow, config);
-  const baseNode = 20 + config.loras.length;
-  const loadImageNode = String(baseNode);
+  const loadImageNode = refs.nextNodeId();
 
   workflow[loadImageNode] = {
     class_type: 'LoadImage',
@@ -261,10 +251,10 @@ export function buildComfyUiHiresFixWorkflow(config: ComfyUiResolvedGenerationCo
 
   let latentRef: [string, number];
   if (config.hiresUpscaleMode === 'ai') {
-    const modelLoaderNode = String(baseNode + 1);
-    const imageUpscaleNode = String(baseNode + 2);
-    const imageScaleNode = String(baseNode + 3);
-    const vaeEncodeNode = String(baseNode + 4);
+    const modelLoaderNode = refs.nextNodeId();
+    const imageUpscaleNode = refs.nextNodeId();
+    const imageScaleNode = refs.nextNodeId();
+    const vaeEncodeNode = refs.nextNodeId();
 
     workflow[modelLoaderNode] = {
       class_type: 'UpscaleModelLoader',
@@ -290,8 +280,8 @@ export function buildComfyUiHiresFixWorkflow(config: ComfyUiResolvedGenerationCo
     };
     latentRef = [vaeEncodeNode, 0];
   } else {
-    const vaeEncodeNode = String(baseNode + 1);
-    const latentUpscaleNode = String(baseNode + 2);
+    const vaeEncodeNode = refs.nextNodeId();
+    const latentUpscaleNode = refs.nextNodeId();
 
     workflow[vaeEncodeNode] = {
       class_type: 'VAEEncode',

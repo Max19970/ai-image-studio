@@ -1,23 +1,28 @@
 import { normalizeImageParamsFromDefinitions } from '../logicalRegistry';
 import { renderGenerationParamSlot } from '../registry';
+import {
+  mergeGenerationTabs,
+  mergeGenerationTabStats,
+  renderGenerationExtensionSlot
+} from '../extensionTypes';
 import type { GenerationParamSlot, GenerationParamTab, GenerationParamTabDefinition } from '../types';
 import type { ProviderGenerationSurface, ProviderGenerationSurfaceContext, ProviderGenerationSurfacePatchContext } from '../surfaceTypes';
 import {
   COMFYUI_SURFACE_ID,
-  buildComfyUiPayload,
-  createComfyUiParameterSummary,
   defaultComfyUiParamState,
   normalizeComfyUiParamState,
   readComfyUiParamState,
   toComfyUiProviderParamState
 } from './state';
+import { buildComfyUiPayload } from './payload';
+import { createComfyUiParameterSummaryFromParams } from './summary';
 import { comfyUiGenerationRequestSurface } from './requestSurface';
+import { comfyUiGenerationExtensions } from './extensions/registry';
 import {
   COMFYUI_MAX_SEED,
   HiresScaleField,
   HiresUpscaleModeField,
   HiresUpscaleModelField,
-  LoraStackField,
   NumberField,
   SeedModeField,
   SelectField,
@@ -47,6 +52,10 @@ const comfyUiHiresFixTabs: readonly GenerationParamTabDefinition[] = [
   { id: 'retry', slot: 'composer/parameters/retry', labelKey: 'params.retry', hintKey: 'params.retryHint', panelClassKey: 'retryTabPanel' }
 ];
 
+function getComfyUiBaseTabs(context: ProviderGenerationSurfaceContext) {
+  return isHiresFixMode(context) ? comfyUiHiresFixTabs : comfyUiTextToImageTabs;
+}
+
 function renderComfyUiFrameSlot(context: ProviderGenerationSurfacePatchContext) {
   const hiresFix = isHiresFixMode(context);
   return [
@@ -72,8 +81,7 @@ function renderComfyUiRenderSlot(context: ProviderGenerationSurfacePatchContext)
 function renderComfyUiServiceSlot(context: ProviderGenerationSurfacePatchContext) {
   return [
     <TextField key="negative" context={context} labelKey="params.comfy.negativePrompt" descriptionKey="params.comfy.negativePrompt.description" stateKey="negativePrompt" multiline />,
-    <TextField key="filename" context={context} labelKey="params.comfy.filenamePrefix" descriptionKey="params.comfy.filenamePrefix.description" stateKey="filenamePrefix" />,
-    <LoraStackField key="loras" context={context} />
+    <TextField key="filename" context={context} labelKey="params.comfy.filenamePrefix" descriptionKey="params.comfy.filenamePrefix.description" stateKey="filenamePrefix" />
   ];
 }
 
@@ -85,7 +93,7 @@ function renderComfyUiHiresUpscaleSlot(context: ProviderGenerationSurfacePatchCo
   ].filter(Boolean);
 }
 
-function renderComfyUiSlot(slot: GenerationParamSlot, context: ProviderGenerationSurfacePatchContext) {
+function renderComfyUiBaseSlot(slot: GenerationParamSlot, context: ProviderGenerationSurfacePatchContext) {
   if (slot === 'composer/parameters/frame') return renderComfyUiFrameSlot(context);
   if (slot === 'composer/parameters/render') return renderComfyUiRenderSlot(context);
   if (slot === 'composer/parameters/output') return isHiresFixMode(context) ? renderComfyUiHiresUpscaleSlot(context) : [];
@@ -94,14 +102,21 @@ function renderComfyUiSlot(slot: GenerationParamSlot, context: ProviderGeneratio
   return [];
 }
 
-function tabStats(context: ProviderGenerationSurfaceContext, retryOffLabel: string): Record<GenerationParamTab, string> {
+function renderComfyUiSlot(slot: GenerationParamSlot, context: ProviderGenerationSurfacePatchContext) {
+  return [
+    ...renderComfyUiBaseSlot(slot, context),
+    ...renderGenerationExtensionSlot(slot, comfyUiGenerationExtensions, context)
+  ];
+}
+
+function baseTabStats(context: ProviderGenerationSurfaceContext, retryOffLabel: string): Record<GenerationParamTab, string> {
   const state = readComfyUiParamState(context.params, context.provider);
   const hiresFix = isHiresFixMode(context);
   return {
     frame: hiresFix ? `${state.hiresScale}×` : `${state.width}×${state.height} · ${state.batchSize}x`,
     render: `${state.steps} steps · CFG ${state.cfg}`,
     output: hiresFix ? (state.hiresUpscaleMode === 'ai' ? (state.hiresUpscaleModel || 'AI upscale') : 'Latent upscale') : 'workflow',
-    service: state.loras.filter((lora) => lora.enabled).length ? `${state.loras.filter((lora) => lora.enabled).length} LoRA` : 'no LoRA',
+    service: 'workflow',
     retry: context.params.retryAttempts > 0 ? `${context.params.retryAttempts}× / ${context.params.retryDelaySeconds}s` : retryOffLabel
   };
 }
@@ -114,14 +129,14 @@ export const comfyUiGenerationSurface: ProviderGenerationSurface = {
   readState: (params, provider) => toComfyUiProviderParamState(readComfyUiParamState(params, provider)),
   normalizeState: (value) => toComfyUiProviderParamState(normalizeComfyUiParamState(value)),
   normalizeParams: normalizeImageParamsFromDefinitions,
-  getTabs: (context) => isHiresFixMode(context) ? comfyUiHiresFixTabs : comfyUiTextToImageTabs,
+  getTabs: (context) => mergeGenerationTabs(getComfyUiBaseTabs(context), comfyUiGenerationExtensions, context),
   getInitialTab: () => 'frame',
-  getTabStats: (context, labels) => tabStats(context, labels?.retryOff ?? 'off'),
+  getTabStats: (context, labels) => mergeGenerationTabStats(baseTabStats(context, labels?.retryOff ?? 'off'), comfyUiGenerationExtensions, context),
   getHiddenSummary: () => ({ capabilityKeys: [], paramLabelKeys: [] }),
   renderSlot: renderComfyUiSlot,
-  buildPayload: ({ params, provider, providerMode }) => buildComfyUiPayload(params, provider, providerMode),
+  buildPayload: ({ params, provider, mode, providerMode }) => buildComfyUiPayload(params, provider, providerMode, mode),
   captureParamsSnapshot: (context) => comfyUiGenerationRequestSurface.captureParamsSnapshot(context),
   captureProviderParamsSnapshot: (context) => comfyUiGenerationRequestSurface.captureProviderParamsSnapshot(context),
-  captureParameterSummary: (context) => createComfyUiParameterSummary(readComfyUiParamState(context.params, context.provider), context.provider, context.providerMode),
+  captureParameterSummary: (context) => createComfyUiParameterSummaryFromParams(context.params, context.provider, context.providerMode, context.mode, context.payload),
   restoreParamsFromSnapshot: (context) => comfyUiGenerationRequestSurface.restoreParamsFromSnapshot(context)
 };

@@ -149,7 +149,7 @@ export function toComfyUiProviderParamState(state: ComfyUiParamState): ProviderP
   };
 }
 
-export function buildComfyUiPayload(
+export function buildComfyUiBasePayload(
   params: ImageParams,
   provider: ProviderSettings,
   providerMode?: ProviderGenerationModeDefinition | null
@@ -183,20 +183,11 @@ export function buildComfyUiPayload(
       ...(state.hiresUpscaleMode === 'ai' && state.hiresUpscaleModel.trim() ? { hires_upscale_model: state.hiresUpscaleModel.trim() } : {})
     } : {}),
     ...(state.negativePrompt.trim() ? { negative_prompt: state.negativePrompt.trim() } : {}),
-    ...(state.seedMode === 'fixed' ? { seed: state.seed } : {}),
-    ...(state.loras.some((lora) => lora.enabled) ? {
-      loras: state.loras
-        .filter((lora) => lora.enabled)
-        .map((lora) => ({
-          lora_name: lora.name,
-          strength_model: lora.strengthModel,
-          strength_clip: lora.strengthClip
-        }))
-    } : {})
+    ...(state.seedMode === 'fixed' ? { seed: state.seed } : {})
   };
 }
 
-export function createComfyUiParameterSummary(
+export function createComfyUiBaseParameterSummary(
   state: ComfyUiParamState,
   provider: ProviderSettings,
   providerMode?: ProviderGenerationModeDefinition | null
@@ -213,6 +204,7 @@ export function createComfyUiParameterSummary(
     { id: 'mode', label: 'Provider mode', value: providerMode?.id ?? 'text-to-image', rawValue: providerMode?.id ?? null },
     { id: 'checkpoint', label: 'Checkpoint', value: provider.modelId || 'not selected', rawValue: provider.modelId },
     { id: hiresFix ? 'targetSize' : 'size', label: hiresFix ? 'Target size' : 'Size', value: `${state.width}×${state.height}`, rawValue: { width: state.width, height: state.height } },
+    { id: 'resolvedSize', label: 'Resolved size', value: `${resolvedSize.width}×${resolvedSize.height}`, rawValue: resolvedSize },
     { id: 'batchSize', label: 'Batch size', value: String(hiresFix ? 1 : state.batchSize), rawValue: hiresFix ? 1 : state.batchSize },
     { id: 'steps', label: 'Steps', value: String(state.steps), rawValue: state.steps },
     { id: 'cfg', label: 'CFG', value: String(state.cfg), rawValue: state.cfg },
@@ -220,8 +212,7 @@ export function createComfyUiParameterSummary(
     { id: 'scheduler', label: 'Scheduler', value: state.scheduler, rawValue: state.scheduler },
     { id: 'seed', label: 'Seed', value: seedValue, rawValue: state.seedMode === 'fixed' ? state.seed : null },
     { id: 'denoise', label: 'Denoise', value: String(state.denoise), rawValue: state.denoise },
-    { id: 'filenamePrefix', label: 'Filename prefix', value: state.filenamePrefix, rawValue: state.filenamePrefix },
-    { id: 'loras', label: 'LoRA stack', value: state.loras.filter((lora) => lora.enabled).length ? state.loras.filter((lora) => lora.enabled).map((lora) => `${lora.name} (${lora.strengthModel}/${lora.strengthClip})`).join(', ') : 'none', rawValue: state.loras }
+    { id: 'filenamePrefix', label: 'Filename prefix', value: state.filenamePrefix, rawValue: state.filenamePrefix }
   ];
 
   if (hiresFix) {

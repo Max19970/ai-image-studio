@@ -1,4 +1,5 @@
 export type {
+  BuiltInGenerationParamTab,
   GenerationParamCopyKey,
   GenerationParamAvailabilityContext,
   GenerationParamFieldContext,
@@ -14,6 +15,7 @@ export type {
   ProviderGenerationParamSet,
   ResolvedGenerationParamFieldPlacement
 } from './types';
+export type { ProviderGenerationExtension } from './extensionTypes';
 export { defineGenerationParam } from './defineParam';
 export { capabilityLabel } from './support';
 export {
