@@ -10,25 +10,35 @@ import {
   shouldSendOutputFormat
 } from '../../entities/generation-params/serializers/openAiCompatible';
 import type { ProviderRequestAdapter, ProviderSubmitProxyRequestInput, ProviderSubmitProxyRequestConfig } from '../../entities/provider/types';
+import { resolveModeImageSize } from '../../entities/provider/valueConstraints';
 import {
   resolveOpenAiCompatibleLegacyMode,
   resolveOpenAiCompatibleProviderMode
 } from '../../entities/generation-params/openai-compatible/modes';
 
-export function getOpenAiCompatibleSizeFromParams(params: ImageParams): string | undefined {
-  return getOpenAiCompatibleSize(params);
+export function getOpenAiCompatibleSizeFromParams(
+  params: ImageParams,
+  providerMode?: ProviderGenerationModeDefinition | null
+): string | undefined {
+  return getOpenAiCompatibleSize(params, providerMode);
 }
 
-export function validateOpenAiCompatibleCustomSize(width: number, height: number): string[] {
-  const errors: string[] = [];
+export function validateOpenAiCompatibleCustomSize(
+  width: number,
+  height: number,
+  providerMode?: ProviderGenerationModeDefinition | null
+): string[] {
   if (!Number.isFinite(width) || !Number.isFinite(height)) {
     return ['Размер должен быть числом.'];
   }
-  if (width % 16 !== 0 || height % 16 !== 0) errors.push('Ширина и высота должны быть кратны 16.');
-  if (Math.max(width, height) > 3840) errors.push('Максимальная сторона для GPT Image 2 — 3840 px.');
-  const ratio = width / height;
-  if (ratio > 3 || ratio < 1 / 3) errors.push('Соотношение сторон должно быть в пределах 1:3..3:1.');
-  return errors;
+  const resolved = resolveModeImageSize(width, height, providerMode, { width, height });
+  const messages: string[] = [];
+  if (Math.max(width, height) > 4096) messages.push('Максимальная сторона изображения — 4096 px.');
+  if (Math.min(width, height) < 1) messages.push('Минимальная сторона изображения — 1 px.');
+  if (resolved.width !== width || resolved.height !== height) {
+    messages.push(`При отправке размер будет приведён к ${resolved.width}×${resolved.height}.`);
+  }
+  return messages;
 }
 
 export function buildOpenAiCompatibleImagePayload(

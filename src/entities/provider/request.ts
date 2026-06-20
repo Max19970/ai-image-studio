@@ -5,12 +5,21 @@ import type { ProviderGenerationModeDefinition } from '../../domain/providerMode
 import type { WorkMode } from '../../domain/workMode';
 import { getProviderAdapterForSettings } from './registry';
 
-export function getSize(params: ImageParams, provider?: ProviderSettings | null): string | undefined {
-  return getProviderAdapterForSettings(provider).request.getSize(params);
+export function getSize(
+  params: ImageParams,
+  provider?: ProviderSettings | null,
+  providerMode?: ProviderGenerationModeDefinition | null
+): string | undefined {
+  return getProviderAdapterForSettings(provider).request.getSize(params, providerMode);
 }
 
-export function validateCustomSize(width: number, height: number, provider?: ProviderSettings | null): string[] {
-  return getProviderAdapterForSettings(provider).request.validateCustomSize(width, height);
+export function validateCustomSize(
+  width: number,
+  height: number,
+  provider?: ProviderSettings | null,
+  providerMode?: ProviderGenerationModeDefinition | null
+): string[] {
+  return getProviderAdapterForSettings(provider).request.validateCustomSize(width, height, providerMode);
 }
 
 export function parseRawJson(rawJson: string, provider?: ProviderSettings | null): Record<string, unknown> {

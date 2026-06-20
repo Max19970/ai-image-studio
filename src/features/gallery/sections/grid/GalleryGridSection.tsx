@@ -19,7 +19,8 @@ export function GalleryGridSection({ context }: ElementDefinitionProps<GalleryLa
                 task,
                 index,
                 onOpenTask: (image) => context.commands.openTaskDetail(task, image),
-                onDeleteTask: () => context.commands.deleteTask(task.id)
+                onDeleteTask: () => context.commands.deleteTask(task.id),
+                onStartHiresFix: (image) => context.commands.startHiresFix(task, image)
               }}
               as={null}
             />

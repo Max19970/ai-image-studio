@@ -111,7 +111,6 @@ export function ImageComposer({
     setTargetImage(null);
     setReferenceImages([]);
     setMask(null);
-    setOpenPopover(null);
   }, [setMask, setReferenceImages, setTargetImage]);
 
   const setMaskAttachment = useCallback((file: File | null) => {

@@ -1,4 +1,6 @@
 import type { ImageParams } from '../../../domain/imageParams';
+import type { ProviderGenerationModeDefinition } from '../../../domain/providerMode';
+import { resolveModeImageSize } from '../../provider/valueConstraints';
 
 export const isBlank = (value: unknown) => value === undefined || value === null || value === '';
 export const isAuto = (value: unknown) => value === 'auto' || isBlank(value);
@@ -10,10 +12,14 @@ export function shouldSendOutputFormat(format: unknown) {
   return typeof format === 'string' && format !== '' && format !== 'png';
 }
 
-export function getOpenAiCompatibleSize(params: ImageParams): string | undefined {
+export function getOpenAiCompatibleSize(
+  params: ImageParams,
+  providerMode?: ProviderGenerationModeDefinition | null
+): string | undefined {
   if (params.sizeMode === 'auto') return 'auto';
   if (params.sizeMode === 'preset') return params.sizePreset || undefined;
-  return `${params.width}x${params.height}`;
+  const size = resolveModeImageSize(params.width, params.height, providerMode, { width: params.width, height: params.height });
+  return `${size.width}x${size.height}`;
 }
 
 export function parseOpenAiCompatibleRawJson(rawJson: string): Record<string, unknown> {

@@ -2,6 +2,7 @@ import type { ProviderRequestParameterSummary } from '../../../domain/generation
 import type { ImageParams } from '../../../domain/imageParams';
 import type { ProviderGenerationModeDefinition } from '../../../domain/providerMode';
 import type { ProviderSettings } from '../../../domain/providerSettings';
+import { resolveModeHiresScale, resolveModeImageSize } from '../../provider/valueConstraints';
 import { isPlainRecord, readProviderParamState } from '../providerState';
 import type { ProviderParamState } from '../surfaceTypes';
 
@@ -30,6 +31,9 @@ export interface ComfyUiParamState {
   filenamePrefix: string;
   hiresUpscaleMode: 'latent' | 'ai';
   hiresUpscaleModel: string;
+  hiresScale: number;
+  hiresInputWidth: number;
+  hiresInputHeight: number;
   loras: ComfyUiLoraSelection[];
 }
 
@@ -53,6 +57,9 @@ export const defaultComfyUiParamState: ComfyUiParamState = {
   filenamePrefix: 'image-studio',
   hiresUpscaleMode: 'latent',
   hiresUpscaleModel: '',
+  hiresScale: 2,
+  hiresInputWidth: 0,
+  hiresInputHeight: 0,
   loras: []
 };
 
@@ -108,6 +115,9 @@ export function normalizeComfyUiParamState(value: unknown): ComfyUiParamState {
     filenamePrefix: stringValue(source.filenamePrefix ?? source.filename_prefix, defaultComfyUiParamState.filenamePrefix).trim() || defaultComfyUiParamState.filenamePrefix,
     hiresUpscaleMode: enumValue(source.hiresUpscaleMode ?? source.hires_upscale_mode, ['latent', 'ai'] as const, defaultComfyUiParamState.hiresUpscaleMode),
     hiresUpscaleModel: stringValue(source.hiresUpscaleModel ?? source.hires_upscale_model, defaultComfyUiParamState.hiresUpscaleModel).trim(),
+    hiresScale: numberInRange(source.hiresScale ?? source.hires_scale ?? source.hires_upscale_factor, defaultComfyUiParamState.hiresScale, 0.1, 8),
+    hiresInputWidth: numberInRange(source.hiresInputWidth ?? source.hires_input_width, defaultComfyUiParamState.hiresInputWidth, 0, 4096, true),
+    hiresInputHeight: numberInRange(source.hiresInputHeight ?? source.hires_input_height, defaultComfyUiParamState.hiresInputHeight, 0, 4096, true),
     loras: normalizeLoras(source.loras)
   };
 }
@@ -132,6 +142,9 @@ export function toComfyUiProviderParamState(state: ComfyUiParamState): ProviderP
     filenamePrefix: state.filenamePrefix,
     hiresUpscaleMode: state.hiresUpscaleMode,
     hiresUpscaleModel: state.hiresUpscaleModel,
+    hiresScale: state.hiresScale,
+    hiresInputWidth: state.hiresInputWidth,
+    hiresInputHeight: state.hiresInputHeight,
     loras: state.loras.map((lora) => ({ ...lora }))
   };
 }
@@ -143,11 +156,17 @@ export function buildComfyUiPayload(
 ): Record<string, unknown> {
   const state = readComfyUiParamState(params, provider);
   const hiresFix = isHiresFixMode(providerMode);
+  const hiresScale = resolveModeHiresScale(state.hiresScale, providerMode);
+  const sourceWidth = state.hiresInputWidth > 0 ? state.hiresInputWidth : state.width;
+  const sourceHeight = state.hiresInputHeight > 0 ? state.hiresInputHeight : state.height;
+  const size = hiresFix
+    ? resolveModeImageSize(sourceWidth * hiresScale, sourceHeight * hiresScale, providerMode, { width: state.width, height: state.height })
+    : resolveModeImageSize(state.width, state.height, providerMode, { width: state.width, height: state.height });
   return {
     prompt: params.prompt.trim(),
     checkpoint: provider.modelId.trim(),
-    width: state.width,
-    height: state.height,
+    width: size.width,
+    height: size.height,
     batch_size: hiresFix ? 1 : state.batchSize,
     steps: state.steps,
     cfg: state.cfg,
@@ -158,6 +177,9 @@ export function buildComfyUiPayload(
     ...(providerMode?.id ? { provider_mode: providerMode.id } : {}),
     ...(hiresFix ? {
       hires_upscale_mode: state.hiresUpscaleMode,
+      hires_upscale_factor: hiresScale,
+      hires_input_width: state.hiresInputWidth,
+      hires_input_height: state.hiresInputHeight,
       ...(state.hiresUpscaleMode === 'ai' && state.hiresUpscaleModel.trim() ? { hires_upscale_model: state.hiresUpscaleModel.trim() } : {})
     } : {}),
     ...(state.negativePrompt.trim() ? { negative_prompt: state.negativePrompt.trim() } : {}),
@@ -181,6 +203,12 @@ export function createComfyUiParameterSummary(
 ): ProviderRequestParameterSummary {
   const seedValue = state.seedMode === 'fixed' ? String(state.seed) : 'random';
   const hiresFix = isHiresFixMode(providerMode);
+  const hiresScale = resolveModeHiresScale(state.hiresScale, providerMode);
+  const sourceWidth = state.hiresInputWidth > 0 ? state.hiresInputWidth : state.width;
+  const sourceHeight = state.hiresInputHeight > 0 ? state.hiresInputHeight : state.height;
+  const resolvedSize = hiresFix
+    ? resolveModeImageSize(sourceWidth * hiresScale, sourceHeight * hiresScale, providerMode, { width: state.width, height: state.height })
+    : resolveModeImageSize(state.width, state.height, providerMode, { width: state.width, height: state.height });
   const entries = [
     { id: 'mode', label: 'Provider mode', value: providerMode?.id ?? 'text-to-image', rawValue: providerMode?.id ?? null },
     { id: 'checkpoint', label: 'Checkpoint', value: provider.modelId || 'not selected', rawValue: provider.modelId },

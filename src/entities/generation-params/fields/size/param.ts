@@ -29,8 +29,8 @@ export const sizeParam = defineGenerationParam({
     width: Number.isFinite(Number(current.width)) ? Number(current.width) : defaults.width,
     height: Number.isFinite(Number(current.height)) ? Number(current.height) : defaults.height
   }),
-  openAiCompatiblePayload: ({ params }) => {
-    const size = getOpenAiCompatibleSize(params);
+  openAiCompatiblePayload: ({ params, providerMode }) => {
+    const size = getOpenAiCompatibleSize(params, providerMode);
     return size ? { size } : {};
   }
 });

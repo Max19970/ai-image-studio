@@ -30,6 +30,7 @@ export interface GalleryCardActionContext {
   galleryIndex: number;
   onOpenTask: (image?: GeneratedImage) => void;
   onDeleteTask: () => void;
+  onStartHiresFix: () => Promise<void>;
 }
 
 export interface GalleryTaskCardContext {
@@ -37,6 +38,7 @@ export interface GalleryTaskCardContext {
   index: number;
   onOpenTask: (image?: GeneratedImage) => void;
   onDeleteTask: () => void;
+  onStartHiresFix: (image?: GeneratedImage | null) => Promise<void>;
 }
 
 export interface WorkspaceGalleryContext {

@@ -5,6 +5,21 @@ export const comfyUiTextToImageModeId = 'comfyui.text-to-image';
 export const comfyUiHiresFixModeId = 'comfyui.hires-fix';
 export const comfyUiDetailSurfaceId = 'comfyui.workflow-summary';
 
+const comfyUiImageSizeConstraint = {
+  min: 64,
+  max: 4096,
+  multipleOf: 8,
+  snap: 'floor',
+  infoKey: 'providerModes.comfyui.sizeRules'
+} as const;
+
+const comfyUiHiresScaleConstraint = {
+  min: 0.1,
+  max: 8,
+  step: 0.01,
+  snap: 'floor'
+} as const;
+
 export const comfyUiTextToImageMode: ProviderGenerationModeDefinition = {
   id: comfyUiTextToImageModeId,
   labelKey: 'providerModes.comfyui.textToImage.label',
@@ -19,7 +34,8 @@ export const comfyUiTextToImageMode: ProviderGenerationModeDefinition = {
   },
   generationSurfaceId: COMFYUI_SURFACE_ID,
   detailSurfaceId: comfyUiDetailSurfaceId,
-  submit: { kind: 'json', operation: 'provider-submit', path: '/api/provider/submit' }
+  submit: { kind: 'json', operation: 'provider-submit', path: '/api/provider/submit' },
+  valueConstraints: { imageSize: comfyUiImageSizeConstraint }
 };
 
 export const comfyUiHiresFixMode: ProviderGenerationModeDefinition = {
@@ -34,7 +50,11 @@ export const comfyUiHiresFixMode: ProviderGenerationModeDefinition = {
   },
   generationSurfaceId: COMFYUI_SURFACE_ID,
   detailSurfaceId: comfyUiDetailSurfaceId,
-  submit: { kind: 'multipart', operation: 'provider-submit', path: '/api/provider/submit' }
+  submit: { kind: 'multipart', operation: 'provider-submit', path: '/api/provider/submit' },
+  valueConstraints: {
+    imageSize: comfyUiImageSizeConstraint,
+    hiresScale: comfyUiHiresScaleConstraint
+  }
 };
 
 export const comfyUiGenerationModes = [

@@ -5,19 +5,31 @@ import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
 import { buildComfyUiPayload } from '../../entities/generation-params/comfyui/state';
 import type { ProviderRequestAdapter, ProviderSubmitProxyRequestConfig, ProviderSubmitProxyRequestInput } from '../../entities/provider/types';
+import { resolveModeImageSize } from '../../entities/provider/valueConstraints';
 
-export function getComfyUiSizeFromParams(params: ImageParams, provider: ProviderSettings): string | undefined {
-  const payload = buildComfyUiPayload(params, provider);
+export function getComfyUiSizeFromParams(
+  params: ImageParams,
+  provider: ProviderSettings,
+  providerMode?: ProviderGenerationModeDefinition | null
+): string | undefined {
+  const payload = buildComfyUiPayload(params, provider, providerMode);
   return `${payload.width}x${payload.height}`;
 }
 
-export function validateComfyUiCustomSize(width: number, height: number): string[] {
-  const errors: string[] = [];
+export function validateComfyUiCustomSize(
+  width: number,
+  height: number,
+  providerMode?: ProviderGenerationModeDefinition | null
+): string[] {
   if (!Number.isFinite(width) || !Number.isFinite(height)) return ['Размер должен быть числом.'];
-  if (width % 8 !== 0 || height % 8 !== 0) errors.push('Для ComfyUI ширина и высота желательно должны быть кратны 8.');
-  if (Math.min(width, height) < 64) errors.push('Минимальная сторона ComfyUI-кадра — 64 px.');
-  if (Math.max(width, height) > 4096) errors.push('Максимальная сторона ComfyUI-кадра в Image Studio ограничена 4096 px.');
-  return errors;
+  const resolved = resolveModeImageSize(width, height, providerMode, { width, height });
+  const messages: string[] = [];
+  if (Math.min(width, height) < 64) messages.push('Минимальная сторона ComfyUI-кадра — 64 px.');
+  if (Math.max(width, height) > 4096) messages.push('Максимальная сторона ComfyUI-кадра в Image Studio ограничена 4096 px.');
+  if (resolved.width !== width || resolved.height !== height) {
+    messages.push(`При отправке размер будет приведён к ${resolved.width}×${resolved.height}.`);
+  }
+  return messages;
 }
 
 export function parseComfyUiRawJson(rawJson: string): Record<string, unknown> {

@@ -5,7 +5,9 @@ import {
 } from '../../../domain/comfyUiSettings';
 import { useI18n } from '../../../i18n';
 import { PopoverSelect } from '../../../shared/ui';
-import { ParamField } from '../support';
+import { getModeImageSizeConstraint } from '../../provider/valueConstraints';
+import { ParamField, ParamInfoTip } from '../support';
+import { DraftNumberInput } from '../fields/shared/DraftNumberInput';
 import type { ProviderGenerationSurfacePatchContext } from '../surfaceTypes';
 import controls from '../ParamControls.module.css';
 import {
@@ -41,18 +43,36 @@ export function NumberField({ context, labelKey, descriptionKey, stateKey, min, 
 }) {
   const { t } = useI18n();
   const state = readComfyUiParamState(context.params, context.provider);
+  const isSizeField = stateKey === 'width' || stateKey === 'height';
+  const sizeConstraint = getModeImageSizeConstraint(context.providerMode);
+  const sizeRulesText = t(sizeConstraint.infoKey ?? 'params.sizeRules.generic', {
+    min: sizeConstraint.min,
+    max: sizeConstraint.max,
+    multiple: sizeConstraint.multipleOf ?? 1,
+    snap: t(sizeConstraint.snap === 'ceil' ? 'params.sizeRules.snap.ceil' : sizeConstraint.snap === 'round' ? 'params.sizeRules.snap.round' : 'params.sizeRules.snap.floor')
+  });
   return (
-    <ParamField label={t(labelKey)} description={t(descriptionKey)}>
-      <input
-        aria-label={t(labelKey)}
-        className={controls.input}
-        type="number"
-        min={min}
-        max={max}
-        step={step}
-        value={numberValue(state[stateKey])}
-        onChange={(event) => patchState(context, stateKey, Number(event.target.value))}
-      />
+    <ParamField label={t(labelKey)} description={t(descriptionKey)} toggle={isSizeField ? <ParamInfoTip ariaLabel={t('params.sizeRules.infoButton')} text={sizeRulesText} /> : undefined}>
+      {isSizeField ? (
+        <DraftNumberInput
+          ariaLabel={t(labelKey)}
+          className={controls.input}
+          step={step}
+          value={numberValue(state[stateKey])}
+          onChange={(value) => patchState(context, stateKey, value)}
+        />
+      ) : (
+        <input
+          aria-label={t(labelKey)}
+          className={controls.input}
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={numberValue(state[stateKey])}
+          onChange={(event) => patchState(context, stateKey, Number(event.target.value))}
+        />
+      )}
     </ParamField>
   );
 }
@@ -131,6 +151,30 @@ export function SeedModeField({ context }: { context: ProviderGenerationSurfaceP
         triggerClassName={controls.selectTrigger}
         panelClassName={controls.selectPanel}
       />
+    </ParamField>
+  );
+}
+
+export function HiresScaleField({ context }: { context: ProviderGenerationSurfacePatchContext }) {
+  const { t } = useI18n();
+  const state = readComfyUiParamState(context.params, context.provider);
+  const hasSourceSize = state.hiresInputWidth > 0 && state.hiresInputHeight > 0;
+  const note = hasSourceSize
+    ? t('params.comfy.hiresScale.sourceKnown', { width: state.hiresInputWidth, height: state.hiresInputHeight })
+    : t('params.comfy.hiresScale.sourceUnknown');
+  return (
+    <ParamField label={t('params.comfy.hiresScale')} description={t('params.comfy.hiresScale.description')}>
+      <input
+        aria-label={t('params.comfy.hiresScale')}
+        className={controls.input}
+        type="number"
+        min={0.1}
+        max={8}
+        step={0.01}
+        value={numberValue(state.hiresScale)}
+        onChange={(event) => patchState(context, 'hiresScale', Number(event.target.value))}
+      />
+      <p className={controls.note}>{note}</p>
     </ParamField>
   );
 }

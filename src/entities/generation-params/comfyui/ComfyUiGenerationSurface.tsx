@@ -14,6 +14,7 @@ import {
 import { comfyUiGenerationRequestSurface } from './requestSurface';
 import {
   COMFYUI_MAX_SEED,
+  HiresScaleField,
   HiresUpscaleModeField,
   HiresUpscaleModelField,
   LoraStackField,
@@ -49,8 +50,8 @@ const comfyUiHiresFixTabs: readonly GenerationParamTabDefinition[] = [
 function renderComfyUiFrameSlot(context: ProviderGenerationSurfacePatchContext) {
   const hiresFix = isHiresFixMode(context);
   return [
-    <NumberField key="width" context={context} labelKey={hiresFix ? 'params.comfy.targetWidth' : 'params.comfy.width'} descriptionKey={hiresFix ? 'params.comfy.targetWidth.description' : 'params.comfy.width.description'} stateKey="width" min={64} max={4096} step={16} />,
-    <NumberField key="height" context={context} labelKey={hiresFix ? 'params.comfy.targetHeight' : 'params.comfy.height'} descriptionKey={hiresFix ? 'params.comfy.targetHeight.description' : 'params.comfy.height.description'} stateKey="height" min={64} max={4096} step={16} />,
+    hiresFix ? <HiresScaleField key="hiresScale" context={context} /> : <NumberField key="width" context={context} labelKey="params.comfy.width" descriptionKey="params.comfy.width.description" stateKey="width" min={64} max={4096} step={1} />,
+    hiresFix ? null : <NumberField key="height" context={context} labelKey="params.comfy.height" descriptionKey="params.comfy.height.description" stateKey="height" min={64} max={4096} step={1} />,
     hiresFix ? null : <NumberField key="batchSize" context={context} labelKey="params.comfy.batchSize" descriptionKey="params.comfy.batchSize.description" stateKey="batchSize" min={1} max={16} step={1} />
   ].filter(Boolean);
 }
@@ -97,7 +98,7 @@ function tabStats(context: ProviderGenerationSurfaceContext, retryOffLabel: stri
   const state = readComfyUiParamState(context.params, context.provider);
   const hiresFix = isHiresFixMode(context);
   return {
-    frame: hiresFix ? `${state.width}×${state.height}` : `${state.width}×${state.height} · ${state.batchSize}x`,
+    frame: hiresFix ? `${state.hiresScale}×` : `${state.width}×${state.height} · ${state.batchSize}x`,
     render: `${state.steps} steps · CFG ${state.cfg}`,
     output: hiresFix ? (state.hiresUpscaleMode === 'ai' ? (state.hiresUpscaleModel || 'AI upscale') : 'Latent upscale') : 'workflow',
     service: state.loras.filter((lora) => lora.enabled).length ? `${state.loras.filter((lora) => lora.enabled).length} LoRA` : 'no LoRA',

@@ -296,3 +296,47 @@
   font-size: 12px;
   line-height: 1.45;
 }
+
+.infoWrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.infoButton {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(255,255,255,.045);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.infoButton:hover,
+.infoButtonActive {
+  border-color: rgba(255,255,255,.24);
+  background: rgba(255,255,255,.10);
+  color: var(--text);
+}
+
+.infoPopover {
+  max-width: min(320px, calc(100vw - 28px));
+  border: 1px solid var(--surface-border-strong);
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: var(--surface-floating);
+  color: rgba(244,244,241,.82);
+  font-size: 12px;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: 0;
+  box-shadow: var(--surface-shadow-floating);
+  backdrop-filter: var(--surface-blur-strong);
+}

@@ -1,6 +1,14 @@
 import type { WorkMode } from '../../../domain/workMode';
 import type { ProviderGenerationModeDefinition } from '../../../domain/providerMode';
 
+const openAiCompatibleImageSizeConstraint = {
+  min: 1,
+  max: 4096,
+  multipleOf: 8,
+  snap: 'floor',
+  infoKey: 'providerModes.openaiCompatible.sizeRules'
+} as const;
+
 export const openAiCompatibleGenerationSurfaceId = 'openai-compatible.logical-params';
 export const openAiCompatibleDetailSurfaceId = 'openai-compatible.request-snapshot';
 
@@ -21,7 +29,8 @@ export const openAiCompatibleImageGenerateMode: ProviderGenerationModeDefinition
   },
   generationSurfaceId: openAiCompatibleGenerationSurfaceId,
   detailSurfaceId: openAiCompatibleDetailSurfaceId,
-  submit: { kind: 'json', operation: 'generate', path: '/api/provider/submit' }
+  submit: { kind: 'json', operation: 'generate', path: '/api/provider/submit' },
+  valueConstraints: { imageSize: openAiCompatibleImageSizeConstraint }
 };
 
 export const openAiCompatibleImageEditMode: ProviderGenerationModeDefinition = {
@@ -37,7 +46,8 @@ export const openAiCompatibleImageEditMode: ProviderGenerationModeDefinition = {
   },
   generationSurfaceId: openAiCompatibleGenerationSurfaceId,
   detailSurfaceId: openAiCompatibleDetailSurfaceId,
-  submit: { kind: 'multipart', operation: 'edit', path: '/api/provider/submit' }
+  submit: { kind: 'multipart', operation: 'edit', path: '/api/provider/submit' },
+  valueConstraints: { imageSize: openAiCompatibleImageSizeConstraint }
 };
 
 export const openAiCompatibleGenerationModes = [

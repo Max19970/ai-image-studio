@@ -14,7 +14,8 @@ export function GalleryPlaceholderCardSection({ context }: ElementDefinitionProp
     activeImage: null,
     galleryIndex: context.index,
     onOpenTask: context.onOpenTask,
-    onDeleteTask: context.onDeleteTask
+    onDeleteTask: context.onDeleteTask,
+    onStartHiresFix: () => context.onStartHiresFix(null)
   };
 
   return (
