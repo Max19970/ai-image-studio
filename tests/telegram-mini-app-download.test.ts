@@ -51,15 +51,14 @@ test('Telegram Mini App download URL is registered through the server for stored
   }
 });
 
-test('Telegram Mini App download verifies fresh image URLs before native request', async () => {
+test('Telegram Mini App download trusts server-registered image URLs before native request', async () => {
   const previousFetch = globalThis.fetch;
   const calls: Array<{ url: string; method: string; body: unknown }> = [];
   const publicUrl = 'https://studio.example/api/storage/generation-task-downloads/temp-1';
   globalThis.fetch = async (input, init) => {
     const method = init?.method ?? 'GET';
     calls.push({ url: String(input), method, body: init?.body ? JSON.parse(String(init.body)) : null });
-    if (method === 'HEAD') return new Response(null, { status: 200, headers: { 'Content-Type': 'image/png' } });
-    return new Response(JSON.stringify({ url: publicUrl }), { status: 200 });
+    return new Response(JSON.stringify({ url: publicUrl, filename: 'fresh.png', mediaType: 'image/png' }), { status: 200 });
   };
 
   const nativeCalls: unknown[] = [];
@@ -84,8 +83,7 @@ test('Telegram Mini App download verifies fresh image URLs before native request
         url: '/api/storage/generation-task-downloads',
         method: 'POST',
         body: { filename: 'fresh.png', src: 'data:image/png;base64,QUJDRA==' }
-      },
-      { url: publicUrl, method: 'HEAD', body: null }
+      }
     ]);
     assert.deepEqual(nativeCalls, [{ url: publicUrl, file_name: 'fresh.png' }]);
   } finally {
