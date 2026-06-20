@@ -7,6 +7,7 @@ export function WorkspaceSingleParametersModalSection({ context }: ElementDefini
     <ParametersModal
       open={context.singleParameters.open}
       mode={context.singleParameters.mode}
+      providerMode={context.singleParameters.providerMode}
       params={context.singleParameters.params}
       provider={context.singleParameters.provider}
       capabilityReport={context.singleParameters.capabilityReport}

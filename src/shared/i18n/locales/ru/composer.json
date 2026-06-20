@@ -58,5 +58,17 @@
   "composer.noProviderModels": "У этого провайдера пока нет зарегистрированных моделей.",
   "composer.compatibilityAdjustedRequest": "Запрос обновлён под возможности выбранного провайдера: неподдерживаемые режимы или вложения очищены.",
   "composer.comfy.loras": "LoRA-пресеты",
-  "composer.comfy.noLoras": "LoRA пока не зарегистрированы. Добавь их в Настройки → API генерации → ComfyUI."
+  "composer.comfy.noLoras": "LoRA пока не зарегистрированы. Добавь их в Настройки → API генерации → ComfyUI.",
+  "providerModes.openaiCompatible.imageGenerate.label": "Генерация",
+  "providerModes.openaiCompatible.imageGenerate.description": "Создать изображение только по промпту.",
+  "providerModes.openaiCompatible.imageEdit.label": "Редактирование",
+  "providerModes.openaiCompatible.imageEdit.description": "Отправить промпт вместе с исходником, опциональными референсами и опциональной маской.",
+  "providerModes.comfyui.textToImage.label": "Text to Image",
+  "providerModes.comfyui.textToImage.description": "Сгенерировать новое изображение через ComfyUI text-to-image workflow.",
+  "providerModes.comfyui.hiresFix.label": "Hires Fix",
+  "providerModes.comfyui.hiresFix.description": "Доработать и увеличить один прикреплённый исходник через ComfyUI Hires Fix workflow.",
+  "composer.providerModeNeedsImage": "Для этого режима нужно добавить хотя бы одно изображение.",
+  "composer.providerModeNeedsTarget": "Для этого режима нужен исходник.",
+  "composer.providerModeNeedsReference": "Для этого режима нужен референс.",
+  "composer.providerModeNeedsMask": "Для этого режима нужна маска."
 }

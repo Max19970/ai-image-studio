@@ -157,6 +157,7 @@
   "settings.comfy.checkpointFallback": "Список ресурсов ещё не загружен. Можно ввести checkpoint вручную или обновить ресурсы.",
   "settings.comfy.samplers": "Сэмплеры",
   "settings.comfy.schedulers": "Scheduler-ы",
+  "settings.comfy.upscaleModels": "Upscale models",
   "settings.comfy.noCheckpointsFound": "ComfyUI доступен, но checkpoint-ы не найдены. Проверь папку models/checkpoints или object_info CheckpointLoaderSimple.",
   "settings.comfy.missingRegisteredLora": "Одна или несколько зарегистрированных LoRA больше не найдены в live-списке ComfyUI. Обнови регистрацию или верни файл в models/loras.",
   "settings.tab.integrations": "Интеграции",

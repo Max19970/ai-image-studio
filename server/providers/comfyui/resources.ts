@@ -47,7 +47,7 @@ function entriesFromObjectInfoChoices(data: unknown, nodeName: string, inputName
   return choices.map((choice) => ({ id: choice, name: choice, nativeName: choice }));
 }
 
-async function fetchModelFolder(provider: ProviderSettings, folder: 'checkpoints' | 'loras'): Promise<ProviderResourceEntry[]> {
+async function fetchModelFolder(provider: ProviderSettings, folder: 'checkpoints' | 'loras' | 'upscale_models'): Promise<ProviderResourceEntry[]> {
   const data = await fetchComfyUiJson<unknown>(provider, resolveComfyUiUrl(provider, `/models/${folder}`), {
     method: 'GET',
     timeoutMs: provider.timeoutMs
@@ -101,6 +101,23 @@ async function fetchSamplerOrSchedulerEntries(provider: ProviderSettings, inputN
   return entriesFromObjectInfoChoices(data, 'KSampler', inputName);
 }
 
+async function fetchUpscaleModelEntries(provider: ProviderSettings): Promise<{ items: ProviderResourceEntry[]; warning?: string }> {
+  try {
+    const items = await fetchModelFolder(provider, 'upscale_models');
+    if (items.length) return { items };
+  } catch (error) {
+    const fallback = await fetchObjectInfo(provider, 'UpscaleModelLoader');
+    const items = entriesFromObjectInfoChoices(fallback, 'UpscaleModelLoader', 'model_name');
+    return {
+      items,
+      warning: error instanceof Error ? `Used object_info fallback after /models/upscale_models failed: ${error.message}` : 'Used object_info fallback for upscale models.'
+    };
+  }
+
+  const fallback = await fetchObjectInfo(provider, 'UpscaleModelLoader');
+  return { items: entriesFromObjectInfoChoices(fallback, 'UpscaleModelLoader', 'model_name') };
+}
+
 export async function fetchComfyUiResources(provider: ProviderSettings, kind: ProviderResourceKind): Promise<ProviderResourceList> {
   let result: { items: ProviderResourceEntry[]; warning?: string };
 
@@ -108,6 +125,7 @@ export async function fetchComfyUiResources(provider: ProviderSettings, kind: Pr
   else if (kind === 'loras') result = await fetchLoraEntries(provider);
   else if (kind === 'samplers') result = { items: await fetchSamplerOrSchedulerEntries(provider, 'sampler_name') };
   else if (kind === 'schedulers') result = { items: await fetchSamplerOrSchedulerEntries(provider, 'scheduler') };
+  else if (kind === 'upscale_models') result = await fetchUpscaleModelEntries(provider);
   else throw new HttpError(`ComfyUI provider does not expose resource kind "${kind}".`, 400);
 
   return {
@@ -119,4 +137,4 @@ export async function fetchComfyUiResources(provider: ProviderSettings, kind: Pr
   };
 }
 
-export const comfyUiResourceKinds = ['models', 'checkpoints', 'loras', 'samplers', 'schedulers'] as const;
+export const comfyUiResourceKinds = ['models', 'checkpoints', 'loras', 'samplers', 'schedulers', 'upscale_models'] as const;

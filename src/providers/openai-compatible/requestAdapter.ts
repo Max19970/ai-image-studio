@@ -1,4 +1,5 @@
 import type { ImageParams } from '../../domain/imageParams';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
@@ -9,6 +10,10 @@ import {
   shouldSendOutputFormat
 } from '../../entities/generation-params/serializers/openAiCompatible';
 import type { ProviderRequestAdapter, ProviderSubmitProxyRequestInput, ProviderSubmitProxyRequestConfig } from '../../entities/provider/types';
+import {
+  resolveOpenAiCompatibleLegacyMode,
+  resolveOpenAiCompatibleProviderMode
+} from '../../entities/generation-params/openai-compatible/modes';
 
 export function getOpenAiCompatibleSizeFromParams(params: ImageParams): string | undefined {
   return getOpenAiCompatibleSize(params);
@@ -26,17 +31,29 @@ export function validateOpenAiCompatibleCustomSize(width: number, height: number
   return errors;
 }
 
-export function buildOpenAiCompatibleImagePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode): Record<string, unknown> {
-  return buildOpenAiCompatibleRequestSurfacePayload(params, provider, mode);
+export function buildOpenAiCompatibleImagePayload(
+  params: ImageParams,
+  provider: ProviderSettings,
+  mode: WorkMode,
+  providerMode?: ProviderGenerationModeDefinition | null
+): Record<string, unknown> {
+  return buildOpenAiCompatibleRequestSurfacePayload(
+    params,
+    provider,
+    resolveOpenAiCompatibleLegacyMode(providerMode, mode),
+    providerMode
+  );
 }
 
 export function explainOpenAiCompatiblePayloadWarnings(
   payload: Record<string, unknown>,
   provider: ProviderSettings,
   mode: WorkMode,
-  capabilityReport: ProviderProbeReport | null
+  capabilityReport: ProviderProbeReport | null,
+  providerMode?: ProviderGenerationModeDefinition | null
 ): string[] {
   const warnings: string[] = [];
+  const effectiveMode = resolveOpenAiCompatibleLegacyMode(providerMode, mode);
   const model = String(payload.model ?? provider.modelId).toLowerCase();
   if (model.includes('gpt-image-2')) {
     if (payload.background === 'transparent') warnings.push('gpt-image-2 обычно не принимает background="transparent".');
@@ -47,7 +64,7 @@ export function explainOpenAiCompatiblePayloadWarnings(
   if (payload.partial_images && payload.stream !== true) warnings.push('partial_images имеет смысл только когда включён stream.');
 
   if (capabilityReport) {
-    const bucket = mode === 'generate' ? capabilityReport.generation : capabilityReport.edit;
+    const bucket = effectiveMode === 'generate' ? capabilityReport.generation : capabilityReport.edit;
     Object.entries(payload).forEach(([key]) => {
       const capability = bucket[key as keyof typeof bucket];
       if (capability && capability.supported === false) {
@@ -60,13 +77,20 @@ export function explainOpenAiCompatiblePayloadWarnings(
 }
 
 export function createOpenAiCompatibleSubmitProxyRequest(input: ProviderSubmitProxyRequestInput): ProviderSubmitProxyRequestConfig {
-  if (input.mode === 'generate') {
+  const providerMode = resolveOpenAiCompatibleProviderMode(input.providerMode, input.mode);
+
+  if (providerMode.submit.kind === 'json') {
     return {
-      path: '/api/generate',
+      path: providerMode.submit.path ?? '/api/generate',
       init: {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: input.provider, payload: input.payload }),
+        body: JSON.stringify({
+          provider: input.provider,
+          payload: input.payload,
+          providerModeId: providerMode.id,
+          transport: providerMode.submit
+        }),
         signal: input.signal
       },
       streamed: input.payload.stream === true,
@@ -77,12 +101,14 @@ export function createOpenAiCompatibleSubmitProxyRequest(input: ProviderSubmitPr
   const form = new FormData();
   form.append('provider', JSON.stringify(input.provider));
   form.append('payload', JSON.stringify(input.payload));
-  const images = [input.targetImage, ...(input.referenceImages ?? [])].filter((file): file is File => Boolean(file));
-  images.forEach((file) => form.append('image', file, file.name));
+  form.append('providerModeId', providerMode.id);
+  form.append('transport', JSON.stringify(providerMode.submit));
+  if (input.targetImage) form.append('image_target', input.targetImage, input.targetImage.name);
+  (input.referenceImages ?? []).forEach((file) => form.append('image_reference', file, file.name));
   if (input.mask) form.append('mask', input.mask, input.mask.name);
 
   return {
-    path: '/api/edit',
+    path: providerMode.submit.path ?? '/api/edit',
     init: {
       method: 'POST',
       body: form,

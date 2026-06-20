@@ -1,10 +1,12 @@
 import { getProviderGenerationRequestSurface } from '../../entities/generation-params/requestSurface';
+import { resolveProviderGenerationModeFromProviderSettings } from '../../entities/provider/modeResolution';
 import type {
   AttachmentSummary,
   GenerationModel,
   GenerationProvider,
   GenerationRequestSnapshot,
   ImageParams,
+  ProviderGenerationModeDefinition,
   ProviderSettings,
   WorkMode
 } from '../../domain/types';
@@ -29,6 +31,8 @@ export function summarizeAttachments(targetImage: File | null, referenceImages: 
 
 export function captureRequestSnapshot(args: {
   mode: WorkMode;
+  providerMode: ProviderGenerationModeDefinition;
+  providerModeLabel: string;
   params: ImageParams;
   provider: ProviderSettings;
   activeProvider: GenerationProvider | null;
@@ -40,15 +44,38 @@ export function captureRequestSnapshot(args: {
   mask: File | null;
   fallbackProviderLabel: string;
 }): GenerationRequestSnapshot {
-  const { mode, params, provider, activeProvider, activeModel, payload, warnings, targetImage, referenceImages, mask, fallbackProviderLabel } = args;
+  const {
+    mode,
+    providerMode,
+    providerModeLabel,
+    params,
+    provider,
+    activeProvider,
+    activeModel,
+    payload,
+    warnings,
+    targetImage,
+    referenceImages,
+    mask,
+    fallbackProviderLabel
+  } = args;
+
+  const activeProviderMode = providerMode ?? resolveProviderGenerationModeFromProviderSettings(provider, null, mode);
+  const activeProviderModeLabel = providerModeLabel || activeProviderMode.id;
   const surface = getProviderGenerationRequestSurface(provider);
-  const snapshotContext = { params, provider, mode, payload };
+  const snapshotContext = { params, provider, mode, providerMode: activeProviderMode, payload };
+  const endpoint = activeProviderMode.submit.path
+    ?? (activeProviderMode.submit.operation === 'edit' ? provider.editEndpoint : provider.generationEndpoint);
 
   return {
     createdAt: Date.now(),
     mode,
+    providerModeId: activeProviderMode.id,
+    providerModeLabel: activeProviderModeLabel,
+    detailSurfaceId: activeProviderMode.detailSurfaceId,
+    transportOperation: activeProviderMode.submit.operation,
     prompt: params.prompt.trim(),
-    endpoint: mode === 'generate' ? provider.generationEndpoint : provider.editEndpoint,
+    endpoint,
     providerLabel: activeProvider?.name || provider.generationEndpoint || provider.editEndpoint || fallbackProviderLabel,
     providerAdapterId: provider.adapterId,
     model: provider.modelId,

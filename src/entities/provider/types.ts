@@ -2,6 +2,7 @@ import type { CapabilityEntry, CapabilityKey, ProviderProbeReport } from '../../
 import type { GeneratedImage } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderSettings } from '../../domain/providerSettings';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderResourceDescriptor, ProviderResourceKind } from '../../domain/providerResources';
 import type { WorkMode } from '../../domain/workMode';
 import type { ProviderGenerationParamProfile } from '../generation-params/types';
@@ -54,6 +55,7 @@ export interface ProviderSubmitProxyRequestInput {
   provider: ProviderSettings;
   payload: Record<string, unknown>;
   mode: WorkMode;
+  providerMode?: ProviderGenerationModeDefinition | null;
   targetImage?: File | null;
   referenceImages?: File[];
   mask?: File | null;
@@ -71,12 +73,13 @@ export interface ProviderRequestAdapter {
   getSize(params: ImageParams): string | undefined;
   validateCustomSize(width: number, height: number): string[];
   parseRawJson(rawJson: string): Record<string, unknown>;
-  buildImagePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode): Record<string, unknown>;
+  buildImagePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode, providerMode?: ProviderGenerationModeDefinition | null): Record<string, unknown>;
   explainPayloadWarnings(
     payload: Record<string, unknown>,
     provider: ProviderSettings,
     mode: WorkMode,
-    capabilityReport: ProviderProbeReport | null
+    capabilityReport: ProviderProbeReport | null,
+    providerMode?: ProviderGenerationModeDefinition | null
   ): string[];
   createSubmitProxyRequest(input: ProviderSubmitProxyRequestInput): ProviderSubmitProxyRequestConfig;
 }
@@ -111,6 +114,7 @@ export interface ProviderAdapterDefinition {
   generationSurface: ProviderGenerationSurfaceDefinition;
   detailDescriptor: ProviderDetailDescriptorDefinition;
   controlSurface: ProviderControlSurfaceDefinition;
+  generationModes?: ProviderGenerationModeDefinition[];
   settingsFields: ProviderAdapterSettingsField[];
   modelResourceKind?: ProviderResourceKind;
   generationParams: ProviderGenerationParamProfile;

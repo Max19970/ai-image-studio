@@ -3,6 +3,7 @@ import type {
   ProviderGenerationParamProfile,
   ProviderGenerationParamSet
 } from './types';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
@@ -20,13 +21,15 @@ export function resolveGenerationParamProfileAvailability(
   context: {
     provider: ProviderSettings;
     mode: WorkMode;
+    providerMode?: ProviderGenerationModeDefinition | null;
     capabilityReport?: ProviderProbeReport | null;
     params?: ImageParams;
   }
 ): boolean {
   let available = generationParamSetIncludes(profile.include, definition.id);
+  const effectiveMode = context.providerMode?.legacyWorkMode ?? context.mode;
 
-  const modeSet = profile.byMode?.[context.mode];
+  const modeSet = profile.byMode?.[effectiveMode];
   if (modeSet) available = available && generationParamSetIncludes(modeSet, definition.id);
 
   if (profile.exclude?.includes(definition.id)) available = false;
@@ -43,7 +46,8 @@ export function resolveGenerationParamProfileAvailability(
   if (profile.isAvailable) {
     available = profile.isAvailable({
       provider: context.provider,
-      mode: context.mode,
+      mode: effectiveMode,
+      providerMode: context.providerMode ?? null,
       capabilityReport: context.capabilityReport ?? null,
       params: context.params,
       definition: definition as GenerationParamDefinition,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import { SlotHost } from '../../../../interface/SlotHost';
 import type { AttachmentPreviewItem } from '../../../../shared/ui';
@@ -25,33 +25,9 @@ export function BatchDraftCardSection({ context }: ElementDefinitionProps<BatchD
     label: getAttachmentLabel
   });
 
-  useEffect(() => {
-    const patch: Partial<typeof context.draft> = {};
-    if (!context.controlSurface.showImageAttachments && (context.draft.targetImage || context.draft.referenceImages.length > 0)) {
-      patch.targetImage = null;
-      patch.referenceImages = [];
-    }
-    if (!context.controlSurface.showMask && context.draft.mask) {
-      patch.mask = null;
-    }
-    if (!context.controlSurface.showModeSwitcher && context.draft.mode !== 'generate') {
-      patch.mode = 'generate';
-    }
-    if (Object.keys(patch).length > 0) context.actions.patchDraft(patch);
-  }, [
-    context.actions,
-    context.controlSurface.showImageAttachments,
-    context.controlSurface.showMask,
-    context.controlSurface.showModeSwitcher,
-    context.draft.mask,
-    context.draft.mode,
-    context.draft.referenceImages.length,
-    context.draft.targetImage
-  ]);
-
   const removeAttachment = useCallback((item: AttachmentPreviewItem) => {
     if (item.id === 'target') {
-      context.actions.patchDraft({ targetImage: null, mode: context.draft.referenceImages.length || context.draft.mask ? 'edit' : context.draft.mode });
+      context.actions.patchDraft({ targetImage: null });
       return;
     }
     if (item.id === 'mask') {
@@ -59,7 +35,7 @@ export function BatchDraftCardSection({ context }: ElementDefinitionProps<BatchD
       return;
     }
     context.actions.patchDraft({ referenceImages: context.draft.referenceImages.filter((file, index) => item.id !== getReferenceAttachmentId(file, index)) });
-  }, [context.actions, context.draft.mask, context.draft.mode, context.draft.referenceImages]);
+  }, [context.actions, context.draft.referenceImages]);
 
   const cardContext = useMemo<BatchDraftLayoutContext>(() => ({
     ...context,

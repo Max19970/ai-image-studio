@@ -54,6 +54,7 @@ export function ComfyUiSettingsPanel({ context }: Props) {
     comfyUiLoraCache,
     comfyUiSamplerCache,
     comfyUiSchedulerCache,
+    comfyUiUpscaleModelCache,
     comfyUiResourcesLoading,
     comfyUiResourcesError,
     refreshComfyUiResources,
@@ -135,6 +136,7 @@ export function ComfyUiSettingsPanel({ context }: Props) {
             {cacheStat({ label: t('settings.comfy.loras'), cache: comfyUiLoraCache, emptyLabel: t('settings.comfy.notLoaded') })}
             {cacheStat({ label: t('settings.comfy.samplers'), cache: comfyUiSamplerCache, emptyLabel: t('settings.comfy.notLoaded') })}
             {cacheStat({ label: t('settings.comfy.schedulers'), cache: comfyUiSchedulerCache, emptyLabel: t('settings.comfy.notLoaded') })}
+            {cacheStat({ label: t('settings.comfy.upscaleModels'), cache: comfyUiUpscaleModelCache, emptyLabel: t('settings.comfy.notLoaded') })}
           </div>
         </div>
 
@@ -143,7 +145,7 @@ export function ComfyUiSettingsPanel({ context }: Props) {
         {comfyUiLoraCache && comfyUiData.loras.some((lora) => lora.loraName && !comfyUiLoraCache.items.some((item) => item.name === lora.loraName || item.id === lora.loraName)) && (
           <div className={`${styles.notice} ${styles.error}`}>{t('settings.comfy.missingRegisteredLora')}</div>
         )}
-        {[comfyUiCheckpointCache, comfyUiLoraCache, comfyUiSamplerCache, comfyUiSchedulerCache].flatMap((cache) => cache?.warning ? [cache.warning] : []).map((warning) => (
+        {[comfyUiCheckpointCache, comfyUiLoraCache, comfyUiSamplerCache, comfyUiSchedulerCache, comfyUiUpscaleModelCache].flatMap((cache) => cache?.warning ? [cache.warning] : []).map((warning) => (
           <div className={styles.notice} key={warning}>{warning}</div>
         ))}
       </article>

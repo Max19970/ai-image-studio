@@ -84,7 +84,7 @@ test('OpenAI-compatible submit proxy config distinguishes JSON generate from mul
     mode: 'generate'
   });
 
-  assert.equal(generate.path, '/api/generate');
+  assert.equal(generate.path, '/api/provider/submit');
   assert.equal(generate.streamed, true);
   assert.equal(generate.fallbackFormat, 'webp');
   assert.equal((generate.init.headers as Record<string, string>)['Content-Type'], 'application/json');
@@ -97,7 +97,7 @@ test('OpenAI-compatible submit proxy config distinguishes JSON generate from mul
     referenceImages: [new File(['ref'], 'ref.png', { type: 'image/png' })]
   });
 
-  assert.equal(edit.path, '/api/edit');
+  assert.equal(edit.path, '/api/provider/submit');
   assert.equal(edit.streamed, false);
   assert.ok(edit.init.body instanceof FormData);
 });

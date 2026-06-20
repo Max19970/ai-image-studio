@@ -1,15 +1,19 @@
 import { ParametersModal } from '../../../parameters/ParametersModal';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { WorkspaceModalsContext } from '../../../../interface/context/workspace/composerDock';
+import { getLegacyWorkModeForProviderMode } from '../../../../entities/provider/modeResolution';
 
 export function WorkspaceBatchParametersModalSection({ context }: ElementDefinitionProps<WorkspaceModalsContext>) {
   const draft = context.batchParameters.draft;
   if (!draft) return null;
 
+  const providerMode = context.batchParameters.providerMode;
+
   return (
     <ParametersModal
       open={Boolean(draft)}
-      mode={draft.mode}
+      mode={getLegacyWorkModeForProviderMode(providerMode)}
+      providerMode={providerMode}
       params={draft.params}
       provider={context.batchParameters.provider}
       capabilityReport={context.batchParameters.capabilityReport}

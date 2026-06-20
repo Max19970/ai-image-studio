@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import type { CapabilityKey, ProviderProbeReport } from '../../domain/providerProbe';
 import type { GenerationRequestSnapshot } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
 
@@ -17,6 +18,7 @@ export interface ProviderGenerationParamModelRule {
 export interface GenerationParamAvailabilityContext {
   provider: ProviderSettings;
   mode: WorkMode;
+  providerMode?: ProviderGenerationModeDefinition | null;
   capabilityReport: ProviderProbeReport | null;
   params?: ImageParams;
   definition: GenerationParamDefinition;
@@ -90,6 +92,7 @@ export interface GenerationParamTabDefinition {
 
 export interface GenerationParamFieldContext {
   mode: WorkMode;
+  providerMode?: ProviderGenerationModeDefinition | null;
   params: ImageParams;
   provider: ProviderSettings;
   capabilityReport: ProviderProbeReport | null;
@@ -129,6 +132,7 @@ export interface OpenAiCompatibleParamPayloadContext {
   params: ImageParams;
   provider: ProviderSettings;
   mode: WorkMode;
+  providerMode?: ProviderGenerationModeDefinition | null;
 }
 
 export interface RestoreGenerationParamContext {

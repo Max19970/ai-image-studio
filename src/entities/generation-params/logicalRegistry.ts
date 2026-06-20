@@ -1,6 +1,7 @@
 import { defaultImageParams } from '../../domain/defaults';
 import type { GenerationRequestSnapshot } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
 import type {
@@ -56,13 +57,13 @@ export const logicalGenerationParamDefinitionsById = new Map(
 export const generationParamCopy = mergeParamRecords('copy') as Record<GenerationParamCopyKey, GenerationParamCopyDescriptor>;
 export const generationParamOptions = mergeParamRecords('options') as Record<GenerationParamOptionGroup, readonly GenerationParamOptionDescriptor[]>;
 
-export function buildOpenAiCompatibleParamPayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode, profile?: ProviderGenerationParamProfile): Record<string, unknown> {
+export function buildOpenAiCompatibleParamPayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode, profile?: ProviderGenerationParamProfile, providerMode?: ProviderGenerationModeDefinition | null): Record<string, unknown> {
   return logicalGenerationParamDefinitions.reduce<Record<string, unknown>>((payload, definition) => {
     if (!definition.openAiCompatiblePayload) return payload;
-    if (profile && !resolveGenerationParamProfileAvailability(profile, definition, { provider, mode, params })) return payload;
+    if (profile && !resolveGenerationParamProfileAvailability(profile, definition, { provider, mode, providerMode, params })) return payload;
     return {
       ...payload,
-      ...definition.openAiCompatiblePayload({ params, provider, mode })
+      ...definition.openAiCompatiblePayload({ params, provider, mode, providerMode })
     };
   }, {});
 }
@@ -85,10 +86,10 @@ export function normalizeImageParamsFromDefinitions(value: Partial<ImageParams> 
   return current;
 }
 
-export function captureGenerationRequestParamsSnapshot(params: ImageParams, provider?: ProviderSettings, mode?: WorkMode, profile?: ProviderGenerationParamProfile): GenerationRequestSnapshot['params'] {
+export function captureGenerationRequestParamsSnapshot(params: ImageParams, provider?: ProviderSettings, mode?: WorkMode, profile?: ProviderGenerationParamProfile, providerMode?: ProviderGenerationModeDefinition | null): GenerationRequestSnapshot['params'] {
   const snapshot: Partial<GenerationRequestSnapshot['params']> = {};
   for (const definition of logicalGenerationParamDefinitions) {
-    if (provider && mode && profile && !resolveGenerationParamProfileAvailability(profile, definition, { provider, mode, params })) continue;
+    if (provider && mode && profile && !resolveGenerationParamProfileAvailability(profile, definition, { provider, mode, providerMode, params })) continue;
     for (const key of definition.snapshotKeys ?? []) {
       (snapshot as Record<string, unknown>)[key] = params[key as keyof ImageParams];
     }

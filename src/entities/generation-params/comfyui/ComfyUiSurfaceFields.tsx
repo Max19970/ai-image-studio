@@ -1,4 +1,8 @@
-import { readComfyUiSettingsData, type ComfyUiLoraRegistration } from '../../../domain/comfyUiSettings';
+import {
+  cacheKeyForComfyUiResources,
+  readComfyUiSettingsData,
+  type ComfyUiLoraRegistration
+} from '../../../domain/comfyUiSettings';
 import { useI18n } from '../../../i18n';
 import { PopoverSelect } from '../../../shared/ui';
 import { ParamField } from '../support';
@@ -127,6 +131,69 @@ export function SeedModeField({ context }: { context: ProviderGenerationSurfaceP
         triggerClassName={controls.selectTrigger}
         panelClassName={controls.selectPanel}
       />
+    </ParamField>
+  );
+}
+
+export function HiresUpscaleModeField({ context }: { context: ProviderGenerationSurfacePatchContext }) {
+  const { t } = useI18n();
+  const state = readComfyUiParamState(context.params, context.provider);
+  return (
+    <ParamField label={t('params.comfy.hiresUpscaleMode')} description={t('params.comfy.hiresUpscaleMode.description')}>
+      <PopoverSelect
+        value={state.hiresUpscaleMode}
+        onChange={(next) => patchState(context, 'hiresUpscaleMode', next)}
+        options={[
+          { value: 'latent', label: t('params.comfy.hiresUpscaleMode.latent'), description: t('params.comfy.hiresUpscaleMode.latent.description') },
+          { value: 'ai', label: t('params.comfy.hiresUpscaleMode.ai'), description: t('params.comfy.hiresUpscaleMode.ai.description') }
+        ]}
+        ariaLabel={t('params.comfy.hiresUpscaleMode')}
+        className={controls.select}
+        triggerClassName={controls.selectTrigger}
+        panelClassName={controls.selectPanel}
+        showSelectedDescription
+      />
+    </ParamField>
+  );
+}
+
+function getCachedUpscaleModels(context: ProviderGenerationSurfacePatchContext): string[] {
+  const settings = context.studioSettings;
+  if (!settings) return [];
+  const data = readComfyUiSettingsData(settings);
+  const provider = settings.providers.find((item) => (
+    item.adapterId === context.provider.adapterId
+    && item.generationEndpoint === context.provider.generationEndpoint
+  )) ?? settings.providers.find((item) => item.adapterId === 'comfyui') ?? null;
+  if (!provider) return [];
+  const cache = data.resourceCache[cacheKeyForComfyUiResources(provider.id, 'upscale_models')];
+  return cache?.items.map((item) => item.name || item.id).filter(Boolean) ?? [];
+}
+
+export function HiresUpscaleModelField({ context }: { context: ProviderGenerationSurfacePatchContext }) {
+  const { t } = useI18n();
+  const state = readComfyUiParamState(context.params, context.provider);
+  const cachedModels = getCachedUpscaleModels(context);
+  const value = state.hiresUpscaleModel || cachedModels[0] || '';
+  const options = value
+    ? optionList(cachedModels, value)
+    : [{ value: '', label: t('params.comfy.hiresUpscaleModel.empty'), disabled: true }];
+  return (
+    <ParamField label={t('params.comfy.hiresUpscaleModel')} description={t('params.comfy.hiresUpscaleModel.description')}>
+      <PopoverSelect
+        value={value}
+        onChange={(next) => patchState(context, 'hiresUpscaleModel', next)}
+        options={options}
+        ariaLabel={t('params.comfy.hiresUpscaleModel')}
+        placeholder={t('params.comfy.hiresUpscaleModel.empty')}
+        emptyText={t('params.comfy.hiresUpscaleModel.empty')}
+        className={controls.select}
+        triggerClassName={controls.selectTrigger}
+        panelClassName={controls.selectPanel}
+      />
+      {cachedModels.length === 0 ? (
+        <p className={controls.note}>{t('params.comfy.hiresUpscaleModel.cacheHint')}</p>
+      ) : null}
     </ParamField>
   );
 }

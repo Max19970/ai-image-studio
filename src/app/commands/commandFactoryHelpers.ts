@@ -15,6 +15,7 @@ export function createBatchDraftFromWorkspace(args: CreateAppCommandsArgs, sourc
   return makeBatchDraft({
     source,
     fallbackParams: args.params,
-    fallbackSelectedModelId: args.studioSettings.selectedModelId
+    fallbackSelectedModelId: args.studioSettings.selectedModelId,
+    fallbackProviderModeId: args.providerModeId
   });
 }

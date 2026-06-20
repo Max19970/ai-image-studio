@@ -1,5 +1,6 @@
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
 import { buildComfyUiPayload } from '../../entities/generation-params/comfyui/state';
@@ -27,18 +28,19 @@ export function parseComfyUiRawJson(rawJson: string): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 
-export function buildComfyUiImagePayload(params: ImageParams, provider: ProviderSettings, _mode: WorkMode): Record<string, unknown> {
-  return buildComfyUiPayload(params, provider);
+export function buildComfyUiImagePayload(params: ImageParams, provider: ProviderSettings, _mode: WorkMode, providerMode: ProviderGenerationModeDefinition | null = null): Record<string, unknown> {
+  return buildComfyUiPayload(params, provider, providerMode);
 }
 
 export function explainComfyUiPayloadWarnings(
   payload: Record<string, unknown>,
   provider: ProviderSettings,
   mode: WorkMode,
-  _capabilityReport: ProviderProbeReport | null
+  _capabilityReport: ProviderProbeReport | null,
+  providerMode: ProviderGenerationModeDefinition | null = null
 ): string[] {
   const warnings: string[] = [];
-  if (mode !== 'generate') warnings.push('ComfyUI MVP adapter currently supports text-to-image generation only.');
+  if (mode !== 'generate' && !providerMode) warnings.push('ComfyUI adapter no longer uses legacy edit mode; choose a ComfyUI provider mode instead.');
   if (!String(provider.modelId || payload.checkpoint || '').trim()) warnings.push('Select a ComfyUI checkpoint before generation.');
   const width = Number(payload.width);
   const height = Number(payload.height);
@@ -48,12 +50,37 @@ export function explainComfyUiPayloadWarnings(
 }
 
 export function createComfyUiSubmitProxyRequest(input: ProviderSubmitProxyRequestInput): ProviderSubmitProxyRequestConfig {
+  const submit = input.providerMode?.submit ?? { kind: 'json' as const, operation: 'generate' as const, path: '/api/provider/submit' };
+  const providerModeId = input.providerMode?.id ?? null;
+
+  if (submit.kind === 'multipart') {
+    const form = new FormData();
+    form.append('provider', JSON.stringify(input.provider));
+    form.append('payload', JSON.stringify(input.payload));
+    if (providerModeId) form.append('providerModeId', providerModeId);
+    form.append('transport', JSON.stringify(submit));
+    if (input.targetImage) form.append('image_target', input.targetImage, input.targetImage.name);
+    (input.referenceImages ?? []).forEach((file) => form.append('image_reference', file, file.name));
+    if (input.mask) form.append('mask', input.mask, input.mask.name);
+
+    return {
+      path: submit.path ?? '/api/provider/submit',
+      init: {
+        method: 'POST',
+        body: form,
+        signal: input.signal
+      },
+      streamed: false,
+      fallbackFormat: 'png'
+    };
+  }
+
   return {
-    path: '/api/generate',
+    path: submit.path ?? '/api/provider/submit',
     init: {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider: input.provider, payload: input.payload }),
+      body: JSON.stringify({ provider: input.provider, payload: input.payload, providerModeId, transport: submit }),
       signal: input.signal
     },
     streamed: false,

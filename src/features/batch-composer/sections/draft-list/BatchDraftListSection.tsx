@@ -2,11 +2,14 @@ import { memo, useMemo } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import { SlotHost } from '../../../../interface/SlotHost';
 import type { BatchComposerDraft } from '../../../../domain/generationTask';
+import type { ProviderGenerationModeDefinition } from '../../../../domain/providerMode';
 import type { BatchComposerLayoutContext, BatchDraftLayoutContext } from '../../batchComposerTypes';
 import type { I18nContextValue } from '../../../../shared/i18n/types';
 import { useI18n } from '../../../../i18n';
 import { getProviderModelOptions } from '../../../../entities/provider/modelOptions';
+import { addImageFilesToProviderModeDraft, hasProviderModeRequiredAttachments } from '../../../../entities/provider/compatibility';
 import { resolveProviderControlSurface } from '../../../../entities/provider/controlSurface';
+import { resolveProviderGenerationModeForModelContext } from '../../../../entities/provider/modeResolution';
 import { toProviderSettings } from '../../../../entities/studio-settings';
 import styles from './BatchDraftListSection.module.css';
 import queueStyles from './BatchQueueRail.module.css';
@@ -16,28 +19,36 @@ function getAttachmentCount(draft: BatchComposerDraft) {
   return (draft.targetImage ? 1 : 0) + draft.referenceImages.length + (draft.mask ? 1 : 0);
 }
 
-function isDraftReady(draft: BatchComposerDraft) {
+function isDraftReady(draft: BatchComposerDraft, providerMode: ProviderGenerationModeDefinition) {
   const hasPrompt = Boolean(draft.params.prompt.trim());
-  const hasImages = getAttachmentCount(draft) > 0;
-  return hasPrompt && (draft.mode === 'generate' || hasImages);
+  return hasPrompt && hasProviderModeRequiredAttachments({
+    targetImage: draft.targetImage,
+    referenceImages: draft.referenceImages,
+    mask: draft.mask
+  }, providerMode);
 }
 
-function getDraftIssue(draft: BatchComposerDraft, t: I18nContextValue['t']) {
+function getDraftIssue(draft: BatchComposerDraft, providerMode: ProviderGenerationModeDefinition, t: I18nContextValue['t']) {
   if (!draft.params.prompt.trim()) return t('batch.needsPrompt');
-  if (draft.mode === 'edit' && getAttachmentCount(draft) === 0) return t('batch.needsImages');
+  if (!hasProviderModeRequiredAttachments({
+    targetImage: draft.targetImage,
+    referenceImages: draft.referenceImages,
+    mask: draft.mask
+  }, providerMode)) return t('batch.needsImages');
   return t('batch.ready');
 }
 
 interface BatchQueueItemProps {
   draft: BatchComposerDraft;
+  providerMode: ProviderGenerationModeDefinition;
   index: number;
   selected: boolean;
   t: I18nContextValue['t'];
   onSelectDraft: (id: string) => void;
 }
 
-const BatchQueueItem = memo(function BatchQueueItem({ draft, index, selected, t, onSelectDraft }: BatchQueueItemProps) {
-  const ready = isDraftReady(draft);
+const BatchQueueItem = memo(function BatchQueueItem({ draft, providerMode, index, selected, t, onSelectDraft }: BatchQueueItemProps) {
+  const ready = isDraftReady(draft, providerMode);
   const prompt = draft.params.prompt.trim() || t('batch.emptyPrompt');
   const attachments = getAttachmentCount(draft);
   const expectedImages = Math.max(1, Number(draft.params.n || 1));
@@ -53,10 +64,10 @@ const BatchQueueItem = memo(function BatchQueueItem({ draft, index, selected, t,
         <span className={queueStyles.queueIndex}>{index + 1}</span>
         <span className={queueStyles.queueCopy}>
           <strong>{prompt}</strong>
-          <span>{getDraftIssue(draft, t)}</span>
+          <span>{getDraftIssue(draft, providerMode, t)}</span>
         </span>
         <span className={queueStyles.queueMeta}>
-          <span>{draft.mode === 'edit' ? t('composer.edit') : t('composer.generate')}</span>
+          <span>{t(providerMode.labelKey)}</span>
           <span>{t('batch.queueImagesValue', { count: expectedImages })}</span>
           <span>{t('batch.queueAttachmentsValue', { count: attachments })}</span>
         </span>
@@ -77,6 +88,11 @@ function createDraftContext(
     models: context.models,
     providers: context.providers
   });
+  const modeResolution = resolveProviderGenerationModeForModelContext(
+    context.studioSettings,
+    controlContext.model,
+    draft.providerModeId
+  );
 
   return {
     draft,
@@ -85,6 +101,8 @@ function createDraftContext(
     models: context.models,
     providers: context.providers,
     provider: toProviderSettings(controlContext.provider, controlContext.model),
+    providerMode: modeResolution.activeMode,
+    providerModes: modeResolution.modes,
     studioSettings: context.studioSettings,
     controlSurface: controlContext.surface,
     selectedModel: controlContext.model,
@@ -101,7 +119,7 @@ function createDraftContext(
       duplicateDraft: () => context.actions.duplicateDraft(draft.id),
       removeDraft: () => context.actions.removeDraft(draft.id),
       openParameters: () => context.actions.openParameters(draft.id),
-      addAttachments: (files) => context.actions.changeDraft(draft.id, { targetImage: null, referenceImages: [...draft.referenceImages, ...files].slice(0, 16), mode: 'edit' }),
+      addAttachments: (files) => context.actions.changeDraft(draft.id, addImageFilesToProviderModeDraft(draft, modeResolution.activeMode, files)),
       removeAttachment: () => undefined,
       clearAttachments: () => context.actions.changeDraft(draft.id, { targetImage: null, referenceImages: [], mask: null })
     }
@@ -142,6 +160,8 @@ export function BatchDraftListSection({ context }: ElementDefinitionProps<BatchC
     );
   }
 
+  const selectedProviderMode = selectedDraftContext.providerMode;
+
   return (
     <div className={styles.workbench} data-testid="batch-queue-workbench">
       <aside className={queueStyles.queueRail} aria-label={t('batch.queueLabel')}>
@@ -158,6 +178,7 @@ export function BatchDraftListSection({ context }: ElementDefinitionProps<BatchC
             <BatchQueueItem
               key={draft.id}
               draft={draft}
+              providerMode={resolveProviderGenerationModeForModelContext(context.studioSettings, context.models.find((model) => model.id === draft.selectedModelId) ?? null, draft.providerModeId).activeMode}
               index={index}
               selected={draft.id === selectedDraft.id}
               t={t}
@@ -173,7 +194,7 @@ export function BatchDraftListSection({ context }: ElementDefinitionProps<BatchC
             <span className="section-kicker">{t('batch.selectedKicker')}</span>
             <h3>{t('batch.requestLabel', { index: selectedIndex + 1 })}</h3>
           </div>
-          <span className={isDraftReady(selectedDraft) ? editorStyles.readyPill : editorStyles.issuePill}>{getDraftIssue(selectedDraft, t)}</span>
+          <span className={isDraftReady(selectedDraft, selectedProviderMode) ? editorStyles.readyPill : editorStyles.issuePill}>{getDraftIssue(selectedDraft, selectedProviderMode, t)}</span>
         </header>
         <SlotHost<BatchDraftLayoutContext>
           key={selectedDraft.id}

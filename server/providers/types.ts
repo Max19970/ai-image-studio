@@ -24,7 +24,16 @@ export class HttpError extends Error {
 }
 
 export type ProviderOperationKind = 'generate' | 'edit';
-export type ProviderResourceKind = 'models' | 'checkpoints' | 'loras' | 'samplers' | 'schedulers' | (string & {});
+export type ProviderSubmitTransportKind = 'json' | 'multipart';
+export type ProviderSubmitTransportOperation = ProviderOperationKind | 'provider-submit';
+
+export interface ProviderSubmitTransportDefinition {
+  kind: ProviderSubmitTransportKind;
+  operation: ProviderSubmitTransportOperation;
+  path?: string;
+}
+
+export type ProviderResourceKind = 'models' | 'checkpoints' | 'loras' | 'samplers' | 'schedulers' | 'upscale_models' | (string & {});
 export type ProbeStatus = 'accepted' | 'rejected' | 'error' | 'unknown';
 
 export interface ProviderRuntimeCapabilities {
@@ -95,6 +104,15 @@ export interface ProviderFetchContext {
   signal?: AbortSignal;
 }
 
+export interface ProviderModeSubmitInput {
+  provider: ProviderSettings;
+  providerModeId?: string | null;
+  transport?: ProviderSubmitTransportDefinition | null;
+  payload: Record<string, unknown>;
+  files: UploadedFile[];
+  context?: ProviderFetchContext;
+}
+
 export interface ProviderAdapterDefinition {
   id: string;
   label: string;
@@ -102,6 +120,7 @@ export interface ProviderAdapterDefinition {
   fingerprint(provider: ProviderSettings): string;
   capabilities: ProviderRuntimeCapabilities;
   resources: ProviderResourceDescriptor;
+  submitProviderMode(input: ProviderModeSubmitInput): Promise<UpstreamRequestResult>;
   fetchGenerate(provider: ProviderSettings, payload: Record<string, unknown>, context?: ProviderFetchContext): Promise<UpstreamRequestResult>;
   fetchEdit(provider: ProviderSettings, payload: Record<string, unknown>, files: UploadedFile[], context?: ProviderFetchContext): Promise<UpstreamRequestResult>;
   fetchResources?(provider: ProviderSettings, kind: ProviderResourceKind): Promise<ProviderResourceList>;

@@ -3,6 +3,7 @@ import type { ProviderProbeReport, ProviderQuickCheckResult } from '../domain/pr
 import type { ProviderSettings } from '../domain/providerSettings';
 import type { ProviderResourceKind, ProviderResourceList } from '../domain/providerResources';
 import type { WorkMode } from '../domain/workMode';
+import type { ProviderGenerationModeDefinition } from '../domain/providerMode';
 import { getProviderAdapterForSettings } from '../entities/provider/registry';
 import type { ProviderResponseAdapter } from '../entities/provider/types';
 
@@ -10,6 +11,7 @@ export interface SubmitRequest {
   provider: ProviderSettings;
   payload: Record<string, unknown>;
   mode: WorkMode;
+  providerMode?: ProviderGenerationModeDefinition | null;
   targetImage?: File | null;
   referenceImages?: File[];
   mask?: File | null;

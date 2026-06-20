@@ -8,6 +8,8 @@ export interface ComfyUiLoraInput {
   enabled?: boolean;
 }
 
+export type ComfyUiHiresUpscaleMode = 'latent' | 'ai';
+
 export interface ComfyUiGenerationPayload {
   prompt: string;
   negative_prompt?: string;
@@ -28,6 +30,11 @@ export interface ComfyUiGenerationPayload {
   denoise?: number;
   loras?: ComfyUiLoraInput[];
   filename_prefix?: string;
+  provider_mode?: string;
+  hires_upscale_mode?: ComfyUiHiresUpscaleMode;
+  hiresUpscaleMode?: ComfyUiHiresUpscaleMode;
+  hires_upscale_model?: string;
+  hiresUpscaleModel?: string;
 }
 
 export type ComfyUiWorkflowNode = {
@@ -52,6 +59,10 @@ export interface ComfyUiResolvedGenerationConfig {
   denoise: number;
   filenamePrefix: string;
   loras: Required<Pick<ComfyUiLoraInput, 'lora_name' | 'strength_model' | 'strength_clip'>>[];
+  providerMode?: string;
+  hiresUpscaleMode?: ComfyUiHiresUpscaleMode;
+  hiresUpscaleModel?: string;
+  inputImageName?: string;
 }
 
 const MAX_SEED = 2 ** 31 - 1;
@@ -98,6 +109,10 @@ function normalizeLoras(value: unknown): ComfyUiResolvedGenerationConfig['loras'
   });
 }
 
+function normalizeHiresUpscaleMode(value: unknown): ComfyUiHiresUpscaleMode {
+  return value === 'ai' ? 'ai' : 'latent';
+}
+
 export function resolveComfyUiGenerationConfig(provider: ProviderSettings, payload: Record<string, unknown>): ComfyUiResolvedGenerationConfig {
   const typed = payload as unknown as ComfyUiGenerationPayload;
   const prompt = String(typed.prompt ?? '').trim();
@@ -123,20 +138,42 @@ export function resolveComfyUiGenerationConfig(provider: ProviderSettings, paylo
     scheduler: String(typed.scheduler ?? 'normal').trim() || 'normal',
     denoise: clampFloat(typed.denoise, 1, 0, 1),
     filenamePrefix: String(typed.filename_prefix ?? 'image-studio').trim() || 'image-studio',
-    loras: normalizeLoras(typed.loras)
+    loras: normalizeLoras(typed.loras),
+    providerMode: typeof typed.provider_mode === 'string' ? typed.provider_mode : undefined
   };
 }
 
-export function buildComfyUiTextToImageWorkflow(config: ComfyUiResolvedGenerationConfig): ComfyUiWorkflow {
-  const workflow: ComfyUiWorkflow = {
-    '4': {
-      class_type: 'CheckpointLoaderSimple',
-      inputs: { ckpt_name: config.checkpoint }
-    },
-    '5': {
-      class_type: 'EmptyLatentImage',
-      inputs: { width: config.width, height: config.height, batch_size: config.batchSize }
-    }
+export function resolveComfyUiHiresFixConfig(
+  provider: ProviderSettings,
+  payload: Record<string, unknown>,
+  inputImageName: string
+): ComfyUiResolvedGenerationConfig {
+  const base = resolveComfyUiGenerationConfig(provider, payload);
+  const typed = payload as unknown as ComfyUiGenerationPayload;
+  const hiresUpscaleMode = normalizeHiresUpscaleMode(typed.hires_upscale_mode ?? typed.hiresUpscaleMode);
+  const hiresUpscaleModel = String(typed.hires_upscale_model ?? typed.hiresUpscaleModel ?? '').trim();
+
+  if (!inputImageName.trim()) {
+    throw new HttpError('ComfyUI Hires Fix requires one uploaded input image.', 400);
+  }
+  if (hiresUpscaleMode === 'ai' && !hiresUpscaleModel) {
+    throw new HttpError('ComfyUI Hires Fix AI Upscale mode requires an upscale model.', 400);
+  }
+
+  return {
+    ...base,
+    batchSize: 1,
+    providerMode: 'comfyui.hires-fix',
+    hiresUpscaleMode,
+    hiresUpscaleModel: hiresUpscaleMode === 'ai' ? hiresUpscaleModel : undefined,
+    inputImageName
+  };
+}
+
+function addModelConditioningNodes(workflow: ComfyUiWorkflow, config: ComfyUiResolvedGenerationConfig) {
+  workflow['4'] = {
+    class_type: 'CheckpointLoaderSimple',
+    inputs: { ckpt_name: config.checkpoint }
   };
 
   let modelRef: [string, number] = ['4', 0];
@@ -165,6 +202,24 @@ export function buildComfyUiTextToImageWorkflow(config: ComfyUiResolvedGeneratio
     class_type: 'CLIPTextEncode',
     inputs: { text: config.negativePrompt, clip: clipRef }
   };
+
+  return {
+    modelRef,
+    vaeRef: ['4', 2] as [string, number],
+    positiveRef: ['6', 0] as [string, number],
+    negativeRef: ['7', 0] as [string, number]
+  };
+}
+
+export function buildComfyUiTextToImageWorkflow(config: ComfyUiResolvedGenerationConfig): ComfyUiWorkflow {
+  const workflow: ComfyUiWorkflow = {
+    '5': {
+      class_type: 'EmptyLatentImage',
+      inputs: { width: config.width, height: config.height, batch_size: config.batchSize }
+    }
+  };
+  const refs = addModelConditioningNodes(workflow, config);
+
   workflow['3'] = {
     class_type: 'KSampler',
     inputs: {
@@ -174,15 +229,105 @@ export function buildComfyUiTextToImageWorkflow(config: ComfyUiResolvedGeneratio
       sampler_name: config.samplerName,
       scheduler: config.scheduler,
       denoise: config.denoise,
-      model: modelRef,
-      positive: ['6', 0],
-      negative: ['7', 0],
+      model: refs.modelRef,
+      positive: refs.positiveRef,
+      negative: refs.negativeRef,
       latent_image: ['5', 0]
     }
   };
   workflow['8'] = {
     class_type: 'VAEDecode',
-    inputs: { samples: ['3', 0], vae: ['4', 2] }
+    inputs: { samples: ['3', 0], vae: refs.vaeRef }
+  };
+  workflow['9'] = {
+    class_type: 'SaveImage',
+    inputs: { filename_prefix: config.filenamePrefix, images: ['8', 0] }
+  };
+
+  return workflow;
+}
+
+export function buildComfyUiHiresFixWorkflow(config: ComfyUiResolvedGenerationConfig): ComfyUiWorkflow {
+  if (!config.inputImageName) throw new HttpError('ComfyUI Hires Fix workflow requires an uploaded input image.', 400);
+  const workflow: ComfyUiWorkflow = {};
+  const refs = addModelConditioningNodes(workflow, config);
+  const baseNode = 20 + config.loras.length;
+  const loadImageNode = String(baseNode);
+
+  workflow[loadImageNode] = {
+    class_type: 'LoadImage',
+    inputs: { image: config.inputImageName }
+  };
+
+  let latentRef: [string, number];
+  if (config.hiresUpscaleMode === 'ai') {
+    const modelLoaderNode = String(baseNode + 1);
+    const imageUpscaleNode = String(baseNode + 2);
+    const imageScaleNode = String(baseNode + 3);
+    const vaeEncodeNode = String(baseNode + 4);
+
+    workflow[modelLoaderNode] = {
+      class_type: 'UpscaleModelLoader',
+      inputs: { model_name: config.hiresUpscaleModel }
+    };
+    workflow[imageUpscaleNode] = {
+      class_type: 'ImageUpscaleWithModel',
+      inputs: { upscale_model: [modelLoaderNode, 0], image: [loadImageNode, 0] }
+    };
+    workflow[imageScaleNode] = {
+      class_type: 'ImageScale',
+      inputs: {
+        image: [imageUpscaleNode, 0],
+        upscale_method: 'lanczos',
+        width: config.width,
+        height: config.height,
+        crop: 'disabled'
+      }
+    };
+    workflow[vaeEncodeNode] = {
+      class_type: 'VAEEncode',
+      inputs: { pixels: [imageScaleNode, 0], vae: refs.vaeRef }
+    };
+    latentRef = [vaeEncodeNode, 0];
+  } else {
+    const vaeEncodeNode = String(baseNode + 1);
+    const latentUpscaleNode = String(baseNode + 2);
+
+    workflow[vaeEncodeNode] = {
+      class_type: 'VAEEncode',
+      inputs: { pixels: [loadImageNode, 0], vae: refs.vaeRef }
+    };
+    workflow[latentUpscaleNode] = {
+      class_type: 'LatentUpscale',
+      inputs: {
+        samples: [vaeEncodeNode, 0],
+        upscale_method: 'nearest-exact',
+        width: config.width,
+        height: config.height,
+        crop: 'disabled'
+      }
+    };
+    latentRef = [latentUpscaleNode, 0];
+  }
+
+  workflow['3'] = {
+    class_type: 'KSampler',
+    inputs: {
+      seed: config.seed,
+      steps: config.steps,
+      cfg: config.cfg,
+      sampler_name: config.samplerName,
+      scheduler: config.scheduler,
+      denoise: config.denoise,
+      model: refs.modelRef,
+      positive: refs.positiveRef,
+      negative: refs.negativeRef,
+      latent_image: latentRef
+    }
+  };
+  workflow['8'] = {
+    class_type: 'VAEDecode',
+    inputs: { samples: ['3', 0], vae: refs.vaeRef }
   };
   workflow['9'] = {
     class_type: 'SaveImage',

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ParameterPanel } from './ParameterPanel';
 import type { ImageParams } from '../../domain/imageParams';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { StudioSettings } from '../../domain/studioSettings';
@@ -13,6 +14,7 @@ import styles from './ParametersModal.module.css';
 interface Props {
   open: boolean;
   mode: WorkMode;
+  providerMode: ProviderGenerationModeDefinition;
   params: ImageParams;
   provider: ProviderSettings;
   capabilityReport: ProviderProbeReport | null;
@@ -22,7 +24,7 @@ interface Props {
   onChange: (params: ImageParams) => void;
 }
 
-export function ParametersModal({ open, mode, params, provider, capabilityReport, studioSettings, warnings, onClose, onChange }: Props) {
+export function ParametersModal({ open, mode, providerMode, params, provider, capabilityReport, studioSettings, warnings, onClose, onChange }: Props) {
   const { t } = useI18n();
 
   useEffect(() => {
@@ -53,7 +55,7 @@ export function ParametersModal({ open, mode, params, provider, capabilityReport
           <div>
             <p className="section-kicker">{t('params.kicker')}</p>
             <h2 id="parameters-modal-title" className="section-title">{t('params.title')}</h2>
-            <p className={styles.subcopy}>{t('params.summary', { mode: t(`gallery.mode.${mode}`), size: summarySize, n: params.n })}</p>
+            <p className={styles.subcopy}>{t('params.summary', { mode: t(providerMode.labelKey), size: summarySize, n: params.n })}</p>
           </div>
           <IconButton className={styles.closeButton} data-testid="parameters-modal-close" onClick={onClose} aria-label={t('attachment.close')}>×</IconButton>
         </header>
@@ -65,7 +67,7 @@ export function ParametersModal({ open, mode, params, provider, capabilityReport
         )}
 
         <div className={styles.body}>
-          <ParameterPanel mode={mode} params={params} provider={provider} capabilityReport={capabilityReport} studioSettings={studioSettings} onChange={onChange} />
+          <ParameterPanel mode={mode} providerMode={providerMode} params={params} provider={provider} capabilityReport={capabilityReport} studioSettings={studioSettings} onChange={onChange} />
         </div>
 
         <footer className={styles.footer}>

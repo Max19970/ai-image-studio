@@ -1,4 +1,4 @@
-export type ProviderResourceKind = 'models' | 'checkpoints' | 'loras' | 'samplers' | 'schedulers' | (string & {});
+export type ProviderResourceKind = 'models' | 'checkpoints' | 'loras' | 'samplers' | 'schedulers' | 'upscale_models' | (string & {});
 
 export interface ProviderResourceDescriptor {
   kinds: readonly ProviderResourceKind[];

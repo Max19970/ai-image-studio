@@ -7,7 +7,10 @@ import type { WorkspaceDerivedState, WorkspaceState } from './types';
 export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDerivedState, t: TranslateFn) {
   return useMemo(() => createAppCommands({
     t,
-    mode: state.mode,
+    mode: derived.mode,
+    providerModeId: state.providerModeId,
+    providerMode: derived.providerMode,
+    providerModes: derived.providerModes,
     params: state.params,
     provider: derived.provider,
     activeProvider: derived.activeProvider,
@@ -33,7 +36,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
       setQuickCheckingProviderId: state.setQuickCheckingProviderId,
       setQuickCheckResults: state.setQuickCheckResults
     },
-    setMode: state.setMode,
+    setProviderModeId: state.setProviderModeId,
     setCompatibilityNotice: state.setCompatibilityNotice,
     setParams: state.setParams,
     setStudioSettings: state.setStudioSettings,

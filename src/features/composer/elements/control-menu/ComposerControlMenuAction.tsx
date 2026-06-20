@@ -3,6 +3,7 @@ import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
 import { useI18n } from '../../../../i18n';
 import type { ComposerActionContext } from '../../composerTypes';
 import { ProviderModelPicker } from '../../../../entities/provider/ui';
+import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/compatibility';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import styles from './ComposerControlMenu.module.css';
 import popoverStyles from '../../ui/ComposerPopover.module.css';
@@ -26,10 +27,12 @@ function useIsMobileComposerControls() {
 function MenuContent({ context }: { context: ComposerActionContext }) {
   const { t } = useI18n();
   const close = () => context.setOpenPopover(null);
-  const setMode = (mode: ComposerActionContext['mode']) => {
-    context.actions.setMode(mode);
+  const chooseProviderMode = (providerModeId: string) => {
+    context.actions.setProviderMode(providerModeId);
     close();
   };
+  const canUseImages = providerModeAllowsImageAttachments(context.providerMode);
+  const canUseMask = providerModeAllowsMask(context.providerMode);
   const openAttachments = () => {
     context.actions.openAttachmentPicker();
     close();
@@ -57,18 +60,23 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
 
   return (
     <div className={styles.menu} data-control-surface={context.controlSurface.id}>
-      {context.controlSurface.showModeSwitcher && (
+      {context.providerModes.length > 1 && (
         <div className={styles.group}>
           <span className={styles.groupTitle}>{t('composer.mode')}</span>
           <div className={styles.modeGrid}>
-            <button type="button" className={styles.modeButton} data-testid="composer-mode-generate" data-active={context.mode === 'generate'} onClick={() => setMode('generate')}>
-              <strong>{t('composer.generate')}</strong>
-              <small>{t('composer.modeGenerateDescription')}</small>
-            </button>
-            <button type="button" className={styles.modeButton} data-testid="composer-mode-edit" data-active={context.mode === 'edit'} onClick={() => setMode('edit')}>
-              <strong>{t('composer.edit')}</strong>
-              <small>{t('composer.modeEditDescription')}</small>
-            </button>
+            {context.providerModes.map((mode) => (
+              <button
+                key={mode.id}
+                type="button"
+                className={styles.modeButton}
+                data-testid={`composer-mode-${mode.id}`}
+                data-active={context.providerMode.id === mode.id}
+                onClick={() => chooseProviderMode(mode.id)}
+              >
+                <strong>{t(mode.labelKey)}</strong>
+                {mode.descriptionKey && <small>{t(mode.descriptionKey)}</small>}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -94,7 +102,7 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
 
       <div className={styles.group}>
         <span className={styles.groupTitle}>{t('composer.actions')}</span>
-        {context.controlSurface.showImageAttachments && (
+        {canUseImages && (
           <button type="button" className={styles.action} data-testid="composer-add-attachments" onClick={openAttachments}>
             <span className={styles.icon} aria-hidden="true">＋</span>
             <span className={styles.copy}>
@@ -103,7 +111,7 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
             </span>
           </button>
         )}
-        {context.controlSurface.showMask && (
+        {canUseMask && (
           <button type="button" className={styles.action} data-testid="composer-add-mask" onClick={openMask}>
             <span className={styles.icon} aria-hidden="true">◌</span>
             <span className={styles.copy}>
@@ -112,7 +120,7 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
             </span>
           </button>
         )}
-        {context.controlSurface.showMask && context.hasMask && (
+        {canUseMask && context.hasMask && (
           <button type="button" className={styles.action} data-testid="composer-clear-mask" onClick={clearMask}>
             <span className={styles.icon} aria-hidden="true">−</span>
             <span className={styles.copy}>
@@ -139,7 +147,7 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
             </span>
           </button>
         )}
-        {(context.controlSurface.showImageAttachments || context.controlSurface.showMask) && context.attachmentsCount > 0 && (
+        {(canUseImages || canUseMask) && context.attachmentsCount > 0 && (
           <button type="button" className={`${styles.action} ${styles.danger}`} onClick={clearAttachments}>
             <span className={styles.icon} aria-hidden="true">×</span>
             <span className={styles.copy}>

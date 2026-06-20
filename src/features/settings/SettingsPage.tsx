@@ -118,6 +118,7 @@ export function SettingsPage({
     comfyUiLoraCache: generationApi.comfyUiLoraCache,
     comfyUiSamplerCache: generationApi.comfyUiSamplerCache,
     comfyUiSchedulerCache: generationApi.comfyUiSchedulerCache,
+    comfyUiUpscaleModelCache: generationApi.comfyUiUpscaleModelCache,
     comfyUiResourcesLoading: generationApi.comfyUiResourcesLoading,
     comfyUiResourcesError: generationApi.comfyUiResourcesError,
     refreshComfyUiResources: generationApi.refreshComfyUiResources,

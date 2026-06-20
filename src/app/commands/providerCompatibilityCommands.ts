@@ -1,12 +1,11 @@
 import type { CreateAppCommandsArgs } from './appCommandTypes';
+import type { ProviderGenerationModeId, ProviderAttachmentRole } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
-import type { WorkMode } from '../../domain/workMode';
 import type { ProviderCompatibilityChange } from '../../entities/provider/compatibility';
 import {
+  getProviderModeForAttachmentRole,
   sanitizeBatchDraftsForSettings,
-  sanitizeGenerationDraftForModel,
-  sanitizeGenerationDraftForProviderCapabilities,
-  getProviderRuntimeCapabilitiesForModel
+  sanitizeProviderModeDraftForModel
 } from '../../entities/provider/compatibility';
 
 export function compatibilityNoticeForChanges(
@@ -25,15 +24,15 @@ export function setCompatibilityNoticeForChanges(
 }
 
 export function applyComposerCompatibilityForModel(args: CreateAppCommandsArgs, settings: StudioSettings, modelId: string) {
-  const result = sanitizeGenerationDraftForModel({
-    mode: args.mode,
+  const result = sanitizeProviderModeDraftForModel({
+    providerModeId: args.providerModeId,
     targetImage: args.targetImage,
     referenceImages: args.referenceImages,
     mask: args.mask
   }, settings, modelId);
 
   if (result.changed) {
-    args.setMode(result.value.mode);
+    args.setProviderModeId(result.value.providerModeId);
     args.setTargetImage(result.value.targetImage);
     args.setReferenceImages(result.value.referenceImages);
     args.setMask(result.value.mask);
@@ -45,32 +44,43 @@ export function applyComposerCompatibilityForModel(args: CreateAppCommandsArgs, 
 
 export function setComposerDraftWithCompatibility(
   args: CreateAppCommandsArgs,
-  draft: { mode: WorkMode; targetImage: File | null; referenceImages: File[]; mask: File | null }
+  draft: {
+    providerModeId?: ProviderGenerationModeId;
+    targetImage: File | null;
+    referenceImages: File[];
+    mask: File | null;
+  }
 ) {
-  const result = sanitizeGenerationDraftForModel(draft, args.studioSettings, args.studioSettings.selectedModelId);
-  args.setMode(result.value.mode);
+  const result = sanitizeProviderModeDraftForModel({
+    providerModeId: draft.providerModeId ?? args.providerModeId,
+    targetImage: draft.targetImage,
+    referenceImages: draft.referenceImages,
+    mask: draft.mask
+  }, args.studioSettings, args.studioSettings.selectedModelId);
+
+  args.setProviderModeId(result.value.providerModeId);
   args.setTargetImage(result.value.targetImage);
   args.setReferenceImages(result.value.referenceImages);
   args.setMask(result.value.mask);
   setCompatibilityNoticeForChanges(args, result.changes);
 }
 
-export function setComposerModeWithCompatibility(args: CreateAppCommandsArgs, mode: WorkMode) {
-  const capabilities = getProviderRuntimeCapabilitiesForModel(args.studioSettings, args.studioSettings.selectedModelId);
-  const result = sanitizeGenerationDraftForProviderCapabilities({
-    mode,
+export function setComposerProviderModeWithCompatibility(args: CreateAppCommandsArgs, providerModeId: ProviderGenerationModeId) {
+  setComposerDraftWithCompatibility(args, {
+    providerModeId,
     targetImage: args.targetImage,
     referenceImages: args.referenceImages,
     mask: args.mask
-  }, capabilities);
+  });
+}
 
-  args.setMode(result.value.mode);
-  if (result.changed) {
-    args.setTargetImage(result.value.targetImage);
-    args.setReferenceImages(result.value.referenceImages);
-    args.setMask(result.value.mask);
-  }
-  setCompatibilityNoticeForChanges(args, result.changes);
+export function getComposerModeForAttachmentRole(args: CreateAppCommandsArgs, role: ProviderAttachmentRole): ProviderGenerationModeId {
+  return getProviderModeForAttachmentRole(
+    args.studioSettings,
+    args.studioSettings.selectedModelId,
+    args.providerModeId,
+    role
+  ).id;
 }
 
 export function sanitizeBatchDraftsAfterSettingsChange(args: CreateAppCommandsArgs, settings: StudioSettings) {

@@ -6,5 +6,5 @@ export default {
   id: 'composer.sections.status',
   label: 'Composer status notes section',
   Component: ComposerStatusSection,
-  enabled: (context) => Boolean(context.statusText) || (context.mode === 'edit' && !context.hasImageAttachments)
+  enabled: (context) => Boolean(context.statusText) 
 } satisfies ElementDefinition<ComposerLayoutContext>;

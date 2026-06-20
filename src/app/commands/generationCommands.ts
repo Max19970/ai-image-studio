@@ -2,6 +2,7 @@ import type { BatchComposerDraft } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import { runBatchGeneration } from '../../processes/batch-runner/batchRunner';
@@ -11,6 +12,7 @@ import type { StateSetter, TaskHistoryCommands, TranslateFn } from './types';
 interface SingleGenerationCommandArgs {
   canSubmit: boolean;
   mode: WorkMode;
+  providerMode: ProviderGenerationModeDefinition;
   params: ImageParams;
   provider: ProviderSettings;
   activeProvider: GenerationProvider | null;
@@ -42,6 +44,7 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
   const {
     canSubmit,
     mode,
+    providerMode,
     params,
     provider,
     activeProvider,
@@ -61,6 +64,7 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
   try {
     await runSingleGeneration({
       mode,
+      providerMode,
       params,
       provider,
       activeProvider,

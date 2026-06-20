@@ -1,6 +1,7 @@
 import { capabilityOrder } from '../../domain/defaults';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderSettings } from '../../domain/providerSettings';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { WorkMode } from '../../domain/workMode';
 import { getGenerationParamPrimaryLabelKey } from './availability';
 import { normalizeImageParamsFromDefinitions } from './logicalRegistry';
@@ -25,8 +26,8 @@ export function getOpenAiCompatibleTabStats(params: ImageParams, retryOffLabel =
   return createOpenAiTabStats(params, retryOffLabel);
 }
 
-export function buildOpenAiCompatibleSurfacePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode): Record<string, unknown> {
-  return buildOpenAiCompatibleRequestSurfacePayload(params, provider, mode);
+export function buildOpenAiCompatibleSurfacePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode, providerMode?: ProviderGenerationModeDefinition | null): Record<string, unknown> {
+  return buildOpenAiCompatibleRequestSurfacePayload(params, provider, mode, providerMode);
 }
 
 export function captureOpenAiCompatibleSurfaceParamsSnapshot(context: ProviderGenerationSurfaceSnapshotContext) {
@@ -49,7 +50,7 @@ export const openAiCompatibleGenerationSurface: ProviderGenerationSurface = {
     paramLabelKeys: getHiddenProviderParamDefinitions(context).map(getGenerationParamPrimaryLabelKey)
   }),
   renderSlot: (slot, context) => renderGenerationParamSlot(slot, context),
-  buildPayload: ({ params, provider, mode }: ProviderGenerationSurfacePayloadContext) => buildOpenAiCompatibleSurfacePayload(params, provider, mode),
+  buildPayload: ({ params, provider, mode, providerMode }: ProviderGenerationSurfacePayloadContext) => buildOpenAiCompatibleSurfacePayload(params, provider, mode, providerMode),
   captureParamsSnapshot: captureOpenAiCompatibleSurfaceParamsSnapshot,
   captureProviderParamsSnapshot: (context) => openAiCompatibleGenerationRequestSurface.captureProviderParamsSnapshot(context),
   captureParameterSummary: (context) => openAiCompatibleGenerationRequestSurface.captureParameterSummary(context),

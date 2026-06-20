@@ -1,6 +1,10 @@
 import type { ProviderAdapterDefinition } from '../types';
 import { resolveOpenAiCompatibleEndpoint, providerFingerprint } from './endpoints';
-import { fetchOpenAiCompatibleEdit, fetchOpenAiCompatibleGenerate } from './requestHandlers';
+import {
+  fetchOpenAiCompatibleEdit,
+  fetchOpenAiCompatibleGenerate,
+  submitOpenAiCompatibleProviderMode
+} from './requestHandlers';
 import { probeOpenAiCompatibleProvider, quickCheckOpenAiCompatibleProvider } from './probeSuite';
 import { openAiCompatibleProviderSettingsSchema } from './settingsSchema';
 
@@ -21,6 +25,7 @@ export const openAiCompatibleProviderAdapter: ProviderAdapterDefinition = {
   resources: {
     kinds: []
   },
+  submitProviderMode: submitOpenAiCompatibleProviderMode,
   fetchGenerate: fetchOpenAiCompatibleGenerate,
   fetchEdit: fetchOpenAiCompatibleEdit,
   quickCheck: quickCheckOpenAiCompatibleProvider,
