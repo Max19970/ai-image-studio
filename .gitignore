@@ -34,3 +34,7 @@ storage.key
 .tmp/
 tmp/
 artifacts/
+
+# Dev-only local tools and outputs
+dev[-]only/
+.playwright-cli/
