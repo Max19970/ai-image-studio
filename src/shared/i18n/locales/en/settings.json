@@ -157,6 +157,7 @@
   "settings.comfy.checkpointFallback": "Resource list is not loaded yet. You can type the checkpoint manually or refresh resources.",
   "settings.comfy.samplers": "Samplers",
   "settings.comfy.schedulers": "Schedulers",
+  "settings.comfy.upscaleModels": "Upscalers",
   "settings.comfy.noCheckpointsFound": "ComfyUI is reachable, but no checkpoints were found. Check models/checkpoints or CheckpointLoaderSimple object_info.",
   "settings.comfy.missingRegisteredLora": "One or more registered LoRA files are missing from the live ComfyUI list. Update the registration or restore the file in models/loras.",
   "settings.tab.integrations": "Integrations",

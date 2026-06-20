@@ -4,6 +4,11 @@ import { openAiCompatibleRequestAdapter } from './requestAdapter';
 import { openAiCompatibleResponseAdapter } from './responseAdapter';
 import { openAiCompatibleSettingsFields } from './settingsSchema';
 import { openAiCompatibleGenerationParamProfile } from './parameterProfile';
+import {
+  openAiCompatibleDetailSurfaceId,
+  openAiCompatibleGenerationModes,
+  openAiCompatibleGenerationSurfaceId
+} from '../../entities/generation-params/openai-compatible/modes';
 
 export const openAiCompatibleProviderDefinition: ProviderAdapterDefinition = {
   id: 'openai-compatible',
@@ -25,12 +30,12 @@ export const openAiCompatibleProviderDefinition: ProviderAdapterDefinition = {
     kinds: []
   },
   generationSurface: {
-    id: 'openai-compatible.logical-params',
+    id: openAiCompatibleGenerationSurfaceId,
     kind: 'logical-params',
     description: 'Uses the shared logical generation parameter registry.'
   },
   detailDescriptor: {
-    id: 'openai-compatible.request-snapshot',
+    id: openAiCompatibleDetailSurfaceId,
     kind: 'request-snapshot',
     label: 'OpenAI-compatible request parameters'
   },
@@ -44,6 +49,7 @@ export const openAiCompatibleProviderDefinition: ProviderAdapterDefinition = {
     showParameters: true,
     showBatch: true
   },
+  generationModes: [...openAiCompatibleGenerationModes],
   settingsFields: openAiCompatibleSettingsFields,
   generationParams: openAiCompatibleGenerationParamProfile,
   capabilitiesFromProbe: modelCapabilitiesFromProbeReport,

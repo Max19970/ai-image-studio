@@ -58,5 +58,17 @@
   "composer.noProviderModels": "This provider has no registered models yet.",
   "composer.compatibilityAdjustedRequest": "The request was adjusted for the selected provider: unsupported modes or attachments were cleared.",
   "composer.comfy.loras": "LoRA presets",
-  "composer.comfy.noLoras": "No registered LoRA yet. Add one in Settings → Generation API → ComfyUI."
+  "composer.comfy.noLoras": "No registered LoRA yet. Add one in Settings → Generation API → ComfyUI.",
+  "providerModes.openaiCompatible.imageGenerate.label": "Generate",
+  "providerModes.openaiCompatible.imageGenerate.description": "Create an image from the prompt only.",
+  "providerModes.openaiCompatible.imageEdit.label": "Edit",
+  "providerModes.openaiCompatible.imageEdit.description": "Send the prompt together with a target image, optional references, and an optional mask.",
+  "providerModes.comfyui.textToImage.label": "Text to Image",
+  "providerModes.comfyui.textToImage.description": "Generate a new image with the ComfyUI text-to-image workflow.",
+  "providerModes.comfyui.hiresFix.label": "Hires Fix",
+  "providerModes.comfyui.hiresFix.description": "Refine and upscale one attached image through a ComfyUI Hires Fix workflow.",
+  "composer.providerModeNeedsImage": "This mode needs at least one attached image.",
+  "composer.providerModeNeedsTarget": "This mode needs a target image.",
+  "composer.providerModeNeedsReference": "This mode needs a reference image.",
+  "composer.providerModeNeedsMask": "This mode needs a mask."
 }

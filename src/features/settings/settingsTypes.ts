@@ -62,6 +62,7 @@ export interface SettingsSectionContext {
   comfyUiLoraCache: ComfyUiResourceCacheEntry | null;
   comfyUiSamplerCache: ComfyUiResourceCacheEntry | null;
   comfyUiSchedulerCache: ComfyUiResourceCacheEntry | null;
+  comfyUiUpscaleModelCache: ComfyUiResourceCacheEntry | null;
   comfyUiResourcesLoading: boolean;
   comfyUiResourcesError: string | null;
   refreshComfyUiResources: (providerId?: string) => Promise<void>;

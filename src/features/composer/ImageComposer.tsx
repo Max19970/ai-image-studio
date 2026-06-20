@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
-import type { WorkMode } from '../../domain/workMode';
+import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
 import type { ImageParams } from '../../domain/imageParams';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { ComposerCommands } from '../../interface/context/commands';
@@ -13,6 +13,7 @@ import type { ComposerActionContext, ComposerLayoutContext, ComposerModelOption,
 import { getReferenceAttachmentId, useFlatAttachmentPreviewItems } from '../../shared/image';
 import { getProviderModelOptions, getSelectedModel } from '../../entities/provider/modelOptions';
 import { resolveProviderControlSurface } from '../../entities/provider/controlSurface';
+import { addImageFilesToProviderModeDraft } from '../../entities/provider/compatibility';
 import styles from './ComposerLayout.module.css';
 
 function cx(...values: Array<string | false | null | undefined>) {
@@ -20,7 +21,9 @@ function cx(...values: Array<string | false | null | undefined>) {
 }
 
 interface Props {
-  mode: WorkMode;
+  providerModeId: ProviderGenerationModeId;
+  providerMode: ProviderGenerationModeDefinition;
+  providerModes: ProviderGenerationModeDefinition[];
   prompt: string;
   params: ImageParams;
   provider: ProviderSettings;
@@ -38,7 +41,8 @@ interface Props {
 }
 
 export function ImageComposer({
-  mode,
+  providerMode,
+  providerModes,
   prompt,
   params,
   provider,
@@ -61,7 +65,7 @@ export function ImageComposer({
   const maskRef = useRef<HTMLInputElement | null>(null);
   const selectedModel = useMemo(() => getSelectedModel(models, selectedModelId), [models, selectedModelId]);
   const controlSurface = useMemo(() => resolveProviderControlSurface({ settings: studioSettings, modelId: selectedModelId, models, providers }).surface, [models, providers, selectedModelId, studioSettings]);
-  const setMode = useEventCallback(commands.setMode);
+  const setProviderMode = useEventCallback(commands.setProviderMode);
   const setModel = useEventCallback(commands.setModel);
   const setPrompt = useEventCallback(commands.setPrompt);
   const changeParams = useEventCallback(commands.patchParams);
@@ -70,6 +74,7 @@ export function ImageComposer({
   const openBatchComposer = useEventCallback(commands.openBatchComposer);
   const setTargetImage = useEventCallback(commands.setTargetImage);
   const setReferenceImages = useEventCallback(commands.setReferenceImages);
+  const setImageAttachments = useEventCallback(commands.setImageAttachments);
   const setMask = useEventCallback(commands.setMask);
 
   const flatImages = useMemo(() => [
@@ -85,7 +90,7 @@ export function ImageComposer({
     label: getAttachmentLabel
   });
   const hasImageAttachments = attachments.length > 0;
-  const hasStatusContent = Boolean(statusText) || (mode === 'edit' && !hasImageAttachments);
+  const hasStatusContent = Boolean(statusText);
   const revealSecondary = expanded || hasStatusContent;
 
   const modelOptions = useMemo<ComposerModelOption[]>(() => getProviderModelOptions(models, providers), [models, providers]);
@@ -111,45 +116,21 @@ export function ImageComposer({
 
   const setMaskAttachment = useCallback((file: File | null) => {
     setMask(file);
-    if (file) setMode('edit');
-  }, [setMask, setMode]);
+  }, [setMask]);
 
   const clearMask = useCallback(() => {
     setMask(null);
   }, [setMask]);
 
   const addAttachments = useCallback((files: File[]) => {
-    const merged = [...referenceImages, ...files].slice(0, 16);
-    setTargetImage(null);
-    setReferenceImages(merged);
-    if (merged.length > 0) setMode('edit');
-  }, [setMode, setReferenceImages, setTargetImage, referenceImages]);
-
-  useEffect(() => {
-    const shouldClearImages = !controlSurface.showImageAttachments && (Boolean(targetImage) || referenceImages.length > 0);
-    const shouldClearMask = !controlSurface.showMask && Boolean(mask);
-    if (!shouldClearImages && !shouldClearMask) return;
-
-    if (shouldClearImages) {
-      setTargetImage(null);
-      setReferenceImages([]);
-    }
-    if (shouldClearMask) setMask(null);
-    if (!controlSurface.showModeSwitcher && mode !== 'generate') setMode('generate');
-    setOpenPopover(null);
-  }, [
-    controlSurface.showImageAttachments,
-    controlSurface.showMask,
-    controlSurface.showModeSwitcher,
-    mask,
-    mode,
-    referenceImages.length,
-    setMask,
-    setMode,
-    setReferenceImages,
-    setTargetImage,
-    targetImage
-  ]);
+    const next = addImageFilesToProviderModeDraft({
+      providerModeId: providerMode.id,
+      targetImage,
+      referenceImages,
+      mask
+    }, providerMode, files);
+    setImageAttachments(next.targetImage, next.referenceImages);
+  }, [mask, providerMode, referenceImages, setImageAttachments, targetImage]);
 
   const toggleExpanded = useCallback(() => {
     setExpanded((value) => !value);
@@ -163,7 +144,8 @@ export function ImageComposer({
   }, [commands.submit]);
 
   const composerActionContext = useMemo<ComposerActionContext>(() => ({
-    mode,
+    providerMode,
+    providerModes,
     attachmentsCount: attachments.length,
     hasMask: Boolean(mask),
     params,
@@ -181,7 +163,7 @@ export function ImageComposer({
       mask: maskRef
     },
     actions: {
-      setMode,
+      setProviderMode,
       changeModel: setModel,
       changeParams,
       openBatchComposer,
@@ -193,7 +175,8 @@ export function ImageComposer({
       openMaskPicker: () => maskRef.current?.click()
     }
   }), [
-    mode,
+    providerMode,
+    providerModes,
     attachments.length,
     mask,
     params,
@@ -205,7 +188,7 @@ export function ImageComposer({
     selectedModel,
     modelOptions,
     openPopover,
-    setMode,
+    setProviderMode,
     setModel,
     changeParams,
     openBatchComposer,
@@ -216,7 +199,8 @@ export function ImageComposer({
   ]);
 
   const composerLayoutContext = useMemo<ComposerLayoutContext>(() => ({
-    mode,
+    providerMode,
+    providerModes,
     prompt,
     busy,
     canSubmit,
@@ -246,7 +230,8 @@ export function ImageComposer({
       addAttachments
     }
   }), [
-    mode,
+    providerMode,
+    providerModes,
     prompt,
     busy,
     canSubmit,

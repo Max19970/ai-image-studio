@@ -26,6 +26,11 @@ export interface ComfyUiGenerationResult {
     workflow: ComfyUiWorkflow;
     images: ComfyUiImageRef[];
     history: unknown;
+    provider_mode?: string;
+    hires_upscale_mode?: string;
+    hires_upscale_model?: string;
+    input_image?: string;
+    target_size?: { width: number; height: number };
   };
 }
 
@@ -148,7 +153,14 @@ export async function mapComfyUiGenerationResult(args: {
       seed: args.config.seed,
       workflow: args.workflow,
       images,
-      history: args.history
+      history: args.history,
+      ...(args.config.providerMode ? { provider_mode: args.config.providerMode } : {}),
+      ...(args.config.hiresUpscaleMode ? { hires_upscale_mode: args.config.hiresUpscaleMode } : {}),
+      ...(args.config.hiresUpscaleModel ? { hires_upscale_model: args.config.hiresUpscaleModel } : {}),
+      ...(args.config.inputImageName ? {
+        input_image: args.config.inputImageName,
+        target_size: { width: args.config.width, height: args.config.height }
+      } : {})
     }
   };
 }

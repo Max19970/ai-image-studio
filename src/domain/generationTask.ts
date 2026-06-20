@@ -1,9 +1,10 @@
 import type { ImageParams } from './imageParams';
+import type { ProviderGenerationModeId } from './providerMode';
 import type { WorkMode } from './workMode';
 
 export interface BatchComposerDraft {
   id: string;
-  mode: WorkMode;
+  providerModeId: ProviderGenerationModeId;
   params: ImageParams;
   selectedModelId: string;
   targetImage: File | null;
@@ -41,6 +42,10 @@ export interface BatchAggregateRequestSnapshot {
 export interface GenerationRequestSnapshot {
   createdAt: number;
   mode: WorkMode;
+  providerModeId?: ProviderGenerationModeId;
+  providerModeLabel?: string;
+  detailSurfaceId?: string;
+  transportOperation?: string;
   prompt: string;
   endpoint: string;
   providerLabel: string;

@@ -8,6 +8,7 @@ import type { BatchComposerDraft, GeneratedImage, GenerationTask } from '../../d
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
+import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import type { TaskHistoryCommands } from '../commands/types';
@@ -15,8 +16,8 @@ import type { TaskHistoryCommands } from '../commands/types';
 export type StateSetter<T> = Dispatch<SetStateAction<T>>;
 
 export interface WorkspaceState {
-  mode: WorkMode;
-  setMode: StateSetter<WorkMode>;
+  providerModeId: ProviderGenerationModeId;
+  setProviderModeId: StateSetter<ProviderGenerationModeId>;
   compatibilityNotice: string | null;
   setCompatibilityNotice: StateSetter<string | null>;
   studioSettings: StudioSettings;
@@ -67,6 +68,9 @@ export interface WorkspaceDerivedState {
   activeModel: GenerationModel | null;
   activeProvider: GenerationProvider | null;
   provider: ProviderSettings;
+  providerMode: ProviderGenerationModeDefinition;
+  providerModes: ProviderGenerationModeDefinition[];
+  mode: WorkMode;
   payload: Record<string, unknown>;
   rawJsonError: string | null;
   warnings: string[];

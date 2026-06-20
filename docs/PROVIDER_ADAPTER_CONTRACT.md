@@ -30,6 +30,7 @@ A client adapter owns UI-facing request/response semantics for one provider fami
 - `generationSurface`, the adapter-owned generation parameter surface descriptor;
 - `detailDescriptor`, the adapter-owned request detail descriptor used by future provider-specific detail pages;
 - `controlSurface`, the adapter-owned declaration of composer/batch controls visible for this provider family;
+- optional `generationModes`, the adapter-owned user-facing generation modes with attachment policy, parameter/detail surfaces, and submit transport metadata;
 - `settingsFields`, the adapter-specific settings schema used by settings UI and documentation;
 - `capabilitiesFromProbe(report)` for converting probe reports into UI capabilities;
 - `request` methods for size validation, payload building, warnings, raw JSON parsing, and submit proxy config;
@@ -49,6 +50,17 @@ POST /api/provider/resources
 ```
 
 The route selects the server adapter through the registry and calls `fetchResources(provider, kind)` when the adapter supports it. Adapters without live resources should declare `resources.kinds: []` and omit `fetchResources`; the route returns a controlled unsupported error instead of leaking provider-specific branching into UI code.
+
+## Provider generation modes
+
+`generationModes` is the client adapter's declaration of user-facing generation operations owned by the provider family. A mode owns its label/description keys, attachment policy, generation/detail surface IDs, and submit transport metadata. Legacy `WorkMode` values may temporarily map to provider modes through `legacyWorkMode`, but they are compatibility vocabulary rather than the target source of truth.
+
+Current OpenAI-compatible modes:
+
+- `openai-compatible.image-generate`: JSON prompt-only image generation through `/api/generate`, mapped from legacy `generate`.
+- `openai-compatible.image-edit`: multipart image editing through `/api/edit`, mapped from legacy `edit`; allows one target image, reference images, and one optional mask. Legacy composer validation still accepts any attached image role during this compatibility stage.
+
+Request adapters should prefer the active provider mode when it is available and fall back to legacy `mode` only while workspace/composer state is being migrated.
 
 ## Generation surface and detail descriptor
 

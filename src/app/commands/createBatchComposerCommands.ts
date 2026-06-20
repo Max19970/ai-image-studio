@@ -23,7 +23,8 @@ export function createBatchComposerCommands(args: CreateAppCommandsArgs): BatchC
         ...prev,
         sanitizeBatchDraftForSettings(createDraft({
           params: prev[prev.length - 1]?.params ?? args.params,
-          selectedModelId: prev[prev.length - 1]?.selectedModelId ?? args.studioSettings.selectedModelId
+          selectedModelId: prev[prev.length - 1]?.selectedModelId ?? args.studioSettings.selectedModelId,
+          providerModeId: prev[prev.length - 1]?.providerModeId ?? args.providerModeId
         }), args.studioSettings).value
       ]);
     },

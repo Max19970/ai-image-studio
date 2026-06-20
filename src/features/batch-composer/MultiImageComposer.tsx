@@ -4,6 +4,8 @@ import type { GenerationModel, GenerationProvider } from '../../domain/providerS
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { BatchComposerCommands } from '../../interface/context/commands';
 import { useI18n } from '../../i18n';
+import { hasProviderModeRequiredAttachments } from '../../entities/provider/compatibility';
+import { resolveProviderGenerationMode } from '../../entities/provider/modeResolution';
 import { SlotHost } from '../../interface/SlotHost';
 import { useEventCallback } from '../../shared/hooks/useEventCallback';
 import type { BatchComposerLayoutContext } from './batchComposerTypes';
@@ -60,9 +62,20 @@ export function MultiImageComposer({
 
   const validDrafts = useMemo(() => drafts.filter((draft) => {
     const hasPrompt = Boolean(draft.params.prompt.trim());
-    const hasImages = Boolean(draft.targetImage) || draft.referenceImages.length > 0 || Boolean(draft.mask);
-    return hasPrompt && (draft.mode === 'generate' || hasImages);
-  }).length, [drafts]);
+    const model = models.find((item) => item.id === draft.selectedModelId) ?? null;
+    const providerMode = resolveProviderGenerationMode({
+      settings: studioSettings,
+      modelId: draft.selectedModelId,
+      providerModeId: draft.providerModeId,
+      models,
+      providers
+    }).activeMode;
+    return Boolean(model) && hasPrompt && hasProviderModeRequiredAttachments({
+      targetImage: draft.targetImage,
+      referenceImages: draft.referenceImages,
+      mask: draft.mask
+    }, providerMode);
+  }).length, [drafts, models, providers, studioSettings]);
 
   const selectedDraftIndex = useMemo(() => drafts.findIndex((draft) => draft.id === selectedDraftId), [drafts, selectedDraftId]);
 

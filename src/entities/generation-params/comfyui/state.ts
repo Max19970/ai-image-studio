@@ -1,10 +1,12 @@
 import type { ProviderRequestParameterSummary } from '../../../domain/generationTask';
 import type { ImageParams } from '../../../domain/imageParams';
+import type { ProviderGenerationModeDefinition } from '../../../domain/providerMode';
 import type { ProviderSettings } from '../../../domain/providerSettings';
 import { isPlainRecord, readProviderParamState } from '../providerState';
 import type { ProviderParamState } from '../surfaceTypes';
 
 export const COMFYUI_SURFACE_ID = 'comfyui.text-to-image';
+const COMFYUI_HIRES_FIX_MODE_ID = 'comfyui.hires-fix';
 
 export interface ComfyUiLoraSelection {
   name: string;
@@ -26,6 +28,8 @@ export interface ComfyUiParamState {
   scheduler: string;
   denoise: number;
   filenamePrefix: string;
+  hiresUpscaleMode: 'latent' | 'ai';
+  hiresUpscaleModel: string;
   loras: ComfyUiLoraSelection[];
 }
 
@@ -47,6 +51,8 @@ export const defaultComfyUiParamState: ComfyUiParamState = {
   scheduler: 'normal',
   denoise: 1,
   filenamePrefix: 'image-studio',
+  hiresUpscaleMode: 'latent',
+  hiresUpscaleModel: '',
   loras: []
 };
 
@@ -63,6 +69,10 @@ function stringValue(value: unknown, fallback = ''): string {
 
 function enumValue<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return typeof value === 'string' && allowed.includes(value as T) ? value as T : fallback;
+}
+
+function isHiresFixMode(providerMode: ProviderGenerationModeDefinition | null | undefined): boolean {
+  return providerMode?.id === COMFYUI_HIRES_FIX_MODE_ID;
 }
 
 function normalizeLoras(value: unknown): ComfyUiLoraSelection[] {
@@ -96,6 +106,8 @@ export function normalizeComfyUiParamState(value: unknown): ComfyUiParamState {
     scheduler: stringValue(source.scheduler, defaultComfyUiParamState.scheduler).trim() || defaultComfyUiParamState.scheduler,
     denoise: numberInRange(source.denoise, defaultComfyUiParamState.denoise, 0, 1),
     filenamePrefix: stringValue(source.filenamePrefix ?? source.filename_prefix, defaultComfyUiParamState.filenamePrefix).trim() || defaultComfyUiParamState.filenamePrefix,
+    hiresUpscaleMode: enumValue(source.hiresUpscaleMode ?? source.hires_upscale_mode, ['latent', 'ai'] as const, defaultComfyUiParamState.hiresUpscaleMode),
+    hiresUpscaleModel: stringValue(source.hiresUpscaleModel ?? source.hires_upscale_model, defaultComfyUiParamState.hiresUpscaleModel).trim(),
     loras: normalizeLoras(source.loras)
   };
 }
@@ -118,24 +130,36 @@ export function toComfyUiProviderParamState(state: ComfyUiParamState): ProviderP
     scheduler: state.scheduler,
     denoise: state.denoise,
     filenamePrefix: state.filenamePrefix,
+    hiresUpscaleMode: state.hiresUpscaleMode,
+    hiresUpscaleModel: state.hiresUpscaleModel,
     loras: state.loras.map((lora) => ({ ...lora }))
   };
 }
 
-export function buildComfyUiPayload(params: ImageParams, provider: ProviderSettings): Record<string, unknown> {
+export function buildComfyUiPayload(
+  params: ImageParams,
+  provider: ProviderSettings,
+  providerMode?: ProviderGenerationModeDefinition | null
+): Record<string, unknown> {
   const state = readComfyUiParamState(params, provider);
+  const hiresFix = isHiresFixMode(providerMode);
   return {
     prompt: params.prompt.trim(),
     checkpoint: provider.modelId.trim(),
     width: state.width,
     height: state.height,
-    batch_size: state.batchSize,
+    batch_size: hiresFix ? 1 : state.batchSize,
     steps: state.steps,
     cfg: state.cfg,
     sampler_name: state.samplerName,
     scheduler: state.scheduler,
     denoise: state.denoise,
     filename_prefix: state.filenamePrefix,
+    ...(providerMode?.id ? { provider_mode: providerMode.id } : {}),
+    ...(hiresFix ? {
+      hires_upscale_mode: state.hiresUpscaleMode,
+      ...(state.hiresUpscaleMode === 'ai' && state.hiresUpscaleModel.trim() ? { hires_upscale_model: state.hiresUpscaleModel.trim() } : {})
+    } : {}),
     ...(state.negativePrompt.trim() ? { negative_prompt: state.negativePrompt.trim() } : {}),
     ...(state.seedMode === 'fixed' ? { seed: state.seed } : {}),
     ...(state.loras.some((lora) => lora.enabled) ? {
@@ -150,12 +174,18 @@ export function buildComfyUiPayload(params: ImageParams, provider: ProviderSetti
   };
 }
 
-export function createComfyUiParameterSummary(state: ComfyUiParamState, provider: ProviderSettings): ProviderRequestParameterSummary {
+export function createComfyUiParameterSummary(
+  state: ComfyUiParamState,
+  provider: ProviderSettings,
+  providerMode?: ProviderGenerationModeDefinition | null
+): ProviderRequestParameterSummary {
   const seedValue = state.seedMode === 'fixed' ? String(state.seed) : 'random';
+  const hiresFix = isHiresFixMode(providerMode);
   const entries = [
+    { id: 'mode', label: 'Provider mode', value: providerMode?.id ?? 'text-to-image', rawValue: providerMode?.id ?? null },
     { id: 'checkpoint', label: 'Checkpoint', value: provider.modelId || 'not selected', rawValue: provider.modelId },
-    { id: 'size', label: 'Size', value: `${state.width}×${state.height}`, rawValue: { width: state.width, height: state.height } },
-    { id: 'batchSize', label: 'Batch size', value: String(state.batchSize), rawValue: state.batchSize },
+    { id: hiresFix ? 'targetSize' : 'size', label: hiresFix ? 'Target size' : 'Size', value: `${state.width}×${state.height}`, rawValue: { width: state.width, height: state.height } },
+    { id: 'batchSize', label: 'Batch size', value: String(hiresFix ? 1 : state.batchSize), rawValue: hiresFix ? 1 : state.batchSize },
     { id: 'steps', label: 'Steps', value: String(state.steps), rawValue: state.steps },
     { id: 'cfg', label: 'CFG', value: String(state.cfg), rawValue: state.cfg },
     { id: 'sampler', label: 'Sampler', value: state.samplerName, rawValue: state.samplerName },
@@ -165,6 +195,13 @@ export function createComfyUiParameterSummary(state: ComfyUiParamState, provider
     { id: 'filenamePrefix', label: 'Filename prefix', value: state.filenamePrefix, rawValue: state.filenamePrefix },
     { id: 'loras', label: 'LoRA stack', value: state.loras.filter((lora) => lora.enabled).length ? state.loras.filter((lora) => lora.enabled).map((lora) => `${lora.name} (${lora.strengthModel}/${lora.strengthClip})`).join(', ') : 'none', rawValue: state.loras }
   ];
+
+  if (hiresFix) {
+    entries.push({ id: 'hiresUpscaleMode', label: 'Hires Fix upscale', value: state.hiresUpscaleMode === 'ai' ? 'AI upscale' : 'Latent upscale', rawValue: state.hiresUpscaleMode });
+    if (state.hiresUpscaleMode === 'ai') {
+      entries.push({ id: 'hiresUpscaleModel', label: 'AI upscale model', value: state.hiresUpscaleModel || 'not selected', rawValue: state.hiresUpscaleModel });
+    }
+  }
 
   if (state.negativePrompt.trim()) entries.push({ id: 'negativePrompt', label: 'Negative prompt', value: state.negativePrompt.trim(), rawValue: state.negativePrompt.trim() });
 

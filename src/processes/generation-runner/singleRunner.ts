@@ -12,6 +12,7 @@ import type { SingleGenerationRunInput } from './types';
 export async function runSingleGeneration(input: SingleGenerationRunInput, onEvent?: SingleGenerationEventSink) {
   const {
     mode,
+    providerMode,
     params,
     provider,
     activeProvider,
@@ -30,6 +31,8 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
 
   const snapshot = captureRequestSnapshot({
     mode,
+    providerMode,
+    providerModeLabel: t(providerMode.labelKey),
     params,
     provider,
     activeProvider,
@@ -68,6 +71,7 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
           provider,
           payload,
           mode,
+          providerMode,
           targetImage,
           referenceImages,
           mask,

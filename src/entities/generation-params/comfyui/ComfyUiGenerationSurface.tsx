@@ -14,6 +14,8 @@ import {
 import { comfyUiGenerationRequestSurface } from './requestSurface';
 import {
   COMFYUI_MAX_SEED,
+  HiresUpscaleModeField,
+  HiresUpscaleModelField,
   LoraStackField,
   NumberField,
   SeedModeField,
@@ -23,19 +25,34 @@ import {
   comfyUiSchedulerOptions
 } from './ComfyUiSurfaceFields';
 
-const comfyUiTabs: readonly GenerationParamTabDefinition[] = [
+const COMFYUI_HIRES_FIX_MODE_ID = 'comfyui.hires-fix';
+
+function isHiresFixMode(context: Pick<ProviderGenerationSurfaceContext, 'providerMode'>): boolean {
+  return context.providerMode.id === COMFYUI_HIRES_FIX_MODE_ID;
+}
+
+const comfyUiTextToImageTabs: readonly GenerationParamTabDefinition[] = [
   { id: 'frame', slot: 'composer/parameters/frame', labelKey: 'params.comfy.frame', hintKey: 'params.comfy.frameHint' },
   { id: 'render', slot: 'composer/parameters/render', labelKey: 'params.comfy.sampling', hintKey: 'params.comfy.samplingHint' },
   { id: 'service', slot: 'composer/parameters/service', labelKey: 'params.comfy.workflow', hintKey: 'params.comfy.workflowHint' },
   { id: 'retry', slot: 'composer/parameters/retry', labelKey: 'params.retry', hintKey: 'params.retryHint', panelClassKey: 'retryTabPanel' }
 ];
 
+const comfyUiHiresFixTabs: readonly GenerationParamTabDefinition[] = [
+  { id: 'frame', slot: 'composer/parameters/frame', labelKey: 'params.comfy.targetFrame', hintKey: 'params.comfy.targetFrameHint' },
+  { id: 'output', slot: 'composer/parameters/output', labelKey: 'params.comfy.hiresUpscale', hintKey: 'params.comfy.hiresUpscaleHint' },
+  { id: 'render', slot: 'composer/parameters/render', labelKey: 'params.comfy.sampling', hintKey: 'params.comfy.samplingHint' },
+  { id: 'service', slot: 'composer/parameters/service', labelKey: 'params.comfy.workflow', hintKey: 'params.comfy.workflowHint' },
+  { id: 'retry', slot: 'composer/parameters/retry', labelKey: 'params.retry', hintKey: 'params.retryHint', panelClassKey: 'retryTabPanel' }
+];
+
 function renderComfyUiFrameSlot(context: ProviderGenerationSurfacePatchContext) {
+  const hiresFix = isHiresFixMode(context);
   return [
-    <NumberField key="width" context={context} labelKey="params.comfy.width" descriptionKey="params.comfy.width.description" stateKey="width" min={64} max={4096} step={16} />,
-    <NumberField key="height" context={context} labelKey="params.comfy.height" descriptionKey="params.comfy.height.description" stateKey="height" min={64} max={4096} step={16} />,
-    <NumberField key="batchSize" context={context} labelKey="params.comfy.batchSize" descriptionKey="params.comfy.batchSize.description" stateKey="batchSize" min={1} max={16} step={1} />
-  ];
+    <NumberField key="width" context={context} labelKey={hiresFix ? 'params.comfy.targetWidth' : 'params.comfy.width'} descriptionKey={hiresFix ? 'params.comfy.targetWidth.description' : 'params.comfy.width.description'} stateKey="width" min={64} max={4096} step={16} />,
+    <NumberField key="height" context={context} labelKey={hiresFix ? 'params.comfy.targetHeight' : 'params.comfy.height'} descriptionKey={hiresFix ? 'params.comfy.targetHeight.description' : 'params.comfy.height.description'} stateKey="height" min={64} max={4096} step={16} />,
+    hiresFix ? null : <NumberField key="batchSize" context={context} labelKey="params.comfy.batchSize" descriptionKey="params.comfy.batchSize.description" stateKey="batchSize" min={1} max={16} step={1} />
+  ].filter(Boolean);
 }
 
 function renderComfyUiRenderSlot(context: ProviderGenerationSurfacePatchContext) {
@@ -59,9 +76,18 @@ function renderComfyUiServiceSlot(context: ProviderGenerationSurfacePatchContext
   ];
 }
 
+function renderComfyUiHiresUpscaleSlot(context: ProviderGenerationSurfacePatchContext) {
+  const state = readComfyUiParamState(context.params, context.provider);
+  return [
+    <HiresUpscaleModeField key="hiresUpscaleMode" context={context} />,
+    state.hiresUpscaleMode === 'ai' ? <HiresUpscaleModelField key="hiresUpscaleModel" context={context} /> : null
+  ].filter(Boolean);
+}
+
 function renderComfyUiSlot(slot: GenerationParamSlot, context: ProviderGenerationSurfacePatchContext) {
   if (slot === 'composer/parameters/frame') return renderComfyUiFrameSlot(context);
   if (slot === 'composer/parameters/render') return renderComfyUiRenderSlot(context);
+  if (slot === 'composer/parameters/output') return isHiresFixMode(context) ? renderComfyUiHiresUpscaleSlot(context) : [];
   if (slot === 'composer/parameters/service') return renderComfyUiServiceSlot(context);
   if (slot === 'composer/parameters/retry') return renderGenerationParamSlot(slot, context);
   return [];
@@ -69,10 +95,11 @@ function renderComfyUiSlot(slot: GenerationParamSlot, context: ProviderGeneratio
 
 function tabStats(context: ProviderGenerationSurfaceContext, retryOffLabel: string): Record<GenerationParamTab, string> {
   const state = readComfyUiParamState(context.params, context.provider);
+  const hiresFix = isHiresFixMode(context);
   return {
-    frame: `${state.width}×${state.height} · ${state.batchSize}x`,
+    frame: hiresFix ? `${state.width}×${state.height}` : `${state.width}×${state.height} · ${state.batchSize}x`,
     render: `${state.steps} steps · CFG ${state.cfg}`,
-    output: 'workflow',
+    output: hiresFix ? (state.hiresUpscaleMode === 'ai' ? (state.hiresUpscaleModel || 'AI upscale') : 'Latent upscale') : 'workflow',
     service: state.loras.filter((lora) => lora.enabled).length ? `${state.loras.filter((lora) => lora.enabled).length} LoRA` : 'no LoRA',
     retry: context.params.retryAttempts > 0 ? `${context.params.retryAttempts}× / ${context.params.retryDelaySeconds}s` : retryOffLabel
   };
@@ -86,14 +113,14 @@ export const comfyUiGenerationSurface: ProviderGenerationSurface = {
   readState: (params, provider) => toComfyUiProviderParamState(readComfyUiParamState(params, provider)),
   normalizeState: (value) => toComfyUiProviderParamState(normalizeComfyUiParamState(value)),
   normalizeParams: normalizeImageParamsFromDefinitions,
-  getTabs: () => comfyUiTabs,
+  getTabs: (context) => isHiresFixMode(context) ? comfyUiHiresFixTabs : comfyUiTextToImageTabs,
   getInitialTab: () => 'frame',
   getTabStats: (context, labels) => tabStats(context, labels?.retryOff ?? 'off'),
   getHiddenSummary: () => ({ capabilityKeys: [], paramLabelKeys: [] }),
   renderSlot: renderComfyUiSlot,
-  buildPayload: ({ params, provider }) => buildComfyUiPayload(params, provider),
+  buildPayload: ({ params, provider, providerMode }) => buildComfyUiPayload(params, provider, providerMode),
   captureParamsSnapshot: (context) => comfyUiGenerationRequestSurface.captureParamsSnapshot(context),
   captureProviderParamsSnapshot: (context) => comfyUiGenerationRequestSurface.captureProviderParamsSnapshot(context),
-  captureParameterSummary: (context) => createComfyUiParameterSummary(readComfyUiParamState(context.params, context.provider), context.provider),
+  captureParameterSummary: (context) => createComfyUiParameterSummary(readComfyUiParamState(context.params, context.provider), context.provider, context.providerMode),
   restoreParamsFromSnapshot: (context) => comfyUiGenerationRequestSurface.restoreParamsFromSnapshot(context)
 };

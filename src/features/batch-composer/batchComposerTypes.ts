@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import type { AttachmentPreviewItem } from '../../shared/image';
 import type { BatchComposerDraft } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderModelOption } from '../../entities/provider/modelOptions';
 import type { StudioSettings } from '../../domain/studioSettings';
@@ -40,6 +41,8 @@ export interface BatchDraftLayoutContext {
   models: GenerationModel[];
   providers: GenerationProvider[];
   provider: ProviderSettings;
+  providerMode: ProviderGenerationModeDefinition;
+  providerModes: ProviderGenerationModeDefinition[];
   studioSettings: StudioSettings;
   controlSurface: ProviderControlSurfaceDefinition;
   selectedModel: GenerationModel | null;

@@ -23,8 +23,8 @@ export type {
 export const openAiCompatibleGenerationRequestSurface: ProviderGenerationRequestSurface = {
   id: 'openai-compatible.logical-params',
   kind: 'logical-params',
-  buildPayload: ({ params, provider, mode }) => buildOpenAiCompatibleRequestSurfacePayload(params, provider, mode),
-  captureParamsSnapshot: ({ params, provider, mode }) => captureGenerationRequestParamsSnapshot(params, provider, mode, openAiCompatibleGenerationParamProfile),
+  buildPayload: ({ params, provider, mode, providerMode }) => buildOpenAiCompatibleRequestSurfacePayload(params, provider, mode, providerMode),
+  captureParamsSnapshot: ({ params, provider, mode, providerMode }) => captureGenerationRequestParamsSnapshot(params, provider, mode, openAiCompatibleGenerationParamProfile, providerMode),
   captureProviderParamsSnapshot: () => undefined,
   captureParameterSummary: () => undefined,
   restoreParamsFromSnapshot: ({ previous, snapshot }) => restoreImageParamsFromRequestSnapshot(previous, snapshot)

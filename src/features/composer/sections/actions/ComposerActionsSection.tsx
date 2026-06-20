@@ -3,6 +3,7 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 import { SlotHost } from '../../../../interface/SlotHost';
 import type { ComposerActionContext, ComposerLayoutContext } from '../../composerTypes';
 import { useI18n } from '../../../../i18n';
+import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/compatibility';
 import styles from '../../ComposerLayout.module.css';
 
 export function ComposerActionsSection({ context }: ElementDefinitionProps<ComposerLayoutContext>) {
@@ -10,12 +11,12 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
   const { fileInputs } = context.actionContext;
 
   const addAttachmentsFromInput = (event: ChangeEvent<HTMLInputElement>) => {
-    if (context.controlSurface.showImageAttachments) context.actions.addAttachments(Array.from(event.target.files ?? []));
+    if (providerModeAllowsImageAttachments(context.providerMode)) context.actions.addAttachments(Array.from(event.target.files ?? []));
     event.currentTarget.value = '';
   };
 
   const addMaskFromInput = (event: ChangeEvent<HTMLInputElement>) => {
-    if (context.controlSurface.showMask) context.actionContext.actions.setMask(event.target.files?.[0] ?? null);
+    if (providerModeAllowsMask(context.providerMode)) context.actionContext.actions.setMask(event.target.files?.[0] ?? null);
     event.currentTarget.value = '';
   };
 
@@ -35,7 +36,7 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
           data-testid="composer-submit"
           disabled={!context.canSubmit}
           onClick={context.actions.submit}
-          aria-label={context.mode === 'generate' ? t('composer.submitGenerate') : t('composer.submitEdit')}
+          aria-label={context.providerMode.legacyWorkMode !== 'edit' ? t('composer.submitGenerate') : t('composer.submitEdit')}
         >
           {context.busy ? t('composer.busy') : t('composer.send')}
         </button>

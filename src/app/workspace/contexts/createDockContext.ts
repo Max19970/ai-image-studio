@@ -5,7 +5,9 @@ export function createDockContext({ state, derived, commands }: WorkspaceContext
   return {
     activeTab: state.workspaceTab,
     batchComposerOpen: state.batchComposerOpen,
-    mode: state.mode,
+    providerModeId: state.providerModeId,
+    providerMode: derived.providerMode,
+    providerModes: derived.providerModes,
     prompt: state.params.prompt,
     params: state.params,
     provider: derived.provider,

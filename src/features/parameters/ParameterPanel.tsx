@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ImageParams } from '../../domain/imageParams';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { StudioSettings } from '../../domain/studioSettings';
@@ -13,6 +14,7 @@ import styles from './ParameterPanel.module.css';
 
 interface Props {
   mode: WorkMode;
+  providerMode: ProviderGenerationModeDefinition;
   params: ImageParams;
   provider: ProviderSettings;
   capabilityReport: ProviderProbeReport | null;
@@ -20,10 +22,10 @@ interface Props {
   onChange: (params: ImageParams) => void;
 }
 
-export function ParameterPanel({ mode, params, provider, capabilityReport, studioSettings, onChange }: Props) {
+export function ParameterPanel({ mode, providerMode, params, provider, capabilityReport, studioSettings, onChange }: Props) {
   const { t } = useI18n();
   const surface = useMemo(() => getProviderGenerationSurface(provider), [provider]);
-  const surfaceContext = useMemo(() => ({ mode, params, provider, capabilityReport, studioSettings }), [mode, params, provider, capabilityReport, studioSettings]);
+  const surfaceContext = useMemo(() => ({ mode, providerMode, params, provider, capabilityReport, studioSettings }), [mode, providerMode, params, provider, capabilityReport, studioSettings]);
   const surfaceTabs = useMemo(() => surface.getTabs(surfaceContext), [surface, surfaceContext]);
   const [activeTab, setActiveTab] = useState<GenerationParamTab>(() => surface.getInitialTab(surfaceContext));
   const tabRailRef = useRef<HTMLElement | null>(null);

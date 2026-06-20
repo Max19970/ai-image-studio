@@ -1,8 +1,8 @@
 import type { BatchComposerDraft, GeneratedImage, GenerationRequestSnapshot, GenerationTask } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
 import type { ImageParams } from '../../domain/imageParams';
+import type { ProviderGenerationModeId } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
-import type { WorkMode } from '../../domain/workMode';
 
 export interface WorkspaceCommands {
   setTab: (tab: 'images' | 'info' | 'settings') => void;
@@ -10,7 +10,7 @@ export interface WorkspaceCommands {
 }
 
 export interface ComposerCommands {
-  setMode: (mode: WorkMode) => void;
+  setProviderMode: (providerModeId: ProviderGenerationModeId) => void;
   setModel: (modelId: string) => void;
   setPrompt: (prompt: string) => void;
   patchParams: (params: ImageParams) => void;
@@ -19,6 +19,7 @@ export interface ComposerCommands {
   openBatchComposer: () => void;
   setTargetImage: (file: File | null) => void;
   setReferenceImages: (files: File[]) => void;
+  setImageAttachments: (targetImage: File | null, referenceImages: File[]) => void;
   setMask: (file: File | null) => void;
 }
 

@@ -2,8 +2,9 @@ import type { ImageParams } from '../../domain/imageParams';
 import type { ComposerCommands } from '../../interface/context/commands';
 import {
   applyComposerCompatibilityForModel,
+  getComposerModeForAttachmentRole,
   setComposerDraftWithCompatibility,
-  setComposerModeWithCompatibility,
+  setComposerProviderModeWithCompatibility,
 } from './providerCompatibilityCommands';
 import type { CreateAppCommandsArgs } from './appCommandTypes';
 import { submitSingleGenerationCommand } from './generationCommands';
@@ -13,16 +14,18 @@ export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCom
   const patchParams = (patch: Partial<ImageParams>) => args.setParams((prev) => ({ ...prev, ...patch }));
 
   return {
-    setMode: (mode) => setComposerModeWithCompatibility(args, mode),
+    setProviderMode: (providerModeId) => setComposerProviderModeWithCompatibility(args, providerModeId),
     setModel: (modelId) => {
-      args.setStudioSettings((prev) => args.normalizeSettings({ ...prev, selectedModelId: modelId }));
-      applyComposerCompatibilityForModel(args, args.studioSettings, modelId);
+      const nextSettings = args.normalizeSettings({ ...args.studioSettings, selectedModelId: modelId });
+      args.setStudioSettings(nextSettings);
+      applyComposerCompatibilityForModel(args, nextSettings, modelId);
     },
     setPrompt: (prompt) => patchParams({ prompt }),
     patchParams: args.setParams,
     submit: () => submitSingleGenerationCommand({
       canSubmit: args.canSubmit,
       mode: args.mode,
+      providerMode: args.providerMode,
       params: args.params,
       provider: args.provider,
       activeProvider: args.activeProvider,
@@ -38,7 +41,7 @@ export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCom
     }),
     openParameters: () => args.setParametersOpen(true),
     openBatchComposer: () => openBatchComposerCommand({
-      mode: args.mode,
+      providerModeId: args.providerModeId,
       params: args.params,
       selectedModelId: args.studioSettings.selectedModelId,
       targetImage: args.targetImage,
@@ -50,7 +53,7 @@ export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCom
     }),
     setTargetImage: (file) => {
       setComposerDraftWithCompatibility(args, {
-        mode: file ? 'edit' : args.mode,
+        providerModeId: file ? getComposerModeForAttachmentRole(args, 'targetImage') : args.providerModeId,
         targetImage: file,
         referenceImages: args.referenceImages,
         mask: args.mask
@@ -58,15 +61,28 @@ export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCom
     },
     setReferenceImages: (files) => {
       setComposerDraftWithCompatibility(args, {
-        mode: files.length > 0 ? 'edit' : args.mode,
+        providerModeId: files.length > 0 ? getComposerModeForAttachmentRole(args, 'referenceImage') : args.providerModeId,
         targetImage: args.targetImage,
         referenceImages: files,
         mask: args.mask
       });
     },
+    setImageAttachments: (targetImage, referenceImages) => {
+      const providerModeId = targetImage
+        ? getComposerModeForAttachmentRole(args, 'targetImage')
+        : referenceImages.length > 0
+          ? getComposerModeForAttachmentRole(args, 'referenceImage')
+          : args.providerModeId;
+      setComposerDraftWithCompatibility(args, {
+        providerModeId,
+        targetImage,
+        referenceImages,
+        mask: args.mask
+      });
+    },
     setMask: (file) => {
       setComposerDraftWithCompatibility(args, {
-        mode: file ? 'edit' : args.mode,
+        providerModeId: file ? getComposerModeForAttachmentRole(args, 'mask') : args.providerModeId,
         targetImage: args.targetImage,
         referenceImages: args.referenceImages,
         mask: file

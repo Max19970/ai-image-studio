@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { GenerationRequestSnapshot, ProviderRequestParameterSummary } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { CapabilityKey, ProviderProbeReport } from '../../domain/providerProbe';
+import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
@@ -17,6 +18,7 @@ export interface ProviderParamStateContext {
 
 export interface ProviderGenerationSurfaceContext extends ProviderParamStateContext {
   mode: WorkMode;
+  providerMode: ProviderGenerationModeDefinition;
   capabilityReport: ProviderProbeReport | null;
   studioSettings?: StudioSettings;
 }
@@ -31,6 +33,7 @@ export interface ProviderGenerationSurfacePayloadContext {
   provider: ProviderSettings;
   params: ImageParams;
   mode: WorkMode;
+  providerMode: ProviderGenerationModeDefinition;
 }
 
 export interface ProviderGenerationSurfaceSnapshotContext extends ProviderGenerationSurfacePayloadContext {

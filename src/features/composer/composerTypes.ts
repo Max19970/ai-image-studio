@@ -2,7 +2,7 @@ import type { Dispatch, KeyboardEventHandler, RefObject, SetStateAction } from '
 import type { AttachmentPreviewItem } from '../../shared/image';
 import type { ProviderModelOption } from '../../entities/provider/modelOptions';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
-import type { WorkMode } from '../../domain/workMode';
+import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
 import type { ImageParams } from '../../domain/imageParams';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { ProviderControlSurfaceDefinition } from '../../entities/provider/types';
@@ -10,7 +10,8 @@ import type { ProviderControlSurfaceDefinition } from '../../entities/provider/t
 export type ComposerPopoverId = string | null;
 
 export interface ComposerActionContext {
-  mode: WorkMode;
+  providerMode: ProviderGenerationModeDefinition;
+  providerModes: ProviderGenerationModeDefinition[];
   attachmentsCount: number;
   hasMask: boolean;
   params: ImageParams;
@@ -28,7 +29,7 @@ export interface ComposerActionContext {
     mask: RefObject<HTMLInputElement | null>;
   };
   actions: {
-    setMode: (mode: WorkMode) => void;
+    setProviderMode: (providerModeId: ProviderGenerationModeId) => void;
     changeModel: (modelId: string) => void;
     changeParams: (params: ImageParams) => void;
     openBatchComposer: () => void;
@@ -44,7 +45,8 @@ export interface ComposerActionContext {
 export type ComposerModelOption = ProviderModelOption;
 
 export interface ComposerLayoutContext {
-  mode: WorkMode;
+  providerMode: ProviderGenerationModeDefinition;
+  providerModes: ProviderGenerationModeDefinition[];
   prompt: string;
   busy: boolean;
   canSubmit: boolean;

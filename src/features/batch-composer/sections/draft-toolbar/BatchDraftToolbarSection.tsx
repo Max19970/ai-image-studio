@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
 import type { BatchDraftLayoutContext } from '../../batchComposerTypes';
+import { getProviderModeForAttachmentRole, providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/compatibility';
 import { ProviderModelPicker } from '../../../../entities/provider/ui';
 import { useI18n } from '../../../../i18n';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
@@ -12,10 +13,12 @@ import menuStyles from './BatchDraftControlsMenu.module.css';
 function MenuContent({ context, close }: { context: BatchDraftLayoutContext; close: () => void }) {
   const { t } = useI18n();
 
-  const setMode = (mode: BatchDraftLayoutContext['draft']['mode']) => {
-    context.actions.patchDraft({ mode });
+  const chooseProviderMode = (providerModeId: string) => {
+    context.actions.patchDraft({ providerModeId });
     close();
   };
+  const canUseImages = providerModeAllowsImageAttachments(context.providerMode);
+  const canUseMask = providerModeAllowsMask(context.providerMode);
 
   const openImages = () => {
     context.fileInputs.attachments.current?.click();
@@ -54,22 +57,19 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
 
   return (
     <div className={menuStyles.menu} data-control-surface={context.controlSurface.id}>
-      {context.controlSurface.showModeSwitcher && (
+      {context.providerModes.length > 1 && (
         <div className={menuStyles.group}>
           <span className={menuStyles.groupTitle}>{t('composer.mode')}</span>
           <div className={menuStyles.modeGrid}>
-            <button type="button" className={menuStyles.modeButton} data-active={context.draft.mode === 'generate'} onClick={() => setMode('generate')}>
-              <strong>{t('composer.generate')}</strong>
-              <small>{t('composer.modeGenerateDescription')}</small>
-            </button>
-            <button type="button" className={menuStyles.modeButton} data-active={context.draft.mode === 'edit'} onClick={() => setMode('edit')}>
-              <strong>{t('composer.edit')}</strong>
-              <small>{t('composer.modeEditDescription')}</small>
-            </button>
+            {context.providerModes.map((mode) => (
+              <button key={mode.id} type="button" className={menuStyles.modeButton} data-active={context.providerMode.id === mode.id} onClick={() => chooseProviderMode(mode.id)}>
+                <strong>{t(mode.labelKey)}</strong>
+                {mode.descriptionKey && <small>{t(mode.descriptionKey)}</small>}
+              </button>
+            ))}
           </div>
         </div>
       )}
-
       <div className={menuStyles.group}>
         <span className={menuStyles.groupTitle}>{t('composer.model')}</span>
         <ProviderModelPicker
@@ -91,7 +91,7 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
 
       <div className={menuStyles.group}>
         <span className={menuStyles.groupTitle}>{t('composer.actions')}</span>
-        {context.controlSurface.showImageAttachments && (
+        {canUseImages && (
           <button type="button" className={menuStyles.action} onClick={openImages}>
             <span className={menuStyles.icon} aria-hidden="true">＋</span>
             <span className={menuStyles.copy}>
@@ -100,7 +100,7 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
             </span>
           </button>
         )}
-        {context.controlSurface.showMask && (
+        {canUseMask && (
           <button type="button" className={menuStyles.action} onClick={openMask}>
             <span className={menuStyles.icon} aria-hidden="true">◌</span>
             <span className={menuStyles.copy}>
@@ -109,7 +109,7 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
             </span>
           </button>
         )}
-        {context.controlSurface.showMask && context.draft.mask && (
+        {canUseMask && context.draft.mask && (
           <button type="button" className={menuStyles.action} onClick={clearMask}>
             <span className={menuStyles.icon} aria-hidden="true">−</span>
             <span className={menuStyles.copy}>
@@ -143,7 +143,7 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
             </span>
           </button>
         )}
-        {(context.controlSurface.showImageAttachments || context.controlSurface.showMask) && context.attachmentsCount > 0 && (
+        {(canUseImages || canUseMask) && context.attachmentsCount > 0 && (
           <button type="button" className={`${menuStyles.action} ${menuStyles.danger}`} onClick={clearAttachments}>
             <span className={menuStyles.icon} aria-hidden="true">×</span>
             <span className={menuStyles.copy}>
@@ -164,13 +164,16 @@ export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<Bat
   const isMobile = useMediaQuery('(max-width: 860px)');
   const close = () => setOpen(false);
 
+  const canUseImages = providerModeAllowsImageAttachments(context.providerMode);
+  const canUseMask = providerModeAllowsMask(context.providerMode);
+
   const addAttachmentsFromInput = (event: ChangeEvent<HTMLInputElement>) => {
-    if (context.controlSurface.showImageAttachments) context.actions.addAttachments(Array.from(event.target.files ?? []));
+    if (canUseImages) context.actions.addAttachments(Array.from(event.target.files ?? []));
     event.currentTarget.value = '';
   };
 
   const addMaskFromInput = (event: ChangeEvent<HTMLInputElement>) => {
-    if (context.controlSurface.showMask) context.actions.patchDraft({ mask: event.target.files?.[0] ?? null, mode: 'edit' });
+    if (canUseMask) context.actions.patchDraft({ mask: event.target.files?.[0] ?? null, providerModeId: getProviderModeForAttachmentRole(context.studioSettings, context.draft.selectedModelId, context.draft.providerModeId, 'mask').id });
     event.currentTarget.value = '';
   };
 

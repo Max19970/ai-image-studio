@@ -1,3 +1,4 @@
+import { resolveProviderGenerationMode } from '../../../entities/provider/modeResolution';
 import { providerContextForModel } from '../../../entities/studio-settings';
 import type { WorkspaceModalsContext } from '../../../interface/context/workspace/composerDock';
 import type { WorkspaceContextFactoryArgs } from './types';
@@ -6,11 +7,19 @@ export function createModalsContext({ state, derived, commands }: WorkspaceConte
   const batchProvider = derived.activeBatchDraft
     ? providerContextForModel(state.studioSettings, derived.activeBatchDraft.selectedModelId).provider
     : derived.provider;
+  const batchProviderMode = derived.activeBatchDraft
+    ? resolveProviderGenerationMode({
+      settings: state.studioSettings,
+      modelId: derived.activeBatchDraft.selectedModelId,
+      providerModeId: derived.activeBatchDraft.providerModeId
+    }).activeMode
+    : derived.providerMode;
 
   return {
     singleParameters: {
       open: state.parametersOpen,
-      mode: state.mode,
+      mode: derived.mode,
+      providerMode: derived.providerMode,
       params: state.params,
       provider: derived.provider,
       capabilityReport: state.capabilityReport,
@@ -21,6 +30,7 @@ export function createModalsContext({ state, derived, commands }: WorkspaceConte
     batchParameters: {
       draft: derived.activeBatchDraft,
       provider: batchProvider,
+      providerMode: batchProviderMode,
       capabilityReport: derived.activeBatchDraft?.selectedModelId === state.studioSettings.selectedModelId
         ? state.capabilityReport
         : null,

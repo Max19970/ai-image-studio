@@ -91,9 +91,13 @@ function summaryRows(snapshot: GenerationRequestSnapshot, t: DetailDescriptorCon
   })) ?? [];
 }
 
+function requestModeLabel(snapshot: GenerationRequestSnapshot, t: DetailDescriptorContext['t']): string {
+  return snapshot.providerModeLabel || t(`gallery.mode.${snapshot.mode}`);
+}
+
 function defaultMetadataRows(snapshot: GenerationRequestSnapshot, t: DetailDescriptorContext['t']): DetailDataRow[] {
   return [
-    { id: 'mode', label: t('detail.mode'), value: t(`gallery.mode.${snapshot.mode}`) },
+    { id: 'mode', label: t('detail.mode'), value: requestModeLabel(snapshot, t) },
     { id: 'model', label: t('detail.model'), value: snapshot.modelLabel || snapshot.model || t('detail.notSet') },
     { id: 'provider', label: t('detail.provider'), value: snapshot.providerLabel || t('detail.notSet') },
     { id: 'endpoint', label: t('detail.endpoint'), value: snapshot.endpoint || t('detail.notSet') },
@@ -166,7 +170,7 @@ const comfyUiDetailDescriptor: ProviderDetailDescriptor = {
   runtimeKickerKey: 'detail.comfy.localExecution',
   getParameterRows: ({ snapshot, t }) => summaryRows(snapshot, t).length ? summaryRows(snapshot, t) : fallbackParamRows(snapshot, t),
   getMetadataRows: ({ snapshot, t }) => [
-    { id: 'mode', label: t('detail.mode'), value: t(`gallery.mode.${snapshot.mode}`) },
+    { id: 'mode', label: t('detail.mode'), value: requestModeLabel(snapshot, t) },
     { id: 'provider', label: t('detail.provider'), value: snapshot.providerLabel || t('detail.notSet') },
     { id: 'checkpoint', label: t('detail.comfy.checkpoint'), value: snapshot.modelLabel || snapshot.model || t('detail.notSet') },
     { id: 'server', label: t('detail.comfy.server'), value: snapshot.endpoint || t('detail.notSet') },

@@ -2,6 +2,7 @@ import type { BatchComposerDraft } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
+import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import type { StateSetter, TaskHistoryCommands, TranslateFn } from './types';
@@ -17,6 +18,9 @@ export interface ProviderProbeCommandState {
 export interface CreateAppCommandsArgs {
   t: TranslateFn;
   mode: WorkMode;
+  providerModeId: ProviderGenerationModeId;
+  providerMode: ProviderGenerationModeDefinition;
+  providerModes: ProviderGenerationModeDefinition[];
   params: ImageParams;
   provider: ProviderSettings;
   activeProvider: GenerationProvider | null;
@@ -36,7 +40,7 @@ export interface CreateAppCommandsArgs {
   selectedTaskId: string | null;
   taskHistory: TaskHistoryCommands;
   providerProbeState: ProviderProbeCommandState;
-  setMode: StateSetter<WorkMode>;
+  setProviderModeId: StateSetter<ProviderGenerationModeId>;
   setCompatibilityNotice: StateSetter<string | null>;
   setParams: StateSetter<ImageParams>;
   setStudioSettings: StateSetter<StudioSettings>;

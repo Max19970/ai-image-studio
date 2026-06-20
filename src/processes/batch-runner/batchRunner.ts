@@ -46,7 +46,8 @@ export async function runBatchGeneration(input: BatchGenerationRunInput, onEvent
           return submitImageRequest({
             provider: preparedItem.provider,
             payload: preparedItem.payload,
-            mode: preparedItem.draft.mode,
+            mode: preparedItem.snapshot.mode,
+            providerMode: preparedItem.providerMode,
             targetImage: preparedItem.draft.targetImage,
             referenceImages: preparedItem.draft.referenceImages,
             mask: preparedItem.draft.mask,

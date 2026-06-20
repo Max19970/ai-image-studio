@@ -1,7 +1,7 @@
 import type { ProviderAdapterDefinition } from '../types';
 import { comfyUiProviderSettingsSchema } from './settingsSchema';
 import { resolveComfyUiEndpoint, comfyUiProviderFingerprint } from './endpoints';
-import { fetchComfyUiEdit, fetchComfyUiGenerate } from './requestHandlers';
+import { fetchComfyUiEdit, fetchComfyUiGenerate, submitComfyUiProviderMode } from './requestHandlers';
 import { probeComfyUiProvider, quickCheckComfyUiProvider } from './probeSuite';
 import { comfyUiResourceKinds, fetchComfyUiResources } from './resources';
 
@@ -22,6 +22,7 @@ export const comfyUiProviderAdapter: ProviderAdapterDefinition = {
   resources: {
     kinds: comfyUiResourceKinds
   },
+  submitProviderMode: submitComfyUiProviderMode,
   fetchGenerate: fetchComfyUiGenerate,
   fetchEdit: fetchComfyUiEdit,
   fetchResources: fetchComfyUiResources,

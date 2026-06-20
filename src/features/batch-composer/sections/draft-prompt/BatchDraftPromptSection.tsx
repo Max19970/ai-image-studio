@@ -21,9 +21,10 @@ export function BatchDraftPromptSection({ context }: ElementDefinitionProps<Batc
     focusedMaxRows: isMobileCompact ? 6 : 7
   });
 
+  const isGenerateLike = context.providerMode.legacyWorkMode !== 'edit';
   const placeholder = isMobileCompact
-    ? context.draft.mode === 'generate' ? t('composer.placeholder.generateCompact') : t('composer.placeholder.editCompact')
-    : context.draft.mode === 'generate' ? t('composer.placeholder.generate') : t('composer.placeholder.edit');
+    ? isGenerateLike ? t('composer.placeholder.generateCompact') : t('composer.placeholder.editCompact')
+    : isGenerateLike ? t('composer.placeholder.generate') : t('composer.placeholder.edit');
 
   return (
     <div className={styles.promptWrap}>

@@ -119,14 +119,15 @@ export function useComfyUiSettingsDraft({
     try {
       const model = firstModelForProvider(draft, targetProvider.id);
       const providerSettings = toProviderSettings(targetProvider, model);
-      const [checkpoints, loras, samplers, schedulers] = await Promise.all([
+      const [checkpoints, loras, samplers, schedulers, upscaleModels] = await Promise.all([
         fetchProviderResources(providerSettings, 'checkpoints'),
         fetchProviderResources(providerSettings, 'loras'),
         fetchProviderResources(providerSettings, 'samplers'),
-        fetchProviderResources(providerSettings, 'schedulers')
+        fetchProviderResources(providerSettings, 'schedulers'),
+        fetchProviderResources(providerSettings, 'upscale_models')
       ]);
       markDirty();
-      setDraft((prev) => [checkpoints, loras, samplers, schedulers].reduce(
+      setDraft((prev) => [checkpoints, loras, samplers, schedulers, upscaleModels].reduce(
         (next, list) => updateComfyUiResourceCache(next, targetProvider.id, list),
         prev
       ));
@@ -184,6 +185,7 @@ export function useComfyUiSettingsDraft({
     comfyUiLoraCache: selectedComfyUiProvider ? comfyUiData.resourceCache[cacheKeyForComfyUiResources(selectedComfyUiProvider.id, 'loras')] ?? null : null,
     comfyUiSamplerCache: selectedComfyUiProvider ? comfyUiData.resourceCache[cacheKeyForComfyUiResources(selectedComfyUiProvider.id, 'samplers')] ?? null : null,
     comfyUiSchedulerCache: selectedComfyUiProvider ? comfyUiData.resourceCache[cacheKeyForComfyUiResources(selectedComfyUiProvider.id, 'schedulers')] ?? null : null,
+    comfyUiUpscaleModelCache: selectedComfyUiProvider ? comfyUiData.resourceCache[cacheKeyForComfyUiResources(selectedComfyUiProvider.id, 'upscale_models')] ?? null : null,
     comfyUiResourcesLoading,
     comfyUiResourcesError,
     resetComfyUiSelectionFrom,

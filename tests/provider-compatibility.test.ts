@@ -2,11 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { ProviderRuntimeCapabilities } from '../src/entities/provider/types';
 import {
+  addImageFilesToProviderModeDraft,
+  providerModeAllowsImageAttachments,
   sanitizeGenerationDraftForProviderCapabilities,
   sanitizeBatchDraftsForSettings
 } from '../src/entities/provider/compatibility';
 import { defaultImageParams, defaultStudioSettings } from '../src/domain/defaults';
 import type { BatchComposerDraft } from '../src/domain/generationTask';
+import { comfyUiHiresFixMode, comfyUiTextToImageMode } from '../src/entities/generation-params/comfyui/modes';
+import { openAiCompatibleImageEditMode, openAiCompatibleImageEditModeId } from '../src/entities/generation-params/openai-compatible/modes';
 
 const apiCapabilities: ProviderRuntimeCapabilities = {
   supportsGenerate: true,
@@ -86,10 +90,15 @@ test('provider compatibility sanitizer can clear masks independently from image 
   assert.equal(result.value.mask, null);
 });
 
+test('provider mode image availability is based on the active mode, not provider-level alternatives', () => {
+  assert.equal(providerModeAllowsImageAttachments(comfyUiTextToImageMode), false);
+  assert.equal(providerModeAllowsImageAttachments(comfyUiHiresFixMode), true);
+});
+
 test('batch draft sanitizer preserves OpenAI-compatible drafts with default settings', () => {
   const draft: BatchComposerDraft = {
     id: 'draft-1',
-    mode: 'edit',
+    providerModeId: openAiCompatibleImageEditModeId,
     params: defaultImageParams,
     selectedModelId: defaultStudioSettings.selectedModelId,
     targetImage: image('target.png'),
@@ -99,7 +108,7 @@ test('batch draft sanitizer preserves OpenAI-compatible drafts with default sett
 
   const sanitized = sanitizeBatchDraftsForSettings([draft], defaultStudioSettings);
 
-  assert.equal(sanitized[0].mode, 'edit');
+  assert.equal(sanitized[0].providerModeId, openAiCompatibleImageEditModeId);
   assert.ok(sanitized[0].targetImage);
   assert.equal(sanitized[0].referenceImages.length, 1);
   assert.ok(sanitized[0].mask);
