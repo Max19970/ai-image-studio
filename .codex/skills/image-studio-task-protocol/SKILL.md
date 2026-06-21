@@ -7,7 +7,7 @@ description: Use for Image Studio implementation tasks unless Max explicitly dis
 
 Use this skill for any task that changes the project, unless Max explicitly says to work without the protocol, directly on `main`, or without a separate plan/worktree.
 
-If Max disables the protocol for a task, do not apply the branch/worktree/Telegram/lifecycle parts for that task. Still follow source-of-truth, safety, and verification rules from the DevSpace workflow skill.
+If Max disables the protocol for a task, do not apply the branch/worktree/planning/lifecycle parts for that task. Still follow source-of-truth, safety, verification, and Telegram-notification rules from `AGENTS.md`.
 
 ## Isolated branch workspace
 
@@ -35,9 +35,18 @@ Before changing files:
 
 If the main checkout already contains unfinished changes from Max or another branch, do not touch them without explicit permission.
 
-## Long technical work notifications
+If worktree creation is blocked by tooling, say so explicitly and continue only when the main checkout is clean and the change is small/safe, or ask Max how to proceed.
 
-During long technical tasks, send concise Telegram progress notifications when meaningful milestones happen: major findings, completed stages, important checks, blockers, or risk changes.
+## Telegram notifications
+
+Telegram notifications are mandatory for technical Image Studio work that changes files, runs implementation checks, performs long investigation, or spans multiple meaningful steps.
+
+Minimum required behavior:
+
+1. Send a progress message after the first meaningful finding or when edits/checks begin.
+2. Send the final summary through Telegram before the final chat reply.
+
+For long tasks, also notify after major milestones, important findings, blockers, or risk changes.
 
 A progress notification should include:
 
@@ -49,9 +58,11 @@ A progress notification should include:
 
 Do not spam on every small action.
 
-At the end of technical work, before the final chat reply, send the same final summary through the Telegram bot MCP when the protocol is active.
+Important: `без протокола`, `без плана`, or `можно на main` disables only branch/worktree/planning parts. It does not disable Telegram notifications. Skip Telegram only if Max explicitly says not to notify in Telegram / не писать в Telegram.
 
-## Final summary while protocol is active
+If Telegram tooling is unavailable, mention that in the final chat summary.
+
+## Final summary
 
 The final answer should include:
 
@@ -59,7 +70,8 @@ The final answer should include:
 2. Changed files.
 3. Checks actually run.
 4. What still needs manual testing, if applicable.
-5. A reminder that final push, merge, release, tag, or worktree cleanup requires explicit acceptance from Max.
+5. Whether Telegram notification was sent.
+6. Whether final push, merge, release, tag, or worktree cleanup still requires explicit acceptance from Max.
 
 ## After explicit acceptance
 
