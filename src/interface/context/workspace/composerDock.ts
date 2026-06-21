@@ -1,6 +1,7 @@
 import type { ImageParams } from '../../../domain/imageParams';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../../domain/providerSettings';
 import type { BatchComposerDraft } from '../../../domain/generationTask';
+import type { RequestPreset } from '../../../entities/request-presets';
 import type { ProviderProbeReport } from '../../../domain/providerProbe';
 import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../../domain/providerMode';
 import type { WorkMode } from '../../../domain/workMode';
@@ -27,6 +28,7 @@ export interface WorkspaceComposerDockContext {
   providers: GenerationProvider[];
   selectedModelId: string;
   statusText: string | null;
+  requestPresets: RequestPreset[];
   commands: ComposerCommands;
 }
 

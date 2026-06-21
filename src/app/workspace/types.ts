@@ -6,6 +6,7 @@ import type { WorkspaceSidebarContext } from '../../interface/context/workspace/
 import type { WorkspaceTab } from '../../interface/context/workspace/tabs';
 import type { BatchComposerDraft, GeneratedImage, GenerationTask } from '../../domain/generationTask';
 import type { GalleryFolder } from '../../domain/galleryFilesystem';
+import type { RequestPreset } from '../../entities/request-presets';
 import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
 import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
@@ -76,6 +77,8 @@ export interface WorkspaceState {
   setQuickCheckResults: StateSetter<Record<string, ProviderQuickCheckResult>>;
   capabilityReport: ProviderProbeReport | null;
   setCapabilityReport: StateSetter<ProviderProbeReport | null>;
+  requestPresets: RequestPreset[];
+  setRequestPresets: StateSetter<RequestPreset[]>;
   batchComposerOpen: boolean;
   setBatchComposerOpen: StateSetter<boolean>;
   batchDrafts: BatchComposerDraft[];

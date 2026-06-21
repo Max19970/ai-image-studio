@@ -1,10 +1,10 @@
-import type { BatchComposerCommands } from '../../interface/context/commands';
+import type { BatchComposerCommands, RequestPresetCommands } from '../../interface/context/commands';
 import { sanitizeBatchDraftForSettings } from '../../entities/provider/compatibility';
 import type { CreateAppCommandsArgs } from './appCommandTypes';
 import { createBatchDraftFromWorkspace } from './commandFactoryHelpers';
 import { submitBatchGenerationCommand } from './generationCommands';
 
-export function createBatchComposerCommands(args: CreateAppCommandsArgs): BatchComposerCommands {
+export function createBatchComposerCommands(args: CreateAppCommandsArgs, requestPresets: RequestPresetCommands): BatchComposerCommands {
   const createDraft = (source = {}) => createBatchDraftFromWorkspace(args, source);
 
   return {
@@ -38,6 +38,7 @@ export function createBatchComposerCommands(args: CreateAppCommandsArgs): BatchC
       args.setBatchDrafts((prev) => prev.length > 1 ? prev.filter((draft) => draft.id !== id) : prev);
     },
     openParameters: args.setBatchParametersDraftId,
+    requestPresets,
     submit: () => submitBatchGenerationCommand({
       canSubmit: args.batchCanSubmit,
       drafts: args.batchDrafts,

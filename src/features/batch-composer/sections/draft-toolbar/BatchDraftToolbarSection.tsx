@@ -5,12 +5,30 @@ import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
 import type { BatchDraftLayoutContext } from '../../batchComposerTypes';
 import { getProviderModeForAttachmentRole, providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/compatibility';
 import { ProviderModelPicker } from '../../../../entities/provider/ui';
+import { RequestPresetManagerDialog, type RequestPresetManagerController } from '../../../request-presets/elements/preset-menu/RequestPresetMenuAction';
 import { useI18n } from '../../../../i18n';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import styles from './BatchDraftToolbarSection.module.css';
 import menuStyles from './BatchDraftControlsMenu.module.css';
 
-function MenuContent({ context, close }: { context: BatchDraftLayoutContext; close: () => void }) {
+function getDefaultDraftName(context: BatchDraftLayoutContext) {
+  const prompt = context.draft.params.prompt.trim().replace(/\s+/g, ' ');
+  if (prompt) return prompt.length > 52 ? `${prompt.slice(0, 49)}…` : prompt;
+  return context.selectedModel?.name || context.selectedModel?.modelId || '';
+}
+
+function createDraftPresetManagerController(context: BatchDraftLayoutContext): RequestPresetManagerController {
+  return {
+    requestPresets: context.requestPresets,
+    defaultName: getDefaultDraftName(context),
+    saveCurrent: context.actions.savePreset,
+    applyPreset: context.actions.applyPreset,
+    updatePreset: context.actions.updatePreset,
+    deletePreset: context.actions.deletePreset
+  };
+}
+
+function MenuContent({ context, onOpenPresets, close }: { context: BatchDraftLayoutContext; onOpenPresets: () => void; close: () => void }) {
   const { t } = useI18n();
 
   const chooseProviderMode = (providerModeId: string) => {
@@ -88,7 +106,6 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
         />
       </div>
 
-
       <div className={menuStyles.group}>
         <span className={menuStyles.groupTitle}>{t('composer.actions')}</span>
         {canUseImages && (
@@ -127,6 +144,13 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
             </span>
           </button>
         )}
+        <button type="button" className={menuStyles.action} data-testid="batch-request-presets-open" onClick={onOpenPresets}>
+          <span className={menuStyles.icon} aria-hidden="true">✦</span>
+          <span className={menuStyles.copy}>
+            <strong>{t('requestPresets.open')}</strong>
+            <small>{t('requestPresets.applyToDraft')}</small>
+          </span>
+        </button>
         <button type="button" className={menuStyles.action} onClick={duplicateDraft}>
           <span className={menuStyles.icon} aria-hidden="true">⧉</span>
           <span className={menuStyles.copy}>
@@ -160,9 +184,15 @@ function MenuContent({ context, close }: { context: BatchDraftLayoutContext; clo
 export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<BatchDraftLayoutContext>) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [presetsOpen, setPresetsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const isMobile = useMediaQuery('(max-width: 860px)');
   const close = () => setOpen(false);
+  const openPresets = () => {
+    close();
+    setPresetsOpen(true);
+  };
+  const presetController = createDraftPresetManagerController(context);
 
   const canUseImages = providerModeAllowsImageAttachments(context.providerMode);
   const canUseMask = providerModeAllowsMask(context.providerMode);
@@ -206,7 +236,7 @@ export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<Bat
           minWidth={310}
           onDismiss={close}
         >
-          <MenuContent context={context} close={close} />
+          <MenuContent context={context} onOpenPresets={openPresets} close={close} />
         </FloatingPopover>
       )}
 
@@ -219,10 +249,17 @@ export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<Bat
           onClose={close}
         >
           <div className={styles.sheetBody}>
-            <MenuContent context={context} close={close} />
+            <MenuContent context={context} onOpenPresets={openPresets} close={close} />
           </div>
         </BottomSheet>
       )}
+
+      <RequestPresetManagerDialog
+        open={presetsOpen}
+        controller={presetController}
+        onClose={() => setPresetsOpen(false)}
+        testId="batch-request-presets-dialog"
+      />
     </div>
   );
 }

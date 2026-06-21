@@ -1,0 +1,357 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  position: relative;
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,.12));
+  border-radius: 13px;
+  padding: 0;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 13%, rgba(255,255,255,.045)), rgba(255,255,255,.045));
+  color: var(--text);
+  font-size: 14px;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.trigger:hover,
+.trigger[data-open='true'] {
+  border-color: color-mix(in srgb, var(--accent) 48%, rgba(255,255,255,.22));
+  background: color-mix(in srgb, var(--accent) 14%, rgba(255,255,255,.10));
+  transform: translateY(-1px);
+}
+
+.trigger em {
+  position: absolute;
+  right: -4px;
+  top: -5px;
+  min-width: 16px;
+  height: 16px;
+  border: 1px solid rgba(255,255,255,.20);
+  border-radius: 999px;
+  padding: 1px 4px 0;
+  background: rgba(8,8,8,.80);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-style: normal;
+  line-height: 13px;
+}
+
+.dialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(0,0,0,.42);
+  backdrop-filter: blur(12px);
+  animation: request-presets-fade-in var(--motion-duration-fast) var(--motion-ease-soft) both;
+}
+
+.dialogShell {
+  position: relative;
+  box-sizing: border-box;
+  width: min(560px, calc(100vw - 44px));
+  max-height: min(780px, calc(100vh - 44px));
+  overflow: auto;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 24px;
+  padding: 10px;
+  background: rgba(15,16,22,.97);
+  box-shadow: 0 28px 90px rgba(0,0,0,.42);
+  outline: none;
+}
+
+.dialogClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(0,0,0,.22);
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.dialogClose:hover {
+  border-color: rgba(255,255,255,.22);
+  color: var(--text);
+  background: rgba(255,255,255,.09);
+}
+
+.panel {
+  box-sizing: border-box;
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.hero,
+.editor,
+.field,
+.list,
+.empty,
+.card,
+.cardMain {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.hero {
+  display: grid;
+  gap: 3px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+  padding: 14px 46px 14px 14px;
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 52%),
+    rgba(255,255,255,.045);
+}
+
+.heroKicker,
+.listHeader span,
+.field span {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.hero strong {
+  font-size: 14px;
+}
+
+.hero small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.editor {
+  display: grid;
+  gap: 8px;
+  border-radius: 16px;
+  padding: 10px;
+  background: rgba(255,255,255,.04);
+}
+
+.searchField {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 15px;
+  padding: 10px;
+  background: rgba(255,255,255,.035);
+}
+
+.editor[data-editing='true'] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.field {
+  display: grid;
+  gap: 5px;
+}
+
+.field input,
+.field textarea {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  padding: 9px 10px;
+  background: rgba(0,0,0,.16);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: color-mix(in srgb, var(--accent) 50%, rgba(255,255,255,.20));
+}
+
+.editorActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.primaryButton,
+.softButton,
+.ghostButton,
+.cardActions button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 11px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.primaryButton {
+  background: color-mix(in srgb, var(--accent) 36%, rgba(255,255,255,.10));
+}
+
+.softButton,
+.cardActions button {
+  background: rgba(255,255,255,.08);
+}
+
+.ghostButton {
+  background: transparent;
+  color: var(--muted);
+}
+
+.list {
+  display: grid;
+  gap: 7px;
+  max-height: min(390px, 48vh);
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3px;
+}
+
+.listHeader em {
+  display: grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,.075);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-style: normal;
+}
+
+.empty {
+  border: 1px dashed rgba(255,255,255,.12);
+  border-radius: 15px;
+  padding: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.card {
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 15px;
+  padding: 8px;
+  background: rgba(255,255,255,.035);
+}
+
+.card[data-active='true'] {
+  border-color: color-mix(in srgb, var(--accent) 38%, rgba(255,255,255,.14));
+}
+
+.cardMain {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.cardMain:hover {
+  background: rgba(255,255,255,.07);
+}
+
+.cardMain strong,
+.cardMain span,
+.cardMain small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardMain strong {
+  font-size: 12px;
+}
+
+.cardMain small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.cardMain span,
+.card p {
+  color: var(--faint);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.card p {
+  margin: 0 8px;
+  overflow-wrap: anywhere;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 5px 2px;
+}
+
+.cardActions .dangerButton {
+  color: #ffd8de;
+  background: rgba(255,154,169,.08);
+}
+
+@keyframes request-presets-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 620px) {
+  .trigger {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    border-radius: 15px;
+  }
+
+  .hero {
+    padding-right: 14px;
+  }
+
+  .list {
+    max-height: 46vh;
+  }
+}

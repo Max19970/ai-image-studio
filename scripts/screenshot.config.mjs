@@ -338,6 +338,37 @@ export const scenarios = [
       { type: 'screenshot' }
     ]
   },
+  {
+    name: 'composer-request-presets',
+    seedParams: {
+      prompt: 'soft cinematic portrait, warm window light, painterly details'
+    },
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="request-presets-open"]' },
+      { type: 'click', selector: '[data-testid="request-presets-open"]' },
+      { type: 'waitForSelector', selector: '[data-testid="request-presets-panel"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-request-presets-saved',
+    seedParams: {
+      prompt: 'soft cinematic portrait, warm window light, painterly details'
+    },
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="request-presets-open"]' },
+      { type: 'click', selector: '[data-testid="request-presets-open"]' },
+      { type: 'waitForSelector', selector: '[data-testid="request-presets-save-current"]' },
+      { type: 'click', selector: '[data-testid="request-presets-save-current"]' },
+      { type: 'wait', ms: 260 },
+      { type: 'screenshot' }
+    ]
+  },
 
   {
     name: 'composer-comfy-controls',
@@ -493,6 +524,21 @@ export const scenarios = [
       { type: 'click', selector: '[data-testid="composer-batch"]' },
       { type: 'waitForSelector', selector: '[data-testid="batch-draft-controls"]' },
       { type: 'click', selector: '[data-testid="batch-draft-controls"]' },
+      { type: 'wait', ms: 240 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'batch-request-presets',
+    steps: [
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
+      { type: 'click', selector: '[data-testid="composer-batch"]' },
+      { type: 'waitForSelector', selector: '[data-testid="batch-draft-controls"]' },
+      { type: 'click', selector: '[data-testid="batch-draft-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="batch-request-presets-open"]' },
+      { type: 'click', selector: '[data-testid="batch-request-presets-open"]' },
+      { type: 'waitForSelector', selector: '[data-testid="request-presets-panel"]' },
       { type: 'wait', ms: 240 },
       { type: 'screenshot' }
     ]

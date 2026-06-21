@@ -6,6 +6,8 @@ import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from 
 import type { ImageParams } from '../../domain/imageParams';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { ProviderControlSurfaceDefinition } from '../../entities/provider/types';
+import type { RequestPreset } from '../../entities/request-presets';
+import type { RequestPresetCommands } from '../../interface/context/commands';
 
 export type ComposerPopoverId = string | null;
 
@@ -22,6 +24,7 @@ export interface ComposerActionContext {
   providers: GenerationProvider[];
   selectedModel: GenerationModel | null;
   modelOptions: ComposerModelOption[];
+  requestPresets: RequestPreset[];
   openPopover: ComposerPopoverId;
   setOpenPopover: Dispatch<SetStateAction<ComposerPopoverId>>;
   fileInputs: {
@@ -40,6 +43,7 @@ export interface ComposerActionContext {
     openAttachmentPicker: () => void;
     openMaskPicker: () => void;
   };
+  requestPresetActions: RequestPresetCommands;
 }
 
 export type ComposerModelOption = ProviderModelOption;

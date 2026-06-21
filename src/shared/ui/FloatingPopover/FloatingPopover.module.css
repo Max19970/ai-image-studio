@@ -1,6 +1,7 @@
 .layer {
   right: auto !important;
   bottom: auto !important;
+  box-sizing: border-box;
   transform-origin: center var(--floating-origin-y, top);
   animation: floating-popover-in var(--motion-duration-fast) var(--motion-ease-soft) both;
 }
@@ -25,7 +26,9 @@
 
 .layer:global(.composer-inline-popover) {
   display: grid;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .layer :global(.popover-select-scroll),
