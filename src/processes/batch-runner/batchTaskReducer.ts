@@ -1,10 +1,12 @@
-import type { GeneratedImage, GenerationStatus, GenerationTask } from '../../domain/generationTask';
+import type { GeneratedImage, GenerationProgress, GenerationStatus, GenerationTask } from '../../domain/generationTask';
 import { isActiveGenerationStatus, transitionTask, transitionTaskBatchItem } from '../generation-task-lifecycle';
+import { upsertLiveStreamingImage } from '../generation-runner/resultMapper';
 
 export type BatchTaskReducerEvent =
   | { type: 'batch-started' }
   | { type: 'item-sending'; itemId: string }
   | { type: 'item-running'; itemId: string; aggregateError: string | null }
+  | { type: 'item-progress'; itemId: string; progress: GenerationProgress; aggregateError: string | null }
   | { type: 'item-streamed'; itemId: string; image: GeneratedImage }
   | { type: 'item-retrying'; itemId: string; retryText: string; aggregateError: string | null }
   | { type: 'item-succeeded'; itemId: string; images: GeneratedImage[]; raw: unknown; streamed: boolean }
@@ -24,6 +26,18 @@ export function reduceBatchTask(task: GenerationTask, event: BatchTaskReducerEve
     case 'item-running':
       return withRunningRoot(transitionTaskBatchItem(task, event.itemId, { status: 'running', error: null, updatedAt: now }), event.aggregateError, now);
 
+    case 'item-progress': {
+      const updated = transitionTaskBatchItem(task, event.itemId, { status: 'running', error: null, updatedAt: now });
+      return {
+        ...withRunningRoot(updated, event.aggregateError, now),
+        progress: event.progress,
+        batch: updated.batch ? {
+          ...updated.batch,
+          items: updated.batch.items.map((item) => item.id === event.itemId ? { ...item, progress: event.progress } : item)
+        } : updated.batch
+      };
+    }
+
     case 'item-retrying':
       return withRunningRoot(transitionTaskBatchItem(task, event.itemId, { status: 'retrying', error: event.retryText, updatedAt: now }), event.aggregateError, now);
 
@@ -33,26 +47,27 @@ export function reduceBatchTask(task: GenerationTask, event: BatchTaskReducerEve
         ...updated,
         status: 'running',
         updatedAt: now,
-        images: [...task.images, event.image],
+        images: upsertLiveStreamingImage(task.images, event.image),
         batch: updated.batch ? {
           ...updated.batch,
-          items: updated.batch.items.map((item) => item.id === event.itemId ? { ...item, images: [...item.images, event.image] } : item)
+          items: updated.batch.items.map((item) => item.id === event.itemId ? { ...item, images: upsertLiveStreamingImage(item.images, event.image) } : item)
         } : updated.batch
       };
     }
 
     case 'item-succeeded': {
       const updated = transitionTaskBatchItem(task, event.itemId, { status: 'succeeded', error: null, updatedAt: now });
+      const shouldReplaceStreamedImages = event.streamed && event.images.length > 0;
       return {
         ...updated,
         status: 'running',
         updatedAt: now,
-        images: event.streamed ? task.images : [...task.images, ...event.images],
+        images: shouldReplaceStreamedImages ? replaceImagesForBatchItem(task.images, event.itemId, event.images) : event.streamed ? task.images : [...task.images, ...event.images],
         batch: updated.batch ? {
           ...updated.batch,
           items: updated.batch.items.map((item) => item.id === event.itemId ? {
             ...item,
-            images: event.streamed ? item.images : event.images,
+            images: shouldReplaceStreamedImages ? event.images : event.streamed ? item.images : event.images,
             raw: event.raw
           } : item)
         } : updated.batch
@@ -78,6 +93,10 @@ export function reduceBatchTask(task: GenerationTask, event: BatchTaskReducerEve
     case 'batch-finished':
       return transitionTask(task, { status: event.status, error: event.error, updatedAt: now });
   }
+}
+
+function replaceImagesForBatchItem(current: GeneratedImage[], itemId: string, next: GeneratedImage[]): GeneratedImage[] {
+  return [...current.filter((image) => image.batchItemId !== itemId), ...next].sort((a, b) => a.index - b.index || a.createdAt - b.createdAt);
 }
 
 function withRunningRoot(task: GenerationTask, aggregateError: string | null, updatedAt: number): GenerationTask {

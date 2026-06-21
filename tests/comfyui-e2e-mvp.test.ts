@@ -26,6 +26,20 @@ async function readBody(req: http.IncomingMessage): Promise<unknown> {
   return text ? JSON.parse(text) : null;
 }
 
+async function readFinalSseJson(response: Response): Promise<unknown> {
+  const text = await response.text();
+  const events = text.split('\n\n').flatMap((block) => {
+    const line = block.split('\n').find((candidate) => candidate.startsWith('data:'));
+    if (!line) return [];
+    try {
+      return [JSON.parse(line.slice(5).trim())];
+    } catch {
+      return [];
+    }
+  });
+  return events.find((event: any) => event?.type === 'comfyui.final') ?? events.at(-1);
+}
+
 async function withFakeComfyUi<T>(handler: (baseUrl: string, received: unknown[]) => Promise<T>): Promise<T> {
   const received: unknown[] = [];
   const server = http.createServer(async (req, res) => {
@@ -143,7 +157,7 @@ test('ComfyUI MVP request flows from provider/model selection to gallery-ready i
 
     const payload = buildImagePayload(params, provider, 'generate');
     const { upstream } = await comfyUiProviderAdapter.fetchGenerate(provider, payload);
-    const raw = await upstream.json();
+    const raw = await readFinalSseJson(upstream);
     const images = comfyUiResponseAdapter.collectImagesFromJson(raw, 'png');
     const snapshot = captureRequestSnapshot({
       mode: 'generate',

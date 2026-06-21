@@ -1,4 +1,4 @@
-import type { GeneratedImage } from '../domain/generationTask';
+import type { GeneratedImage, GenerationProgress } from '../domain/generationTask';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../domain/providerProbe';
 import type { ProviderSettings } from '../domain/providerSettings';
 import type { ProviderResourceKind, ProviderResourceList } from '../domain/providerResources';
@@ -16,6 +16,7 @@ export interface SubmitRequest {
   referenceImages?: File[];
   mask?: File | null;
   onStreamImage?: (image: GeneratedImage) => void;
+  onProgress?: (progress: GenerationProgress) => void;
   signal?: AbortSignal;
 }
 
@@ -63,7 +64,8 @@ async function readJsonOrThrow(response: Response): Promise<unknown> {
 async function consumeStream(
   response: Response,
   responseAdapter: ProviderResponseAdapter,
-  onStreamImage?: (image: GeneratedImage) => void
+  onStreamImage?: (image: GeneratedImage) => void,
+  onProgress?: (progress: GenerationProgress) => void
 ): Promise<GeneratedImage[]> {
   if (!response.ok || !response.body) {
     await readJsonOrThrow(response);
@@ -77,6 +79,12 @@ async function consumeStream(
 
   const collectBlock = (block: string) => {
     for (const event of responseAdapter.parseSseBlock(block)) {
+      const streamError = responseAdapter.collectErrorFromJson?.(event);
+      if (streamError) throw new Error(streamError);
+
+      const progress = responseAdapter.collectProgressFromJson?.(event);
+      if (progress) onProgress?.(progress);
+
       const imgs = responseAdapter.collectImagesFromJson(event);
       imgs.forEach((img) => {
         collected.push(img);
@@ -99,18 +107,18 @@ async function consumeStream(
   return collected;
 }
 
-export async function submitImageRequest(request: SubmitRequest): Promise<{ images: GeneratedImage[]; raw: unknown }> {
+export async function submitImageRequest(request: SubmitRequest): Promise<{ images: GeneratedImage[]; raw: unknown; streamed: boolean }> {
   const adapter = getProviderAdapterForSettings(request.provider);
   const proxyRequest = adapter.request.createSubmitProxyRequest(request);
   const response = await fetchProxy(proxyRequest.path, proxyRequest.init);
 
   if (proxyRequest.streamed) {
-    const images = await consumeStream(response, adapter.response, request.onStreamImage);
-    return { images, raw: null };
+    const images = await consumeStream(response, adapter.response, request.onStreamImage, request.onProgress);
+    return { images, raw: null, streamed: true };
   }
 
   const raw = await readJsonOrThrow(response);
-  return { images: adapter.response.collectImagesFromJson(raw, proxyRequest.fallbackFormat), raw };
+  return { images: adapter.response.collectImagesFromJson(raw, proxyRequest.fallbackFormat), raw, streamed: false };
 }
 
 export async function probeProvider(provider: ProviderSettings): Promise<ProviderProbeReport> {
@@ -134,7 +142,6 @@ export async function quickCheckProvider(provider: ProviderSettings): Promise<Pr
   const raw = await readJsonOrThrow(response);
   return raw as ProviderQuickCheckResult;
 }
-
 
 export async function fetchProviderResources(provider: ProviderSettings, kind: ProviderResourceKind): Promise<ProviderResourceList> {
   const response = await fetchProxy('/api/provider/resources', {

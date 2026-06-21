@@ -101,6 +101,17 @@ export interface GeneratedImage {
   request?: GenerationRequestSnapshot;
 }
 
+export interface GenerationProgress {
+  providerAdapterId?: string;
+  percent?: number | null;
+  step?: number | null;
+  maxSteps?: number | null;
+  stage?: string | null;
+  nodeId?: string | null;
+  message?: string | null;
+  updatedAt: number;
+}
+
 export type GenerationStatus = 'created' | 'queued' | 'sending' | 'running' | 'retrying' | 'succeeded' | 'failed' | 'cancelled';
 
 export interface BatchGenerationItem {
@@ -109,6 +120,7 @@ export interface BatchGenerationItem {
   status: GenerationStatus;
   request: GenerationRequestSnapshot;
   images: GeneratedImage[];
+  progress?: GenerationProgress | null;
   raw?: unknown;
   error?: string | null;
 }
@@ -126,6 +138,7 @@ export interface GenerationTask {
   updatedAt: number;
   request: GenerationRequestSnapshot;
   images: GeneratedImage[];
+  progress?: GenerationProgress | null;
   batch?: BatchGenerationSnapshot;
   raw?: unknown;
   error?: string | null;

@@ -18,14 +18,15 @@ export function ImageDetailPage({ task, image, commands }: Props) {
   const expected = expectedImageCount(task);
   const hasPendingSlide = !isTerminalGenerationStatus(task.status) && task.images.length < expected;
   const shouldUseCarousel = Boolean(task.batch) || task.images.length > 1 || hasPendingSlide;
-  const fallbackActiveImage = image ?? task.images[0] ?? null;
+  const preferredActiveImage = image ?? (!isTerminalGenerationStatus(task.status) ? task.images[task.images.length - 1] : task.images[0]) ?? null;
+  const fallbackActiveImage = preferredActiveImage;
   const [activeImage, setActiveImage] = useState<GeneratedImage | null>(fallbackActiveImage);
   const label = useDetailStatusLabel(task.status);
   const hydrated = useHydratedDetailAssets(task, activeImage);
 
   useEffect(() => {
-    setActiveImage(image ?? task.images[0] ?? null);
-  }, [image, task.images]);
+    setActiveImage(image ?? (!isTerminalGenerationStatus(task.status) ? task.images[task.images.length - 1] : task.images[0]) ?? null);
+  }, [image, task.images, task.status]);
 
   const layoutContext: DetailLayoutContext = {
     task: hydrated.task,

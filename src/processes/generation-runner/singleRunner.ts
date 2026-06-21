@@ -4,7 +4,7 @@ import { submitImageRequest } from '../../infrastructure/api';
 import { transitionTask } from '../generation-task-lifecycle';
 import { createRunnerAbortController, normalizeRunnerFailure, releaseRunnerAbortController } from './cancellation';
 import type { SingleGenerationEventSink } from './events';
-import { mapSingleGenerationFinalImages } from './resultMapper';
+import { mapSingleGenerationFinalImages, upsertLiveStreamingImage } from './resultMapper';
 import { createRunnerRetryPolicy, runWithRetryPolicy } from './retryPolicy';
 import { captureRequestSnapshot } from './requestSnapshots';
 import type { SingleGenerationRunInput } from './types';
@@ -80,9 +80,15 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
             const attached = attachSnapshot([image], snapshot, taskId)[0];
             taskHistory.updateTask(taskId, (current) => ({
               ...transitionTask(current, { status: 'running' }),
-              images: [...current.images, attached]
+              images: upsertLiveStreamingImage(current.images, attached)
             }));
             onEvent?.({ type: 'streaming', taskId, image: attached });
+          },
+          onProgress: (progress) => {
+            taskHistory.updateTask(taskId, (current) => ({
+              ...transitionTask(current, { status: 'running' }),
+              progress
+            }));
           }
         });
       },
@@ -100,7 +106,7 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
       result,
       request: snapshot,
       taskId,
-      streamed: payload.stream === true
+      streamed: result.streamed
     });
 
     taskHistory.updateTask(taskId, (current) => ({

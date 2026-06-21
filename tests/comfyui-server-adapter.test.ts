@@ -27,6 +27,24 @@ async function readBody(req: http.IncomingMessage): Promise<unknown> {
   return text ? JSON.parse(text) : null;
 }
 
+async function readSseEvents(response: Response): Promise<any[]> {
+  const text = await response.text();
+  return text.split('\n\n').flatMap((block) => {
+    const line = block.split('\n').find((candidate) => candidate.startsWith('data:'));
+    if (!line) return [];
+    try {
+      return [JSON.parse(line.slice(5).trim())];
+    } catch {
+      return [];
+    }
+  });
+}
+
+async function readFinalSseJson(response: Response): Promise<any> {
+  const events = await readSseEvents(response);
+  return events.find((event) => event?.type === 'comfyui.final') ?? events.at(-1);
+}
+
 async function withFakeComfyUi<T>(handler: (baseUrl: string, received: unknown[]) => Promise<T>): Promise<T> {
   const received: unknown[] = [];
   const server = http.createServer(async (req, res) => {
@@ -301,7 +319,7 @@ test('ComfyUI Hires Fix latent workflow uploads one target image and builds Late
       files: [targetFile()]
     });
 
-    const raw = await upstream.json() as any;
+    const raw = await readFinalSseJson(upstream) as any;
     const promptRequest = received.find((item: any) => item?.prompt) as any;
     const workflow = promptRequest.prompt;
     const latentUpscale = workflowNodeByClass(workflow, 'LatentUpscale');
@@ -323,7 +341,7 @@ test('ComfyUI Hires Fix latent workflow uploads one target image and builds Late
 test('ComfyUI Hires Fix can use tiled VAE nodes', async () => {
   await withFakeComfyUi(async (baseUrl, received) => {
     const settings = provider(baseUrl);
-    await comfyUiProviderAdapter.submitProviderMode({
+    const { upstream } = await comfyUiProviderAdapter.submitProviderMode({
       provider: settings,
       providerModeId: 'comfyui.hires-fix',
       transport: { kind: 'multipart', operation: 'provider-submit', path: '/api/provider/submit' },
@@ -338,6 +356,7 @@ test('ComfyUI Hires Fix can use tiled VAE nodes', async () => {
       files: [targetFile()]
     });
 
+    await readFinalSseJson(upstream);
     const promptRequest = received.find((item: any) => item?.prompt) as any;
     const workflow = promptRequest.prompt;
     assert.equal(workflowNodeByClass(workflow, 'VAEEncodeTiled')?.inputs.tile_size, 768);
@@ -363,7 +382,7 @@ test('ComfyUI Hires Fix AI workflow uses UpscaleModelLoader before refinement', 
       files: [targetFile()]
     });
 
-    const raw = await upstream.json() as any;
+    const raw = await readFinalSseJson(upstream) as any;
     const promptRequest = received.find((item: any) => item?.prompt) as any;
     const workflow = promptRequest.prompt;
 
@@ -416,7 +435,7 @@ test('ComfyUI generate adapter posts workflow, polls history and returns OpenAI-
       scheduler: 'normal'
     });
 
-    const raw = await upstream.json() as any;
+    const raw = await readFinalSseJson(upstream) as any;
     assert.equal(upstream.status, 200);
     assert.equal(raw.provider, 'comfyui');
     assert.equal(raw.comfyui.prompt_id, 'prompt-1');
@@ -425,6 +444,62 @@ test('ComfyUI generate adapter posts workflow, polls history and returns OpenAI-
     assert.equal(raw.data[0].b64_json, tinyPng.toString('base64'));
     assert.equal((received[0] as any).prompt['4'].inputs.ckpt_name, 'realistic.safetensors');
   });
+});
+
+test('ComfyUI streamed response emits websocket progress and preview events before final output', async () => {
+  const originalWebSocket = (globalThis as any).WebSocket;
+  class FakeComfyUiWebSocket {
+    binaryType = 'arraybuffer';
+    private listeners = new Map<string, Array<(event: any) => void>>();
+
+    constructor(public url: string) {
+      setTimeout(() => {
+        this.dispatch('open', {});
+        this.dispatch('message', {
+          data: JSON.stringify({ type: 'progress', data: { prompt_id: 'prompt-1', value: 5, max: 10, node: '3' } })
+        });
+        const binaryPreview = Buffer.concat([Buffer.alloc(8), tinyPng]);
+        this.dispatch('message', {
+          data: binaryPreview.buffer.slice(binaryPreview.byteOffset, binaryPreview.byteOffset + binaryPreview.byteLength)
+        });
+      }, 0);
+    }
+
+    addEventListener(type: string, listener: (event: any) => void) {
+      this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
+    }
+
+    close() {
+      this.dispatch('close', {});
+    }
+
+    private dispatch(type: string, event: any) {
+      for (const listener of this.listeners.get(type) ?? []) listener(event);
+    }
+  }
+
+  (globalThis as any).WebSocket = FakeComfyUiWebSocket;
+  try {
+    await withFakeComfyUi(async (baseUrl) => {
+      const settings = provider(baseUrl);
+      const { upstream } = await comfyUiProviderAdapter.fetchGenerate(settings, {
+        prompt: 'small fox',
+        width: 512,
+        height: 512,
+        seed: 42,
+        steps: 12,
+        sampler_name: 'euler',
+        scheduler: 'normal'
+      });
+
+      const events = await readSseEvents(upstream);
+      assert.ok(events.some((event) => event?.type === 'comfyui.progress' && event.progress?.percent === 50));
+      assert.ok(events.some((event) => event?.type === 'comfyui.preview' && event.progress?.percent === 50 && event.b64_json === tinyPng.toString('base64')));
+      assert.ok(events.some((event) => event?.type === 'comfyui.final'));
+    });
+  } finally {
+    (globalThis as any).WebSocket = originalWebSocket;
+  }
 });
 
 test('ComfyUI response mapper collects image references from direct and wrapped history shapes', () => {

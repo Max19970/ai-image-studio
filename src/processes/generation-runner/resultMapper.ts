@@ -6,14 +6,45 @@ export interface RunnerImageResult {
   raw: unknown;
 }
 
+function deliveredFinalImages(images: GeneratedImage[]): GeneratedImage[] {
+  return images.filter((image) => image.kind === 'final');
+}
+
+export function countStreamedFinalImages(images: GeneratedImage[]): number {
+  return deliveredFinalImages(images).length;
+}
+
+function sameLiveImageSlot(left: GeneratedImage, right: GeneratedImage): boolean {
+  return (left.batchItemId ?? null) === (right.batchItemId ?? null) && left.index === right.index;
+}
+
+export function upsertLiveStreamingImage(current: GeneratedImage[], next: GeneratedImage): GeneratedImage[] {
+  if (next.kind === 'partial') {
+    return [...current.filter((image) => image.kind !== 'partial' || !sameLiveImageSlot(image, next)), next]
+      .sort((a, b) => a.index - b.index || a.createdAt - b.createdAt);
+  }
+
+  return [...current.filter((image) => image.kind !== 'partial' || !sameLiveImageSlot(image, next)), next]
+    .sort((a, b) => a.index - b.index || a.createdAt - b.createdAt);
+}
+
+export function replaceLiveStreamingImagesForBatchItem(current: GeneratedImage[], itemId: string, next: GeneratedImage): GeneratedImage[] {
+  return upsertLiveStreamingImage(current.filter((image) => image.batchItemId !== itemId || image.kind !== 'partial' || !sameLiveImageSlot(image, next)), next);
+}
+
+export function removeLivePartialImagesForBatchItem(current: GeneratedImage[], itemId: string): GeneratedImage[] {
+  return current.filter((image) => image.batchItemId !== itemId || image.kind !== 'partial');
+}
+
 export function mapSingleGenerationFinalImages(args: {
   result: RunnerImageResult;
   request: GenerationRequestSnapshot;
   taskId: string;
   streamed: boolean;
 }): GeneratedImage[] | undefined {
-  if (args.streamed) return undefined;
-  return attachSnapshot(args.result.images, args.request, args.taskId);
+  const images = args.streamed ? deliveredFinalImages(args.result.images) : args.result.images;
+  if (args.streamed && images.length === 0) return undefined;
+  return attachSnapshot(images, args.request, args.taskId);
 }
 
 export function mapBatchGenerationFinalImages(args: {
@@ -25,9 +56,10 @@ export function mapBatchGenerationFinalImages(args: {
   globalStartIndex: number;
   streamed: boolean;
 }): GeneratedImage[] {
-  if (args.streamed) return [];
+  const images = args.streamed ? deliveredFinalImages(args.result.images) : args.result.images;
+  if (args.streamed && images.length === 0) return [];
   return attachBatchSnapshot(
-    args.result.images,
+    images,
     args.request,
     args.taskId,
     args.batchItemId,
@@ -44,6 +76,17 @@ export function mapBatchStreamingImage(args: {
   batchItemIndex: number;
   globalStartIndex: number;
 }): GeneratedImage {
+  if (args.image.kind === 'partial') {
+    return {
+      ...args.image,
+      index: args.globalStartIndex + args.image.index,
+      taskId: args.taskId,
+      batchItemId: args.batchItemId,
+      batchItemIndex: args.batchItemIndex,
+      request: args.request
+    };
+  }
+
   return attachBatchSnapshot(
     [args.image],
     args.request,

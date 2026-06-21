@@ -1,6 +1,6 @@
 import { submitImageRequest } from '../../infrastructure/api';
 import { createRunnerAbortController, normalizeRunnerFailure, releaseRunnerAbortController } from '../generation-runner/cancellation';
-import { mapBatchGenerationFinalImages, mapBatchStreamingImage } from '../generation-runner/resultMapper';
+import { countStreamedFinalImages, mapBatchGenerationFinalImages, mapBatchStreamingImage } from '../generation-runner/resultMapper';
 import type { BatchEventSink } from './events';
 import { createBatchRunProgressTracker } from './batchRunProgress';
 import { createBatchTaskModel } from './batchTaskModel';
@@ -59,10 +59,13 @@ export async function runBatchGeneration(input: BatchGenerationRunInput, onEvent
                 taskId,
                 batchItemId: batchItem.id,
                 batchItemIndex: itemIndex,
-                globalStartIndex: progress.reserveImageIndexes(1)
+                globalStartIndex: image.kind === 'partial' ? itemIndex * 1000 : progress.reserveImageIndexes(1)
               });
               dispatchTask({ type: 'item-streamed', itemId: batchItem.id, image: attached });
               onEvent?.({ type: 'item-streaming', taskId, itemId: batchItem.id, itemIndex, image: attached });
+            },
+            onProgress: (itemProgress) => {
+              dispatchTask({ type: 'item-progress', itemId: batchItem.id, progress: itemProgress, aggregateError: progress.getAggregateError() });
             }
           });
         },
@@ -74,14 +77,15 @@ export async function runBatchGeneration(input: BatchGenerationRunInput, onEvent
         signal: controller.signal
       });
 
-      const streamed = preparedItem.payload.stream === true;
+      const streamed = result.streamed;
+      const finalImageCount = streamed ? countStreamedFinalImages(result.images) : result.images.length;
       const finalImages = mapBatchGenerationFinalImages({
         result,
         request: preparedItem.snapshot,
         taskId,
         batchItemId: batchItem.id,
         batchItemIndex: itemIndex,
-        globalStartIndex: progress.reserveImageIndexes(result.images.length),
+        globalStartIndex: progress.reserveImageIndexes(finalImageCount),
         streamed
       });
 
