@@ -125,21 +125,102 @@ function clientSnapshotTasks(): GenerationTask[] {
   });
 }
 
+interface GenerationTasksDeltaEvent {
+  revision: number;
+  taskIds: string[];
+  upserted: GenerationTask[];
+  deletedIds: string[];
+}
+
+let taskEventsRevision = 0;
+
+function imageDeltaSignature(image: GeneratedImage): string {
+  return [
+    image.id,
+    image.kind,
+    image.index,
+    image.batchItemId ?? '',
+    image.batchItemIndex ?? '',
+    image.storageAssetKey ?? '',
+    image.storageThumbnailKey ?? '',
+    image.storageAssetLoaded === false ? 'lazy' : 'full',
+    image.src?.length ?? 0,
+    image.thumbnailSrc?.length ?? 0,
+    image.createdAt
+  ].join(':');
+}
+
+function progressDeltaSignature(progress: GenerationProgress | null | undefined): string {
+  if (!progress) return '';
+  return [
+    progress.providerAdapterId ?? '',
+    progress.percent ?? '',
+    progress.step ?? '',
+    progress.maxSteps ?? '',
+    progress.stage ?? '',
+    progress.nodeId ?? '',
+    progress.message ?? '',
+    progress.updatedAt
+  ].join(':');
+}
+
+function taskDeltaSignature(task: GenerationTask): string {
+  return JSON.stringify({
+    id: task.id,
+    kind: task.kind ?? 'single',
+    status: task.status,
+    updatedAt: task.updatedAt,
+    galleryPath: task.galleryPath ?? '/',
+    galleryPaths: task.galleryPaths ?? [task.galleryPath ?? '/'],
+    favorite: task.galleryFavorite ?? false,
+    error: task.error ?? null,
+    progress: progressDeltaSignature(task.progress),
+    images: task.images.map(imageDeltaSignature),
+    batch: task.batch ? {
+      intervalMs: task.batch.intervalMs,
+      items: task.batch.items.map((item) => ({
+        id: item.id,
+        status: item.status,
+        error: item.error ?? null,
+        progress: progressDeltaSignature(item.progress),
+        images: item.images.map(imageDeltaSignature)
+      }))
+    } : null
+  });
+}
+
+function createTasksDelta(previousTasks: GenerationTask[], nextTasks: GenerationTask[], revision: number): GenerationTasksDeltaEvent {
+  const previousSignatures = new Map(previousTasks.map((task) => [task.id, taskDeltaSignature(task)]));
+  const nextIds = new Set(nextTasks.map((task) => task.id));
+  const deletedIds = previousTasks.flatMap((task) => nextIds.has(task.id) ? [] : [task.id]);
+  const upserted = nextTasks.filter((task) => previousSignatures.get(task.id) !== taskDeltaSignature(task));
+  return {
+    revision,
+    taskIds: nextTasks.map((task) => task.id),
+    upserted,
+    deletedIds
+  };
+}
+
 function sendEvent(client: Client, event: string, data: unknown) {
   client.write(`event: ${event}\n`);
   client.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-function broadcastTasks() {
-  const tasks = clientSnapshotTasks();
-  for (const client of clients) sendEvent(client, 'tasks', { tasks });
+function broadcastTasksDelta(previousTasks: GenerationTask[], nextTasks: GenerationTask[], revision: number) {
+  if (clients.size === 0) return;
+  const delta = createTasksDelta(previousTasks, nextTasks, revision);
+  if (delta.upserted.length === 0 && delta.deletedIds.length === 0) return;
+  for (const client of clients) sendEvent(client, 'tasks-delta', delta);
 }
 
 async function mutateTasks(recipe: (tasks: GenerationTask[]) => GenerationTask[], options: { persist?: boolean } = {}) {
   mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
+    const previousClientTasks = clients.size > 0 ? clientSnapshotTasks() : [];
     runtimeTasks = recipe(ensureRuntimeTasks());
     if (options.persist !== false) persistRuntimeTasks(runtimeTasks);
-    broadcastTasks();
+    const revision = ++taskEventsRevision;
+    if (clients.size > 0) broadcastTasksDelta(previousClientTasks, clientSnapshotTasks(), revision);
   });
   await mutationQueue;
 }
@@ -688,6 +769,7 @@ export function resetGenerationTaskRuntimeForTests() {
   taskControllers.clear();
   runtimeTasks = null;
   mutationQueue = Promise.resolve();
+  taskEventsRevision = 0;
   for (const client of clients) client.end();
   clients.clear();
 }
@@ -699,7 +781,7 @@ export function subscribeGenerationTaskEvents(req: express.Request, res: express
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders?.();
   clients.add(res);
-  sendEvent(res, 'tasks', { tasks: clientSnapshotTasks() });
+  sendEvent(res, 'tasks', { revision: taskEventsRevision, tasks: clientSnapshotTasks() });
 
   const keepAlive = setInterval(() => {
     if (!res.writableEnded) res.write(': keep-alive\n\n');

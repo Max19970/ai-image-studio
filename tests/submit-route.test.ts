@@ -43,7 +43,7 @@ async function waitForCondition(predicate: () => boolean, timeoutMs = 500): Prom
   }
 }
 
-async function readNextTasksEvent(response: Response): Promise<any> {
+async function readNextSseEvent(response: Response, eventName: string): Promise<any> {
   assert.ok(response.body);
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -51,14 +51,49 @@ async function readNextTasksEvent(response: Response): Promise<any> {
   try {
     while (true) {
       const { done, value } = await reader.read();
-      if (done) throw new Error('SSE stream closed before task event.');
+      if (done) throw new Error('SSE stream closed before expected event.');
       buffer += decoder.decode(value, { stream: true });
       const blocks = buffer.split('\n\n');
       buffer = blocks.pop() ?? '';
       for (const block of blocks) {
-        if (!block.includes('event: tasks')) continue;
+        const hasEvent = block.split('\n').some((line) => line.trim() === `event: ${eventName}`);
+        if (!hasEvent) continue;
         const data = block.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\n');
         return JSON.parse(data);
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function readNextTasksEvent(response: Response): Promise<any> {
+  return readNextSseEvent(response, 'tasks');
+}
+
+async function readInitialTasksThenDelta(response: Response, afterInitial: () => Promise<void>): Promise<{ initial: any; delta: any }> {
+  assert.ok(response.body);
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let initial: any = null;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) throw new Error('SSE stream closed before delta event.');
+      buffer += decoder.decode(value, { stream: true });
+      const blocks = buffer.split('\n\n');
+      buffer = blocks.pop() ?? '';
+      for (const block of blocks) {
+        const eventLine = block.split('\n').find((line) => line.startsWith('event:'));
+        const eventName = eventLine?.slice('event:'.length).trim();
+        const data = block.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\n');
+        if (!eventName || !data) continue;
+        if (eventName === 'tasks' && !initial) {
+          initial = JSON.parse(data);
+          await afterInitial();
+        }
+        if (eventName === 'tasks-delta' && initial) return { initial, delta: JSON.parse(data) };
       }
     }
   } finally {
@@ -79,7 +114,7 @@ async function readTasksEventWithTask(response: Response, taskId: string): Promi
       const blocks = buffer.split('\n\n');
       buffer = blocks.pop() ?? '';
       for (const block of blocks) {
-        if (!block.includes('event: tasks')) continue;
+        if (!block.split('\n').some((line) => line.trim() === 'event: tasks')) continue;
         const data = block.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\n');
         const parsed = JSON.parse(data);
         if (parsed.tasks?.some((task: any) => task.id === taskId)) return parsed;
@@ -178,6 +213,64 @@ test('server-owned generation route keeps active task available to new SSE subsc
       assert.ok(['queued', 'sending', 'running'].includes(task.status));
       assert.equal(task.request.prompt, 'server owned fox');
       assert.equal(upstreamCalls.length, 1);
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    resetGenerationTaskRuntimeForTests();
+  }
+});
+
+test('generation task SSE sends compact deltas after the initial snapshot', async () => {
+  resetGenerationTaskRuntimeForTests();
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('http://127.0.0.1:')) return originalFetch(input, init);
+    return new Promise<Response>(() => undefined);
+  };
+
+  try {
+    await withServer(async (baseUrl) => {
+      const controller = new AbortController();
+      const eventsResponse = await fetch(`${baseUrl}/api/generation-tasks/events`, { signal: controller.signal });
+      let body: { taskId: string } | null = null;
+      const { initial, delta } = await readInitialTasksThenDelta(eventsResponse, async () => {
+        const runResponse = await fetch(`${baseUrl}/api/generation-tasks/run`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider,
+            payload: { prompt: 'delta fox', model: 'image-model' },
+            providerModeId: 'openai-compatible.image-generate',
+            transport: { kind: 'json', operation: 'generate', path: '/api/provider/submit' },
+            snapshot: {
+              createdAt: Date.now(),
+              mode: 'generate',
+              prompt: 'delta fox',
+              endpoint: provider.generationEndpoint,
+              providerLabel: 'Test provider',
+              providerAdapterId: 'openai-compatible',
+              model: 'image-model',
+              modelLabel: 'image-model',
+              payload: { prompt: 'delta fox', model: 'image-model' },
+              warnings: [],
+              attachments: [],
+              params: {}
+            }
+          })
+        });
+        body = await runResponse.json() as { taskId: string };
+        assert.equal(runResponse.status, 202);
+      });
+      controller.abort();
+      assert.ok(body);
+      assert.ok(Array.isArray(initial.tasks));
+      assert.equal(delta.taskIds[0], body.taskId);
+      assert.equal(delta.upserted.length, 1);
+      assert.equal(delta.upserted[0].id, body.taskId);
+      assert.equal(delta.upserted[0].request.prompt, 'delta fox');
+      assert.deepEqual(delta.deletedIds, []);
+      assert.equal(delta.tasks, undefined);
     });
   } finally {
     globalThis.fetch = originalFetch;
