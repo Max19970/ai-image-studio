@@ -1,72 +1,48 @@
 # Image Studio — AGENTS.md
 
-Before project work, also read and follow .codex/AGENTS_PROTOCOL_APPENDIX.md.
+This file is the short entry point for agents working on **Image Studio**.
+Detailed operational rules live in local Codex skills under `.codex/skills/`.
 
-AI-ассистенты должны работать с проектом Image Studio через DevSpace. Актуальная кодовая база в DevSpace является главным источником истины.
+## Core project facts
+
+- Main project root on Max's machine:
+
+  ```txt
+  C:\Users\maxsh\Documents\Codex\image-studio
+  ```
+
+- Work with the actual project through **DevSpace**. Current files in DevSpace are the source of truth.
+- Do not treat old archives, older chat context, or memory as authoritative when DevSpace access is available.
+- Do not commit, push, merge, tag, release, or clean up worktrees unless Max explicitly asks.
+- If Max explicitly disables the normal protocol for a task, follow that instruction for the task, but still preserve source-of-truth, safety, and verification rules.
 
 ## Agent-side project files
 
-В проектной папке `.codex/` должны храниться только те агентские материалы, которые мы создаём вручную для работы ассистентов, либо явно устанавливаем туда как подтверждённо совместимые с `.codex` вещи: например Codex skills, агентские инструкции, workflow-документы и MCP/DevSpace-заметки.
+The project `.codex/` directory is reserved for manually maintained agent materials and confirmed Codex-compatible assets: local skills, agent instructions, workflow notes, DevSpace/MCP notes, and next-chat prompts.
 
-Не переносить в `.codex/` автоматически созданные runtime/cache/log-папки инструментов, если они не были вручную заведены как часть агентской конфигурации. Например `.playwright-cli/` — это вывод/состояние инструмента, а не установленная нами агентская инструкция или skill; его нужно игнорировать, чистить или оставлять отдельно по смыслу инструмента, но не складывать в `.codex/`.
+Do not move generated runtime/cache/log directories into `.codex/`. For example, `.playwright-cli/` is tool output/state, not an installed agent instruction or skill.
 
-Не создавать новые вручную поддерживаемые агентские папки и документы вне `.codex/`, включая `.agents/`, отдельные агентские документы в `docs/` и похожие служебные места. Исключение — сам корневой `AGENTS.md`, потому что он является точкой входа для агентских инструкций проекта.
+Do not create new manually maintained agent folders outside `.codex/`, including `.agents/` or standalone agent documents in `docs/`. The root `AGENTS.md` is the only exception because it is the agent entry point.
 
-## Isolated branch workspace protocol
+## Skill router
 
-При каждом изменении проекта нужно создавать отдельную рабочую папку проекта под конкретную ветку и работать только в ней до завершения задачи.
+Before acting, read the skills that match the task. If several apply, read the general workflow skill first, then the more specific ones.
 
-Правило: одна задача или один связанный набор изменений = одна отдельная рабочая папка = одна ветка.
+| Skill | When to use |
+| --- | --- |
+| `.codex/skills/image-studio-devspace-workflow/SKILL.md` | Any Image Studio work through DevSpace: reading files, editing, checking, reporting, handling source-of-truth. |
+| `.codex/skills/devspace-background-bash/SKILL.md` | Any DevSpace shell command that may take longer than 1 second. Run it in background-log mode. |
+| `.codex/skills/image-studio-task-protocol/SKILL.md` | Any implementation/change task unless Max explicitly disables the protocol. Covers branch/worktree, Telegram, acceptance, and lifecycle rules. |
+| `.codex/skills/image-studio-large-task-decomposition/SKILL.md` | When the task is too large for one chat and should be split into follow-up work notes. |
+| `.codex/skills/image-studio-architecture/SKILL.md` | Architecture, refactoring, modularization, ownership boundaries, technical debt, or roadmap work. |
+| `.codex/skills/image-studio-generation-rules/SKILL.md` | Provider/model/generation runner work, batch/multi generation, attachments, LoRA, prompt textarea behavior. |
+| `.codex/skills/image-studio-ui-visual-qa/SKILL.md` | UI/UX/layout/theme/mobile changes or any task requiring visual QA and screenshots. |
+| `.codex/skills/dev-image-cli/SKILL.md` | Development tasks that need generated image files, fixtures, visual examples, datasets, or implementation testing through the local image CLI. |
 
-Нельзя вносить новые изменения напрямую в основной checkout main, кроме случаев, когда Макс явно попросил сделать именно так.
+## Non-negotiables
 
-Главная цель протокола — не просто переключить ветку в основной папке, а иметь физически отдельную копию или рабочую директорию проекта для параллельной работы над фичами.
-
-Предпочтительный способ — git worktree. Если среда не позволяет создать git worktree, нужно использовать эквивалентный по смыслу способ: отдельную управляемую копию проекта в новой папке, привязанную к новой ветке.
-
-Нельзя ограничиваться обычным checkout ветки внутри основной папки проекта. Обычный checkout допустим только внутри уже созданной отдельной рабочей папки этой задачи.
-
-Перед началом изменений нужно:
-
-1. Проверить состояние репозитория.
-2. Убедиться, что работа не ведётся поверх чужих незавершённых изменений.
-3. Создать отдельную рабочую папку проекта от актуальной main.
-4. Создать или открыть в ней ветку под конкретную задачу.
-5. Назвать ветку по смыслу задачи, например feature/settings-header-panel или fix/composer-prompt-scroll.
-6. Все файлы читать, менять, собирать и тестировать именно в этой отдельной рабочей папке до тех пор, пока ветка не будет принята и слита обратно в main.
-
-Если основной checkout уже содержит незавершённые изменения Макса или другой ветки, не трогать их без отдельного явного разрешения.
-
-## Завершение работы
-
-В конце технической работы, перед тем как писать финальный ответ Максу в чате, нужно сначала отправить это же финальное сообщение Максу в Telegram через Telegram bot MCP.
-
-Финальный ответ должен содержать:
-
-1. Что изменено.
-2. Перечень изменённых файлов.
-3. Какие проверки реально запускались.
-4. Что осталось проверить руками, если это нужно.
-5. Напоминание о том, что нужно дождаться явного подтверждения Макса, что обновление полностью принимается.
-
-До такого подтверждения нельзя самостоятельно делать финальный push, merge в main, release, tag или cleanup worktree.
-
-## После явного принятия обновления Максом
-
-Когда Макс явно подтвердил, что обновление полностью принято, нужно:
-
-1. Запушить рабочую ветку на GitHub.
-2. Локально попробовать смерджить main с веткой обновлений.
-3. Если merge прошёл успешно, убедиться, что проект собирается и нет конфликтов.
-4. После успешного merge обновить основную папку проекта: перейти в основной checkout, сделать pull актуальной main и убедиться, что эта папка снова находится на свежей main после принятых изменений.
-5. Следующие задачи снова начинать от актуальной main и нового worktree.
-
-Если merge конфликтует, сборка падает или main нельзя безопасно обновить, остановиться и честно описать проблему Максу. Не пытаться силой проталкивать merge.
-
-## Проверки
-
-Перед отчётом всегда свериться с package.json и запускать релевантные проверки. Минимальная стандартная проверка для проекта: npm run build.
-
-Для UI-задач по возможности делать visual QA через screenshot runner и честно писать, какие сценарии реально проверены.
-
-Нельзя писать «проверено», если проверка реально не запускалась.
+- Read relevant project files before changing code. Do not implement from memory.
+- Preserve existing user/agent changes unless Max explicitly allows replacing them.
+- Before reporting success, run relevant checks and state exactly what was run.
+- For UI changes, do visual QA when possible and state the scenarios/viewports checked.
+- Never claim something was verified if it was not actually checked.

@@ -1,8 +1,9 @@
+---
+name: dev-image-cli
+description: Use when Image Studio development work requires creating image files for fixtures, visual checks, examples, datasets, or implementation testing. Use the project dev-only GPT Image CLI in background-log mode.
+---
+
 # Dev image CLI
-
-Name: dev-image-cli
-
-Description: Use when Image Studio development work requires creating image files for fixtures, visual checks, examples, datasets, or implementation testing. Use the project dev-only GPT Image CLI in background-log mode.
 
 Use this skill inside the Image Studio project when a development task needs project image outputs.
 
