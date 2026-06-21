@@ -20,7 +20,7 @@ function sameLiveImageSlot(left: GeneratedImage, right: GeneratedImage): boolean
 
 export function upsertLiveStreamingImage(current: GeneratedImage[], next: GeneratedImage): GeneratedImage[] {
   if (next.kind === 'partial') {
-    return [...current.filter((image) => image.kind !== 'partial' || !sameLiveImageSlot(image, next)), next]
+    return [...current.filter((image) => image.kind !== 'partial' || (image.batchItemId ?? null) !== (next.batchItemId ?? null)), next]
       .sort((a, b) => a.index - b.index || a.createdAt - b.createdAt);
   }
 

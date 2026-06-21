@@ -80,12 +80,14 @@ test('CORS allowlist includes local production origin and public tunnel URL', ()
     process.env.PORT = '8787';
     process.env.IMAGE_STUDIO_PUBLIC_URL = 'https://comfybottg.space/app';
     process.env.IMAGE_STUDIO_ALLOWED_ORIGINS = 'https://app.comfybottg.space,not-a-url';
+    process.env.IMAGE_STUDIO_ALLOWED_HOSTS = 'mobile.comfybottg.space';
 
     const origins = allowedCorsOrigins();
     assert.equal(origins.has('http://127.0.0.1:8787'), true);
     assert.equal(origins.has('http://localhost:8787'), true);
     assert.equal(origins.has('https://comfybottg.space'), true);
     assert.equal(origins.has('https://app.comfybottg.space'), true);
+    assert.equal(origins.has('https://mobile.comfybottg.space'), true);
     assert.equal(origins.has('not-a-url'), false);
   });
 });

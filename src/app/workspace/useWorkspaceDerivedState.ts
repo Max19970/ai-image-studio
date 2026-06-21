@@ -172,7 +172,14 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
   }, [activeBatchDraft, state.studioSettings, state.capabilityReport, t]);
 
   const taskStatusText = currentTask?.status === 'succeeded' ? null : getStatusText(currentTask, t);
-  const composerStatusText = rawJsonError || taskStatusText || state.compatibilityNotice || attachmentStatusText;
+  const serverSubmissionText = state.serverSubmission.phase === 'submitting'
+    ? 'Отправляю запрос на сервер…'
+    : state.serverSubmission.phase === 'waiting-for-event'
+      ? 'Запрос принят сервером. Жду событие генерации…'
+      : state.serverSubmission.phase === 'failed'
+        ? `Не удалось поставить запрос на сервер: ${state.serverSubmission.error ?? 'неизвестная ошибка'}`
+        : null;
+  const composerStatusText = rawJsonError || serverSubmissionText || taskStatusText || state.compatibilityNotice || attachmentStatusText;
 
   return {
     activeModel,

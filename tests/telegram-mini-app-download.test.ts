@@ -7,7 +7,7 @@ import {
   parseImageDataUrlForDownload,
   sanitizeDownloadFilename
 } from '../server/routes/generationTaskDownloadHelpers';
-import { requestTelegramMiniAppImageDownload, resolveTelegramDownloadUrl } from '../src/integrations/telegram-mini-app/downloadFile';
+import { requestTelegramMiniAppImageDownload, resolveServerImageDownload, resolveTelegramDownloadUrl } from '../src/integrations/telegram-mini-app/downloadFile';
 import type { TelegramWebAppBridge } from '../src/integrations/telegram-mini-app/telegramWebApp';
 
 async function withMockWindow<T>(webApp: Partial<TelegramWebAppBridge>, run: () => T | Promise<T>): Promise<T> {
@@ -46,6 +46,23 @@ test('Telegram Mini App download URL is registered through the server for stored
       url: '/api/storage/generation-task-downloads',
       body: { filename: 'result.png', storageAssetKey: 'task-1/image/top/full' }
     }]);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test('browser image download resolver registers inline images through the server', async () => {
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    assert.equal(String(input), '/api/storage/generation-task-downloads');
+    assert.deepEqual(JSON.parse(String(init?.body)), { filename: 'large.png', src: 'data:image/png;base64,QUJDRA==' });
+    return new Response(JSON.stringify({ url: '/api/storage/generation-task-downloads/temp-1', filename: 'large.png', mediaType: 'image/png' }), { status: 200 });
+  };
+
+  try {
+    const resolved = await resolveServerImageDownload({ href: 'data:image/png;base64,QUJDRA==', filename: 'large.png' });
+    assert.equal(resolved?.url, '/api/storage/generation-task-downloads/temp-1');
+    assert.equal(resolved?.trustedImage, true);
   } finally {
     globalThis.fetch = previousFetch;
   }

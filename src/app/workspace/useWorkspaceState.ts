@@ -12,7 +12,7 @@ export function useWorkspaceState(): WorkspaceState {
   const navigation = useNavigationWorkspaceState();
   const composer = useComposerWorkspaceState();
   const taskSelection = useTaskSelectionState();
-  const execution = useGenerationExecutionState();
+  const execution = useGenerationExecutionState(taskSelection.tasks);
   const providerProbe = useProviderProbeState(settings.studioSettings);
   const batch = useBatchWorkspaceState();
 

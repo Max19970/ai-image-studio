@@ -5,9 +5,11 @@ import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
-import { runBatchGeneration } from '../../processes/batch-runner/batchRunner';
+import { enqueueServerBatchGenerationRequest } from '../../infrastructure/api';
+import { createAggregateSnapshot, prepareBatchItems } from '../../processes/batch-runner/requestBuilder';
+import { normalizeBatchIntervalSeconds } from '../../processes/batch-runner/schedule';
 import { runSingleGeneration } from '../../processes/generation-runner/singleRunner';
-import type { StateSetter, TaskHistoryCommands, TranslateFn } from './types';
+import type { ServerSubmissionSetter, StateSetter, TaskHistoryCommands, TranslateFn } from './types';
 
 interface SingleGenerationCommandArgs {
   canSubmit: boolean;
@@ -24,6 +26,7 @@ interface SingleGenerationCommandArgs {
   mask: File | null;
   taskHistory: TaskHistoryCommands;
   setBusy: StateSetter<boolean>;
+  setServerSubmission: ServerSubmissionSetter;
   t: TranslateFn;
 }
 
@@ -56,13 +59,15 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
     mask,
     taskHistory,
     setBusy,
+    setServerSubmission,
     t
   } = args;
 
   if (!canSubmit) return;
   setBusy(true);
+  setServerSubmission({ phase: 'submitting' });
   try {
-    await runSingleGeneration({
+    const taskId = await runSingleGeneration({
       mode,
       providerMode,
       params,
@@ -77,6 +82,10 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
       taskHistory,
       t
     });
+    setServerSubmission({ phase: 'waiting-for-event', taskId });
+  } catch (error) {
+    setServerSubmission({ phase: 'failed', error: error instanceof Error ? error.message : String(error) });
+    throw error;
   } finally {
     setBusy(false);
   }
@@ -100,7 +109,7 @@ export async function submitBatchGenerationCommand(args: BatchGenerationCommandA
   setBusy(true);
   setBatchComposerOpen(false);
   try {
-    await runBatchGeneration({
+    const prepared = prepareBatchItems({
       drafts,
       intervalSeconds,
       settings,
@@ -108,6 +117,24 @@ export async function submitBatchGenerationCommand(args: BatchGenerationCommandA
       capabilityReport,
       taskHistory,
       t
+    });
+    if (prepared.length === 0) return;
+
+    const intervalMs = normalizeBatchIntervalSeconds(intervalSeconds);
+    await enqueueServerBatchGenerationRequest({
+      intervalMs,
+      aggregateSnapshot: createAggregateSnapshot({ prepared, intervalMs, createdAt: Date.now(), t }),
+      items: prepared.map((item) => ({
+        provider: item.provider,
+        payload: item.payload,
+        providerMode: item.providerMode,
+        snapshot: item.snapshot,
+        targetImage: item.draft.targetImage,
+        referenceImages: item.draft.referenceImages,
+        mask: item.draft.mask,
+        retryAttempts: item.draft.params.retryAttempts,
+        retryDelaySeconds: item.draft.params.retryDelaySeconds
+      }))
     });
   } finally {
     setBusy(false);

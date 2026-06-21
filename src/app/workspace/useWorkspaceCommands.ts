@@ -49,6 +49,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
     setSelectedTaskId: state.setSelectedTaskId,
     setSelectedImageId: state.setSelectedImageId,
     setBusy: state.setBusy,
+    setServerSubmission: state.setServerSubmission,
     setBatchComposerOpen: state.setBatchComposerOpen,
     setBatchDrafts: state.setBatchDrafts,
     setBatchIntervalSeconds: state.setBatchIntervalSeconds,

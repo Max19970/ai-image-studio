@@ -5,6 +5,7 @@ export function allowedCorsOrigins(): Set<string> {
   return new Set([
     ...splitOrigins(env('IMAGE_STUDIO_ALLOWED_ORIGINS')),
     ...splitOrigins(env('IMAGE_STUDIO_PUBLIC_URL')),
+    ...originsFromHosts(env('IMAGE_STUDIO_ALLOWED_HOSTS')),
     ...defaultLocalOrigins()
   ]);
 }
@@ -26,6 +27,20 @@ function splitOrigins(value: string): string[] {
   return value
     .split(',')
     .map((origin) => normalizeOrigin(origin.trim()))
+    .filter((origin): origin is string => Boolean(origin));
+}
+
+function originsFromHosts(value: string): string[] {
+  return value
+    .split(',')
+    .map((host) => host.trim())
+    .filter(Boolean)
+    .flatMap((host) => {
+      const normalized = host.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      if (!normalized) return [];
+      return [`https://${normalized}`, `http://${normalized}`];
+    })
+    .map((origin) => normalizeOrigin(origin))
     .filter((origin): origin is string => Boolean(origin));
 }
 

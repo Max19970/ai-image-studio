@@ -1,4 +1,5 @@
 import { cloneParams } from '../../domain/generationSnapshots';
+import { clearServerGenerationTasks, deleteServerGenerationTask } from '../../infrastructure/api';
 import { sanitizeProviderModeDraftForModel } from '../../entities/provider/compatibility';
 import { normalizeSelectedModel } from '../../entities/studio-settings';
 import { getProviderGenerationRequestSurfaceById } from '../../entities/generation-params/requestSurface';
@@ -16,7 +17,7 @@ export function deleteTaskCommand(args: {
   taskHistory: Pick<TaskHistoryCommands, 'deleteTask'>;
 }) {
   const { taskId, selectedTaskId, navigation, taskHistory } = args;
-  taskHistory.deleteTask(taskId);
+  void deleteServerGenerationTask(taskId).catch(console.error);
   if (selectedTaskId === taskId) {
     navigation.setSelectedTaskId(null);
     navigation.setSelectedImageId(null);
@@ -27,7 +28,7 @@ export function clearTasksCommand(args: {
   navigation: WorkspaceNavigationCommands;
   taskHistory: Pick<TaskHistoryCommands, 'clearTasks'>;
 }) {
-  args.taskHistory.clearTasks();
+  void clearServerGenerationTasks().catch(console.error);
   args.navigation.setSelectedTaskId(null);
   args.navigation.setSelectedImageId(null);
 }

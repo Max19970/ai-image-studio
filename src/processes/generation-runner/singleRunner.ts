@@ -1,15 +1,9 @@
-import { attachSnapshot } from '../../domain/generationSnapshots';
-import type { GenerationTask } from '../../domain/generationTask';
-import { submitImageRequest } from '../../infrastructure/api';
-import { transitionTask } from '../generation-task-lifecycle';
-import { createRunnerAbortController, normalizeRunnerFailure, releaseRunnerAbortController } from './cancellation';
+import { enqueueServerGenerationRequest } from '../../infrastructure/api';
 import type { SingleGenerationEventSink } from './events';
-import { mapSingleGenerationFinalImages, upsertLiveStreamingImage } from './resultMapper';
-import { createRunnerRetryPolicy, runWithRetryPolicy } from './retryPolicy';
 import { captureRequestSnapshot } from './requestSnapshots';
 import type { SingleGenerationRunInput } from './types';
 
-export async function runSingleGeneration(input: SingleGenerationRunInput, onEvent?: SingleGenerationEventSink) {
+export async function runSingleGeneration(input: SingleGenerationRunInput, onEvent?: SingleGenerationEventSink): Promise<string> {
   const {
     mode,
     providerMode,
@@ -22,12 +16,8 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
     targetImage,
     referenceImages,
     mask,
-    taskHistory,
     t
   } = input;
-
-  const taskId = crypto.randomUUID();
-  const controller = createRunnerAbortController(taskId, taskHistory);
 
   const snapshot = captureRequestSnapshot({
     mode,
@@ -45,88 +35,17 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
     fallbackProviderLabel: t('app.localProvider')
   });
 
-  const taskCreatedAt = Date.now();
-  const task: GenerationTask = {
-    id: taskId,
-    kind: 'single',
-    status: 'queued',
-    createdAt: taskCreatedAt,
-    updatedAt: taskCreatedAt,
-    request: snapshot,
-    images: []
-  };
+  const { taskId } = await enqueueServerGenerationRequest({
+    mode,
+    providerMode,
+    provider,
+    payload,
+    targetImage,
+    referenceImages,
+    mask,
+    snapshot
+  });
 
-  taskHistory.setTasks((prev) => [task, ...prev]);
   onEvent?.({ type: 'queued', taskId, request: snapshot });
-
-  try {
-    taskHistory.updateTask(taskId, (current) => transitionTask(current, { status: 'sending', error: null }));
-    onEvent?.({ type: 'started', taskId });
-
-    const result = await runWithRetryPolicy({
-      policy: createRunnerRetryPolicy({ attempts: params.retryAttempts, delaySeconds: params.retryDelaySeconds }),
-      run: () => {
-        taskHistory.updateTask(taskId, (current) => transitionTask(current, { status: 'running', error: null }));
-        return submitImageRequest({
-          provider,
-          payload,
-          mode,
-          providerMode,
-          targetImage,
-          referenceImages,
-          mask,
-          signal: controller.signal,
-          onStreamImage: (image) => {
-            const attached = attachSnapshot([image], snapshot, taskId)[0];
-            taskHistory.updateTask(taskId, (current) => ({
-              ...transitionTask(current, { status: 'running' }),
-              images: upsertLiveStreamingImage(current.images, attached)
-            }));
-            onEvent?.({ type: 'streaming', taskId, image: attached });
-          },
-          onProgress: (progress) => {
-            taskHistory.updateTask(taskId, (current) => ({
-              ...transitionTask(current, { status: 'running' }),
-              progress
-            }));
-          }
-        });
-      },
-      onRetry: ({ attempt, totalAttempts, error, waitMs }) => {
-        taskHistory.updateTask(taskId, (current) => transitionTask(current, {
-          status: 'retrying',
-          error: t('app.retryWaiting', { attempt, total: totalAttempts, seconds: Math.round(waitMs / 1000), error })
-        }));
-        onEvent?.({ type: 'retrying', taskId, attempt, totalAttempts, error, waitMs });
-      },
-      signal: controller.signal
-    });
-
-    const finalImages = mapSingleGenerationFinalImages({
-      result,
-      request: snapshot,
-      taskId,
-      streamed: result.streamed
-    });
-
-    taskHistory.updateTask(taskId, (current) => ({
-      ...transitionTask(current, { status: 'succeeded', error: null }),
-      images: finalImages ?? current.images,
-      raw: result.raw
-    }));
-    onEvent?.({ type: 'succeeded', taskId, status: 'succeeded', imageCount: finalImages?.length ?? result.images.length });
-  } catch (error) {
-    const failure = normalizeRunnerFailure(error, t);
-    taskHistory.updateTask(taskId, (current) => transitionTask(current, {
-      status: failure.cancelled ? 'cancelled' : 'failed',
-      error: failure.message
-    }));
-    onEvent?.(
-      failure.cancelled
-        ? { type: 'cancelled', taskId, status: 'cancelled', error: failure.message }
-        : { type: 'failed', taskId, status: 'failed', error: failure.message }
-    );
-  } finally {
-    releaseRunnerAbortController(taskId, taskHistory);
-  }
+  return taskId;
 }

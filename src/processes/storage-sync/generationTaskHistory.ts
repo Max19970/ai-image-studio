@@ -11,7 +11,53 @@ export interface GenerationTaskHistorySyncDependencies {
   fallback?: GenerationTaskHistoryCache;
 }
 
+let latestHistorySaveRevision = 0;
+let historySaveQueue: Promise<void> = Promise.resolve();
 
+function imageHasPersistableAsset(image: GeneratedImage): boolean {
+  return image.kind !== 'partial' && Boolean(image.src || image.storageAssetKey);
+}
+
+function taskHasPersistableImage(task: GenerationTask): boolean {
+  if (task.images.some(imageHasPersistableAsset)) return true;
+  return Boolean(task.batch?.items.some((item) => item.images.some(imageHasPersistableAsset)));
+}
+
+function imageSignature(image: GeneratedImage): string {
+  return [
+    image.id,
+    image.kind,
+    image.index,
+    image.batchItemId ?? '',
+    image.storageAssetKey ?? '',
+    image.storageThumbnailKey ?? '',
+    image.storageAssetLoaded === false ? 'lazy' : 'full',
+    image.src?.length ?? 0,
+    image.thumbnailSrc?.length ?? 0
+  ].join(':');
+}
+
+export function createPersistableGenerationTaskHistorySnapshot(tasks: GenerationTask[]): GenerationTask[] {
+  return normalizeGenerationTasks(
+    tasks.filter((task) => !isActiveGenerationStatus(task.status) || taskHasPersistableImage(task)),
+    120
+  );
+}
+
+export function getGenerationTaskHistoryPersistenceSignature(tasks: readonly GenerationTask[]): string {
+  return JSON.stringify(tasks.map((task) => ({
+    id: task.id,
+    status: task.status,
+    error: task.error ?? null,
+    images: task.images.map(imageSignature),
+    batch: task.batch ? task.batch.items.map((item) => ({
+      id: item.id,
+      status: item.status,
+      error: item.error ?? null,
+      images: item.images.map(imageSignature)
+    })) : null
+  })));
+}
 
 function shouldLoadFullAsset(image: GeneratedImage): image is GeneratedImage & { storageAssetKey: string } {
   return Boolean(image.storageAssetKey && image.storageAssetLoaded === false);
@@ -100,19 +146,32 @@ export function shouldPersistGenerationTaskHistory(tasks: readonly GenerationTas
   return !tasks.some((task) => isActiveGenerationStatus(task.status));
 }
 
-export async function saveGenerationTaskHistory(tasks: GenerationTask[], dependencies: GenerationTaskHistorySyncDependencies = {}): Promise<void> {
+async function saveGenerationTaskHistoryNow(tasks: GenerationTask[], dependencies: GenerationTaskHistorySyncDependencies = {}): Promise<void> {
   const { remote, fallback } = getSyncStores(dependencies);
-  const safeTasks = normalizeGenerationTasks(tasks, 120);
+  const safeTasks = tasks;
   try {
     const tasksWithFullAssets = await withGeneratedImageFullAssets(safeTasks);
     const tasksWithThumbnails = await withGeneratedImageThumbnails(tasksWithFullAssets);
     await remote.save(tasksWithThumbnails);
-    // Keep only a small emergency cache in localStorage; the real history lives in the encrypted storage backend.
     fallback.save(tasksWithThumbnails);
   } catch (error) {
     console.warn('Could not persist generation history to the encrypted database. Using local fallback cache.', error);
     fallback.save(safeTasks);
   }
+}
+
+export function saveGenerationTaskHistory(tasks: GenerationTask[], dependencies: GenerationTaskHistorySyncDependencies = {}): Promise<void> {
+  const revision = ++latestHistorySaveRevision;
+  const safeTasks = normalizeGenerationTasks(tasks, 120);
+
+  historySaveQueue = historySaveQueue
+    .catch(() => undefined)
+    .then(async () => {
+      if (revision !== latestHistorySaveRevision) return;
+      await saveGenerationTaskHistoryNow(safeTasks, dependencies);
+    });
+
+  return historySaveQueue;
 }
 
 export async function clearGenerationTaskHistory(dependencies: GenerationTaskHistorySyncDependencies = {}): Promise<void> {

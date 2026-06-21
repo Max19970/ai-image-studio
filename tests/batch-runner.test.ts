@@ -97,7 +97,7 @@ test('batch task reducer keeps streamed images attached without final duplicatio
 test('batch task reducer replaces partial previews within their own batch item slot', () => {
   let task = createTask();
   const firstPartial = image(0, { id: 'partial-1', kind: 'partial', src: 'data:image/png;base64,first', createdAt: 20 });
-  const secondPartial = image(0, { id: 'partial-2', kind: 'partial', src: 'data:image/png;base64,second', createdAt: 21 });
+  const secondPartial = image(42, { id: 'partial-2', kind: 'partial', src: 'data:image/png;base64,second', createdAt: 21 });
   const otherItemPartial = image(1, { id: 'partial-other', kind: 'partial', batchItemId: 'item-1', batchItemIndex: 1, src: 'data:image/png;base64,other', createdAt: 22 });
 
   task = reduceBatchTask(task, { type: 'item-streamed', itemId: 'item-0', image: firstPartial }, 3);

@@ -5,7 +5,7 @@ import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain
 import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
-import type { StateSetter, TaskHistoryCommands, TranslateFn } from './types';
+import type { ServerSubmissionSetter, StateSetter, TaskHistoryCommands, TranslateFn } from './types';
 
 export interface ProviderProbeCommandState {
   setCapabilityReport: StateSetter<ProviderProbeReport | null>;
@@ -53,6 +53,7 @@ export interface CreateAppCommandsArgs {
   setSelectedTaskId: StateSetter<string | null>;
   setSelectedImageId: StateSetter<string | null>;
   setBusy: StateSetter<boolean>;
+  setServerSubmission: ServerSubmissionSetter;
   setBatchComposerOpen: StateSetter<boolean>;
   setBatchDrafts: StateSetter<BatchComposerDraft[]>;
   setBatchIntervalSeconds: StateSetter<number>;

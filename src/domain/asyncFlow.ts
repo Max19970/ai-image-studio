@@ -4,12 +4,12 @@ export function delay(ms: number, signal?: AbortSignal) {
       reject(new DOMException('Request was cancelled.', 'AbortError'));
       return;
     }
-    const id = window.setTimeout(() => {
+    const id = globalThis.setTimeout(() => {
       signal?.removeEventListener('abort', onAbort);
       resolve();
     }, ms);
     const onAbort = () => {
-      window.clearTimeout(id);
+      globalThis.clearTimeout(id);
       reject(new DOMException('Request was cancelled.', 'AbortError'));
     };
     signal?.addEventListener('abort', onAbort, { once: true });

@@ -37,6 +37,7 @@ export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCom
       mask: args.mask,
       taskHistory: args.taskHistory,
       setBusy: args.setBusy,
+      setServerSubmission: args.setServerSubmission,
       t: args.t
     }),
     openParameters: () => args.setParametersOpen(true),

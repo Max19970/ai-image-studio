@@ -21,11 +21,14 @@ interface DownloadRegistrationResponse {
   mediaType?: unknown;
 }
 
-interface ResolvedTelegramDownload {
+export interface ResolvedServerImageDownload {
   url: string;
   filename: string;
+  mediaType: string;
   trustedImage: boolean;
 }
+
+type ResolvedTelegramDownload = ResolvedServerImageDownload;
 
 export function shouldUseTelegramMiniAppDownload(webApp: TelegramWebAppBridge | null = getTelegramWebApp()): boolean {
   return Boolean(webApp && (typeof webApp.downloadFile === 'function' || typeof webApp.openLink === 'function'));
@@ -68,7 +71,7 @@ export async function resolveTelegramDownloadUrl(request: TelegramMiniAppImageDo
   return (await resolveTelegramDownload(request))?.url ?? null;
 }
 
-async function resolveTelegramDownload(request: TelegramMiniAppImageDownloadRequest): Promise<ResolvedTelegramDownload | null> {
+export async function resolveServerImageDownload(request: TelegramMiniAppImageDownloadRequest): Promise<ResolvedServerImageDownload | null> {
   if (request.storageAssetKey) {
     return registerDownload({ filename: request.filename, storageAssetKey: request.storageAssetKey });
   }
@@ -79,10 +82,17 @@ async function resolveTelegramDownload(request: TelegramMiniAppImageDownloadRequ
     return dataUrl ? registerDownload({ filename: request.filename, src: dataUrl }) : null;
   }
 
+  return null;
+}
+
+async function resolveTelegramDownload(request: TelegramMiniAppImageDownloadRequest): Promise<ResolvedTelegramDownload | null> {
+  const serverDownload = await resolveServerImageDownload(request);
+  if (serverDownload) return serverDownload;
+
   try {
     const url = new URL(request.href, window.location.href);
     return url.protocol === 'https:'
-      ? { url: url.toString(), filename: request.filename, trustedImage: false }
+      ? { url: url.toString(), filename: request.filename, mediaType: '', trustedImage: false }
       : null;
   } catch {
     return null;
@@ -102,7 +112,7 @@ async function registerDownload(request: DownloadRegistrationRequest): Promise<R
 
   const filename = typeof data.filename === 'string' && data.filename.trim() ? data.filename : request.filename;
   const mediaType = typeof data.mediaType === 'string' ? data.mediaType : '';
-  return { url: data.url, filename, trustedImage: /^image\//i.test(mediaType) };
+  return { url: data.url, filename, mediaType, trustedImage: /^image\//i.test(mediaType) };
 }
 
 async function verifyTelegramDownloadUrl(url: string): Promise<boolean> {

@@ -9,7 +9,11 @@ import {
   normalizeGenerationStatus,
   runWithRetryPolicy
 } from '../src/processes/generation-task-lifecycle';
-import { shouldPersistGenerationTaskHistory } from '../src/processes/storage-sync';
+import {
+  createPersistableGenerationTaskHistorySnapshot,
+  getGenerationTaskHistoryPersistenceSignature,
+  shouldPersistGenerationTaskHistory
+} from '../src/processes/storage-sync';
 
 test('generation lifecycle normalizes old statuses and classifies active work', () => {
   assert.equal(normalizeGenerationStatus('streaming'), 'running');
@@ -25,6 +29,22 @@ test('generation history persistence waits until active previews finish', () => 
   assert.equal(shouldPersistGenerationTaskHistory([{ id: 'task-1', status: 'retrying' } as any]), false);
   assert.equal(shouldPersistGenerationTaskHistory([{ id: 'task-1', status: 'succeeded' } as any]), true);
   assert.equal(shouldPersistGenerationTaskHistory([{ id: 'task-1', status: 'failed' } as any]), true);
+});
+
+test('generation history persistence snapshots finished images even while other work is active', () => {
+  const request = { prompt: '', createdAt: 1, mode: 'generate', endpoint: '', providerLabel: '', model: '', modelLabel: '', payload: {}, warnings: [], attachments: [], params: {} };
+  const image = { id: 'image-1', src: 'data:image/png;base64,QUJDRA==', format: 'png', kind: 'final', index: 0, createdAt: 10 };
+
+  const snapshot = createPersistableGenerationTaskHistorySnapshot([
+    { id: 'done', kind: 'single', status: 'succeeded', createdAt: 1, updatedAt: 2, request, images: [image] },
+    { id: 'active-empty', kind: 'single', status: 'running', createdAt: 3, updatedAt: 4, request, images: [] },
+    { id: 'active-with-image', kind: 'single', status: 'running', createdAt: 5, updatedAt: 6, request, images: [{ ...image, id: 'image-2' }] }
+  ] as any);
+
+  assert.deepEqual(snapshot.map((task) => task.id), ['done', 'active-with-image']);
+  assert.equal(snapshot[1].status, 'failed');
+  assert.equal(shouldPersistGenerationTaskHistory(snapshot), true);
+  assert.equal(getGenerationTaskHistoryPersistenceSignature(snapshot).includes('image-2'), true);
 });
 
 test('task cancellation registry aborts and releases controllers', () => {

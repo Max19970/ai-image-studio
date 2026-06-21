@@ -12,6 +12,7 @@ import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from 
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import type { TaskHistoryCommands } from '../commands/types';
+import type { ServerSubmissionState } from './state/useGenerationExecutionState';
 
 export type StateSetter<T> = Dispatch<SetStateAction<T>>;
 
@@ -44,6 +45,8 @@ export interface WorkspaceState {
   setSelectedImageId: StateSetter<string | null>;
   busy: boolean;
   setBusy: StateSetter<boolean>;
+  serverSubmission: ServerSubmissionState;
+  setServerSubmission: StateSetter<ServerSubmissionState>;
   probeError: string | null;
   setProbeError: StateSetter<string | null>;
   probingProviderId: string | null;
