@@ -28,6 +28,7 @@ interface SingleGenerationCommandArgs {
   setBusy: StateSetter<boolean>;
   setServerSubmission: ServerSubmissionSetter;
   t: TranslateFn;
+  galleryPath: string;
 }
 
 interface BatchGenerationCommandArgs {
@@ -41,6 +42,7 @@ interface BatchGenerationCommandArgs {
   setBusy: StateSetter<boolean>;
   setBatchComposerOpen: StateSetter<boolean>;
   t: TranslateFn;
+  galleryPath: string;
 }
 
 export async function submitSingleGenerationCommand(args: SingleGenerationCommandArgs) {
@@ -60,7 +62,8 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
     taskHistory,
     setBusy,
     setServerSubmission,
-    t
+    t,
+    galleryPath
   } = args;
 
   if (!canSubmit) return;
@@ -80,7 +83,8 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
       referenceImages,
       mask,
       taskHistory,
-      t
+      t,
+      galleryPath
     });
     setServerSubmission({ phase: 'waiting-for-event', taskId });
   } catch (error) {
@@ -102,7 +106,8 @@ export async function submitBatchGenerationCommand(args: BatchGenerationCommandA
     taskHistory,
     setBusy,
     setBatchComposerOpen,
-    t
+    t,
+    galleryPath
   } = args;
 
   if (!canSubmit) return;
@@ -123,6 +128,7 @@ export async function submitBatchGenerationCommand(args: BatchGenerationCommandA
     const intervalMs = normalizeBatchIntervalSeconds(intervalSeconds);
     await enqueueServerBatchGenerationRequest({
       intervalMs,
+      galleryPath,
       aggregateSnapshot: createAggregateSnapshot({ prepared, intervalMs, createdAt: Date.now(), t }),
       items: prepared.map((item) => ({
         provider: item.provider,

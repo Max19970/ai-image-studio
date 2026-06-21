@@ -1,4 +1,4 @@
-import type { GalleryLayoutContext, GalleryTaskCardContext } from '../context/workspace/gallery';
+import type { GalleryFolderCardContext, GalleryLayoutContext, GalleryTaskCardContext } from '../context/workspace/gallery';
 import type { ElementPlacement } from '../registry/types';
 
 const galleryLayoutPlacements = [
@@ -24,6 +24,15 @@ const galleryLayoutPlacements = [
   }
 ] satisfies ElementPlacement<GalleryLayoutContext>[];
 
+const galleryFolderCardPlacements = [
+  {
+    id: 'gallery.folder.card',
+    slot: 'gallery/folder-card',
+    use: 'gallery.sections.folderCard',
+    order: 10
+  }
+] satisfies ElementPlacement<GalleryFolderCardContext>[];
+
 const galleryCardPlacements = [
   {
     id: 'gallery.card.placeholder',
@@ -43,5 +52,6 @@ const galleryCardPlacements = [
 
 export default [
   ...galleryLayoutPlacements,
+  ...galleryFolderCardPlacements,
   ...galleryCardPlacements
 ] satisfies ElementPlacement<any>[];

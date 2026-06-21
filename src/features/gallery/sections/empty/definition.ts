@@ -6,5 +6,5 @@ export default {
   id: 'gallery.sections.empty',
   label: 'Gallery empty state section',
   Component: GalleryEmptySection,
-  enabled: (context) => context.tasks.length === 0
+  enabled: (context) => context.items.length === 0
 } satisfies ElementDefinition<GalleryLayoutContext>;

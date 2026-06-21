@@ -3,6 +3,7 @@ import { SlotHost } from '../../../../interface/SlotHost';
 import type { GalleryHeaderActionContext, GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
 import { GalleryArchiveControls } from './GalleryArchiveControls';
+import { GalleryExplorerBar } from '../filesystem/GalleryExplorerBar';
 import styles from './GalleryHeaderSection.module.css';
 
 export function GalleryHeaderSection({ context }: ElementDefinitionProps<GalleryLayoutContext>) {
@@ -38,6 +39,7 @@ export function GalleryHeaderSection({ context }: ElementDefinitionProps<Gallery
           className={styles.headerActions}
         />
       </div>
+      <GalleryExplorerBar context={context} />
       <GalleryArchiveControls context={context} />
     </header>
   );

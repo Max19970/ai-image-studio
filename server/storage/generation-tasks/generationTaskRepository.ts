@@ -6,6 +6,7 @@ import {
   storageBackend,
   storageDbPath
 } from '../encryptedStore';
+import { normalizeGalleryPath, normalizeGalleryPaths } from '../../../src/domain/galleryFilesystem';
 import { storageSchemaVersion } from '../schema';
 import {
   clampLimit,
@@ -30,6 +31,15 @@ function resolveLoadOptions(options: GenerationTaskHistoryLoadOptions): Required
   };
 }
 
+function isActiveStoredStatus(status: unknown): boolean {
+  return status === 'queued' || status === 'sending' || status === 'running' || status === 'retrying';
+}
+
+function isEmptyActiveStoredTask(task: JsonObject, imageCount: number): boolean {
+  if (imageCount > 0) return false;
+  return isActiveStoredStatus(task.status);
+}
+
 function loadV2Tasks(options: Required<GenerationTaskHistoryLoadOptions>): unknown[] {
   const taskRows = selectTaskRows(options.limit, options.offset);
   const assetsByTask = new Map<string, ReturnType<typeof selectAssetRows>>();
@@ -42,6 +52,9 @@ function loadV2Tasks(options: Required<GenerationTaskHistoryLoadOptions>): unkno
   return taskRows.flatMap((row) => {
     const task = loadEncryptedDocument<JsonObject | null>(generationTaskDocumentBucket, row.document_key, null);
     if (!task) return [];
+    if (isEmptyActiveStoredTask(task, row.image_count)) return [];
+    task.galleryPath = normalizeGalleryPath(task.galleryPath ?? row.gallery_path);
+    task.galleryPaths = normalizeGalleryPaths(task.galleryPaths, task.galleryPath);
     return [restoreTaskImages(task, assetsByTask.get(row.id) ?? [], options.assetMode, loadGenerationTaskAssetDocument)];
   });
 }
@@ -71,9 +84,15 @@ export function saveGenerationTaskHistoryDocuments(tasks: unknown[]) {
     tasks.forEach((taskLike) => {
       if (!isRecord(taskLike)) return;
       const taskId = stringOrFallback(taskLike.id, `task-${Date.now()}`);
-      const task = { ...taskLike, id: taskId };
+      const task = {
+        ...taskLike,
+        id: taskId,
+        galleryPath: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)[0] ?? normalizeGalleryPath(taskLike.galleryPath),
+        galleryPaths: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)
+      };
       const imageRefs = collectImages(task, taskId);
       const fullImageRefs = imageRefs.filter((ref) => ref.assetKind === 'full');
+      if (isEmptyActiveStoredTask(task, fullImageRefs.length)) return;
 
       const taskStats = saveEncryptedDocument(generationTaskDocumentBucket, taskId, cloneWithoutImages(task));
       stats.compressedBytes += taskStats.compressedBytes;

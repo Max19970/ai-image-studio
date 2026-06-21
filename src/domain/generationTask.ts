@@ -134,6 +134,9 @@ export interface GenerationTask {
   id: string;
   kind?: 'single' | 'batch';
   status: GenerationStatus;
+  galleryPath?: string;
+  galleryPaths?: string[];
+  galleryFavorite?: boolean;
   createdAt: number;
   updatedAt: number;
   request: GenerationRequestSnapshot;

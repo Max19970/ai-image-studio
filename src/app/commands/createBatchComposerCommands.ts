@@ -48,7 +48,8 @@ export function createBatchComposerCommands(args: CreateAppCommandsArgs): BatchC
       taskHistory: args.taskHistory,
       setBusy: args.setBusy,
       setBatchComposerOpen: args.setBatchComposerOpen,
-      t: args.t
+      t: args.t,
+      galleryPath: args.activeGalleryPath
     }),
     close: () => args.setBatchComposerOpen(false)
   };

@@ -1,0 +1,327 @@
+.explorer {
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 20px;
+  padding: 10px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255,255,255,.08), transparent 36%),
+    rgba(0,0,0,.18);
+}
+
+.collapsed {
+  gap: 0;
+  padding: 8px;
+}
+
+.heroBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.currentPathBlock {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.pathKicker {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.currentPathButton {
+  display: inline-flex;
+  min-width: 0;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -.025em;
+  cursor: pointer;
+}
+
+.currentPathButton span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collapseGlyph {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.primaryTools {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.breadcrumbs {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding-top: 9px;
+  scrollbar-width: thin;
+}
+
+.crumb {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: rgba(255,255,255,.055);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 720;
+  letter-spacing: -.02em;
+  cursor: pointer;
+}
+
+.crumbActive {
+  background: rgba(255,255,255,.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13);
+}
+
+.separatorWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.separator {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.iconAction,
+.primaryAction,
+.createButton,
+.cancelCreateButton,
+.selectionButton {
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  background: rgba(255,255,255,.075);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.iconAction {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+}
+
+.toolIcon {
+  width: 15px;
+  height: 15px;
+}
+
+.primaryAction {
+  padding: 9px 12px;
+  background: rgba(255,255,255,.15);
+}
+
+.iconActionActive {
+  background: rgba(255,255,255,.16);
+}
+
+.iconAction:disabled,
+.selectionButton:disabled,
+.createButton:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+
+.creatorDock {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  gap: 8px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 8px;
+  background: rgba(255,255,255,.04);
+}
+
+.createInput {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  padding: 9px 12px;
+  background: rgba(0,0,0,.22);
+  color: var(--text);
+  outline: none;
+}
+
+.createInput:focus {
+  border-color: rgba(255,255,255,.32);
+}
+
+.createButton,
+.cancelCreateButton {
+  padding: 9px 12px;
+}
+
+.cancelCreateButton {
+  background: rgba(255,255,255,.045);
+  color: var(--muted);
+}
+
+.actionDeck {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 16px;
+  padding: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  scrollbar-width: thin;
+}
+
+.actionDeckActive {
+  background: rgba(255,255,255,.045);
+}
+
+.selectionButton {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+}
+
+.selectedCount {
+  flex: 0 0 auto;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.actionHint {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pinnedShelf {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  overflow-x: auto;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 16px;
+  padding: 8px;
+  scrollbar-width: thin;
+}
+
+.pinnedChip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  max-width: 220px;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 999px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,.065);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 720;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chipIcon {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .explorer {
+    gap: 8px;
+    margin-top: 10px;
+    border-radius: 18px;
+    padding: 8px;
+  }
+
+  .heroBar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .primaryTools {
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .primaryAction {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pathKicker {
+    display: none;
+  }
+
+  .currentPathButton {
+    width: 100%;
+    justify-content: space-between;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 14px;
+    padding: 9px 10px;
+    background: rgba(255,255,255,.045);
+  }
+
+  .breadcrumbs {
+    padding-top: 7px;
+  }
+
+  .creatorDock {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .createInput {
+    grid-column: 1 / -1;
+  }
+}

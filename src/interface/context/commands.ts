@@ -1,3 +1,6 @@
+import type { GalleryFolder } from '../../domain/galleryFilesystem';
+import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
+import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
 import type { BatchComposerDraft, GeneratedImage, GenerationRequestSnapshot, GenerationTask } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
 import type { ImageParams } from '../../domain/imageParams';
@@ -24,10 +27,21 @@ export interface ComposerCommands {
 }
 
 export interface GalleryCommands {
+  activePath: string;
+  galleryFolders: GalleryFolder[];
+  galleryPins: GalleryPinItem[];
+  galleryTagRecords: GalleryTagRecord[];
   clearResults: () => void;
   deleteTask: (taskId: string) => void;
   openTaskDetail: (task: GenerationTask, image?: GeneratedImage) => void;
   startHiresFix: (task: GenerationTask, image?: GeneratedImage | null) => Promise<void>;
+  setActivePath: (path: string) => void;
+  createFolder: (name: string) => Promise<void>;
+  deleteFolder: (path: string) => Promise<void>;
+  moveItem: (itemKind: 'task' | 'folder', itemId: string, targetPath: string) => Promise<void>;
+  pasteItems: (operation: GalleryClipboardOperation, items: GalleryClipboardItemPayload[], targetPath: string) => Promise<void>;
+  setPinned: (kind: GalleryMetadataKind, id: string, enabled: boolean) => Promise<void>;
+  setTags: (kind: GalleryMetadataKind, id: string, tags: string[]) => Promise<void>;
 }
 
 export interface BatchComposerCommands {

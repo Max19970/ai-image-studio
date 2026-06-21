@@ -1,5 +1,6 @@
 import type express from 'express';
 import type multer from 'multer';
+import { normalizeGalleryPath } from '../../src/domain/galleryFilesystem';
 import { getProviderAdapter, parseProviderSettings } from '../providers/registry';
 import {
   normalizePayload,
@@ -63,6 +64,10 @@ function parseTransport(value: unknown): ProviderSubmitTransportDefinition | nul
   };
 }
 
+function parseGalleryPath(value: unknown): string {
+  return normalizeGalleryPath(parseJsonField(value, '/'));
+}
+
 function parsePreviewStreamMode(value: unknown): ProviderPreviewStreamMode | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
@@ -101,7 +106,8 @@ function parseBatchItems(req: express.Request) {
       snapshot: parseSnapshot(item.snapshot),
       previewStreamMode: resolvePreviewStreamMode(req),
       retryAttempts: numericField(item.retryAttempts, 0),
-      retryDelaySeconds: numericField(item.retryDelaySeconds, 0)
+      retryDelaySeconds: numericField(item.retryDelaySeconds, 0),
+      galleryPath: parseGalleryPath(req.body.galleryPath)
     };
   });
 }
@@ -147,6 +153,7 @@ export function registerGenerationRoutes(app: express.Express, upload: multer.Mu
       const providerModeId = parseProviderModeId(req.body.providerModeId);
       const transport = parseTransport(req.body.transport);
       const snapshot = parseSnapshot(req.body.snapshot);
+      const galleryPath = parseGalleryPath(req.body.galleryPath);
       const task = await startServerGenerationRun({
         provider,
         payload,
@@ -154,6 +161,7 @@ export function registerGenerationRoutes(app: express.Express, upload: multer.Mu
         providerModeId,
         transport,
         snapshot,
+        galleryPath,
         previewStreamMode: resolvePreviewStreamMode(req)
       });
       res.status(202).json({ taskId: task.id, task });
@@ -167,7 +175,8 @@ export function registerGenerationRoutes(app: express.Express, upload: multer.Mu
       const task = await startServerBatchGenerationRun({
         items: parseBatchItems(req),
         intervalMs: numericField(parseJsonField(req.body.intervalMs, 0), 0),
-        aggregateSnapshot: parseJsonField(req.body.aggregateSnapshot, null) as any
+        aggregateSnapshot: parseJsonField(req.body.aggregateSnapshot, null) as any,
+        galleryPath: parseGalleryPath(req.body.galleryPath)
       });
       res.status(202).json({ taskId: task.id, task });
     } catch (error) {

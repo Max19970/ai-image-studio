@@ -16,7 +16,8 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
     targetImage,
     referenceImages,
     mask,
-    t
+    t,
+    galleryPath
   } = input;
 
   const snapshot = captureRequestSnapshot({
@@ -43,7 +44,8 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
     targetImage,
     referenceImages,
     mask,
-    snapshot
+    snapshot,
+    galleryPath
   });
 
   onEvent?.({ type: 'queued', taskId, request: snapshot });
