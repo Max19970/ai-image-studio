@@ -82,7 +82,7 @@ export function createComfyUiSubmitProxyRequest(input: ProviderSubmitProxyReques
         body: form,
         signal: input.signal
       },
-      streamed: false,
+      streamed: true,
       fallbackFormat: 'png'
     };
   }
@@ -95,7 +95,7 @@ export function createComfyUiSubmitProxyRequest(input: ProviderSubmitProxyReques
       body: JSON.stringify({ provider: input.provider, payload: input.payload, providerModeId, transport: submit }),
       signal: input.signal
     },
-    streamed: false,
+    streamed: true,
     fallbackFormat: 'png'
   };
 }

@@ -20,10 +20,27 @@ export function imageFromOpenAiCompatibleBase64(
   };
 }
 
+function collectResponseCompletedImages(root: any, fallbackFormat: string): GeneratedImage[] {
+  if (root?.type !== 'response.completed' || !Array.isArray(root?.response?.output)) return [];
+  const format = root?.output_format ?? fallbackFormat;
+  const images: GeneratedImage[] = [];
+
+  root.response.output.forEach((item: any) => {
+    const result = item?.result ?? item?.image?.b64_json ?? item?.b64_json;
+    if (item?.type === 'image_generation_call' && typeof result === 'string' && result) {
+      images.push(imageFromOpenAiCompatibleBase64(result, format, 'final', images.length, item));
+    }
+  });
+
+  return images;
+}
+
 export function collectOpenAiCompatibleImagesFromJson(json: unknown, fallbackFormat = 'png'): GeneratedImage[] {
   const images: GeneratedImage[] = [];
   const root = json as any;
   const format = root?.output_format ?? fallbackFormat;
+
+  images.push(...collectResponseCompletedImages(root, format));
 
   if (Array.isArray(root?.data)) {
     root.data.forEach((item: any, index: number) => {
@@ -34,7 +51,15 @@ export function collectOpenAiCompatibleImagesFromJson(json: unknown, fallbackFor
     });
   }
 
-  if (root?.b64_json) images.push(imageFromOpenAiCompatibleBase64(root.b64_json, format, root?.type?.includes('partial') ? 'partial' : 'final', root?.partial_image_index ?? 0, root));
+  if (typeof root?.partial_image_b64 === 'string' && root.partial_image_b64) {
+    images.push(imageFromOpenAiCompatibleBase64(root.partial_image_b64, format, 'partial', root.partial_image_index ?? 0, root));
+  }
+
+  if (typeof root?.b64_json === 'string' && root.b64_json) {
+    const isPartial = String(root?.type ?? '').includes('partial');
+    images.push(imageFromOpenAiCompatibleBase64(root.b64_json, format, isPartial ? 'partial' : 'final', root?.partial_image_index ?? 0, root));
+  }
+
   if (root?.image?.b64_json) images.push(imageFromOpenAiCompatibleBase64(root.image.b64_json, format, 'final', 0, root));
 
   return images;

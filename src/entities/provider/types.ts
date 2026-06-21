@@ -1,5 +1,5 @@
 import type { CapabilityEntry, CapabilityKey, ProviderProbeReport } from '../../domain/providerProbe';
-import type { GeneratedImage } from '../../domain/generationTask';
+import type { GeneratedImage, GenerationProgress } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
@@ -86,6 +86,8 @@ export interface ProviderRequestAdapter {
 
 export interface ProviderResponseAdapter {
   collectImagesFromJson(json: unknown, fallbackFormat?: string): GeneratedImage[];
+  collectProgressFromJson?(json: unknown): GenerationProgress | null;
+  collectErrorFromJson?(json: unknown): string | null;
   parseSseBlock(block: string): unknown[];
 }
 

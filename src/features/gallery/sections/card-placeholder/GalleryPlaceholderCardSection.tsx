@@ -9,6 +9,8 @@ export function GalleryPlaceholderCardSection({ context }: ElementDefinitionProp
   const { t } = useI18n();
   const { task } = context;
   const label = useGalleryStatusLabel(task.status);
+  const progressPercent = typeof task.progress?.percent === 'number' ? Math.round(task.progress.percent) : null;
+  const progressLabel = progressPercent !== null ? `${progressPercent}% · ${label}` : label;
   const actionContext: GalleryCardActionContext = {
     task,
     activeImage: null,
@@ -29,7 +31,7 @@ export function GalleryPlaceholderCardSection({ context }: ElementDefinitionProp
           <strong>{label}</strong>
           <p>{task.status === 'failed' ? (task.error || t('gallery.requestFailed')) : t('gallery.requestSentShort')}</p>
         </div>
-        <GalleryStatusPill status={task.status} floating>{label}</GalleryStatusPill>
+        <GalleryStatusPill status={task.status} floating>{progressLabel}</GalleryStatusPill>
       </button>
       <div className={styles.tileOverlay} aria-hidden="false">
         <div className={styles.tileActionGroup}>

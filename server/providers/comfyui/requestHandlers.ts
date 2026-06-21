@@ -11,6 +11,7 @@ import { fetchComfyUiJson } from './http';
 import { describeComfyUiError } from './errorNormalizer';
 import { createJsonResponse, mapComfyUiGenerationResult, type ComfyUiPromptResponse } from './responseMapper';
 import { selectComfyUiHiresFixTargetImage, uploadComfyUiInputImage } from './imageUpload';
+import { runComfyUiWorkflowStream } from './progressStream';
 import {
   buildComfyUiHiresFixWorkflow,
   buildComfyUiTextToImageWorkflow,
@@ -127,7 +128,7 @@ export async function fetchComfyUiGenerate(
 ): Promise<UpstreamRequestResult> {
   const config = resolveComfyUiGenerationConfig(provider, payload);
   const workflow = buildComfyUiTextToImageWorkflow(config);
-  return runComfyUiWorkflow({ provider, workflow, config, context });
+  return runComfyUiWorkflowStream({ provider, workflow, config, clientId: buildClientId(), context });
 }
 
 export async function fetchComfyUiHiresFix(
@@ -140,7 +141,7 @@ export async function fetchComfyUiHiresFix(
   const uploaded = await uploadComfyUiInputImage(provider, target, context);
   const config = resolveComfyUiHiresFixConfig(provider, payload, uploaded.name);
   const workflow = buildComfyUiHiresFixWorkflow(config);
-  return runComfyUiWorkflow({ provider, workflow, config, context });
+  return runComfyUiWorkflowStream({ provider, workflow, config, clientId: buildClientId(), context });
 }
 
 export async function fetchComfyUiEdit(

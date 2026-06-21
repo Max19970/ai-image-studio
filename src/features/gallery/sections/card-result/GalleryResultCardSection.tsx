@@ -16,13 +16,17 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
   const [slideDirection, setSlideDirection] = useState<'next' | 'prev'>('next');
   const tileRef = useRef<HTMLElement | null>(null);
   const label = useGalleryStatusLabel(task.status);
+  const isActiveTask = !isTerminalGenerationStatus(task.status);
+  const progressPercent = typeof task.progress?.percent === 'number' ? Math.round(task.progress.percent) : null;
   const activeImage = task.images[Math.min(activeIndex, Math.max(0, task.images.length - 1))] ?? null;
   const hasStoredThumbnail = Boolean(activeImage?.thumbnailSrc);
   const thumbnailSrc = useOptimizedImageSrc(activeImage?.thumbnailSrc ?? activeImage?.src ?? '', 620, { skipOptimization: hasStoredThumbnail });
   const isBatch = task.kind === 'batch';
   const hasMultiple = isBatch || task.images.length > 1;
-  const shouldShowStatusPill = activeImage?.kind === 'partial' || !isTerminalGenerationStatus(task.status);
-  const canAutoAdvance = useGalleryAutoAdvance(tileRef, task.images.length > 1);
+  const shouldShowStatusPill = activeImage?.kind === 'partial' || isActiveTask;
+  const statusLabel = activeImage?.kind === 'partial' ? t('gallery.kind.partial') : label;
+  const progressLabel = progressPercent !== null && isActiveTask ? `${progressPercent}% · ${statusLabel}` : statusLabel;
+  const canAutoAdvance = useGalleryAutoAdvance(tileRef, !isActiveTask && task.images.length > 1);
   const actionContext: GalleryCardActionContext = {
     task,
     activeImage,
@@ -33,13 +37,17 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
   };
 
   useEffect(() => {
+    if (isActiveTask && task.images.length > 0) {
+      setActiveIndex(task.images.length - 1);
+      return;
+    }
     if (task.images.length <= 1 || !canAutoAdvance) return;
     const id = window.setInterval(() => {
       setSlideDirection('next');
       setActiveIndex((value) => (value + 1) % task.images.length);
     }, 1700);
     return () => window.clearInterval(id);
-  }, [canAutoAdvance, task.images.length]);
+  }, [canAutoAdvance, isActiveTask, task.images.length]);
 
   useEffect(() => {
     if (activeIndex >= task.images.length) setActiveIndex(Math.max(0, task.images.length - 1));
@@ -76,7 +84,7 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
           </div>
         )}
         {shouldShowStatusPill ? (
-          <GalleryStatusPill status={task.status} floating>{activeImage?.kind === 'partial' ? t('gallery.kind.partial') : label}</GalleryStatusPill>
+          <GalleryStatusPill status={task.status} floating>{progressLabel}</GalleryStatusPill>
         ) : null}
         {hasMultiple && (
           <span className={styles.sequenceBadge}>

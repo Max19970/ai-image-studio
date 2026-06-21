@@ -102,6 +102,28 @@ test('OpenAI-compatible submit proxy config distinguishes JSON generate from mul
   assert.ok(edit.init.body instanceof FormData);
 });
 
+test('OpenAI-compatible response adapter collects streamed partial and completed Responses API images', () => {
+  const partial = collectOpenAiCompatibleImagesFromJson({
+    type: 'response.image_generation_call.partial_image',
+    partial_image_index: 1,
+    partial_image_b64: 'PARTIAL'
+  });
+  assert.equal(partial.length, 1);
+  assert.equal(partial[0].kind, 'partial');
+  assert.equal(partial[0].index, 1);
+  assert.equal(partial[0].src, 'data:image/png;base64,PARTIAL');
+
+  const completed = collectOpenAiCompatibleImagesFromJson({
+    type: 'response.completed',
+    response: {
+      output: [{ type: 'image_generation_call', result: 'FINAL' }]
+    }
+  });
+  assert.equal(completed.length, 1);
+  assert.equal(completed[0].kind, 'final');
+  assert.equal(completed[0].src, 'data:image/png;base64,FINAL');
+});
+
 test('OpenAI-compatible response adapter collects JSON images and parses SSE blocks', () => {
   const images = collectOpenAiCompatibleImagesFromJson({
     output_format: 'webp',
