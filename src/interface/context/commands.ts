@@ -3,6 +3,7 @@ import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../
 import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
 import type { BatchComposerDraft, GeneratedImage, GenerationRequestSnapshot, GenerationTask } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
+import type { RequestPreset } from '../../entities/request-presets';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderGenerationModeId } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
@@ -10,6 +11,15 @@ import type { StudioSettings } from '../../domain/studioSettings';
 export interface WorkspaceCommands {
   setTab: (tab: 'images' | 'info' | 'settings') => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+}
+
+export interface RequestPresetCommands {
+  saveCurrent: (name?: string, note?: string) => void;
+  saveBatchDraft: (draftId: string, name?: string, note?: string) => void;
+  applyPreset: (presetId: string) => void;
+  updatePreset: (presetId: string, patch: { name?: string; note?: string; captureCurrent?: boolean; captureBatchDraftId?: string }) => void;
+  deletePreset: (presetId: string) => void;
+  applyPresetToBatchDraft: (draftId: string, presetId: string) => void;
 }
 
 export interface ComposerCommands {
@@ -24,6 +34,7 @@ export interface ComposerCommands {
   setReferenceImages: (files: File[]) => void;
   setImageAttachments: (targetImage: File | null, referenceImages: File[]) => void;
   setMask: (file: File | null) => void;
+  requestPresets: RequestPresetCommands;
 }
 
 export interface GalleryCommands {
@@ -54,6 +65,7 @@ export interface BatchComposerCommands {
   openParameters: (draftId: string) => void;
   submit: () => Promise<void>;
   close: () => void;
+  requestPresets: RequestPresetCommands;
 }
 
 export interface SettingsCommands {

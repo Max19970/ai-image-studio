@@ -1,6 +1,8 @@
 import type { RefObject } from 'react';
 import type { AttachmentPreviewItem } from '../../shared/image';
 import type { BatchComposerDraft } from '../../domain/generationTask';
+import type { RequestPreset } from '../../entities/request-presets';
+import type { RequestPresetCommands } from '../../interface/context/commands';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ImageParams } from '../../domain/imageParams';
@@ -20,6 +22,7 @@ export interface BatchComposerLayoutContext {
   validDrafts: number;
   selectedDraftId: string | null;
   selectedDraftIndex: number;
+  requestPresets: RequestPreset[];
   actions: {
     changeIntervalSeconds: (value: number) => void;
     changeDraft: (id: string, patch: Partial<BatchComposerDraft>) => void;
@@ -31,6 +34,7 @@ export interface BatchComposerLayoutContext {
     openParameters: (id: string) => void;
     submit: () => void;
     cancel: () => void;
+    requestPresets: RequestPresetCommands;
   };
 }
 
@@ -49,6 +53,7 @@ export interface BatchDraftLayoutContext {
   modelOptions: ProviderModelOption[];
   attachments: AttachmentPreviewItem[];
   attachmentsCount: number;
+  requestPresets: RequestPreset[];
   fileInputs: {
     attachments: RefObject<HTMLInputElement | null>;
     mask: RefObject<HTMLInputElement | null>;
@@ -62,5 +67,9 @@ export interface BatchDraftLayoutContext {
     addAttachments: (files: File[]) => void;
     removeAttachment: (item: AttachmentPreviewItem) => void;
     clearAttachments: () => void;
+    savePreset: (name?: string, note?: string) => void;
+    updatePreset: (presetId: string, patch: { name?: string; note?: string; captureCurrent?: boolean }) => void;
+    deletePreset: (presetId: string) => void;
+    applyPreset: (presetId: string) => void;
   };
 }

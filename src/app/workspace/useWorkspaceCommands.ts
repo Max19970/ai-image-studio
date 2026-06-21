@@ -24,6 +24,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
     batchCanSubmit: derived.batchCanSubmit,
     batchDrafts: state.batchDrafts,
     batchIntervalSeconds: state.batchIntervalSeconds,
+    requestPresets: state.requestPresets,
     activeBatchDraft: derived.activeBatchDraft,
     studioSettings: state.studioSettings,
     capabilityReport: state.capabilityReport,
@@ -64,6 +65,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
     setBatchComposerOpen: state.setBatchComposerOpen,
     setBatchDrafts: state.setBatchDrafts,
     setBatchIntervalSeconds: state.setBatchIntervalSeconds,
+    setRequestPresets: state.setRequestPresets,
     setBatchParametersDraftId: state.setBatchParametersDraftId,
     normalizeSettings: normalizeSelectedModel
   }), [state, derived, t]);

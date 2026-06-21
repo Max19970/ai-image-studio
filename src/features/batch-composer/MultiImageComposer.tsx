@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { BatchComposerDraft } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
 import type { StudioSettings } from '../../domain/studioSettings';
+import type { RequestPreset } from '../../entities/request-presets';
 import type { BatchComposerCommands } from '../../interface/context/commands';
 import { useI18n } from '../../i18n';
 import { hasProviderModeRequiredAttachments } from '../../entities/provider/compatibility';
@@ -19,6 +20,7 @@ interface Props {
   models: GenerationModel[];
   providers: GenerationProvider[];
   studioSettings: StudioSettings;
+  requestPresets: RequestPreset[];
   commands: BatchComposerCommands;
 }
 
@@ -30,6 +32,7 @@ export function MultiImageComposer({
   models,
   providers,
   studioSettings,
+  requestPresets,
   commands
 }: Props) {
   const { t } = useI18n();
@@ -89,7 +92,8 @@ export function MultiImageComposer({
     removeDraft,
     openParameters,
     submit,
-    cancel: close
+    cancel: close,
+    requestPresets: commands.requestPresets
   }), [
     setIntervalSeconds,
     patchDraft,
@@ -99,7 +103,8 @@ export function MultiImageComposer({
     removeDraft,
     openParameters,
     submit,
-    close
+    close,
+    commands.requestPresets
   ]);
 
   const context = useMemo<BatchComposerLayoutContext>(() => ({
@@ -114,6 +119,7 @@ export function MultiImageComposer({
     validDrafts,
     selectedDraftId,
     selectedDraftIndex,
+    requestPresets,
     actions: contextActions
   }), [
     drafts,
@@ -127,6 +133,7 @@ export function MultiImageComposer({
     validDrafts,
     selectedDraftId,
     selectedDraftIndex,
+    requestPresets,
     contextActions
   ]);
 

@@ -57,20 +57,24 @@ function focusWithoutScroll(element: HTMLElement | null | undefined) {
 function resolvePosition(args: {
   anchor: DOMRect;
   panel: DOMRect;
+  panelContentWidth: number;
   placement: Placement;
   offset: number;
   margin: number;
   matchAnchorWidth: boolean;
   minWidth?: number;
 }): FloatingState {
-  const { anchor, panel, placement, offset, margin, matchAnchorWidth, minWidth } = args;
+  const { anchor, panel, panelContentWidth, placement, offset, margin, matchAnchorWidth, minWidth } = args;
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const viewportMaxWidth = Math.max(120, viewportWidth - margin * 2);
-  const measuredPanelWidth = panel.width > 0 && panel.width < viewportMaxWidth - 1 ? panel.width : 0;
+  const measuredPanelWidth = minWidth
+    ? panel.width || 0
+    : Math.max(panel.width || 0, panelContentWidth || 0);
+  const contentWidth = measuredPanelWidth > 0 && measuredPanelWidth < viewportMaxWidth - 1 ? measuredPanelWidth : 0;
   const desiredWidth = matchAnchorWidth
     ? anchor.width
-    : minWidth ?? (measuredPanelWidth || Math.min(anchor.width, viewportMaxWidth));
+    : Math.max(minWidth ?? 0, contentWidth || Math.min(anchor.width, viewportMaxWidth));
   const width = Math.min(Math.max(desiredWidth, minWidth ?? 0, 120), viewportMaxWidth);
   const estimatedHeight = Math.min(panel.height || 220, Math.max(120, viewportHeight - margin * 2));
   const spaceBelow = viewportHeight - anchor.bottom - margin - offset;
@@ -114,7 +118,7 @@ function resolvePosition(args: {
       position: 'fixed',
       left,
       top,
-      width: matchAnchorWidth || minWidth ? width : undefined,
+      width: matchAnchorWidth || minWidth || contentWidth ? width : undefined,
       minWidth: matchAnchorWidth ? width : minWidth,
       maxWidth: `calc(100vw - ${margin * 2}px)`,
       maxHeight,
@@ -160,6 +164,7 @@ export function FloatingPopover({
     setFloating(resolvePosition({
       anchor: anchor.getBoundingClientRect(),
       panel: panel.getBoundingClientRect(),
+      panelContentWidth: panel.scrollWidth,
       placement,
       offset,
       margin: viewportMargin,

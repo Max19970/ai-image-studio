@@ -1,7 +1,8 @@
 .menu {
   display: grid;
   gap: 8px;
-  min-width: 292px;
+  width: 292px;
+  min-width: 0;
 }
 .group {
   display: grid;
@@ -17,7 +18,7 @@
 }
 .modeGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 143px);
   gap: 5px;
 }
 .action,
@@ -38,6 +39,8 @@
 .modeButton {
   grid-template-columns: minmax(0, 1fr);
   gap: 4px;
+  width: 143px;
+  min-width: 0;
 }
 .action:hover,
 .modeButton:hover,
@@ -94,16 +97,23 @@
   font-size: 10px;
   line-height: 1.35;
 }
+.modeButton small {
+  overflow-wrap: anywhere;
+}
 .danger:hover {
   background: rgba(255,154,169,.08);
   color: #ffd8de;
 }
 @media (max-width: 620px) {
   .menu {
+    width: 100%;
     min-width: 0;
   }
   .modeGrid {
     grid-template-columns: 1fr;
+  }
+  .modeButton {
+    width: 100%;
   }
   .action,
   .modeButton {

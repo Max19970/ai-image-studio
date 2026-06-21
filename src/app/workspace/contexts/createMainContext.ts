@@ -18,6 +18,7 @@ export function createMainContext({ state, derived, commands }: WorkspaceContext
       models: state.studioSettings.models,
       providers: state.studioSettings.providers,
       studioSettings: state.studioSettings,
+      requestPresets: state.requestPresets,
       commands: commands.batchComposer
     },
     info: {},

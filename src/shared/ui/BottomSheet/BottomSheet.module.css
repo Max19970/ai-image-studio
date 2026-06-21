@@ -21,8 +21,11 @@
 .sheet {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   width: min(100%, 780px);
   max-height: calc(100dvh - 14px);
+  min-height: 0;
   justify-self: center;
   overflow: hidden;
   border: 1px solid var(--surface-border-strong);
@@ -53,6 +56,7 @@
 
 .handle {
   display: block;
+  flex: 0 0 auto;
   width: 42px;
   height: 4px;
   margin: 10px auto 0;
@@ -61,6 +65,7 @@
 }
 
 .header {
+  flex: 0 0 auto;
   padding: 14px var(--density-comfortable-padding) 10px;
   border-bottom: 1px solid var(--surface-border-soft);
 }
@@ -82,10 +87,12 @@
 
 .body {
   position: relative;
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: inherit;
-  overflow: auto;
-  padding: var(--density-comfortable-padding) var(--density-comfortable-padding) calc(var(--density-comfortable-padding) + max(16px, env(safe-area-inset-bottom)));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--density-comfortable-padding) var(--density-comfortable-padding) calc(var(--density-comfortable-padding) + max(48px, env(safe-area-inset-bottom)));
 }
 
 .compactHeader .header {
@@ -111,6 +118,7 @@
 }
 
 .footer {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -146,6 +154,6 @@
   }
 
   .body {
-    padding: 12px 12px calc(12px + max(12px, env(safe-area-inset-bottom)));
+    padding: 12px 12px calc(12px + max(56px, env(safe-area-inset-bottom)));
   }
 }

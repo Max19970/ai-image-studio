@@ -41,13 +41,18 @@ export function BatchDraftCardSection({ context }: ElementDefinitionProps<BatchD
     ...context,
     attachments,
     attachmentsCount: attachments.length,
+    requestPresets: context.requestPresets,
     fileInputs: {
       attachments: attachmentsRef,
       mask: maskRef
     },
     actions: {
       ...context.actions,
-      removeAttachment
+      removeAttachment,
+      savePreset: context.actions.savePreset,
+      updatePreset: context.actions.updatePreset,
+      deletePreset: context.actions.deletePreset,
+      applyPreset: context.actions.applyPreset
     }
   }), [context, attachments, removeAttachment]);
 

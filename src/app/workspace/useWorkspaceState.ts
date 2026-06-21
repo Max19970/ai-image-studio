@@ -5,6 +5,7 @@ import { useGenerationExecutionState } from './state/useGenerationExecutionState
 import { useGalleryFilesystemState } from './state/useGalleryFilesystemState';
 import { useNavigationWorkspaceState } from './state/useNavigationWorkspaceState';
 import { useProviderProbeState } from './state/useProviderProbeState';
+import { useRequestPresetWorkspaceState } from './state/useRequestPresetWorkspaceState';
 import { useSettingsWorkspaceState } from './state/useSettingsWorkspaceState';
 import { useTaskSelectionState } from './state/useTaskSelectionState';
 
@@ -16,6 +17,7 @@ export function useWorkspaceState(): WorkspaceState {
   const taskSelection = useTaskSelectionState();
   const execution = useGenerationExecutionState(taskSelection.tasks);
   const providerProbe = useProviderProbeState(settings.studioSettings);
+  const requestPresets = useRequestPresetWorkspaceState();
   const batch = useBatchWorkspaceState();
 
   return {
@@ -26,6 +28,7 @@ export function useWorkspaceState(): WorkspaceState {
     ...taskSelection,
     ...execution,
     ...providerProbe,
+    ...requestPresets,
     ...batch
   };
 }

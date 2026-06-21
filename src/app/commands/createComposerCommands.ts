@@ -1,5 +1,5 @@
 import type { ImageParams } from '../../domain/imageParams';
-import type { ComposerCommands } from '../../interface/context/commands';
+import type { ComposerCommands, RequestPresetCommands } from '../../interface/context/commands';
 import {
   applyComposerCompatibilityForModel,
   getComposerModeForAttachmentRole,
@@ -10,7 +10,7 @@ import type { CreateAppCommandsArgs } from './appCommandTypes';
 import { submitSingleGenerationCommand } from './generationCommands';
 import { openBatchComposerCommand } from './workspaceCommands';
 
-export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCommands {
+export function createComposerCommands(args: CreateAppCommandsArgs, requestPresets: RequestPresetCommands): ComposerCommands {
   const patchParams = (patch: Partial<ImageParams>) => args.setParams((prev) => ({ ...prev, ...patch }));
 
   return {
@@ -89,6 +89,7 @@ export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCom
         referenceImages: args.referenceImages,
         mask: file
       });
-    }
+    },
+    requestPresets
   };
 }

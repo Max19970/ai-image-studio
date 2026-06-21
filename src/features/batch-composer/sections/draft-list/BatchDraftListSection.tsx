@@ -107,6 +107,7 @@ function createDraftContext(
     controlSurface: controlContext.surface,
     selectedModel: controlContext.model,
     modelOptions,
+    requestPresets: context.requestPresets,
     attachments: [],
     attachmentsCount: 0,
     fileInputs: {
@@ -121,7 +122,15 @@ function createDraftContext(
       openParameters: () => context.actions.openParameters(draft.id),
       addAttachments: (files) => context.actions.changeDraft(draft.id, addImageFilesToProviderModeDraft(draft, modeResolution.activeMode, files)),
       removeAttachment: () => undefined,
-      clearAttachments: () => context.actions.changeDraft(draft.id, { targetImage: null, referenceImages: [], mask: null })
+      clearAttachments: () => context.actions.changeDraft(draft.id, { targetImage: null, referenceImages: [], mask: null }),
+      savePreset: (name, note) => context.actions.requestPresets.saveBatchDraft(draft.id, name, note),
+      updatePreset: (presetId, patch) => context.actions.requestPresets.updatePreset(presetId, {
+        name: patch.name,
+        note: patch.note,
+        ...(patch.captureCurrent ? { captureBatchDraftId: draft.id } : {})
+      }),
+      deletePreset: context.actions.requestPresets.deletePreset,
+      applyPreset: (presetId) => context.actions.requestPresets.applyPresetToBatchDraft(draft.id, presetId)
     }
   };
 }

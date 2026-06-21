@@ -11,6 +11,7 @@ import params from './params.json';
 import attachment from './attachment.json';
 import detail from './detail.json';
 import requestPreview from './requestPreview.json';
+import requestPresets from './requestPresets.json';
 
 export const ruDictionary = Object.freeze({
   ...app,
@@ -25,4 +26,5 @@ export const ruDictionary = Object.freeze({
   ...attachment,
   ...detail,
   ...requestPreview,
+  ...requestPresets,
 }) satisfies Dictionary;

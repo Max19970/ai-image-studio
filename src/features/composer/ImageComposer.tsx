@@ -4,6 +4,7 @@ import type { GenerationModel, GenerationProvider, ProviderSettings } from '../.
 import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
 import type { ImageParams } from '../../domain/imageParams';
 import type { StudioSettings } from '../../domain/studioSettings';
+import type { RequestPreset } from '../../entities/request-presets';
 import type { ComposerCommands } from '../../interface/context/commands';
 import { useI18n } from '../../i18n';
 import { SlotHost } from '../../interface/SlotHost';
@@ -37,6 +38,7 @@ interface Props {
   providers: GenerationProvider[];
   selectedModelId: string;
   statusText?: string | null;
+  requestPresets: RequestPreset[];
   commands: ComposerCommands;
 }
 
@@ -56,6 +58,7 @@ export function ImageComposer({
   providers,
   selectedModelId,
   statusText,
+  requestPresets,
   commands
 }: Props) {
   const { t } = useI18n();
@@ -155,6 +158,7 @@ export function ImageComposer({
     providers,
     selectedModel,
     modelOptions,
+    requestPresets,
     openPopover,
     setOpenPopover,
     fileInputs: {
@@ -172,7 +176,8 @@ export function ImageComposer({
       clearMask,
       openAttachmentPicker: () => attachmentsRef.current?.click(),
       openMaskPicker: () => maskRef.current?.click()
-    }
+    },
+    requestPresetActions: commands.requestPresets
   }), [
     providerMode,
     providerModes,
@@ -186,7 +191,9 @@ export function ImageComposer({
     providers,
     selectedModel,
     modelOptions,
+    requestPresets,
     openPopover,
+    commands.requestPresets,
     setProviderMode,
     setModel,
     changeParams,

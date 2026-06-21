@@ -1,4 +1,5 @@
 import type { GalleryFolder } from '../../domain/galleryFilesystem';
+import type { RequestPreset } from '../../entities/request-presets';
 import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
 import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
 import type { BatchComposerDraft } from '../../domain/generationTask';
@@ -37,6 +38,7 @@ export interface CreateAppCommandsArgs {
   batchCanSubmit: boolean;
   batchDrafts: BatchComposerDraft[];
   batchIntervalSeconds: number;
+  requestPresets: RequestPreset[];
   activeBatchDraft: BatchComposerDraft | null;
   studioSettings: StudioSettings;
   capabilityReport: ProviderProbeReport | null;
@@ -71,6 +73,7 @@ export interface CreateAppCommandsArgs {
   setBatchComposerOpen: StateSetter<boolean>;
   setBatchDrafts: StateSetter<BatchComposerDraft[]>;
   setBatchIntervalSeconds: StateSetter<number>;
+  setRequestPresets: StateSetter<RequestPreset[]>;
   setBatchParametersDraftId: StateSetter<string | null>;
   normalizeSettings: (settings: StudioSettings) => StudioSettings;
 }

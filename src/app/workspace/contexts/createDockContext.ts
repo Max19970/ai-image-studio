@@ -21,6 +21,7 @@ export function createDockContext({ state, derived, commands }: WorkspaceContext
     providers: state.studioSettings.providers,
     selectedModelId: state.studioSettings.selectedModelId,
     statusText: derived.statusText,
+    requestPresets: state.requestPresets,
     commands: commands.composer
   };
 }

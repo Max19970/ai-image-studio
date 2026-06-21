@@ -5,6 +5,7 @@ import {
   imageParamsBucket,
   loadAppDocument,
   providerProbeCacheBucket,
+  requestPresetsBucket,
   saveAppDocument,
   studioSettingsBucket
 } from '../storage/appDocumentStore';
@@ -38,6 +39,7 @@ function registerAppDocumentRoute<T>(
 export function registerAppDocumentStorageRoutes(app: express.Express) {
   registerAppDocumentRoute(app, '/api/storage/studio-settings', studioSettingsBucket, 'settings', null);
   registerAppDocumentRoute(app, '/api/storage/image-params', imageParamsBucket, 'params', null);
+  registerAppDocumentRoute(app, '/api/storage/request-presets', requestPresetsBucket, 'presets', []);
   registerAppDocumentRoute(app, '/api/storage/provider-probe-cache', providerProbeCacheBucket, 'cache', {});
 
   app.delete('/api/storage/provider-probe-cache', (_req, res) => {

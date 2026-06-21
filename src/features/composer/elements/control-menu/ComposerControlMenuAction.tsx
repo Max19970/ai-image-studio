@@ -4,6 +4,7 @@ import { useI18n } from '../../../../i18n';
 import type { ComposerActionContext } from '../../composerTypes';
 import { ProviderModelPicker } from '../../../../entities/provider/ui';
 import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/compatibility';
+import { RequestPresetManagerDialog, createComposerPresetManagerController } from '../../../request-presets/elements/preset-menu/RequestPresetMenuAction';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import styles from './ComposerControlMenu.module.css';
 import popoverStyles from '../../ui/ComposerPopover.module.css';
@@ -24,7 +25,7 @@ function useIsMobileComposerControls() {
   return isMobile;
 }
 
-function MenuContent({ context }: { context: ComposerActionContext }) {
+function MenuContent({ context, onOpenPresets }: { context: ComposerActionContext; onOpenPresets: () => void }) {
   const { t } = useI18n();
   const chooseProviderMode = (providerModeId: string) => {
     context.actions.setProviderMode(providerModeId);
@@ -91,7 +92,6 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
         />
       </div>
 
-
       <div className={styles.group}>
         <span className={styles.groupTitle}>{t('composer.actions')}</span>
         {canUseImages && (
@@ -130,6 +130,13 @@ function MenuContent({ context }: { context: ComposerActionContext }) {
             </span>
           </button>
         )}
+        <button type="button" className={styles.action} data-testid="request-presets-open" onClick={onOpenPresets}>
+          <span className={styles.icon} aria-hidden="true">✦</span>
+          <span className={styles.copy}>
+            <strong>{t('requestPresets.open')}</strong>
+            <small>{t('requestPresets.openDescription')}</small>
+          </span>
+        </button>
         {context.controlSurface.showBatch && (
           <button type="button" className={styles.action} data-testid="composer-batch" onClick={openBatch}>
             <span className={styles.icon} aria-hidden="true">☷</span>
@@ -157,9 +164,15 @@ export function ComposerControlMenuAction({ context }: ElementDefinitionProps<Co
   const { t } = useI18n();
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const isMobile = useIsMobileComposerControls();
+  const [presetsOpen, setPresetsOpen] = useState(false);
   const open = context.openPopover === popoverId;
   const toggle = () => context.setOpenPopover((value) => value === popoverId ? null : popoverId);
   const close = () => context.setOpenPopover(null);
+  const openPresets = () => {
+    close();
+    setPresetsOpen(true);
+  };
+  const presetController = createComposerPresetManagerController(context);
 
   return (
     <div className={styles.wrapper} data-slot-contribution="controls">
@@ -187,7 +200,7 @@ export function ComposerControlMenuAction({ context }: ElementDefinitionProps<Co
           minWidth={310}
           onDismiss={close}
         >
-          <MenuContent context={context} />
+          <MenuContent context={context} onOpenPresets={openPresets} />
         </FloatingPopover>
       )}
 
@@ -202,10 +215,16 @@ export function ComposerControlMenuAction({ context }: ElementDefinitionProps<Co
           onClose={close}
         >
           <div className={styles.sheetBody}>
-            <MenuContent context={context} />
+            <MenuContent context={context} onOpenPresets={openPresets} />
           </div>
         </BottomSheet>
       )}
+
+      <RequestPresetManagerDialog
+        open={presetsOpen}
+        controller={presetController}
+        onClose={() => setPresetsOpen(false)}
+      />
     </div>
   );
 }
