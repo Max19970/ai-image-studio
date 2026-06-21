@@ -1,3 +1,6 @@
+import type { GalleryFolder } from '../../domain/galleryFilesystem';
+import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
+import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
 import type { BatchComposerDraft } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ImageParams } from '../../domain/imageParams';
@@ -38,6 +41,10 @@ export interface CreateAppCommandsArgs {
   studioSettings: StudioSettings;
   capabilityReport: ProviderProbeReport | null;
   selectedTaskId: string | null;
+  activeGalleryPath: string;
+  galleryFolders: GalleryFolder[];
+  galleryPins: GalleryPinItem[];
+  galleryTagRecords: GalleryTagRecord[];
   taskHistory: TaskHistoryCommands;
   providerProbeState: ProviderProbeCommandState;
   setProviderModeId: StateSetter<ProviderGenerationModeId>;
@@ -52,6 +59,13 @@ export interface CreateAppCommandsArgs {
   setMask: StateSetter<File | null>;
   setSelectedTaskId: StateSetter<string | null>;
   setSelectedImageId: StateSetter<string | null>;
+  setActiveGalleryPath: StateSetter<string>;
+  createGalleryFolder: (name: string) => Promise<void>;
+  deleteGalleryFolder: (path: string) => Promise<void>;
+  moveGalleryItem: (itemKind: 'task' | 'folder', itemId: string, targetPath: string) => Promise<void>;
+  pasteGalleryItems: (operation: GalleryClipboardOperation, items: GalleryClipboardItemPayload[], targetPath: string) => Promise<void>;
+  setGalleryItemPinned: (kind: GalleryMetadataKind, id: string, enabled: boolean) => Promise<void>;
+  setGalleryItemTags: (kind: GalleryMetadataKind, id: string, tags: string[]) => Promise<void>;
   setBusy: StateSetter<boolean>;
   setServerSubmission: ServerSubmissionSetter;
   setBatchComposerOpen: StateSetter<boolean>;

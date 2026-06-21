@@ -5,6 +5,7 @@ import {
   getStorageDb
 } from '../encryptedStore';
 import { generationTaskAssetsTableName, generationTasksTableName } from '../schema';
+import { normalizeGalleryPath, normalizeGalleryPaths } from '../../../src/domain/galleryFilesystem';
 import { isRecord, numberOrFallback, stringOrFallback } from './generationTaskCodecs';
 import type { AssetRow, JsonObject, StoredImageReference, TaskRow } from './types';
 
@@ -19,12 +20,13 @@ export function clearGenerationTaskTables() {
 export function insertTaskRow(task: JsonObject, imageCount: number) {
   const batchItems = isRecord(task.batch) && Array.isArray(task.batch.items) ? task.batch.items : [];
   getStorageDb()
-    .prepare(`INSERT INTO ${generationTasksTableName} (id, document_key, kind, status, created_at, updated_at, image_count, batch_item_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+    .prepare(`INSERT INTO ${generationTasksTableName} (id, document_key, kind, status, gallery_path, created_at, updated_at, image_count, batch_item_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(
       stringOrFallback(task.id, `task-${Date.now()}`),
       stringOrFallback(task.id, `task-${Date.now()}`),
       stringOrFallback(task.kind, 'single'),
       stringOrFallback(task.status, 'failed'),
+      normalizeGalleryPaths(task.galleryPaths, task.galleryPath)[0] ?? normalizeGalleryPath(task.galleryPath),
       numberOrFallback(task.createdAt, Date.now()),
       numberOrFallback(task.updatedAt, Date.now()),
       imageCount,
@@ -42,7 +44,7 @@ export function insertAssetRows(refs: StoredImageReference[]) {
 
 export function selectTaskRows(limit: number, offset: number): TaskRow[] {
   return getStorageDb()
-    .prepare(`SELECT id, document_key, kind, status, created_at, updated_at, image_count, batch_item_count FROM ${generationTasksTableName} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
+    .prepare(`SELECT id, document_key, kind, status, gallery_path, created_at, updated_at, image_count, batch_item_count FROM ${generationTasksTableName} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
     .all(limit, offset) as TaskRow[];
 }
 

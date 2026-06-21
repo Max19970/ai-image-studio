@@ -1,0 +1,144 @@
+.folderFace {
+  position: relative;
+  z-index: 0;
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1 / 1.16;
+  overflow: hidden;
+  border: 0;
+  border-radius: inherit;
+  padding: 18px;
+  place-items: end stretch;
+  background:
+    radial-gradient(circle at 16% 12%, rgba(255,255,255,.16), transparent 34%),
+    linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.035) 42%, rgba(0,0,0,.28));
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.folderGlyph {
+  position: absolute;
+  top: 17%;
+  left: 50%;
+  width: min(58%, 148px);
+  aspect-ratio: 1.18 / 1;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 18px 22px 22px 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.065)),
+    rgba(255,255,255,.06);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.20), 0 20px 48px rgba(0,0,0,.20);
+}
+
+.folderGlyph::before {
+  content: '';
+  position: absolute;
+  top: -13px;
+  left: 12px;
+  width: 48%;
+  height: 22px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-bottom: 0;
+  border-radius: 14px 14px 4px 4px;
+  background: rgba(255,255,255,.105);
+}
+
+.folderCopy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 7px;
+}
+
+.folderCopy strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 740;
+  letter-spacing: -.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folderCopy span {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+
+.folderActions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft), transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.folderCard:hover .folderActions,
+.folderCard:focus-within .folderActions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.folderActionTrigger {
+  width: 34px;
+  height: 34px;
+  background: rgba(0,0,0,.48);
+}
+
+.actionItem {
+  justify-content: flex-start;
+}
+
+.pinMark {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 4;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  background: rgba(0,0,0,.46);
+  color: var(--text);
+  box-shadow: 0 10px 26px rgba(0,0,0,.22);
+  backdrop-filter: blur(12px) saturate(130%);
+}
+
+.pinIcon {
+  width: 15px;
+  height: 15px;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .folderActions {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .folderFace {
+    padding: 12px;
+  }
+
+  .folderGlyph {
+    border-radius: 14px 17px 17px 17px;
+  }
+
+  .folderCopy strong {
+    font-size: 12px;
+  }
+
+  .folderCopy span {
+    font-size: 9px;
+  }
+}

@@ -1,6 +1,7 @@
 import { sanitizeGenerationRequestParamsSnapshot } from '../generation-params/logicalRegistry';
 import { interruptedStatusToFailed, isActiveGenerationStatus, normalizeGenerationStatus } from '../../domain/generationStatus';
 import type { AttachmentSummary, BatchGenerationItem, GeneratedImage, GenerationTask } from '../../domain/generationTask';
+import { normalizeGalleryPath, normalizeGalleryPaths } from '../../domain/galleryFilesystem';
 
 function uid(prefix: string) {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
@@ -113,6 +114,8 @@ export function sanitizeGenerationTask(task: Partial<GenerationTask>): Generatio
     id,
     kind: task.kind === 'batch' ? 'batch' : 'single',
     status,
+    galleryPath: normalizeGalleryPath(task.galleryPath),
+    galleryPaths: normalizeGalleryPaths(task.galleryPaths, task.galleryPath),
     createdAt: Number(task.createdAt ?? request.createdAt ?? Date.now()),
     updatedAt: Number(task.updatedAt ?? task.createdAt ?? Date.now()),
     request,
@@ -128,12 +131,38 @@ export function sanitizeGenerationTask(task: Partial<GenerationTask>): Generatio
 
 export function normalizeGenerationTasks(tasks: unknown, limit = 120): GenerationTask[] {
   if (!Array.isArray(tasks)) return [];
-  return tasks
-    .slice(0, limit)
-    .flatMap((task) => {
-      const normalized = sanitizeGenerationTask(task as Partial<GenerationTask>);
-      return normalized ? [normalized] : [];
-    });
+  const seen = new Set<string>();
+  const normalizedTasks: GenerationTask[] = [];
+
+  for (const task of tasks) {
+    const normalized = sanitizeGenerationTask(task as Partial<GenerationTask>);
+    if (!normalized || seen.has(normalized.id)) continue;
+    seen.add(normalized.id);
+    normalizedTasks.push(normalized);
+    if (normalizedTasks.length >= limit) break;
+  }
+
+  return normalizedTasks;
+}
+
+function imageHasPersistableAsset(image: Partial<GeneratedImage>): boolean {
+  return image.kind !== 'partial' && Boolean(image.src || image.storageAssetKey);
+}
+
+export function taskHasPersistableGenerationImage(task: Partial<GenerationTask>): boolean {
+  const images = Array.isArray(task.images) ? task.images : [];
+  if (images.some((image) => imageHasPersistableAsset(image as Partial<GeneratedImage>))) return true;
+  const items = Array.isArray(task.batch?.items) ? task.batch.items : [];
+  return items.some((item) => Array.isArray(item.images) && item.images.some((image) => imageHasPersistableAsset(image as Partial<GeneratedImage>)));
+}
+
+export function isEmptyActiveGenerationTask(task: Partial<GenerationTask>): boolean {
+  const status = normalizeGenerationStatus(task.status);
+  return isActiveGenerationStatus(status) && !taskHasPersistableGenerationImage(task);
+}
+
+export function toPersistableGenerationTaskSnapshot(tasks: GenerationTask[], limit = 120): GenerationTask[] {
+  return normalizeGenerationTasks(tasks.filter((task) => !isEmptyActiveGenerationTask(task)), limit);
 }
 
 export function toLightGenerationTaskSnapshot(tasks: GenerationTask[], limit = 40): GenerationTask[] {

@@ -38,7 +38,8 @@ export function createComposerCommands(args: CreateAppCommandsArgs): ComposerCom
       taskHistory: args.taskHistory,
       setBusy: args.setBusy,
       setServerSubmission: args.setServerSubmission,
-      t: args.t
+      t: args.t,
+      galleryPath: args.activeGalleryPath
     }),
     openParameters: () => args.setParametersOpen(true),
     openBatchComposer: () => openBatchComposerCommand({

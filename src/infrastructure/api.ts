@@ -4,6 +4,7 @@ import type { ProviderSettings } from '../domain/providerSettings';
 import type { ProviderResourceKind, ProviderResourceList } from '../domain/providerResources';
 import type { WorkMode } from '../domain/workMode';
 import type { ProviderGenerationModeDefinition } from '../domain/providerMode';
+import { normalizeGalleryPath } from '../domain/galleryFilesystem';
 import { getProviderAdapterForSettings } from '../entities/provider/registry';
 import type { ProviderResponseAdapter } from '../entities/provider/types';
 
@@ -18,6 +19,7 @@ export interface SubmitRequest {
   onStreamImage?: (image: GeneratedImage) => void;
   onProgress?: (progress: GenerationProgress) => void;
   signal?: AbortSignal;
+  galleryPath?: string;
 }
 
 export interface ServerBatchGenerationItemRequest {
@@ -36,6 +38,7 @@ export interface ServerBatchGenerationRequest {
   items: ServerBatchGenerationItemRequest[];
   intervalMs: number;
   aggregateSnapshot?: GenerationRequestSnapshot | null;
+  galleryPath?: string;
 }
 
 async function fetchProxy(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
@@ -141,10 +144,27 @@ function withServerTaskSnapshot(init: RequestInit, snapshot: GenerationRequestSn
   };
 }
 
+function withServerGalleryPath(init: RequestInit, galleryPath: string | undefined): RequestInit {
+  const normalized = normalizeGalleryPath(galleryPath);
+  const body = init.body;
+  if (body instanceof FormData) {
+    const form = new FormData();
+    body.forEach((value, key) => form.append(key, value));
+    form.append('galleryPath', normalized);
+    return { ...init, body: form };
+  }
+  const parsed = typeof body === 'string' ? JSON.parse(body) : {};
+  return {
+    ...init,
+    body: JSON.stringify({ ...parsed, galleryPath: normalized })
+  };
+}
+
 export async function enqueueServerGenerationRequest(request: SubmitRequest & { snapshot: GenerationRequestSnapshot }): Promise<{ taskId: string; task?: GenerationTask }> {
   const adapter = getProviderAdapterForSettings(request.provider);
   const proxyRequest = adapter.request.createSubmitProxyRequest(request);
-  const raw = await readJsonOrThrow(await fetchProxy('/api/generation-tasks/run', withServerTaskSnapshot(proxyRequest.init, request.snapshot)));
+  const init = withServerGalleryPath(withServerTaskSnapshot(proxyRequest.init, request.snapshot), request.galleryPath);
+  const raw = await readJsonOrThrow(await fetchProxy('/api/generation-tasks/run', init));
   const data = raw && typeof raw === 'object' ? raw as { taskId?: unknown; task?: unknown } : {};
   if (typeof data.taskId !== 'string') throw new Error('Server generation runner returned an invalid task id.');
   return { taskId: data.taskId, task: data.task as GenerationTask | undefined };
@@ -173,6 +193,7 @@ export async function enqueueServerBatchGenerationRequest(request: ServerBatchGe
   form.append('items', JSON.stringify(items));
   form.append('intervalMs', String(request.intervalMs));
   if (request.aggregateSnapshot) form.append('aggregateSnapshot', JSON.stringify(request.aggregateSnapshot));
+  form.append('galleryPath', normalizeGalleryPath(request.galleryPath));
 
   const raw = await readJsonOrThrow(await fetchProxy('/api/generation-tasks/batch', { method: 'POST', body: form }));
   const data = raw && typeof raw === 'object' ? raw as { taskId?: unknown; task?: unknown } : {};

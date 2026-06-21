@@ -17,6 +17,7 @@ export function deleteTaskCommand(args: {
   taskHistory: Pick<TaskHistoryCommands, 'deleteTask'>;
 }) {
   const { taskId, selectedTaskId, navigation, taskHistory } = args;
+  taskHistory.deleteTask(taskId);
   void deleteServerGenerationTask(taskId).catch(console.error);
   if (selectedTaskId === taskId) {
     navigation.setSelectedTaskId(null);
@@ -28,6 +29,7 @@ export function clearTasksCommand(args: {
   navigation: WorkspaceNavigationCommands;
   taskHistory: Pick<TaskHistoryCommands, 'clearTasks'>;
 }) {
+  args.taskHistory.clearTasks();
   void clearServerGenerationTasks().catch(console.error);
   args.navigation.setSelectedTaskId(null);
   args.navigation.setSelectedImageId(null);

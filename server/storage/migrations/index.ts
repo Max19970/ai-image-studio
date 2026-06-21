@@ -2,13 +2,14 @@ import type { DatabaseSync } from 'node:sqlite';
 import { createStorageMigrationsTableSql, storageMigrationsTableName, storagePragmasSql } from '../schema';
 import { encryptedBlobsMigration } from './001_encrypted_blobs';
 import { storageV2DocumentsMigration } from './002_storage_v2_documents';
+import { galleryPathsMigration } from './003_gallery_paths';
 
 interface StorageMigration {
   id: string;
   up(db: DatabaseSync): void;
 }
 
-const storageMigrations: StorageMigration[] = [encryptedBlobsMigration, storageV2DocumentsMigration];
+const storageMigrations: StorageMigration[] = [encryptedBlobsMigration, storageV2DocumentsMigration, galleryPathsMigration];
 
 function hasMigration(db: DatabaseSync, id: string): boolean {
   const row = db.prepare(`SELECT id FROM ${storageMigrationsTableName} WHERE id = ?`).get(id) as { id?: string } | undefined;

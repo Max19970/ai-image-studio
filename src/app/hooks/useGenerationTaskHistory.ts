@@ -3,6 +3,7 @@ import type { GenerationTask } from '../../domain/generationTask';
 import { collectGenerationTasksObjectUrls, revokeBrowserObjectUrls } from '../../domain/generationTaskObjectUrls';
 import { createTaskCancellationRegistry } from '../../processes/generation-task-lifecycle';
 import {
+  cacheGenerationTaskHistoryFallback,
   clearGenerationTaskHistory,
   loadGenerationTaskHistory,
   loadGenerationTaskHistoryFallback
@@ -17,16 +18,30 @@ function readTasksEvent(event: MessageEvent): GenerationTask[] | null {
   }
 }
 
+function withoutDeletedTasks(tasks: GenerationTask[], deletedTaskIds: Set<string>): GenerationTask[] {
+  return deletedTaskIds.size > 0 ? tasks.filter((task) => !deletedTaskIds.has(task.id)) : tasks;
+}
+
 export function useGenerationTaskHistory() {
   const [tasks, setTasks] = useState<GenerationTask[]>(() => loadGenerationTaskHistoryFallback());
   const taskCancellationRegistryRef = useRef(createTaskCancellationRegistry());
   const liveTaskObjectUrlsRef = useRef<Set<string>>(new Set());
+  const latestTasksRef = useRef<GenerationTask[]>(tasks);
+  const deletedTaskIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    latestTasksRef.current = tasks;
+  }, [tasks]);
 
   useEffect(() => {
     let cancelled = false;
     void loadGenerationTaskHistory().then((persistedTasks) => {
       if (cancelled) return;
-      setTasks((current) => taskCancellationRegistryRef.current.activeCount() > 0 ? current : persistedTasks);
+      setTasks((current) => {
+        const nextTasks = taskCancellationRegistryRef.current.activeCount() > 0 ? current : withoutDeletedTasks(persistedTasks, deletedTaskIdsRef.current);
+        latestTasksRef.current = nextTasks;
+        return nextTasks;
+      });
     });
     return () => { cancelled = true; };
   }, []);
@@ -37,7 +52,10 @@ export function useGenerationTaskHistory() {
     source.addEventListener('tasks', (event) => {
       const serverTasks = readTasksEvent(event as MessageEvent);
       if (!serverTasks) return;
-      setTasks(serverTasks);
+      const nextTasks = withoutDeletedTasks(serverTasks, deletedTaskIdsRef.current);
+      latestTasksRef.current = nextTasks;
+      setTasks(nextTasks);
+      cacheGenerationTaskHistoryFallback(nextTasks);
     });
     source.onerror = () => {
       // Browser will retry automatically. Keep the last known task list visible between reconnect attempts.
@@ -66,11 +84,17 @@ export function useGenerationTaskHistory() {
 
   const deleteTask = (taskId: string) => {
     taskCancellationRegistryRef.current.cancel(taskId);
-    setTasks((prev) => prev.filter((task) => task.id !== taskId));
+    deletedTaskIdsRef.current.add(taskId);
+    const nextTasks = latestTasksRef.current.filter((task) => task.id !== taskId);
+    latestTasksRef.current = nextTasks;
+    setTasks(nextTasks);
+    cacheGenerationTaskHistoryFallback(nextTasks);
   };
 
   const clearTasks = () => {
     taskCancellationRegistryRef.current.cancelAll();
+    for (const task of latestTasksRef.current) deletedTaskIdsRef.current.add(task.id);
+    latestTasksRef.current = [];
     setTasks([]);
     void clearGenerationTaskHistory();
   };

@@ -58,6 +58,11 @@ function GalleryFilterSelects({ context }: { context: GalleryLayoutContext }) {
     { value: 'images', label: t('gallery.sort.images') }
   ], [t]);
 
+  const tagOptions = useMemo<PopoverSelectOption[]>(() => [
+    { value: '', label: t('gallery.filter.all') },
+    ...archive.availableTags.map((tag) => ({ value: tag, label: `#${tag}` }))
+  ], [archive.availableTags, t]);
+
   return (
     <>
       <GalleryControlSelect
@@ -71,6 +76,12 @@ function GalleryFilterSelects({ context }: { context: GalleryLayoutContext }) {
         value={archive.kindFilter}
         options={kindOptions}
         onChange={(value) => archive.setKindFilter(value as GalleryKindFilter)}
+      />
+      <GalleryControlSelect
+        label={t('gallery.tagFilter')}
+        value={archive.tagFilter}
+        options={tagOptions}
+        onChange={(value) => archive.setTagFilter(value)}
       />
       <GalleryControlSelect
         label={t('gallery.sort')}
@@ -90,14 +101,15 @@ function GalleryFilterTokens({ context, onDeleteFiltered }: { context: GalleryLa
   const tokens = [
     archive.query ? t('gallery.token.query', { query: archive.query }) : null,
     archive.statusFilter !== 'all' ? t('gallery.token.status', { value: t(archive.statusFilter === 'active' || archive.statusFilter === 'terminal' ? `gallery.filter.${archive.statusFilter}` : `status.${archive.statusFilter}`) }) : null,
-    archive.kindFilter !== 'all' ? t('gallery.token.kind', { value: t(archive.kindFilter === 'batch' ? 'gallery.kind.batchShort' : 'gallery.kind.single') }) : null
+    archive.kindFilter !== 'all' ? t('gallery.token.kind', { value: t(archive.kindFilter === 'batch' ? 'gallery.kind.batchShort' : 'gallery.kind.single') }) : null,
+    archive.tagFilter ? t('gallery.token.tag', { tag: archive.tagFilter }) : null
   ].filter((token): token is string => Boolean(token));
 
   return (
     <div className={styles.filterTokens} aria-label={t('gallery.activeFilters')}>
       {tokens.map((token) => <span key={token} className={styles.filterToken}>{token}</span>)}
       <button type="button" className={styles.filterTokenButton} onClick={archive.reset}>{t('gallery.resetFilters')}</button>
-      {archive.filteredCount > 0 && <button type="button" className={`${styles.filterTokenButton} ${styles.deleteFilteredButton}`} onClick={onDeleteFiltered}>{t('gallery.deleteFiltered')}</button>}
+      {archive.filteredTaskCount > 0 && <button type="button" className={`${styles.filterTokenButton} ${styles.deleteFilteredButton}`} onClick={onDeleteFiltered}>{t('gallery.deleteFiltered')}</button>}
     </div>
   );
 }
@@ -109,7 +121,7 @@ export function GalleryArchiveControls({ context }: { context: GalleryLayoutCont
   if (archive.totalCount === 0) return null;
 
   const deleteFiltered = () => {
-    if (!window.confirm(t('gallery.deleteFilteredConfirm', { count: archive.filteredCount }))) return;
+    if (!window.confirm(t('gallery.deleteFilteredConfirm', { count: archive.filteredTaskCount }))) return;
     archive.deleteFiltered();
   };
 

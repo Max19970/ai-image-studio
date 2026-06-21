@@ -6,5 +6,5 @@ export default {
   id: 'gallery.sections.grid',
   label: 'Gallery task grid section',
   Component: GalleryGridSection,
-  enabled: (context) => context.tasks.length > 0
+  enabled: (context) => context.items.length > 0
 } satisfies ElementDefinition<GalleryLayoutContext>;

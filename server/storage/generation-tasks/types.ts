@@ -28,6 +28,7 @@ export interface TaskRow {
   document_key: string;
   kind: string;
   status: string;
+  gallery_path: string;
   created_at: number;
   updated_at: number;
   image_count: number;

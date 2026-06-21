@@ -1,4 +1,4 @@
-export const storageSchemaVersion = 2;
+export const storageSchemaVersion = 3;
 
 export const encryptedBlobTableName = 'encrypted_blobs';
 export const storageMigrationsTableName = 'storage_migrations';
@@ -47,6 +47,7 @@ export const createGenerationTasksTableSql = `
     document_key TEXT NOT NULL,
     kind TEXT NOT NULL,
     status TEXT NOT NULL,
+    gallery_path TEXT NOT NULL DEFAULT '/',
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
     image_count INTEGER NOT NULL DEFAULT 0,
@@ -72,5 +73,6 @@ export const createGenerationTaskAssetsTableSql = `
 
 export const createGenerationTaskIndexesSql = `
   CREATE INDEX IF NOT EXISTS idx_generation_tasks_updated_at ON ${generationTasksTableName}(updated_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_generation_tasks_gallery_path ON ${generationTasksTableName}(gallery_path, created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_generation_task_assets_task_id ON ${generationTaskAssetsTableName}(task_id, image_index ASC);
 `;
