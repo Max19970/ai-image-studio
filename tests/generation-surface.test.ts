@@ -112,6 +112,20 @@ test('ComfyUI request surface builds provider-owned payload and parameter summar
     seed: 42,
     denoise: 0.95,
     negativePrompt: 'blurry',
+    tiledGenerationEnabled: true,
+    tiledGenerationBackend: 'tiledDiffusion',
+    tiledGenerationTileWidth: 640,
+    tiledGenerationTileHeight: 768,
+    tiledDiffusionMethod: 'Mixture of Diffusers',
+    tiledDiffusionTileOverlap: 96,
+    tiledDiffusionTileBatchSize: 3,
+    tiledVaeDecodeEnabled: true,
+    tiledVaeTileSize: 768,
+    tiledVaeOverlap: 96,
+    pagEnabled: true,
+    pagScale: 2.25,
+    perpGuiderEnabled: true,
+    perpGuiderScale: 1.4,
     loras: [{ name: 'style.safetensors', strengthModel: 0.8, strengthClip: 0.7, enabled: true }]
   });
 
@@ -127,10 +141,13 @@ test('ComfyUI request surface builds provider-owned payload and parameter summar
   assert.equal(payload.batch_size, 2);
   assert.equal(payload.seed, 42);
   assert.deepEqual(payload.loras, [{ lora_name: 'style.safetensors', strength_model: 0.8, strength_clip: 0.7 }]);
+  assert.deepEqual(payload.tiled_generation, { enabled: true, backend: 'tiled_diffusion', tile_width: 640, tile_height: 768, method: 'Mixture of Diffusers', tile_overlap: 96, tile_batch_size: 3, shift_method: 'random', shift_seed: 0 });
 
   const snapshotState = surface.captureProviderParamsSnapshot({ params, provider: comfyProvider, mode: 'generate', payload });
   assert.equal(snapshotState?.steps, 32);
   assert.equal(snapshotState?.samplerName, 'dpmpp_2m');
+  assert.equal(snapshotState?.tiledGenerationEnabled, true);
+  assert.equal(snapshotState?.tiledGenerationBackend, 'tiledDiffusion');
 
   const summary = surface.captureParameterSummary({ params, provider: comfyProvider, mode: 'generate', payload });
   assert.equal(summary?.surfaceId, 'comfyui.text-to-image');

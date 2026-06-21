@@ -9,6 +9,11 @@ import type { ProviderParamState } from '../surfaceTypes';
 export const COMFYUI_SURFACE_ID = 'comfyui.text-to-image';
 const COMFYUI_HIRES_FIX_MODE_ID = 'comfyui.hires-fix';
 
+export type ComfyUiTiledGenerationBackend = 'bnkTiledKSampler' | 'tiledDiffusion';
+export type ComfyUiTilingStrategy = 'random' | 'randomStrict' | 'padded' | 'simple';
+export type ComfyUiTiledDiffusionMethod = 'MultiDiffusion' | 'Mixture of Diffusers' | 'SpotDiffusion';
+export type ComfyUiSpotDiffusionShiftMethod = 'random' | 'sorted' | 'fibonacci';
+
 export interface ComfyUiLoraSelection {
   name: string;
   strengthModel: number;
@@ -34,6 +39,27 @@ export interface ComfyUiParamState {
   hiresScale: number;
   hiresInputWidth: number;
   hiresInputHeight: number;
+  tiledGenerationEnabled: boolean;
+  tiledGenerationBackend: ComfyUiTiledGenerationBackend;
+  tiledGenerationTileWidth: number;
+  tiledGenerationTileHeight: number;
+  tiledGenerationStrategy: ComfyUiTilingStrategy;
+  tiledDiffusionMethod: ComfyUiTiledDiffusionMethod;
+  tiledDiffusionTileOverlap: number;
+  tiledDiffusionTileBatchSize: number;
+  tiledDiffusionShiftMethod: ComfyUiSpotDiffusionShiftMethod;
+  tiledDiffusionShiftSeed: number;
+  tiledVaeEncodeEnabled: boolean;
+  tiledVaeDecodeEnabled: boolean;
+  tiledVaeTileSize: number;
+  tiledVaeOverlap: number;
+  tiledVaeTemporalSize: number;
+  tiledVaeTemporalOverlap: number;
+  pagEnabled: boolean;
+  pagScale: number;
+  perpGuiderEnabled: boolean;
+  perpGuiderScale: number;
+  perpGuiderBlankConditioning: string;
   loras: ComfyUiLoraSelection[];
 }
 
@@ -41,6 +67,10 @@ export const COMFYUI_MAX_SEED = 2 ** 31 - 1;
 
 export const comfyUiSamplerOptions = ['euler', 'euler_ancestral', 'heun', 'dpm_2', 'dpmpp_2m', 'dpmpp_sde', 'dpmpp_3m_sde'] as const;
 export const comfyUiSchedulerOptions = ['normal', 'karras', 'exponential', 'sgm_uniform', 'simple', 'ddim_uniform'] as const;
+export const comfyUiTiledGenerationBackendOptions = ['bnkTiledKSampler', 'tiledDiffusion'] as const;
+export const comfyUiTilingStrategyOptions = ['random', 'randomStrict', 'padded', 'simple'] as const;
+export const comfyUiTiledDiffusionMethodOptions = ['MultiDiffusion', 'Mixture of Diffusers', 'SpotDiffusion'] as const;
+export const comfyUiSpotDiffusionShiftMethodOptions = ['random', 'sorted', 'fibonacci'] as const;
 
 export const defaultComfyUiParamState: ComfyUiParamState = {
   negativePrompt: '',
@@ -60,6 +90,27 @@ export const defaultComfyUiParamState: ComfyUiParamState = {
   hiresScale: 2,
   hiresInputWidth: 0,
   hiresInputHeight: 0,
+  tiledGenerationEnabled: false,
+  tiledGenerationBackend: 'bnkTiledKSampler',
+  tiledGenerationTileWidth: 512,
+  tiledGenerationTileHeight: 512,
+  tiledGenerationStrategy: 'random',
+  tiledDiffusionMethod: 'Mixture of Diffusers',
+  tiledDiffusionTileOverlap: 64,
+  tiledDiffusionTileBatchSize: 4,
+  tiledDiffusionShiftMethod: 'random',
+  tiledDiffusionShiftSeed: 0,
+  tiledVaeEncodeEnabled: false,
+  tiledVaeDecodeEnabled: false,
+  tiledVaeTileSize: 512,
+  tiledVaeOverlap: 64,
+  tiledVaeTemporalSize: 64,
+  tiledVaeTemporalOverlap: 8,
+  pagEnabled: false,
+  pagScale: 3,
+  perpGuiderEnabled: false,
+  perpGuiderScale: 1,
+  perpGuiderBlankConditioning: '',
   loras: []
 };
 
@@ -72,6 +123,11 @@ function numberInRange(value: unknown, fallback: number, min: number, max: numbe
 
 function stringValue(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
+}
+
+function booleanValue(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') return value;
+  return fallback;
 }
 
 function enumValue<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
@@ -118,6 +174,27 @@ export function normalizeComfyUiParamState(value: unknown): ComfyUiParamState {
     hiresScale: numberInRange(source.hiresScale ?? source.hires_scale ?? source.hires_upscale_factor, defaultComfyUiParamState.hiresScale, 0.1, 8),
     hiresInputWidth: numberInRange(source.hiresInputWidth ?? source.hires_input_width, defaultComfyUiParamState.hiresInputWidth, 0, 4096, true),
     hiresInputHeight: numberInRange(source.hiresInputHeight ?? source.hires_input_height, defaultComfyUiParamState.hiresInputHeight, 0, 4096, true),
+    tiledGenerationEnabled: booleanValue(source.tiledGenerationEnabled ?? source.tiled_generation_enabled),
+    tiledGenerationBackend: enumValue(source.tiledGenerationBackend ?? source.tiled_generation_backend, comfyUiTiledGenerationBackendOptions, defaultComfyUiParamState.tiledGenerationBackend),
+    tiledGenerationTileWidth: numberInRange(source.tiledGenerationTileWidth ?? source.tiled_generation_tile_width, defaultComfyUiParamState.tiledGenerationTileWidth, 256, 8192, true),
+    tiledGenerationTileHeight: numberInRange(source.tiledGenerationTileHeight ?? source.tiled_generation_tile_height, defaultComfyUiParamState.tiledGenerationTileHeight, 256, 8192, true),
+    tiledGenerationStrategy: enumValue(source.tiledGenerationStrategy ?? source.tiled_generation_strategy, comfyUiTilingStrategyOptions, defaultComfyUiParamState.tiledGenerationStrategy),
+    tiledDiffusionMethod: enumValue(source.tiledDiffusionMethod ?? source.tiled_diffusion_method, comfyUiTiledDiffusionMethodOptions, defaultComfyUiParamState.tiledDiffusionMethod),
+    tiledDiffusionTileOverlap: numberInRange(source.tiledDiffusionTileOverlap ?? source.tiled_diffusion_tile_overlap, defaultComfyUiParamState.tiledDiffusionTileOverlap, 0, 2048, true),
+    tiledDiffusionTileBatchSize: numberInRange(source.tiledDiffusionTileBatchSize ?? source.tiled_diffusion_tile_batch_size, defaultComfyUiParamState.tiledDiffusionTileBatchSize, 1, 8192, true),
+    tiledDiffusionShiftMethod: enumValue(source.tiledDiffusionShiftMethod ?? source.tiled_diffusion_shift_method, comfyUiSpotDiffusionShiftMethodOptions, defaultComfyUiParamState.tiledDiffusionShiftMethod),
+    tiledDiffusionShiftSeed: numberInRange(source.tiledDiffusionShiftSeed ?? source.tiled_diffusion_shift_seed, defaultComfyUiParamState.tiledDiffusionShiftSeed, 0, COMFYUI_MAX_SEED, true),
+    tiledVaeEncodeEnabled: booleanValue(source.tiledVaeEncodeEnabled ?? source.tiled_vae_encode_enabled),
+    tiledVaeDecodeEnabled: booleanValue(source.tiledVaeDecodeEnabled ?? source.tiled_vae_decode_enabled),
+    tiledVaeTileSize: numberInRange(source.tiledVaeTileSize ?? source.tiled_vae_tile_size, defaultComfyUiParamState.tiledVaeTileSize, 64, 4096, true),
+    tiledVaeOverlap: numberInRange(source.tiledVaeOverlap ?? source.tiled_vae_overlap, defaultComfyUiParamState.tiledVaeOverlap, 0, 4096, true),
+    tiledVaeTemporalSize: numberInRange(source.tiledVaeTemporalSize ?? source.tiled_vae_temporal_size, defaultComfyUiParamState.tiledVaeTemporalSize, 8, 4096, true),
+    tiledVaeTemporalOverlap: numberInRange(source.tiledVaeTemporalOverlap ?? source.tiled_vae_temporal_overlap, defaultComfyUiParamState.tiledVaeTemporalOverlap, 4, 4096, true),
+    pagEnabled: booleanValue(source.pagEnabled ?? source.pag_enabled),
+    pagScale: numberInRange(source.pagScale ?? source.pag_scale, defaultComfyUiParamState.pagScale, 0, 100),
+    perpGuiderEnabled: booleanValue(source.perpGuiderEnabled ?? source.perp_guider_enabled),
+    perpGuiderScale: numberInRange(source.perpGuiderScale ?? source.perp_guider_scale, defaultComfyUiParamState.perpGuiderScale, 0, 100),
+    perpGuiderBlankConditioning: stringValue(source.perpGuiderBlankConditioning ?? source.perp_guider_blank_conditioning, defaultComfyUiParamState.perpGuiderBlankConditioning),
     loras: normalizeLoras(source.loras)
   };
 }
@@ -145,6 +222,27 @@ export function toComfyUiProviderParamState(state: ComfyUiParamState): ProviderP
     hiresScale: state.hiresScale,
     hiresInputWidth: state.hiresInputWidth,
     hiresInputHeight: state.hiresInputHeight,
+    tiledGenerationEnabled: state.tiledGenerationEnabled,
+    tiledGenerationBackend: state.tiledGenerationBackend,
+    tiledGenerationTileWidth: state.tiledGenerationTileWidth,
+    tiledGenerationTileHeight: state.tiledGenerationTileHeight,
+    tiledGenerationStrategy: state.tiledGenerationStrategy,
+    tiledDiffusionMethod: state.tiledDiffusionMethod,
+    tiledDiffusionTileOverlap: state.tiledDiffusionTileOverlap,
+    tiledDiffusionTileBatchSize: state.tiledDiffusionTileBatchSize,
+    tiledDiffusionShiftMethod: state.tiledDiffusionShiftMethod,
+    tiledDiffusionShiftSeed: state.tiledDiffusionShiftSeed,
+    tiledVaeEncodeEnabled: state.tiledVaeEncodeEnabled,
+    tiledVaeDecodeEnabled: state.tiledVaeDecodeEnabled,
+    tiledVaeTileSize: state.tiledVaeTileSize,
+    tiledVaeOverlap: state.tiledVaeOverlap,
+    tiledVaeTemporalSize: state.tiledVaeTemporalSize,
+    tiledVaeTemporalOverlap: state.tiledVaeTemporalOverlap,
+    pagEnabled: state.pagEnabled,
+    pagScale: state.pagScale,
+    perpGuiderEnabled: state.perpGuiderEnabled,
+    perpGuiderScale: state.perpGuiderScale,
+    perpGuiderBlankConditioning: state.perpGuiderBlankConditioning,
     loras: state.loras.map((lora) => ({ ...lora }))
   };
 }

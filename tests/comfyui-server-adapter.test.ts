@@ -172,6 +172,101 @@ test('ComfyUI workflow injects checkpoint, sampler params and LoRA chain without
   assert.deepEqual(workflow['5'].inputs, { width: 768, height: 1024, batch_size: 1 });
 });
 
+test('ComfyUI workflow injects optional tiled nodes without changing the base path when disabled', () => {
+  const baseConfig = resolveComfyUiGenerationConfig(provider('http://127.0.0.1:8188'), {
+    prompt: 'forest shrine',
+    width: 768,
+    height: 1024,
+    seed: 123
+  });
+  const baseWorkflow = buildComfyUiTextToImageWorkflow(baseConfig);
+  assert.equal(workflowNodeByClass(baseWorkflow, 'KSampler')?.class_type, 'KSampler');
+  assert.equal(workflowNodeByClass(baseWorkflow, 'BNK_TiledKSampler'), null);
+  assert.equal(workflowNodeByClass(baseWorkflow, 'VAEDecodeTiled'), null);
+
+  const tiledConfig = resolveComfyUiGenerationConfig(provider('http://127.0.0.1:8188'), {
+    prompt: 'forest shrine',
+    seed: 123,
+    tiled_generation: { enabled: true, tile_width: 640, tile_height: 768, tiling_strategy: 'padded' },
+    tiled_vae: { decode: true, tile_size: 768, overlap: 96 }
+  });
+  const tiledWorkflow = buildComfyUiTextToImageWorkflow(tiledConfig);
+  const tiledSampler = workflowNodeByClass(tiledWorkflow, 'BNK_TiledKSampler');
+  assert.equal(tiledSampler?.inputs.tile_width, 640);
+  assert.equal(tiledSampler?.inputs.tile_height, 768);
+  assert.equal(tiledSampler?.inputs.tiling_strategy, 'padded');
+  assert.equal(workflowNodeByClass(tiledWorkflow, 'KSampler'), null);
+  assert.equal(workflowNodeByClass(tiledWorkflow, 'VAEDecodeTiled')?.inputs.tile_size, 768);
+});
+
+test('ComfyUI workflow can use ComfyUI_TiledDiffusion as a model patch backend', () => {
+  const config = resolveComfyUiGenerationConfig(provider('http://127.0.0.1:8188'), {
+    prompt: 'forest shrine',
+    seed: 123,
+    tiled_generation: {
+      enabled: true,
+      backend: 'tiled_diffusion',
+      tile_width: 768,
+      tile_height: 640,
+      method: 'SpotDiffusion',
+      tile_overlap: 96,
+      tile_batch_size: 3,
+      shift_method: 'fibonacci',
+      shift_seed: 42
+    },
+    perp_neg_guider: { enabled: true, neg_scale: 1.4 }
+  });
+  const workflow = buildComfyUiTextToImageWorkflow(config);
+  const tiledDiffusionNode = workflowNodeByClass(workflow, 'TiledDiffusion');
+  const spotParamsNode = workflowNodeByClass(workflow, 'SpotDiffusionParams_TiledDiffusion');
+  const guiderNode = workflowNodeByClass(workflow, 'PerpNegGuider');
+
+  assert.equal(tiledDiffusionNode?.inputs.method, 'SpotDiffusion');
+  assert.equal(tiledDiffusionNode?.inputs.tile_width, 768);
+  assert.equal(tiledDiffusionNode?.inputs.tile_height, 640);
+  assert.equal(tiledDiffusionNode?.inputs.tile_overlap, 96);
+  assert.equal(tiledDiffusionNode?.inputs.tile_batch_size, 3);
+  assert.equal(spotParamsNode?.inputs.shift_method, 'fibonacci');
+  assert.equal(spotParamsNode?.inputs.seed, 42);
+  assert.deepEqual(guiderNode?.inputs.model, [Object.entries(workflow).find(([, node]: any) => node.class_type === 'SpotDiffusionParams_TiledDiffusion')?.[0], 0]);
+  assert.equal(workflowNodeByClass(workflow, 'BNK_TiledKSampler'), null);
+  assert.equal(workflow['3'].class_type, 'SamplerCustomAdvanced');
+});
+
+test('ComfyUI workflow builds PAG and PerpNegGuider path', () => {
+  const pagClass = String.fromCharCode(80, 101, 114, 116, 117, 114, 98, 101, 100, 65, 116, 116, 101, 110, 116, 105, 111, 110, 71, 117, 105, 100, 97, 110, 99, 101);
+  const config = resolveComfyUiGenerationConfig(provider('http://127.0.0.1:8188'), {
+    prompt: 'forest shrine',
+    seed: 123,
+    cfg: 6.5,
+    sampler_name: 'dpmpp_2m',
+    scheduler: 'karras',
+    pag: { enabled: true, scale: 2.25 },
+    perp_neg_guider: { enabled: true, neg_scale: 1.4 }
+  });
+  const workflow = buildComfyUiTextToImageWorkflow(config);
+  const pagNode = workflowNodeByClass(workflow, pagClass);
+  const pagNodeId = Object.entries(workflow).find(([, node]: any) => node.class_type === pagClass)?.[0];
+  const guiderNode = workflowNodeByClass(workflow, 'PerpNegGuider');
+
+  assert.equal(pagNode?.inputs.scale, 2.25);
+  assert.deepEqual(guiderNode?.inputs.model, [pagNodeId, 0]);
+  assert.equal(guiderNode?.inputs.cfg, 6.5);
+  assert.equal(guiderNode?.inputs.neg_scale, 1.4);
+  assert.equal(workflowNodeByClass(workflow, 'RandomNoise')?.inputs.noise_seed, 123);
+  assert.equal(workflowNodeByClass(workflow, 'KSamplerSelect')?.inputs.sampler_name, 'dpmpp_2m');
+  assert.equal(workflowNodeByClass(workflow, 'BasicScheduler')?.inputs.scheduler, 'karras');
+  assert.equal(workflow['3'].class_type, 'SamplerCustomAdvanced');
+});
+
+test('ComfyUI workflow rejects BNK_TiledKSampler together with PerpNegGuider', () => {
+  assert.throws(() => resolveComfyUiGenerationConfig(provider('http://127.0.0.1:8188'), {
+    prompt: 'forest shrine',
+    tiled_generation: { enabled: true },
+    perp_neg_guider: { enabled: true }
+  }), /BNK_TiledKSampler cannot be combined/);
+});
+
 test('ComfyUI resources adapter reads checkpoints, LoRA files, samplers, schedulers and upscale models', async () => {
   await withFakeComfyUi(async (baseUrl) => {
     const settings = provider(baseUrl);
@@ -222,6 +317,31 @@ test('ComfyUI Hires Fix latent workflow uploads one target image and builds Late
     assert.equal(latentUpscale?.inputs.height, 720);
     assert.equal(workflow['3'].class_type, 'KSampler');
     assert.deepEqual(workflow['3'].inputs.latent_image, [Object.entries(workflow).find(([, node]: any) => node.class_type === 'LatentUpscale')?.[0], 0]);
+  });
+});
+
+test('ComfyUI Hires Fix can use tiled VAE nodes', async () => {
+  await withFakeComfyUi(async (baseUrl, received) => {
+    const settings = provider(baseUrl);
+    await comfyUiProviderAdapter.submitProviderMode({
+      provider: settings,
+      providerModeId: 'comfyui.hires-fix',
+      transport: { kind: 'multipart', operation: 'provider-submit', path: '/api/provider/submit' },
+      payload: {
+        prompt: 'restore fox portrait',
+        width: 1280,
+        height: 720,
+        seed: 7,
+        hires_upscale_mode: 'latent',
+        tiled_vae: { encode: true, decode: true, tile_size: 768, overlap: 96 }
+      },
+      files: [targetFile()]
+    });
+
+    const promptRequest = received.find((item: any) => item?.prompt) as any;
+    const workflow = promptRequest.prompt;
+    assert.equal(workflowNodeByClass(workflow, 'VAEEncodeTiled')?.inputs.tile_size, 768);
+    assert.equal(workflowNodeByClass(workflow, 'VAEDecodeTiled')?.inputs.overlap, 96);
   });
 });
 
