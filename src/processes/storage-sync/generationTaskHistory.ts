@@ -1,4 +1,5 @@
 import type { GeneratedImage, GenerationTask } from '../../domain/generationTask';
+import { isActiveGenerationStatus } from '../../domain/generationStatus';
 import type { GenerationTaskHistoryCache, GenerationTaskHistoryStore } from '../../entities/storage';
 import { normalizeGenerationTasks } from '../../entities/storage';
 import { localGenerationTaskCache } from '../../infrastructure/storage/localGenerationTaskCache';
@@ -93,6 +94,10 @@ export async function loadGenerationTaskHistory(dependencies: GenerationTaskHist
     console.warn('Falling back to local generation history cache.', error);
     return fallback.loadSync();
   }
+}
+
+export function shouldPersistGenerationTaskHistory(tasks: readonly GenerationTask[]): boolean {
+  return !tasks.some((task) => isActiveGenerationStatus(task.status));
 }
 
 export async function saveGenerationTaskHistory(tasks: GenerationTask[], dependencies: GenerationTaskHistorySyncDependencies = {}): Promise<void> {

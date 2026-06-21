@@ -9,6 +9,7 @@ import {
   normalizeGenerationStatus,
   runWithRetryPolicy
 } from '../src/processes/generation-task-lifecycle';
+import { shouldPersistGenerationTaskHistory } from '../src/processes/storage-sync';
 
 test('generation lifecycle normalizes old statuses and classifies active work', () => {
   assert.equal(normalizeGenerationStatus('streaming'), 'running');
@@ -17,6 +18,13 @@ test('generation lifecycle normalizes old statuses and classifies active work', 
   assert.equal(interruptedStatusToFailed('succeeded'), 'succeeded');
   assert.equal(isActiveGenerationStatus('retrying'), true);
   assert.equal(isActiveGenerationStatus('cancelled'), false);
+});
+
+test('generation history persistence waits until active previews finish', () => {
+  assert.equal(shouldPersistGenerationTaskHistory([{ id: 'task-1', status: 'running' } as any]), false);
+  assert.equal(shouldPersistGenerationTaskHistory([{ id: 'task-1', status: 'retrying' } as any]), false);
+  assert.equal(shouldPersistGenerationTaskHistory([{ id: 'task-1', status: 'succeeded' } as any]), true);
+  assert.equal(shouldPersistGenerationTaskHistory([{ id: 'task-1', status: 'failed' } as any]), true);
 });
 
 test('task cancellation registry aborts and releases controllers', () => {

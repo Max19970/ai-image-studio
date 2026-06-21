@@ -87,7 +87,7 @@ async function consumeStream(
 
       const imgs = responseAdapter.collectImagesFromJson(event);
       imgs.forEach((img) => {
-        collected.push(img);
+        if (img.kind !== 'partial') collected.push(img);
         onStreamImage?.(img);
       });
     }

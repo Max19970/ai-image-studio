@@ -7,6 +7,32 @@ import { buildComfyUiPayload } from '../../entities/generation-params/comfyui/pa
 import type { ProviderRequestAdapter, ProviderSubmitProxyRequestConfig, ProviderSubmitProxyRequestInput } from '../../entities/provider/types';
 import { resolveModeImageSize } from '../../entities/provider/valueConstraints';
 
+type ComfyUiPreviewStreamMode = 'full' | 'throttled' | 'off';
+
+const COMFYUI_PREVIEW_STREAM_HEADER = 'X-Image-Studio-ComfyUI-Preview-Stream';
+
+function readPreviewStreamModeOverride(): ComfyUiPreviewStreamMode | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const value = window.localStorage?.getItem('imageStudio.comfyUiPreviewStreamMode')?.trim().toLowerCase();
+    if (value === 'full' || value === 'throttled' || value === 'off') return value;
+  } catch {
+    // localStorage may be blocked in embedded browsers.
+  }
+  return null;
+}
+
+function resolveComfyUiPreviewStreamMode(): ComfyUiPreviewStreamMode {
+  return readPreviewStreamModeOverride() ?? 'throttled';
+}
+
+function comfyUiPreviewHeaders(headers: Record<string, string> = {}): Record<string, string> {
+  return {
+    ...headers,
+    [COMFYUI_PREVIEW_STREAM_HEADER]: resolveComfyUiPreviewStreamMode()
+  };
+}
+
 export function getComfyUiSizeFromParams(
   params: ImageParams,
   provider: ProviderSettings,
@@ -79,6 +105,7 @@ export function createComfyUiSubmitProxyRequest(input: ProviderSubmitProxyReques
       path: submit.path ?? '/api/provider/submit',
       init: {
         method: 'POST',
+        headers: comfyUiPreviewHeaders(),
         body: form,
         signal: input.signal
       },
@@ -91,7 +118,7 @@ export function createComfyUiSubmitProxyRequest(input: ProviderSubmitProxyReques
     path: submit.path ?? '/api/provider/submit',
     init: {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: comfyUiPreviewHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ provider: input.provider, payload: input.payload, providerModeId, transport: submit }),
       signal: input.signal
     },

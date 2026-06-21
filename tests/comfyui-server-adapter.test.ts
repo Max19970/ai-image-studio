@@ -502,6 +502,62 @@ test('ComfyUI streamed response emits websocket progress and preview events befo
   }
 });
 
+test('ComfyUI preview stream mode off keeps websocket progress and suppresses preview payloads', async () => {
+  const originalWebSocket = (globalThis as any).WebSocket;
+  class FakeComfyUiWebSocket {
+    binaryType = 'arraybuffer';
+    private listeners = new Map<string, Array<(event: any) => void>>();
+
+    constructor(public url: string) {
+      setTimeout(() => {
+        this.dispatch('open', {});
+        this.dispatch('message', {
+          data: JSON.stringify({ type: 'progress', data: { prompt_id: 'prompt-1', value: 5, max: 10, node: '3' } })
+        });
+        const binaryPreview = Buffer.concat([Buffer.alloc(8), tinyPng]);
+        this.dispatch('message', {
+          data: binaryPreview.buffer.slice(binaryPreview.byteOffset, binaryPreview.byteOffset + binaryPreview.byteLength)
+        });
+      }, 0);
+    }
+
+    addEventListener(type: string, listener: (event: any) => void) {
+      this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
+    }
+
+    close() {
+      this.dispatch('close', {});
+    }
+
+    private dispatch(type: string, event: any) {
+      for (const listener of this.listeners.get(type) ?? []) listener(event);
+    }
+  }
+
+  (globalThis as any).WebSocket = FakeComfyUiWebSocket;
+  try {
+    await withFakeComfyUi(async (baseUrl) => {
+      const settings = provider(baseUrl);
+      const { upstream } = await comfyUiProviderAdapter.fetchGenerate(settings, {
+        prompt: 'small fox',
+        width: 512,
+        height: 512,
+        seed: 42,
+        steps: 12,
+        sampler_name: 'euler',
+        scheduler: 'normal'
+      }, { previewStreamMode: 'off' });
+
+      const events = await readSseEvents(upstream);
+      assert.ok(events.some((event) => event?.type === 'comfyui.progress' && event.progress?.percent === 50));
+      assert.equal(events.some((event) => event?.type === 'comfyui.preview'), false);
+      assert.ok(events.some((event) => event?.type === 'comfyui.final'));
+    });
+  } finally {
+    (globalThis as any).WebSocket = originalWebSocket;
+  }
+});
+
 test('ComfyUI response mapper collects image references from direct and wrapped history shapes', () => {
   assert.deepEqual(collectComfyUiOutputImages({ outputs: { '9': { images: [{ filename: 'a.png' }] } } }), [
     { filename: 'a.png', subfolder: '', type: 'output' }

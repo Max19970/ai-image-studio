@@ -20,7 +20,8 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
   const progressPercent = typeof task.progress?.percent === 'number' ? Math.round(task.progress.percent) : null;
   const activeImage = task.images[Math.min(activeIndex, Math.max(0, task.images.length - 1))] ?? null;
   const hasStoredThumbnail = Boolean(activeImage?.thumbnailSrc);
-  const thumbnailSrc = useOptimizedImageSrc(activeImage?.thumbnailSrc ?? activeImage?.src ?? '', 620, { skipOptimization: hasStoredThumbnail });
+  const shouldSkipLiveOptimization = isActiveTask || activeImage?.kind === 'partial';
+  const thumbnailSrc = useOptimizedImageSrc(activeImage?.thumbnailSrc ?? activeImage?.src ?? '', 620, { skipOptimization: hasStoredThumbnail || shouldSkipLiveOptimization });
   const isBatch = task.kind === 'batch';
   const hasMultiple = isBatch || task.images.length > 1;
   const shouldShowStatusPill = activeImage?.kind === 'partial' || isActiveTask;

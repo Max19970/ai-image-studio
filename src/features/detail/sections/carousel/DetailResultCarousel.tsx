@@ -11,7 +11,7 @@ type CarouselSlide = { type: 'image'; image: GeneratedImage } | { type: 'pending
 
 function ResultCarouselSlide({ slide, className, onClick }: { slide: CarouselSlide; className: string; onClick: () => void }) {
   const { t } = useI18n();
-  const thumbnailSrc = useOptimizedImageSrc(slide.type === 'image' ? slide.image.src : '', 1200);
+  const thumbnailSrc = useOptimizedImageSrc(slide.type === 'image' ? slide.image.src : '', 1200, { skipOptimization: slide.type === 'image' && slide.image.kind === 'partial' });
 
   return (
     <button type="button" className={cx(styles.carouselSlide, className)} onClick={onClick}>

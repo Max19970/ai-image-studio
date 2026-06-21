@@ -6,7 +6,7 @@ import styles from './DetailHeroSection.module.css';
 
 export function DetailThumb({ item, active, onClick }: { item: GeneratedImage; active: boolean; onClick: () => void }) {
   const { t } = useI18n();
-  const thumbnailSrc = useOptimizedImageSrc(item.thumbnailSrc ?? item.src, 180, { skipOptimization: Boolean(item.thumbnailSrc) });
+  const thumbnailSrc = useOptimizedImageSrc(item.thumbnailSrc ?? item.src, 180, { skipOptimization: Boolean(item.thumbnailSrc) || item.kind === 'partial' });
   return (
     <button type="button" className={cx(styles.thumb, active && styles.active)} onClick={onClick}>
       <img src={thumbnailSrc} alt={t('detail.outputAlt', { index: item.index + 1 })} loading="lazy" decoding="async" />

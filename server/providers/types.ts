@@ -100,8 +100,11 @@ export type UpstreamRequestResult = {
   upstream: Response;
 };
 
+export type ProviderPreviewStreamMode = 'full' | 'throttled' | 'off';
+
 export interface ProviderFetchContext {
   signal?: AbortSignal;
+  previewStreamMode?: ProviderPreviewStreamMode;
 }
 
 export interface ProviderModeSubmitInput {

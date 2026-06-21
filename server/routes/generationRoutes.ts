@@ -3,6 +3,7 @@ import type multer from 'multer';
 import { getProviderAdapter, parseProviderSettings } from '../providers/registry';
 import {
   normalizePayload,
+  type ProviderPreviewStreamMode,
   type ProviderSubmitTransportDefinition,
   type UploadedFile
 } from '../providers/types';
@@ -46,6 +47,17 @@ function parseTransport(value: unknown): ProviderSubmitTransportDefinition | nul
   };
 }
 
+function parsePreviewStreamMode(value: unknown): ProviderPreviewStreamMode | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'full' || normalized === 'throttled' || normalized === 'off') return normalized;
+  return null;
+}
+
+function resolvePreviewStreamMode(req: express.Request): ProviderPreviewStreamMode {
+  return parsePreviewStreamMode(req.get('x-image-studio-comfyui-preview-stream')) ?? 'throttled';
+}
+
 async function submitProviderModeRequest(
   req: express.Request,
   res: express.Response,
@@ -63,7 +75,8 @@ async function submitProviderModeRequest(
     payload,
     files,
     context: {
-      signal: createRequestAbortSignal(req, res)
+      signal: createRequestAbortSignal(req, res),
+      previewStreamMode: resolvePreviewStreamMode(req)
     }
   });
   await proxyResponse(upstream, res);

@@ -25,7 +25,7 @@ import {
   buildOpenAiCompatibleImagePayload,
   createOpenAiCompatibleSubmitProxyRequest
 } from '../src/providers/openai-compatible/requestAdapter';
-import { buildComfyUiImagePayload } from '../src/providers/comfyui/requestAdapter';
+import { buildComfyUiImagePayload, createComfyUiSubmitProxyRequest } from '../src/providers/comfyui/requestAdapter';
 
 const customComfyMode: ProviderGenerationModeDefinition = {
   id: 'comfyui.custom-mode',
@@ -162,6 +162,31 @@ test('ComfyUI declares text-to-image and Hires Fix as provider-owned modes', () 
   assert.deepEqual(modes[1].attachmentPolicy.allowedRoles, ['targetImage']);
   assert.deepEqual(modes[1].attachmentPolicy.requiredRoles, ['targetImage']);
   assert.equal(modes[1].attachmentPolicy.maxCounts?.targetImage, 1);
+});
+
+test('ComfyUI submit request keeps throttled previews in Telegram Mini App runtime', () => {
+  const previousWindow = globalThis.window;
+  (globalThis as typeof globalThis & { window: unknown }).window = {
+    Telegram: { WebApp: {} },
+    navigator: { userAgent: 'Telegram Android' },
+    location: { search: '?tgWebAppData=test', hash: '' },
+    matchMedia: () => ({ matches: true }),
+    localStorage: { getItem: () => null }
+  };
+
+  try {
+    const request = createComfyUiSubmitProxyRequest({
+      provider: { ...defaultProviderSettings, adapterId: 'comfyui', modelId: 'sdxl.safetensors' },
+      payload: { prompt: 'fox' },
+      mode: 'generate',
+      providerMode: listProviderGenerationModes(comfyUiProviderDefinition)[0]
+    });
+
+    assert.equal((request.init.headers as Record<string, string>)['X-Image-Studio-ComfyUI-Preview-Stream'], 'throttled');
+  } finally {
+    if (previousWindow) (globalThis as typeof globalThis & { window: unknown }).window = previousWindow;
+    else delete (globalThis as typeof globalThis & { window?: unknown }).window;
+  }
 });
 
 test('ComfyUI Hires Fix payload is provider-mode scoped and single-image oriented', () => {

@@ -6,7 +6,8 @@ import {
   clearGenerationTaskHistory,
   loadGenerationTaskHistory,
   loadGenerationTaskHistoryFallback,
-  saveGenerationTaskHistory
+  saveGenerationTaskHistory,
+  shouldPersistGenerationTaskHistory
 } from '../../processes/storage-sync';
 
 export function useGenerationTaskHistory() {
@@ -34,6 +35,7 @@ export function useGenerationTaskHistory() {
 
   useEffect(() => {
     if (!historyHydratedRef.current) return;
+    if (!shouldPersistGenerationTaskHistory(tasks)) return;
     void saveGenerationTaskHistory(tasks);
   }, [tasks]);
 

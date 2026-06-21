@@ -1,6 +1,7 @@
 import {
   HttpError,
   type ProviderFetchContext,
+  type ProviderPreviewStreamMode,
   type ProviderSettings,
   type UpstreamRequestResult
 } from '../types';
@@ -25,6 +26,30 @@ interface StreamEvent {
 type ComfyUiProgressEvent = ReturnType<typeof progressEvent>;
 
 const encoder = new TextEncoder();
+const COMFYUI_PREVIEW_THROTTLE_MS = 2_500;
+const COMFYUI_THROTTLED_PREVIEW_MAX_BYTES = 1_500_000;
+
+interface ComfyUiPreviewThrottleState {
+  lastEmittedAt: number;
+}
+
+function normalizePreviewStreamMode(mode?: ProviderPreviewStreamMode): ProviderPreviewStreamMode {
+  return mode ?? 'throttled';
+}
+
+function shouldEmitPreview(
+  preview: { bytes: Buffer },
+  mode: ProviderPreviewStreamMode,
+  state: ComfyUiPreviewThrottleState,
+  now = Date.now()
+): boolean {
+  if (mode === 'off') return false;
+  if (mode === 'full') return true;
+  if (preview.bytes.length > COMFYUI_THROTTLED_PREVIEW_MAX_BYTES) return false;
+  if (state.lastEmittedAt > 0 && now - state.lastEmittedAt < COMFYUI_PREVIEW_THROTTLE_MS) return false;
+  state.lastEmittedAt = now;
+  return true;
+}
 
 function hasNodeErrors(value: unknown): boolean {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -135,6 +160,7 @@ function connectComfyUiWebSocket(args: {
   getPromptId: () => string;
   emit: (event: StreamEvent) => void;
   signal?: AbortSignal;
+  previewStreamMode?: ProviderPreviewStreamMode;
 }): WebSocket | null {
   if (typeof WebSocket === 'undefined') {
     args.emit({ type: 'comfyui.progress', progress: progressEvent({ stage: 'polling', message: 'WebSocket is not available in this runtime.' }) });
@@ -151,6 +177,8 @@ function connectComfyUiWebSocket(args: {
   }
 
   ws.binaryType = 'arraybuffer';
+  const previewStreamMode = normalizePreviewStreamMode(args.previewStreamMode);
+  const previewThrottleState: ComfyUiPreviewThrottleState = { lastEmittedAt: 0 };
 
   const belongsToPrompt = (data: any) => {
     const promptId = args.getPromptId();
@@ -207,10 +235,12 @@ function connectComfyUiWebSocket(args: {
       return;
     }
 
+    if (previewStreamMode === 'off') return;
+
     void (async () => {
       const raw = await messageDataToBuffer(event.data);
       const preview = extractPreviewImage(raw);
-      if (!preview) return;
+      if (!preview || !shouldEmitPreview(preview, previewStreamMode, previewThrottleState)) return;
       args.emit({
         type: 'comfyui.preview',
         b64_json: preview.bytes.toString('base64'),
@@ -312,7 +342,8 @@ export function runComfyUiWorkflowStream(args: {
             clientId: args.clientId,
             getPromptId: () => promptId,
             emit,
-            signal: args.context?.signal
+            signal: args.context?.signal,
+            previewStreamMode: args.context?.previewStreamMode
           });
 
           const promptResponse = await fetchComfyUiJson<ComfyUiPromptResponse>(args.provider, endpoint, {
