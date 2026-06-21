@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { createImageStudioApp } from './app';
 import { registerStaticClient } from './http/staticClient';
 import { env } from './providers/types';
+import { startOptionalCloudflaredTunnel } from './tunnel/cloudflaredTunnel';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,6 +13,9 @@ registerStaticClient(app, __dirname);
 
 const port = Number(process.env.PORT || 8787);
 const host = env('HOST', '127.0.0.1');
+const localServerUrl = `http://${host}:${port}`;
+
 app.listen(port, host, () => {
-  console.log(`Image Studio proxy listening on http://${host}:${port}`);
+  console.log(`Image Studio proxy listening on ${localServerUrl}`);
+  startOptionalCloudflaredTunnel({ targetUrl: localServerUrl });
 });

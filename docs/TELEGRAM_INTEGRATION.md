@@ -64,6 +64,31 @@ npm run start
 
 `npm run start` loads `.env`, `.env.local`, and environment-specific `.env.*` files automatically before the Express server imports provider, storage, CORS, or integration modules. Shell environment variables still win over `.env` values.
 
+### Optional tunnel autostart
+
+The production server can also start `cloudflared` automatically after Express begins listening:
+
+```env
+IMAGE_STUDIO_TUNNEL_AUTOSTART=true
+IMAGE_STUDIO_TUNNEL_COMMAND=cloudflared
+```
+
+With no custom args, Image Studio runs a quick tunnel equivalent to:
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:8787
+```
+
+For a stable custom hostname such as `https://comfybottg.space`, prefer a named Cloudflare Tunnel and set args to the exact command you would normally run manually. A token-based connector works well for local autostart:
+
+```env
+IMAGE_STUDIO_TUNNEL_ARGS=tunnel --no-autoupdate --protocol http2 run --token <TOKEN>
+```
+
+`--protocol http2` is optional, but it can avoid QUIC/DNS resolver stalls on some Windows networks.
+
+`IMAGE_STUDIO_TUNNEL_ARGS` supports `${HOST}`, `${PORT}`, `${targetUrl}`, and `${IMAGE_STUDIO_TUNNEL_TARGET_URL}` placeholders.
+
 Point the Cloudflare Tunnel public hostname to:
 
 ```txt
