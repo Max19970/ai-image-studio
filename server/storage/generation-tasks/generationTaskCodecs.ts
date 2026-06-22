@@ -25,11 +25,15 @@ export function clampOffset(value: unknown): number {
   return Math.max(0, numeric);
 }
 
+function isImageDataUrl(value: unknown): value is string {
+  return typeof value === 'string' && /^data:image\/[^;,]+;base64,/i.test(value);
+}
+
 function estimateImageBytes(image: JsonObject): number {
   const src = typeof image.src === 'string' ? image.src : '';
   const comma = src.indexOf(',');
-  if (src.startsWith('data:') && comma >= 0) return Math.floor((src.length - comma - 1) * 0.75);
-  return Buffer.byteLength(src, 'utf8');
+  if (isImageDataUrl(src) && comma >= 0) return Math.floor((src.length - comma - 1) * 0.75);
+  return 0;
 }
 
 function imageFormatFromDataUrl(src: string, fallback: string): string {
@@ -57,6 +61,8 @@ function collectTopLevelImageRefs(task: JsonObject, taskId: string): StoredImage
   const topLevelImages = Array.isArray(task.images) ? task.images : [];
   return topLevelImages.flatMap((image, index) => {
     if (!isRecord(image)) return [];
+    const imageSrc = typeof image.src === 'string' ? image.src : '';
+    if (!isImageDataUrl(imageSrc)) return [];
     const imageId = stringOrFallback(image.id, `${taskId}-image-${index}`);
     const imageIndex = numberOrFallback(image.index, index);
     const format = stringOrFallback(image.format, 'png');
@@ -76,7 +82,7 @@ function collectTopLevelImageRefs(task: JsonObject, taskId: string): StoredImage
       document: { ...image, id: imageId, storageAssetKey: fullDocumentKey, storageAssetLoaded: true }
     }];
 
-    if (typeof image.thumbnailSrc === 'string' && image.thumbnailSrc) {
+    if (isImageDataUrl(image.thumbnailSrc)) {
       const thumbnailDocumentKey = `${taskId}/image/${imageId}/thumbnail`;
       const thumbnailDocument = createThumbnailDocument(image, image.thumbnailSrc, fullDocumentKey, thumbnailDocumentKey);
       refs.push({
@@ -105,6 +111,8 @@ function collectBatchImageRefs(task: JsonObject, taskId: string): StoredImageRef
     const batchItemId = stringOrFallback(item.id, `${taskId}-batch-item-${itemIndex}`);
     return item.images.flatMap((image, imageIndex) => {
       if (!isRecord(image)) return [];
+      const imageSrc = typeof image.src === 'string' ? image.src : '';
+      if (!isImageDataUrl(imageSrc)) return [];
       const imageId = stringOrFallback(image.id, `${batchItemId}-image-${imageIndex}`);
       const storedIndex = numberOrFallback(image.index, imageIndex);
       const format = stringOrFallback(image.format, 'png');
@@ -124,7 +132,7 @@ function collectBatchImageRefs(task: JsonObject, taskId: string): StoredImageRef
         document: { ...image, id: imageId, storageAssetKey: fullDocumentKey, storageAssetLoaded: true }
       }];
 
-      if (typeof image.thumbnailSrc === 'string' && image.thumbnailSrc) {
+      if (isImageDataUrl(image.thumbnailSrc)) {
         const thumbnailDocumentKey = `${taskId}/batch/${batchItemId}/image/${imageId}/thumbnail`;
         const thumbnailDocument = createThumbnailDocument(image, image.thumbnailSrc, fullDocumentKey, thumbnailDocumentKey);
         refs.push({

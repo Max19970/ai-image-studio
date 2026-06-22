@@ -168,8 +168,8 @@ function scheduleRuntimeTaskPersistence(tasks: GenerationTask[]) {
 
 function ensureRuntimeTasks(): GenerationTask[] {
   if (!runtimeTasks) {
-    const { tasks } = loadGenerationTaskHistoryDocuments({ limit: 120, offset: 0, assetMode: 'metadata' });
-    runtimeTasks = normalizeGenerationTasks(serializeGenerationTaskHistoryForClient(tasks, 'thumbnail'), 120);
+    const { tasks } = loadGenerationTaskHistoryDocuments({ limit: 120, offset: 0, assetMode: 'full' });
+    runtimeTasks = normalizeGenerationTasks(tasks, 120);
   }
   return runtimeTasks;
 }

@@ -31,6 +31,42 @@ function resolveLoadOptions(options: GenerationTaskHistoryLoadOptions): Required
   };
 }
 
+function isImageDataUrl(value: unknown): value is string {
+  return typeof value === 'string' && /^data:image\/[^;,]+;base64,/i.test(value);
+}
+
+function hydrateImageForPersistence(image: unknown): unknown {
+  if (!isRecord(image)) return image;
+  const fullKey = typeof image.storageAssetKey === 'string' ? image.storageAssetKey : '';
+  const thumbnailKey = typeof image.storageThumbnailKey === 'string' ? image.storageThumbnailKey : '';
+  const full = fullKey ? loadGenerationTaskAssetDocument(fullKey) : null;
+  const thumbnail = thumbnailKey ? loadGenerationTaskAssetDocument(thumbnailKey) : null;
+  const fullSrc = isImageDataUrl(image.src) ? image.src : isImageDataUrl(full?.src) ? full.src : '';
+  const thumbnailSrc = isImageDataUrl(image.thumbnailSrc) ? image.thumbnailSrc : isImageDataUrl(thumbnail?.src) ? thumbnail.src : isImageDataUrl(full?.thumbnailSrc) ? full.thumbnailSrc : '';
+
+  return {
+    ...image,
+    ...(fullSrc ? { src: fullSrc } : {}),
+    ...(thumbnailSrc ? { thumbnailSrc } : {}),
+    ...(fullKey ? { storageAssetKey: fullKey } : {}),
+    ...(thumbnailKey ? { storageThumbnailKey: thumbnailKey } : {})
+  };
+}
+
+function hydrateTaskForPersistence(task: JsonObject): JsonObject {
+  return {
+    ...task,
+    images: Array.isArray(task.images) ? task.images.map(hydrateImageForPersistence) : task.images,
+    batch: isRecord(task.batch) && Array.isArray(task.batch.items) ? {
+      ...task.batch,
+      items: task.batch.items.map((item: unknown) => isRecord(item) ? {
+        ...item,
+        images: Array.isArray(item.images) ? item.images.map(hydrateImageForPersistence) : item.images
+      } : item)
+    } : task.batch
+  };
+}
+
 function isActiveStoredStatus(status: unknown): boolean {
   return status === 'queued' || status === 'sending' || status === 'running' || status === 'retrying';
 }
@@ -84,12 +120,12 @@ export function saveGenerationTaskHistoryDocuments(tasks: unknown[]) {
     tasks.forEach((taskLike) => {
       if (!isRecord(taskLike)) return;
       const taskId = stringOrFallback(taskLike.id, `task-${Date.now()}`);
-      const task = {
+      const task = hydrateTaskForPersistence({
         ...taskLike,
         id: taskId,
         galleryPath: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)[0] ?? normalizeGalleryPath(taskLike.galleryPath),
         galleryPaths: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)
-      };
+      });
       const imageRefs = collectImages(task, taskId);
       const fullImageRefs = imageRefs.filter((ref) => ref.assetKind === 'full');
       if (isEmptyActiveStoredTask(task, fullImageRefs.length)) return;
