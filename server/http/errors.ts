@@ -9,6 +9,8 @@ export async function proxyResponse(upstream: Response, res: express.Response) {
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
   } else {
     res.setHeader('Content-Type', contentType || 'application/json; charset=utf-8');
   }

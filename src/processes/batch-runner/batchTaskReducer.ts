@@ -11,7 +11,7 @@ export type BatchTaskReducerEvent =
   | { type: 'item-retrying'; itemId: string; retryText: string; aggregateError: string | null }
   | { type: 'item-succeeded'; itemId: string; images: GeneratedImage[]; raw: unknown; streamed: boolean }
   | { type: 'item-failed'; itemId: string; error: string; aggregateError: string }
-  | { type: 'item-cancelled'; itemId: string; error: string; aggregateError: string }
+  | { type: 'item-cancelled'; itemId: string; error: string; aggregateError: string | null }
   | { type: 'active-items-cancelled'; error: string }
   | { type: 'batch-finished'; status: GenerationStatus; error: string | null };
 

@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
-import type { AttachmentSummary, BatchGenerationItem, GeneratedImage, GenerationRequestSnapshot, GenerationTask } from '../../../../domain/generationTask';
+import { useState, type ReactNode } from 'react';
+import type { AttachmentSummary, BatchGenerationItem, GeneratedImage, GenerationRequestSnapshot, GenerationStatus, GenerationTask } from '../../../../domain/generationTask';
+import { cancelServerBatchGenerationItem } from '../../../../infrastructure/api';
 import { useI18n } from '../../../../i18n';
 import { AttachmentImageStrip } from '../../../../shared/ui';
 import type { AttachmentPreviewItem } from '../../../../shared/ui';
@@ -204,18 +205,52 @@ function BatchRequestSection({ title, children }: { title: string; children: Rea
   );
 }
 
-function BatchRequestCard({ item, activeMobileTab }: { item: BatchGenerationItem; activeMobileTab?: DetailInspectorTab }) {
+const cancellableBatchItemStatuses = new Set<GenerationStatus>(['queued', 'sending', 'running', 'retrying']);
+
+function canCancelBatchItem(item: BatchGenerationItem): boolean {
+  return cancellableBatchItemStatuses.has(item.status);
+}
+
+function BatchRequestCard({
+  item,
+  activeMobileTab,
+  cancelling,
+  onCancel
+}: {
+  item: BatchGenerationItem;
+  activeMobileTab?: DetailInspectorTab;
+  cancelling: boolean;
+  onCancel: (itemId: string) => void;
+}) {
   const { t } = useI18n();
   const showPrompt = visible(activeMobileTab, 'prompt');
   const showFiles = visible(activeMobileTab, 'files');
   const showParams = visible(activeMobileTab, 'params');
   const showTechnical = visible(activeMobileTab, 'technical');
+  const canCancel = canCancelBatchItem(item);
 
   return (
     <details className={styles.batchRequestCard} open>
       <summary>
         <span>{t('detail.batchRequestTitle', { index: item.index + 1 })}</span>
-        <span className={`status-pill tiny ${item.status}`}>{t(`status.${item.status}`)}</span>
+        <span className={styles.batchRequestSummaryActions}>
+          <span className={`status-pill tiny ${item.status}`}>{t(`status.${item.status}`)}</span>
+          {canCancel && (
+            <button
+              type="button"
+              className={styles.cancelBatchItemButton}
+              disabled={cancelling}
+              aria-label={t('detail.cancelBatchItemAria', { index: item.index + 1 })}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onCancel(item.id);
+              }}
+            >
+              {cancelling ? t('detail.cancelBatchItemPending') : t('detail.cancelBatchItem')}
+            </button>
+          )}
+        </span>
       </summary>
       <div className={styles.batchRequestBody}>
         {showPrompt && (
@@ -257,7 +292,21 @@ function BatchRequestCard({ item, activeMobileTab }: { item: BatchGenerationItem
 
 function BatchSnapshotSections({ task, activeMobileTab }: { task: GenerationTask; activeMobileTab?: DetailInspectorTab }) {
   const { t } = useI18n();
+  const [cancellingItemIds, setCancellingItemIds] = useState<Set<string>>(() => new Set());
   if (!task.batch) return null;
+
+  const cancelBatchItem = (itemId: string) => {
+    setCancellingItemIds((current) => new Set(current).add(itemId));
+    void cancelServerBatchGenerationItem(task.id, itemId)
+      .catch((error) => console.error('[detail] failed to cancel batch item:', error))
+      .finally(() => {
+        setCancellingItemIds((current) => {
+          const next = new Set(current);
+          next.delete(itemId);
+          return next;
+        });
+      });
+  };
 
   return (
     <div className={styles.inspectorStack} data-detail-slot="request-batch">
@@ -282,7 +331,15 @@ function BatchSnapshotSections({ task, activeMobileTab }: { task: GenerationTask
 
       <InspectorGroup title={t('detail.batchGeneratedImage')} kicker={t('detail.batchRequests')}>
         <div className={styles.batchList}>
-          {task.batch.items.map((item) => <BatchRequestCard key={item.id} item={item} activeMobileTab={activeMobileTab} />)}
+          {task.batch.items.map((item) => (
+            <BatchRequestCard
+              key={item.id}
+              item={item}
+              activeMobileTab={activeMobileTab}
+              cancelling={cancellingItemIds.has(item.id)}
+              onCancel={cancelBatchItem}
+            />
+          ))}
         </div>
       </InspectorGroup>
     </div>

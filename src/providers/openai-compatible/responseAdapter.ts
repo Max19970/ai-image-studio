@@ -1,6 +1,24 @@
 import type { GeneratedImage } from '../../domain/generationTask';
 import type { ProviderResponseAdapter } from '../../entities/provider/types';
 
+const LARGE_INLINE_IMAGE_KEYS = new Set(['b64_json', 'partial_image_b64', 'result']);
+
+function compactInlineImageRaw(value: unknown, depth = 0): unknown {
+  if (!value || typeof value !== 'object' || depth > 4) return value;
+  if (Array.isArray(value)) return value.map((item) => compactInlineImageRaw(item, depth + 1));
+
+  const source = value as Record<string, unknown>;
+  const compacted: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(source)) {
+    if (LARGE_INLINE_IMAGE_KEYS.has(key) && typeof entry === 'string') {
+      compacted[key] = `[omitted inline image payload: ${entry.length} chars]`;
+      continue;
+    }
+    compacted[key] = compactInlineImageRaw(entry, depth + 1);
+  }
+  return compacted;
+}
+
 export function imageFromOpenAiCompatibleBase64(
   base64: string,
   format = 'png',
@@ -16,7 +34,7 @@ export function imageFromOpenAiCompatibleBase64(
     kind,
     index,
     createdAt: Date.now(),
-    raw
+    raw: compactInlineImageRaw(raw)
   };
 }
 

@@ -217,6 +217,10 @@ export async function cancelServerGenerationTask(taskId: string): Promise<void> 
   await readJsonOrThrow(await fetchProxy(`/api/generation-tasks/${encodeURIComponent(taskId)}/cancel`, { method: 'POST' }));
 }
 
+export async function cancelServerBatchGenerationItem(taskId: string, itemId: string): Promise<void> {
+  await readJsonOrThrow(await fetchProxy(`/api/generation-tasks/${encodeURIComponent(taskId)}/batch-items/${encodeURIComponent(itemId)}/cancel`, { method: 'POST' }));
+}
+
 export async function submitImageRequest(request: SubmitRequest): Promise<{ images: GeneratedImage[]; raw: unknown; streamed: boolean }> {
   const adapter = getProviderAdapterForSettings(request.provider);
   const proxyRequest = adapter.request.createSubmitProxyRequest(request);

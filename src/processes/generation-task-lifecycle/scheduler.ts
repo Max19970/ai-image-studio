@@ -11,8 +11,10 @@ export interface DelayedParallelSchedulerOptions<T> {
   intervalMs: number;
   maxConcurrency?: number;
   signal: AbortSignal;
+  taskSignal?: (task: ScheduledTask<T>) => AbortSignal | undefined;
   onBeforeDelay?: (task: ScheduledTask<T>) => void;
   onBeforeRun?: (task: ScheduledTask<T>) => void;
+  onTaskAbort?: (task: ScheduledTask<T>) => void | Promise<void>;
   run: (task: ScheduledTask<T>) => Promise<void>;
 }
 
@@ -39,9 +41,26 @@ export async function runDelayedParallelScheduler<T>(options: DelayedParallelSch
       const task = schedule[nextIndex];
       nextIndex += 1;
       if (options.signal.aborted) throw new DOMException('Request was cancelled.', 'AbortError');
+      const taskSignal = options.taskSignal?.(task);
+      if (taskSignal?.aborted) {
+        await options.onTaskAbort?.(task);
+        continue;
+      }
       options.onBeforeDelay?.(task);
-      if (task.delayMs > 0) await delay(task.delayMs, options.signal);
+      try {
+        if (task.delayMs > 0) await delay(task.delayMs, taskSignal ?? options.signal);
+      } catch (error) {
+        if (taskSignal?.aborted && !options.signal.aborted) {
+          await options.onTaskAbort?.(task);
+          continue;
+        }
+        throw error;
+      }
       if (options.signal.aborted) throw new DOMException('Request was cancelled.', 'AbortError');
+      if (taskSignal?.aborted) {
+        await options.onTaskAbort?.(task);
+        continue;
+      }
       options.onBeforeRun?.(task);
       await options.run(task);
     }

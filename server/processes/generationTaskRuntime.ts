@@ -12,6 +12,8 @@ import { runDelayedParallelScheduler } from '../../src/processes/generation-task
 import { createRunnerRetryPolicy, runWithRetryPolicy } from '../../src/processes/generation-task-lifecycle/retryPolicy';
 import { loadGenerationTaskHistoryDocuments, saveGenerationTaskHistoryDocuments } from '../storage/generationTaskStore';
 import { getProviderAdapter } from '../providers/registry';
+import { serializeGenerationTaskHistoryForClient } from './generationTaskHistoryClientSerialization';
+import { serializeLiveGenerationTaskImagesForClient } from './liveGenerationImageStore';
 import type {
   ProviderPreviewStreamMode,
   ProviderSettings,
@@ -43,11 +45,67 @@ export interface ServerBatchGenerationRunInput {
 
 let runtimeTasks: GenerationTask[] | null = null;
 let mutationQueue: Promise<void> = Promise.resolve();
+let persistenceQueue: Promise<void> = Promise.resolve();
 const clients = new Set<Client>();
 const taskControllers = new Map<string, AbortController>();
+const batchItemControllers = new Map<string, Map<string, AbortController>>();
+const batchItemCancellationRequests = new Map<string, Set<string>>();
 
 function uid(prefix: string) {
   return `${prefix}-${crypto.randomUUID()}`;
+}
+
+function batchItemControllerMap(taskId: string): Map<string, AbortController> {
+  const current = batchItemControllers.get(taskId);
+  if (current) return current;
+  const next = new Map<string, AbortController>();
+  batchItemControllers.set(taskId, next);
+  return next;
+}
+
+function batchItemCancellationSet(taskId: string): Set<string> {
+  const current = batchItemCancellationRequests.get(taskId);
+  if (current) return current;
+  const next = new Set<string>();
+  batchItemCancellationRequests.set(taskId, next);
+  return next;
+}
+
+function requestBatchItemCancellation(taskId: string, itemId: string) {
+  batchItemCancellationSet(taskId).add(itemId);
+}
+
+function isBatchItemCancellationRequested(taskId: string, itemId: string): boolean {
+  return batchItemCancellationRequests.get(taskId)?.has(itemId) ?? false;
+}
+
+function registerBatchItemController(taskId: string, itemId: string, controller: AbortController) {
+  if (isBatchItemCancellationRequested(taskId, itemId)) controller.abort();
+  batchItemControllerMap(taskId).set(itemId, controller);
+}
+
+function abortBatchItemController(taskId: string, itemId: string): boolean {
+  const controller = batchItemControllers.get(taskId)?.get(itemId);
+  controller?.abort();
+  return Boolean(controller);
+}
+
+function abortBatchItemControllers(taskId: string) {
+  const controllers = batchItemControllers.get(taskId);
+  if (!controllers) return;
+  for (const controller of controllers.values()) controller.abort();
+}
+
+function unregisterBatchItemController(taskId: string, itemId: string) {
+  const controllers = batchItemControllers.get(taskId);
+  if (!controllers) return;
+  controllers.delete(itemId);
+  if (controllers.size === 0) batchItemControllers.delete(taskId);
+}
+
+function clearBatchTaskRuntime(taskId: string) {
+  batchItemControllers.delete(taskId);
+  batchItemCancellationRequests.delete(taskId);
 }
 
 function getResponseAdapter(adapterId: string | undefined): ProviderResponseAdapter {
@@ -98,14 +156,20 @@ function runtimePersistableTasks(tasks: GenerationTask[]): GenerationTask[] {
   return tasks.filter((task) => !isEmptyActiveTask(task));
 }
 
-function persistRuntimeTasks(tasks: GenerationTask[]) {
-  saveGenerationTaskHistoryDocuments(runtimePersistableTasks(tasks));
+function scheduleRuntimeTaskPersistence(tasks: GenerationTask[]) {
+  const snapshot = runtimePersistableTasks(tasks);
+  persistenceQueue = persistenceQueue.catch(() => undefined).then(async () => {
+    saveGenerationTaskHistoryDocuments(snapshot);
+  });
+  void persistenceQueue.catch((error) => {
+    console.error('[generation-task-runtime] failed to persist task history:', error);
+  });
 }
 
 function ensureRuntimeTasks(): GenerationTask[] {
   if (!runtimeTasks) {
-    const { tasks } = loadGenerationTaskHistoryDocuments({ limit: 120, offset: 0, assetMode: 'full' });
-    runtimeTasks = normalizeGenerationTasks(tasks, 120);
+    const { tasks } = loadGenerationTaskHistoryDocuments({ limit: 120, offset: 0, assetMode: 'metadata' });
+    runtimeTasks = normalizeGenerationTasks(serializeGenerationTaskHistoryForClient(tasks, 'thumbnail'), 120);
   }
   return runtimeTasks;
 }
@@ -114,15 +178,22 @@ function isActiveStatus(status: GenerationStatus): boolean {
   return status === 'queued' || status === 'sending' || status === 'running' || status === 'retrying';
 }
 
-function clientSnapshotTasks(): GenerationTask[] {
-  const { tasks } = loadGenerationTaskHistoryDocuments({ limit: 120, offset: 0, assetMode: 'thumbnail' });
-  if (!runtimeTasks) return normalizeGenerationTasks(tasks, 120);
+function serializeClientTask(task: GenerationTask): GenerationTask {
+  const [storedAssetUrlTask] = serializeGenerationTaskHistoryForClient([task], 'thumbnail') as GenerationTask[];
+  return serializeLiveGenerationTaskImagesForClient(storedAssetUrlTask ?? task);
+}
 
-  const storedById = new Map((tasks as GenerationTask[]).map((task) => [task.id, task]));
-  return runtimeTasks.map((task) => {
-    if (isActiveStatus(task.status)) return task;
-    return storedById.get(task.id) ?? task;
-  });
+function serializeClientTasks(tasks: GenerationTask[]): GenerationTask[] {
+  return tasks.map(serializeClientTask);
+}
+
+function clientSnapshotTasks(): GenerationTask[] {
+  if (!runtimeTasks) {
+    const { tasks } = loadGenerationTaskHistoryDocuments({ limit: 120, offset: 0, assetMode: 'metadata' });
+    return serializeGenerationTaskHistoryForClient(tasks, 'thumbnail') as GenerationTask[];
+  }
+
+  return serializeClientTasks(runtimeTasks);
 }
 
 interface GenerationTasksDeltaEvent {
@@ -216,17 +287,44 @@ function broadcastTasksDelta(previousTasks: GenerationTask[], nextTasks: Generat
 
 async function mutateTasks(recipe: (tasks: GenerationTask[]) => GenerationTask[], options: { persist?: boolean } = {}) {
   mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
-    const previousClientTasks = clients.size > 0 ? clientSnapshotTasks() : [];
+    const previousClientTasks = clients.size > 0 && runtimeTasks ? clientSnapshotTasks() : [];
     runtimeTasks = recipe(ensureRuntimeTasks());
-    if (options.persist !== false) persistRuntimeTasks(runtimeTasks);
+    if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
     const revision = ++taskEventsRevision;
     if (clients.size > 0) broadcastTasksDelta(previousClientTasks, clientSnapshotTasks(), revision);
   });
   await mutationQueue;
 }
 
+function currentRuntimeTaskIds(): string[] {
+  return ensureRuntimeTasks().map((task) => task.id);
+}
+
+function broadcastTaskUpsert(task: GenerationTask, revision: number) {
+  if (clients.size === 0) return;
+  const delta: GenerationTasksDeltaEvent = {
+    revision,
+    taskIds: currentRuntimeTaskIds(),
+    upserted: [serializeClientTask(task)],
+    deletedIds: []
+  };
+  for (const client of clients) sendEvent(client, 'tasks-delta', delta);
+}
+
 async function patchTask(taskId: string, recipe: (task: GenerationTask) => GenerationTask, options: { persist?: boolean } = {}) {
-  await mutateTasks((tasks) => tasks.map((task) => task.id === taskId ? recipe(task) : task), options);
+  mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
+    let changedTask: GenerationTask | null = null;
+    runtimeTasks = ensureRuntimeTasks().map((task) => {
+      if (task.id !== taskId) return task;
+      changedTask = recipe(task);
+      return changedTask;
+    });
+    if (!changedTask) return;
+    if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
+    const revision = ++taskEventsRevision;
+    broadcastTaskUpsert(changedTask, revision);
+  });
+  await mutationQueue;
 }
 
 function transitionTask(task: GenerationTask, status: GenerationStatus, patch: Partial<GenerationTask> = {}): GenerationTask {
@@ -259,11 +357,16 @@ async function readJsonOrThrow(response: Response): Promise<unknown> {
   return data;
 }
 
-async function consumeStreamedGeneration(
-  taskId: string,
+interface RuntimeGenerationStreamHandlers {
+  attachImage: (image: GeneratedImage) => GeneratedImage;
+  onProgress: (progress: GenerationProgress) => Promise<void>;
+  onImage: (image: GeneratedImage) => Promise<void>;
+}
+
+async function consumeStreamedRuntimeGeneration(
   response: Response,
   responseAdapter: ProviderResponseAdapter,
-  snapshot: GenerationRequestSnapshot
+  handlers: RuntimeGenerationStreamHandlers
 ): Promise<GeneratedImage[]> {
   if (!response.ok || !response.body) {
     await readJsonOrThrow(response);
@@ -281,17 +384,13 @@ async function consumeStreamedGeneration(
       if (streamError) throw new Error(streamError);
 
       const progress = responseAdapter.collectProgressFromJson?.(event);
-      if (progress) {
-        await patchTask(taskId, (task) => transitionTask(task, 'running', { progress }), { persist: false });
-      }
+      if (progress) await handlers.onProgress(progress);
 
       const images = responseAdapter.collectImagesFromJson(event);
       for (const image of images) {
-        const attached = attachSnapshot([image], snapshot, taskId)[0];
+        const attached = handlers.attachImage(image);
         if (attached.kind === 'final') collected.push(attached);
-        await patchTask(taskId, (task) => transitionTask(task, 'running', {
-          images: upsertLiveImage(task.images, attached)
-        }), { persist: attached.kind === 'final' });
+        await handlers.onImage(attached);
       }
     }
   };
@@ -309,96 +408,95 @@ async function consumeStreamedGeneration(
   return collected;
 }
 
-async function consumeStreamedBatchItem(args: {
-  taskId: string;
-  response: Response;
-  responseAdapter: ProviderResponseAdapter;
-  batchItem: BatchGenerationItem;
-  itemIndex: number;
-  snapshot: GenerationRequestSnapshot;
-  reserveFinalIndex: () => number;
-}): Promise<GeneratedImage[]> {
-  const { taskId, response, responseAdapter, batchItem, itemIndex, snapshot, reserveFinalIndex } = args;
-  if (!response.ok || !response.body) {
-    await readJsonOrThrow(response);
-    return [];
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  const collected: GeneratedImage[] = [];
-
-  const collectBlock = async (block: string) => {
-    for (const event of responseAdapter.parseSseBlock(block)) {
-      const streamError = responseAdapter.collectErrorFromJson?.(event);
-      if (streamError) throw new Error(streamError);
-
-      const progress = responseAdapter.collectProgressFromJson?.(event);
-      if (progress) {
-        await dispatchBatchEvent(taskId, { type: 'item-progress', itemId: batchItem.id, progress, aggregateError: null }, false);
-      }
-
-      const images = responseAdapter.collectImagesFromJson(event);
-      for (const image of images) {
-        const index = image.kind === 'partial' ? itemIndex * 1000 : reserveFinalIndex();
-        const attached = attachBatchImage(image, taskId, batchItem, itemIndex, index, snapshot);
-        if (attached.kind === 'final') collected.push(attached);
-        await dispatchBatchEvent(taskId, { type: 'item-streamed', itemId: batchItem.id, image: attached }, attached.kind === 'final');
-      }
-    }
-  };
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const blocks = buffer.split('\n\n');
-    buffer = blocks.pop() ?? '';
-    for (const block of blocks) await collectBlock(block);
-  }
-
-  if (buffer.trim()) await collectBlock(buffer);
-  return collected;
+interface RuntimeGenerationRequestHandlers {
+  attachImage: (image: GeneratedImage) => GeneratedImage;
+  onSending: () => Promise<void> | void;
+  onRunning: () => Promise<void> | void;
+  onRetry: (args: { attempt: number; totalAttempts: number; error: unknown; waitMs: number }) => Promise<void> | void;
+  onProgress: (progress: GenerationProgress) => Promise<void>;
+  onImage: (image: GeneratedImage) => Promise<void>;
+  onSucceeded: (result: { images: GeneratedImage[]; raw: unknown; streamed: boolean }) => Promise<void>;
+  onFailed: (error: unknown, cancelled: boolean) => Promise<void>;
 }
 
-async function runTask(taskId: string, input: ServerGenerationRunInput, controller: AbortController) {
+function publishRuntimeRequestEvent(action: () => Promise<void> | void, label: string) {
+  void Promise.resolve()
+    .then(action)
+    .catch((error) => console.warn(`[generation-task-runtime] failed to publish ${label}:`, error));
+}
+
+async function submitProviderRequest(input: ServerGenerationRunInput, signal: AbortSignal): Promise<Response> {
+  const { upstream } = await getProviderAdapter(input.provider.adapterId).submitProviderMode({
+    provider: input.provider,
+    providerModeId: input.providerModeId,
+    transport: input.transport,
+    payload: input.payload,
+    files: input.files,
+    context: {
+      signal,
+      previewStreamMode: input.previewStreamMode
+    }
+  });
+  return upstream;
+}
+
+async function runGenerationRequestPipeline(args: {
+  input: ServerGenerationRunInput;
+  signal: AbortSignal;
+  handlers: RuntimeGenerationRequestHandlers;
+}) {
+  const { input, signal, handlers } = args;
   const responseAdapter = getResponseAdapter(input.provider.adapterId);
+
   try {
-    await patchTask(taskId, (task) => transitionTask(task, 'sending', { error: null }));
-    const { upstream } = await getProviderAdapter(input.provider.adapterId).submitProviderMode({
-      provider: input.provider,
-      providerModeId: input.providerModeId,
-      transport: input.transport,
-      payload: input.payload,
-      files: input.files,
-      context: {
-        signal: controller.signal,
-        previewStreamMode: input.previewStreamMode
-      }
+    publishRuntimeRequestEvent(handlers.onSending, 'request sending state');
+    const upstream = await runWithRetryPolicy({
+      policy: createRunnerRetryPolicy({ attempts: input.retryAttempts ?? 0, delaySeconds: input.retryDelaySeconds ?? 0 }),
+      run: async () => submitProviderRequest(input, signal),
+      onRetry: (retry) => publishRuntimeRequestEvent(() => handlers.onRetry(retry), 'request retry state'),
+      signal
     });
 
-    await patchTask(taskId, (task) => transitionTask(task, 'running', { error: null }));
+    publishRuntimeRequestEvent(handlers.onRunning, 'request running state');
 
     if (isStreamedRun(input)) {
-      const streamedImages = await consumeStreamedGeneration(taskId, upstream, responseAdapter, input.snapshot);
-      await patchTask(taskId, (task) => {
-        const images = streamedImages.length > 0 ? sortImages(streamedImages) : sortImages(finalImages(task.images));
-        return transitionTask(task, 'succeeded', { images, error: null, progress: null });
-      });
+      const streamedImages = await consumeStreamedRuntimeGeneration(upstream, responseAdapter, handlers);
+      await handlers.onSucceeded({ images: sortImages(streamedImages), raw: null, streamed: true });
       return;
     }
 
     const raw = await readJsonOrThrow(upstream);
-    const images = attachSnapshot(
-      responseAdapter.collectImagesFromJson(raw, String(input.payload.output_format ?? 'png')),
-      input.snapshot,
-      taskId
-    );
-    await patchTask(taskId, (task) => transitionTask(task, 'succeeded', { images, raw, error: null, progress: null }));
+    const images = responseAdapter.collectImagesFromJson(raw, String(input.payload.output_format ?? 'png')).map(handlers.attachImage);
+    await handlers.onSucceeded({ images, raw, streamed: false });
   } catch (error) {
-    const cancelled = isAbortError(error) || controller.signal.aborted;
-    await patchTask(taskId, (task) => transitionTask(task, cancelled ? 'cancelled' : 'failed', { error: normalizeError(error), progress: null }));
+    const cancelled = isAbortError(error) || signal.aborted;
+    await handlers.onFailed(error, cancelled);
+  }
+}
+
+async function runTask(taskId: string, input: ServerGenerationRunInput, controller: AbortController) {
+  try {
+    await runGenerationRequestPipeline({
+      input,
+      signal: controller.signal,
+      handlers: {
+        attachImage: (image) => attachSnapshot([image], input.snapshot, taskId)[0],
+        onSending: () => patchTask(taskId, (task) => transitionTask(task, 'sending', { error: null }), { persist: false }),
+        onRunning: () => patchTask(taskId, (task) => transitionTask(task, 'running', { error: null }), { persist: false }),
+        onRetry: ({ attempt, totalAttempts, error, waitMs }) => patchTask(taskId, (task) => transitionTask(task, 'retrying', {
+          error: `Retry ${attempt}/${totalAttempts} in ${Math.round(waitMs / 1000)}s: ${error}`
+        }), { persist: false }),
+        onProgress: (progress) => patchTask(taskId, (task) => transitionTask(task, 'running', { progress }), { persist: false }),
+        onImage: (image) => patchTask(taskId, (task) => transitionTask(task, 'running', {
+          images: upsertLiveImage(task.images, image)
+        }), { persist: image.kind === 'final' }),
+        onSucceeded: ({ images, raw, streamed }) => patchTask(taskId, (task) => {
+          const final = streamed && images.length === 0 ? sortImages(finalImages(task.images)) : sortImages(images);
+          return transitionTask(task, 'succeeded', { images: final, raw: streamed ? undefined : raw, error: null, progress: null });
+        }),
+        onFailed: (error, cancelled) => patchTask(taskId, (task) => transitionTask(task, cancelled ? 'cancelled' : 'failed', { error: normalizeError(error), progress: null }))
+      }
+    });
   } finally {
     taskControllers.delete(taskId);
   }
@@ -482,21 +580,6 @@ async function dispatchBatchEvent(taskId: string, event: BatchTaskReducerEvent, 
   await patchTask(taskId, (task) => reduceBatchTask(task, event), { persist });
 }
 
-async function submitProviderRequest(input: ServerGenerationRunInput, signal: AbortSignal): Promise<Response> {
-  const { upstream } = await getProviderAdapter(input.provider.adapterId).submitProviderMode({
-    provider: input.provider,
-    providerModeId: input.providerModeId,
-    transport: input.transport,
-    payload: input.payload,
-    files: input.files,
-    context: {
-      signal,
-      previewStreamMode: input.previewStreamMode
-    }
-  });
-  return upstream;
-}
-
 async function runServerBatchItem(args: {
   taskId: string;
   item: ServerGenerationRunInput;
@@ -506,71 +589,87 @@ async function runServerBatchItem(args: {
   reserveFinalIndex: () => number;
 }) {
   const { taskId, item, batchItem, itemIndex, controller, reserveFinalIndex } = args;
-  const responseAdapter = getResponseAdapter(item.provider.adapterId);
-
-  await dispatchBatchEvent(taskId, { type: 'item-sending', itemId: batchItem.id }, false);
-
-  try {
-    const upstream = await runWithRetryPolicy({
-      policy: createRunnerRetryPolicy({ attempts: item.retryAttempts ?? 0, delaySeconds: item.retryDelaySeconds ?? 0 }),
-      run: async () => {
-        await dispatchBatchEvent(taskId, { type: 'item-running', itemId: batchItem.id, aggregateError: null }, false);
-        return submitProviderRequest(item, controller.signal);
+  await runGenerationRequestPipeline({
+    input: item,
+    signal: controller.signal,
+    handlers: {
+      attachImage: (image) => {
+        const index = image.kind === 'partial' ? itemIndex * 1000 : reserveFinalIndex();
+        return attachBatchImage(image, taskId, batchItem, itemIndex, index, item.snapshot);
       },
-      onRetry: ({ attempt, totalAttempts, error, waitMs }) => {
-        void dispatchBatchEvent(taskId, {
-          type: 'item-retrying',
-          itemId: batchItem.id,
-          retryText: `Retry ${attempt}/${totalAttempts} in ${Math.round(waitMs / 1000)}s: ${error}`,
-          aggregateError: null
-        }, false);
-      },
-      signal: controller.signal
-    });
-
-    if (isStreamedRun(item)) {
-      const streamedImages = await consumeStreamedBatchItem({
-        taskId,
-        response: upstream,
-        responseAdapter,
-        batchItem,
-        itemIndex,
-        snapshot: item.snapshot,
-        reserveFinalIndex
-      });
-      await dispatchBatchEvent(taskId, { type: 'item-succeeded', itemId: batchItem.id, images: sortImages(streamedImages), raw: null, streamed: true });
-      return;
+      onSending: () => dispatchBatchEvent(taskId, { type: 'item-sending', itemId: batchItem.id }, false),
+      onRunning: () => dispatchBatchEvent(taskId, { type: 'item-running', itemId: batchItem.id, aggregateError: null }, false),
+      onRetry: ({ attempt, totalAttempts, error, waitMs }) => dispatchBatchEvent(taskId, {
+        type: 'item-retrying',
+        itemId: batchItem.id,
+        retryText: `Retry ${attempt}/${totalAttempts} in ${Math.round(waitMs / 1000)}s: ${error}`,
+        aggregateError: null
+      }, false),
+      onProgress: (progress) => dispatchBatchEvent(taskId, { type: 'item-progress', itemId: batchItem.id, progress, aggregateError: null }, false),
+      onImage: (image) => dispatchBatchEvent(taskId, { type: 'item-streamed', itemId: batchItem.id, image }, image.kind === 'final'),
+      onSucceeded: ({ images, raw, streamed }) => dispatchBatchEvent(taskId, {
+        type: 'item-succeeded',
+        itemId: batchItem.id,
+        images: sortImages(images),
+        raw: streamed ? null : raw,
+        streamed
+      }),
+      onFailed: (error, cancelled) => {
+        const message = normalizeError(error);
+        return cancelled
+          ? dispatchBatchEvent(taskId, { type: 'item-cancelled', itemId: batchItem.id, error: message, aggregateError: null })
+          : dispatchBatchEvent(taskId, { type: 'item-failed', itemId: batchItem.id, error: message, aggregateError: message });
+      }
     }
-
-    const raw = await readJsonOrThrow(upstream);
-    const images = responseAdapter.collectImagesFromJson(raw, String(item.payload.output_format ?? 'png')).map((image) => {
-      return attachBatchImage(image, taskId, batchItem, itemIndex, reserveFinalIndex(), item.snapshot);
-    });
-    await dispatchBatchEvent(taskId, { type: 'item-succeeded', itemId: batchItem.id, images, raw, streamed: false });
-  } catch (error) {
-    const cancelled = isAbortError(error) || controller.signal.aborted;
-    await dispatchBatchEvent(taskId, {
-      type: cancelled ? 'item-cancelled' : 'item-failed',
-      itemId: batchItem.id,
-      error: normalizeError(error),
-      aggregateError: normalizeError(error)
-    });
-  }
+  });
 }
 
 async function runBatchTask(task: GenerationTask, input: ServerBatchGenerationRunInput, controller: AbortController) {
   let nextFinalIndex = 0;
   const reserveFinalIndex = () => nextFinalIndex++;
+  const controllerByItemId = new Map<string, AbortController>();
+  const batchItemForIndex = (index: number) => task.batch?.items[index] ?? null;
+  const controllerForBatchItem = (item: BatchGenerationItem) => {
+    const current = controllerByItemId.get(item.id);
+    if (current) return current;
+    const next = new AbortController();
+    controllerByItemId.set(item.id, next);
+    registerBatchItemController(task.id, item.id, next);
+    return next;
+  };
+  const abortItemsOnTaskCancel = () => abortBatchItemControllers(task.id);
+
   try {
+    controller.signal.addEventListener('abort', abortItemsOnTaskCancel, { once: true });
     await dispatchBatchEvent(task.id, { type: 'batch-started' }, false);
     await runDelayedParallelScheduler({
       items: input.items,
       intervalMs: input.intervalMs,
       signal: controller.signal,
+      taskSignal: ({ index }) => {
+        const batchItem = batchItemForIndex(index);
+        return batchItem ? controllerForBatchItem(batchItem).signal : undefined;
+      },
+      onTaskAbort: async ({ index }) => {
+        const batchItem = batchItemForIndex(index);
+        if (!batchItem || batchItem.status === 'cancelled') return;
+        await dispatchBatchEvent(task.id, {
+          type: 'item-cancelled',
+          itemId: batchItem.id,
+          error: 'Request was cancelled.',
+          aggregateError: null
+        }, false);
+      },
       run: async ({ item, index }) => {
-        const batchItem = task.batch?.items[index];
+        const batchItem = batchItemForIndex(index);
         if (!batchItem) return;
-        await runServerBatchItem({ taskId: task.id, item, batchItem, itemIndex: index, controller, reserveFinalIndex });
+        const itemController = controllerForBatchItem(batchItem);
+        if (itemController.signal.aborted || isBatchItemCancellationRequested(task.id, batchItem.id)) return;
+        try {
+          await runServerBatchItem({ taskId: task.id, item, batchItem, itemIndex: index, controller: itemController, reserveFinalIndex });
+        } finally {
+          unregisterBatchItemController(task.id, batchItem.id);
+        }
       }
     });
 
@@ -581,7 +680,9 @@ async function runBatchTask(task: GenerationTask, input: ServerBatchGenerationRu
   } catch (error) {
     await dispatchBatchEvent(task.id, { type: 'active-items-cancelled', error: normalizeError(error) });
   } finally {
+    controller.signal.removeEventListener('abort', abortItemsOnTaskCancel);
     taskControllers.delete(task.id);
+    clearBatchTaskRuntime(task.id);
   }
 }
 
@@ -613,7 +714,7 @@ export async function startServerGenerationRun(input: ServerGenerationRunInput):
   };
 
   taskControllers.set(taskId, controller);
-  await mutateTasks((tasks) => [task, ...tasks.filter((item) => item.id !== taskId)]);
+  await mutateTasks((tasks) => [task, ...tasks.filter((item) => item.id !== taskId)], { persist: false });
   void runTask(taskId, input, controller);
   return task;
 }
@@ -621,12 +722,17 @@ export async function startServerGenerationRun(input: ServerGenerationRunInput):
 export async function deleteServerGenerationTask(taskId: string): Promise<void> {
   taskControllers.get(taskId)?.abort();
   taskControllers.delete(taskId);
+  abortBatchItemControllers(taskId);
+  clearBatchTaskRuntime(taskId);
   await mutateTasks((tasks) => tasks.filter((task) => task.id !== taskId));
 }
 
 export async function clearServerGenerationTasks(): Promise<void> {
   for (const controller of taskControllers.values()) controller.abort();
+  for (const taskId of batchItemControllers.keys()) abortBatchItemControllers(taskId);
   taskControllers.clear();
+  batchItemControllers.clear();
+  batchItemCancellationRequests.clear();
   await mutateTasks(() => []);
 }
 
@@ -634,7 +740,24 @@ export async function cancelServerGenerationTask(taskId: string): Promise<void> 
   const controller = taskControllers.get(taskId);
   if (!controller) return;
   controller.abort();
+  abortBatchItemControllers(taskId);
   await patchTask(taskId, (task) => transitionTask(task, 'cancelled', { error: 'Request was cancelled.', progress: null }));
+}
+
+export async function cancelServerBatchGenerationItem(taskId: string, itemId: string): Promise<void> {
+  const task = ensureRuntimeTasks().find((candidate) => candidate.id === taskId);
+  const item = task?.batch?.items.find((candidate) => candidate.id === itemId);
+  if (!task || !item) throw new Error('Batch item not found.');
+  if (item.status === 'succeeded' || item.status === 'failed' || item.status === 'cancelled') return;
+
+  requestBatchItemCancellation(taskId, itemId);
+  abortBatchItemController(taskId, itemId);
+  await dispatchBatchEvent(taskId, {
+    type: 'item-cancelled',
+    itemId,
+    error: 'Request was cancelled.',
+    aggregateError: null
+  }, false);
 }
 
 function galleryPathIsNested(path: string, parent: string): boolean {
@@ -766,7 +889,10 @@ export async function deleteServerGalleryFolderTasks(folderPath: string): Promis
 
 export function resetGenerationTaskRuntimeForTests() {
   for (const controller of taskControllers.values()) controller.abort();
+  for (const taskId of batchItemControllers.keys()) abortBatchItemControllers(taskId);
   taskControllers.clear();
+  batchItemControllers.clear();
+  batchItemCancellationRequests.clear();
   runtimeTasks = null;
   mutationQueue = Promise.resolve();
   taskEventsRevision = 0;
@@ -779,6 +905,7 @@ export function subscribeGenerationTaskEvents(req: express.Request, res: express
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders?.();
   clients.add(res);
   sendEvent(res, 'tasks', { revision: taskEventsRevision, tasks: clientSnapshotTasks() });

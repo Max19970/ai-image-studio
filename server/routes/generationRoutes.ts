@@ -10,6 +10,7 @@ import {
 } from '../providers/types';
 import { proxyResponse, sendServerError } from '../http/errors';
 import {
+  cancelServerBatchGenerationItem,
   cancelServerGenerationTask,
   clearServerGenerationTasks,
   deleteServerGenerationTask,
@@ -17,6 +18,7 @@ import {
   startServerGenerationRun,
   subscribeGenerationTaskEvents
 } from '../processes/generationTaskRuntime';
+import { getLiveGenerationImageAsset } from '../processes/liveGenerationImageStore';
 
 function createRequestAbortSignal(req: express.Request, res: express.Response): AbortSignal {
   const controller = new AbortController();
@@ -137,6 +139,22 @@ async function submitProviderModeRequest(
 }
 
 export function registerGenerationRoutes(app: express.Express, upload: multer.Multer) {
+  app.get('/api/generation-tasks/live-images/:imageId', (req, res) => {
+    try {
+      const asset = getLiveGenerationImageAsset(req.params.imageId);
+      if (!asset) {
+        res.status(404).json({ error: { message: 'Live generation image not found.' } });
+        return;
+      }
+      res.setHeader('Content-Type', asset.mimeType);
+      res.setHeader('Cache-Control', 'no-store, no-transform');
+      res.setHeader('Content-Length', String(asset.bytes.length));
+      res.end(asset.bytes);
+    } catch (error) {
+      sendServerError(res, error);
+    }
+  });
+
   app.get('/api/generation-tasks/events', (req, res) => {
     try {
       subscribeGenerationTaskEvents(req, res);
@@ -224,6 +242,15 @@ export function registerGenerationRoutes(app: express.Express, upload: multer.Mu
   app.post('/api/generation-tasks/:taskId/cancel', async (req, res) => {
     try {
       await cancelServerGenerationTask(req.params.taskId);
+      res.status(204).end();
+    } catch (error) {
+      sendServerError(res, error);
+    }
+  });
+
+  app.post('/api/generation-tasks/:taskId/batch-items/:itemId/cancel', async (req, res) => {
+    try {
+      await cancelServerBatchGenerationItem(req.params.taskId, req.params.itemId);
       res.status(204).end();
     } catch (error) {
       sendServerError(res, error);

@@ -6,6 +6,7 @@ import {
   saveGenerationTaskHistoryDocuments
 } from '../storage/generationTaskStore';
 import { sendServerError } from '../http/errors';
+import { serializeGenerationTaskHistoryForClient } from '../processes/generationTaskHistoryClientSerialization';
 
 export function registerGenerationTaskHistoryRoutes(app: express.Express) {
   app.get('/api/storage/generation-tasks/diagnostics', (_req, res) => {
@@ -21,8 +22,9 @@ export function registerGenerationTaskHistoryRoutes(app: express.Express) {
       const limit = Number(req.query.limit ?? 120);
       const offset = Number(req.query.offset ?? 0);
       const assetMode = req.query.assetMode === 'thumbnail' || req.query.assetMode === 'metadata' ? req.query.assetMode : 'full';
-      const { tasks, stats } = loadGenerationTaskHistoryDocuments({ limit, offset, assetMode });
-      res.json({ tasks, storage: stats, pagination: { limit, offset, assetMode } });
+      const loadAssetMode = assetMode === 'thumbnail' ? 'metadata' : assetMode;
+      const { tasks, stats } = loadGenerationTaskHistoryDocuments({ limit, offset, assetMode: loadAssetMode });
+      res.json({ tasks: serializeGenerationTaskHistoryForClient(tasks, assetMode), storage: stats, pagination: { limit, offset, assetMode } });
     } catch (error) {
       sendServerError(res, error);
     }
