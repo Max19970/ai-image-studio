@@ -4,6 +4,7 @@ import http from 'node:http';
 import { once } from 'node:events';
 import type { AddressInfo } from 'node:net';
 import { comfyUiProviderAdapter } from '../server/providers/comfyui/adapter';
+import { cancelComfyUiPrompt } from '../server/providers/comfyui/cancellation';
 import { collectComfyUiOutputImages, describeComfyUiHistoryFailure } from '../server/providers/comfyui/responseMapper';
 import {
   buildComfyUiTextToImageWorkflow,
@@ -420,6 +421,54 @@ test('ComfyUI Hires Fix rejects missing or extra attachments', async () => {
       /exactly one target image/
     );
   });
+});
+
+test('ComfyUI prompt cancellation deletes pending prompts and interrupts only matching running prompts', async () => {
+  const calls: Array<{ route: string; body: unknown }> = [];
+  let state: 'pending' | 'running' = 'pending';
+  const server = http.createServer(async (req, res) => {
+    const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+    if (req.method === 'GET' && url.pathname === '/queue') {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({
+        queue_running: state === 'running' ? [[1, 'prompt-running']] : [],
+        queue_pending: state === 'pending' ? [[2, 'prompt-pending']] : []
+      }));
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/queue') {
+      calls.push({ route: 'queue', body: await readBody(req) });
+      res.statusCode = 200;
+      res.end();
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/interrupt') {
+      calls.push({ route: 'interrupt', body: await readBody(req) });
+      res.statusCode = 200;
+      res.end();
+      return;
+    }
+    res.statusCode = 404;
+    res.end('not found');
+  });
+
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const address = server.address() as AddressInfo;
+  try {
+    const settings = provider(`http://127.0.0.1:${address.port}`);
+    await cancelComfyUiPrompt(settings, 'prompt-pending');
+    state = 'running';
+    await cancelComfyUiPrompt(settings, 'prompt-running');
+
+    assert.deepEqual(calls, [
+      { route: 'queue', body: { delete: ['prompt-pending'] } },
+      { route: 'interrupt', body: { prompt_id: 'prompt-running' } }
+    ]);
+  } finally {
+    server.close();
+    await once(server, 'close');
+  }
 });
 
 test('ComfyUI generate adapter posts workflow, polls history and returns OpenAI-compatible image JSON', async () => {

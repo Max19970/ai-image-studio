@@ -80,6 +80,7 @@ export interface DetailCommands {
   backToGallery: () => void;
   selectImage: (image: GeneratedImage) => void;
   restoreRequest: (snapshot: GenerationRequestSnapshot) => void;
+  startHiresFix: (task: GenerationTask, image?: GeneratedImage | null) => Promise<void>;
 }
 
 export interface ParameterModalCommands {

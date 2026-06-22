@@ -9,6 +9,7 @@ import {
 import { resolveComfyUiEndpoint, resolveComfyUiUrl } from './endpoints';
 import { fetchComfyUiJson } from './http';
 import { describeComfyUiError } from './errorNormalizer';
+import { registerComfyUiPromptCancellation } from './cancellation';
 import { createJsonResponse, mapComfyUiGenerationResult, type ComfyUiPromptResponse } from './responseMapper';
 import { selectComfyUiHiresFixTargetImage, uploadComfyUiInputImage } from './imageUpload';
 import { runComfyUiWorkflowStream } from './progressStream';
@@ -110,15 +111,25 @@ async function runComfyUiWorkflow(args: {
     throw new HttpError(`ComfyUI did not return a prompt_id. Response: ${JSON.stringify(promptResponse)}`, 502);
   }
 
-  const history = await waitForPromptHistory(args.provider, promptId, args.context?.signal);
-  const normalized = await mapComfyUiGenerationResult({
+  const cleanupPromptCancellation = registerComfyUiPromptCancellation({
     provider: args.provider,
     promptId,
-    history,
-    workflow: args.workflow,
-    config: args.config
+    signal: args.context?.signal
   });
-  return { endpoint, upstream: createJsonResponse(normalized) };
+
+  try {
+    const history = await waitForPromptHistory(args.provider, promptId, args.context?.signal);
+    const normalized = await mapComfyUiGenerationResult({
+      provider: args.provider,
+      promptId,
+      history,
+      workflow: args.workflow,
+      config: args.config
+    });
+    return { endpoint, upstream: createJsonResponse(normalized) };
+  } finally {
+    cleanupPromptCancellation();
+  }
 }
 
 export async function fetchComfyUiGenerate(

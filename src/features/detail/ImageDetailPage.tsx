@@ -37,6 +37,7 @@ export function ImageDetailPage({ task, image, commands }: Props) {
     onBack: commands.backToGallery,
     onSelectImage: commands.selectImage,
     onRestoreRequest: commands.restoreRequest,
+    onStartHiresFix: commands.startHiresFix,
     setActiveImage
   };
 

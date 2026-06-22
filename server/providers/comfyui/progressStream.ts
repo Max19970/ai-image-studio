@@ -8,6 +8,7 @@ import {
 import { resolveComfyUiEndpoint, resolveComfyUiUrl } from './endpoints';
 import { fetchComfyUiJson } from './http';
 import { describeComfyUiError } from './errorNormalizer';
+import { registerComfyUiPromptCancellation } from './cancellation';
 import {
   mapComfyUiGenerationResult,
   type ComfyUiPromptResponse
@@ -305,6 +306,7 @@ export function runComfyUiWorkflowStream(args: {
       let closed = false;
       let ws: WebSocket | null = null;
       let promptId = '';
+      let cleanupPromptCancellation: (() => void) | null = null;
       let lastMeasuredProgress: ComfyUiProgressEvent | null = null;
 
       const close = () => {
@@ -362,6 +364,11 @@ export function runComfyUiWorkflowStream(args: {
           if (!promptId) {
             throw new HttpError(`ComfyUI did not return a prompt_id. Response: ${JSON.stringify(promptResponse)}`, 502);
           }
+          cleanupPromptCancellation = registerComfyUiPromptCancellation({
+            provider: args.provider,
+            promptId,
+            signal: args.context?.signal
+          });
 
           emit({ type: 'comfyui.progress', progress: progressEvent({ percent: 0, stage: 'queued', message: `Prompt id: ${promptId}` }) });
 
@@ -382,6 +389,8 @@ export function runComfyUiWorkflowStream(args: {
           close();
         } catch (error) {
           fail(error);
+        } finally {
+          cleanupPromptCancellation?.();
         }
       })();
     }

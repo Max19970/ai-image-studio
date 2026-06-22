@@ -15,7 +15,8 @@ export function DetailHeroSection({ context }: ElementDefinitionProps<DetailLayo
     activeImage,
     snapshot,
     isBatchSnapshot: snapshot.endpoint === 'multi',
-    onRestoreRequest: context.onRestoreRequest
+    onRestoreRequest: context.onRestoreRequest,
+    onStartHiresFix: (image) => context.onStartHiresFix?.(task, image) ?? Promise.resolve()
   };
 
   const selectImage = (image: typeof activeImage) => {
