@@ -8,6 +8,12 @@ import {
   openAiCompatibleResponseAdapter
 } from '../../../src/providers/openai-compatible/responseAdapter';
 import { getProviderAdapter } from '../../providers/registry';
+import {
+  describeAbortSignal,
+  describeRuntimeError,
+  logGenerationPipelineStart,
+  logGenerationPipelineTerminal
+} from './runtimeDiagnostics';
 import type {
   ProviderPreviewStreamMode,
   ProviderSettings,
@@ -130,7 +136,7 @@ function publishRuntimeRequestEvent(action: () => Promise<void> | void, label: s
     .catch((error) => console.warn(`[generation-task-runtime] failed to publish ${label}:`, error));
 }
 
-async function submitProviderRequest(input: ServerGenerationRunInput, signal: AbortSignal): Promise<Response> {
+async function submitProviderRequest(input: ServerGenerationRunInput, signal: AbortSignal, traceId?: string): Promise<Response> {
   const { upstream } = await getProviderAdapter(input.provider.adapterId).submitProviderMode({
     provider: input.provider,
     providerModeId: input.providerModeId,
@@ -139,7 +145,8 @@ async function submitProviderRequest(input: ServerGenerationRunInput, signal: Ab
     files: input.files,
     context: {
       signal,
-      previewStreamMode: input.previewStreamMode
+      previewStreamMode: input.previewStreamMode,
+      runtimeTraceId: traceId
     }
   });
   return upstream;
@@ -149,15 +156,19 @@ export async function runGenerationRequestPipeline(args: {
   input: ServerGenerationRunInput;
   signal: AbortSignal;
   handlers: RuntimeGenerationRequestHandlers;
+  traceId?: string;
 }) {
-  const { input, signal, handlers } = args;
+  const { input, signal, handlers, traceId } = args;
   const responseAdapter = getResponseAdapter(input.provider.adapterId);
+
+  const started = Date.now();
+  if (traceId) logGenerationPipelineStart(traceId, input);
 
   try {
     publishRuntimeRequestEvent(handlers.onSending, 'request sending state');
     const upstream = await runWithRetryPolicy({
       policy: createRunnerRetryPolicy({ attempts: input.retryAttempts ?? 0, delaySeconds: input.retryDelaySeconds ?? 0 }),
-      run: async () => submitProviderRequest(input, signal),
+      run: async () => submitProviderRequest(input, signal, traceId),
       onRetry: (retry) => publishRuntimeRequestEvent(() => handlers.onRetry(retry), 'request retry state'),
       signal
     });
@@ -166,15 +177,23 @@ export async function runGenerationRequestPipeline(args: {
 
     if (isStreamedRun(input)) {
       const streamedImages = await consumeStreamedRuntimeGeneration(upstream, responseAdapter, handlers);
+      if (traceId) logGenerationPipelineTerminal(traceId, 'succeeded', { elapsedMs: Date.now() - started, streamed: true, imageCount: streamedImages.length });
       await handlers.onSucceeded({ images: sortImages(streamedImages), raw: null, streamed: true });
       return;
     }
 
     const raw = await readJsonOrThrow(upstream);
     const images = responseAdapter.collectImagesFromJson(raw, String(input.payload.output_format ?? 'png')).map(handlers.attachImage);
+    if (traceId) logGenerationPipelineTerminal(traceId, 'succeeded', { elapsedMs: Date.now() - started, streamed: false, imageCount: images.length });
     await handlers.onSucceeded({ images, raw: compactResponseRaw(input, raw), streamed: false });
   } catch (error) {
     const cancelled = isAbortError(error) || signal.aborted;
+    if (traceId) logGenerationPipelineTerminal(traceId, cancelled ? 'cancelled' : 'failed', {
+      elapsedMs: Date.now() - started,
+      signalAborted: signal.aborted,
+      abortReason: describeAbortSignal(signal),
+      error: describeRuntimeError(error)
+    });
     await handlers.onFailed(error, cancelled);
   }
 }

@@ -14,6 +14,7 @@ import {
 import { isActiveStatus, normalizeError, sortImages, uid } from './imageState';
 import { runGenerationRequestPipeline, type ServerGenerationRunInput } from './providerPipeline';
 import { mutateTasks, patchTask } from './runtimeStore';
+import { logGenerationTaskQueued } from './runtimeDiagnostics';
 
 export interface ServerBatchGenerationRunInput {
   items: ServerGenerationRunInput[];
@@ -112,6 +113,7 @@ async function runServerBatchItem(args: {
   await runGenerationRequestPipeline({
     input: item,
     signal: controller.signal,
+    traceId: `${taskId}:${batchItem.id}`,
     handlers: {
       attachImage: (image) => {
         const index = image.kind === 'partial' ? itemIndex * 1000 : reserveFinalIndex();
@@ -211,6 +213,7 @@ export async function startServerBatchGenerationRun(input: ServerBatchGeneration
   const task = createBatchTask(input);
   const controller = new AbortController();
   registerTaskController(task.id, controller);
+  input.items.forEach((item, index) => logGenerationTaskQueued(`${task.id}:item-${index}`, item));
   await mutateTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)], { persist: false });
   setImmediate(() => {
     void runBatchTask(task, input, controller);

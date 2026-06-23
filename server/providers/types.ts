@@ -105,6 +105,7 @@ export type ProviderPreviewStreamMode = 'full' | 'throttled' | 'off';
 export interface ProviderFetchContext {
   signal?: AbortSignal;
   previewStreamMode?: ProviderPreviewStreamMode;
+  runtimeTraceId?: string;
 }
 
 export interface ProviderModeSubmitInput {

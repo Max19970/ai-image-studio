@@ -10,7 +10,12 @@ import { buildOpenAiCompatibleHeaders } from './auth';
 import { resolveOpenAiCompatibleEndpoint } from './endpoints';
 import { appendOpenAiCompatibleEditPayload, validateEditFiles } from './multipartEdit';
 import { resolveOpenAiCompatibleSubmitOperation } from './submitOperation';
-import { fetchUpstream, logOutboundRequest, timeoutSignal } from './upstreamClient';
+import {
+  createOpenAiCompatibleUpstreamDiagnostics,
+  fetchUpstream,
+  logOutboundRequest,
+  timeoutSignal
+} from './upstreamClient';
 
 function resolveRequestSignal(provider: ProviderSettings, context: ProviderFetchContext): AbortSignal {
   const timeout = timeoutSignal(provider.timeoutMs);
@@ -25,13 +30,19 @@ export async function fetchOpenAiCompatibleGenerate(
 ): Promise<UpstreamRequestResult> {
   validatePromptPayload(payload);
   const endpoint = resolveOpenAiCompatibleEndpoint(provider, 'generate');
-  logOutboundRequest('generate', endpoint, payload);
+  logOutboundRequest('generate', endpoint, payload, [], context.runtimeTraceId);
   const upstream = await fetchUpstream(endpoint, {
     method: 'POST',
     headers: buildOpenAiCompatibleHeaders(provider),
     body: JSON.stringify(payload),
     signal: resolveRequestSignal(provider, context)
-  });
+  }, 3, createOpenAiCompatibleUpstreamDiagnostics({
+    operation: 'generate',
+    provider,
+    endpoint,
+    payload,
+    traceId: context.runtimeTraceId
+  }));
   return { endpoint, upstream };
 }
 
@@ -44,7 +55,7 @@ export async function fetchOpenAiCompatibleEdit(
   validatePromptPayload(payload);
   validateEditFiles(files);
   const endpoint = resolveOpenAiCompatibleEndpoint(provider, 'edit');
-  logOutboundRequest('edit', endpoint, payload, files);
+  logOutboundRequest('edit', endpoint, payload, files, context.runtimeTraceId);
 
   const form = new FormData();
   appendOpenAiCompatibleEditPayload(form, payload, files);
@@ -54,7 +65,14 @@ export async function fetchOpenAiCompatibleEdit(
     headers: buildOpenAiCompatibleHeaders(provider, true),
     body: form,
     signal: resolveRequestSignal(provider, context)
-  });
+  }, 3, createOpenAiCompatibleUpstreamDiagnostics({
+    operation: 'edit',
+    provider,
+    endpoint,
+    payload,
+    files,
+    traceId: context.runtimeTraceId
+  }));
   return { endpoint, upstream };
 }
 

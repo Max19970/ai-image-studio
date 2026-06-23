@@ -5,12 +5,14 @@ import { finalImages, normalizeError, sortImages, transitionTask, uid, upsertLiv
 import { registerTaskController, unregisterTaskController } from './cancellation';
 import { runGenerationRequestPipeline, type ServerGenerationRunInput } from './providerPipeline';
 import { mutateTasks, patchTask } from './runtimeStore';
+import { logGenerationTaskQueued } from './runtimeDiagnostics';
 
 async function runTask(taskId: string, input: ServerGenerationRunInput, controller: AbortController) {
   try {
     await runGenerationRequestPipeline({
       input,
       signal: controller.signal,
+      traceId: taskId,
       handlers: {
         attachImage: (image) => attachSnapshot([image], input.snapshot, taskId)[0],
         onSending: () => patchTask(taskId, (task) => transitionTask(task, 'sending', { error: null }), { persist: false }),
@@ -52,6 +54,7 @@ export async function startServerGenerationRun(input: ServerGenerationRunInput):
   };
 
   registerTaskController(taskId, controller);
+  logGenerationTaskQueued(taskId, input);
   await mutateTasks((tasks) => [task, ...tasks.filter((item) => item.id !== taskId)], { persist: false });
   setImmediate(() => {
     void runTask(taskId, input, controller);
