@@ -15,7 +15,12 @@ const port = Number(process.env.PORT || 8787);
 const host = env('HOST', '127.0.0.1');
 const localServerUrl = `http://${host}:${port}`;
 
-app.listen(port, host, () => {
+const server = app.listen(port, host, () => {
   console.log(`Image Studio proxy listening on ${localServerUrl}`);
   startOptionalCloudflaredTunnel({ targetUrl: localServerUrl });
 });
+
+server.requestTimeout = 0;
+server.headersTimeout = 0;
+server.timeout = 0;
+server.keepAliveTimeout = 75_000;

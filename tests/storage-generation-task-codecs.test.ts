@@ -59,6 +59,28 @@ test('generation task codecs collect full and thumbnail assets without mutating 
   assert.equal(task.batch.items[0].images.length, 1);
 });
 
+test('generation task codecs preserve external URL images in task documents', () => {
+  const task = {
+    id: 'task-url',
+    status: 'succeeded',
+    images: [{ id: 'url-img', src: 'https://example.test/image.png', raw: { data: 'large' }, kind: 'final', index: 0 }],
+    batch: {
+      items: [{ id: 'item-url', images: [{ id: 'batch-url-img', src: 'https://example.test/batch.png', kind: 'final', index: 0 }] }]
+    }
+  };
+
+  const cloned = cloneWithoutImages(task);
+  assert.equal(cloned.images.length, 1);
+  assert.equal(cloned.images[0].src, 'https://example.test/image.png');
+  assert.equal(cloned.images[0].raw, undefined);
+  assert.equal(cloned.batch.items[0].images.length, 1);
+
+  const restored = restoreTaskImages(cloned, [], 'metadata', () => null);
+  assert.equal(restored.images.length, 1);
+  assert.equal(restored.images[0].src, 'https://example.test/image.png');
+  assert.equal(restored.batch.items[0].images[0].src, 'https://example.test/batch.png');
+});
+
 test('generation task codecs restore metadata images into root and batch owners', () => {
   const task = cloneWithoutImages(createTask());
   const assets: AssetRow[] = [

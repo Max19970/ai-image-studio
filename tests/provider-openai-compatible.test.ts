@@ -9,6 +9,7 @@ import {
 } from '../src/providers/openai-compatible/requestAdapter';
 import {
   collectOpenAiCompatibleImagesFromJson,
+  compactOpenAiCompatibleResponseRaw,
   parseOpenAiCompatibleSseBlock
 } from '../src/providers/openai-compatible/responseAdapter';
 
@@ -43,6 +44,25 @@ test('OpenAI-compatible payload trims prompt, serializes enabled params, and let
   assert.equal(payload.stream, true);
   assert.equal(payload.partial_images, 2);
   assert.equal(payload.seed, 123);
+});
+
+test('OpenAI-compatible payload always includes the selected provider model', () => {
+  const payload = buildOpenAiCompatibleImagePayload({
+    ...defaultImageParams,
+    prompt: 'model fox',
+    includeModel: false,
+    rawJson: '{"model":"raw-model"}'
+  }, defaultProviderSettings, 'generate');
+
+  assert.equal(payload.model, 'raw-model');
+
+  const withoutRawOverride = buildOpenAiCompatibleImagePayload({
+    ...defaultImageParams,
+    prompt: 'model fox',
+    includeModel: false
+  }, defaultProviderSettings, 'generate');
+
+  assert.equal(withoutRawOverride.model, defaultProviderSettings.modelId);
 });
 
 test('OpenAI-compatible request adapter keeps PNG compression omitted and validates custom sizes', () => {
@@ -122,6 +142,35 @@ test('OpenAI-compatible response adapter collects streamed partial and completed
   assert.equal(completed.length, 1);
   assert.equal(completed[0].kind, 'final');
   assert.equal(completed[0].src, 'data:image/png;base64,FINAL');
+});
+
+test('OpenAI-compatible response adapter collects non-stream Responses API output images', () => {
+  const response = collectOpenAiCompatibleImagesFromJson({
+    id: 'resp_123',
+    object: 'response',
+    status: 'completed',
+    output_format: 'webp',
+    output: [
+      { type: 'message' },
+      { type: 'image_generation_call', status: 'completed', result: 'NON_STREAM_FINAL' }
+    ]
+  });
+
+  assert.equal(response.length, 1);
+  assert.equal(response[0].kind, 'final');
+  assert.equal(response[0].src, 'data:image/webp;base64,NON_STREAM_FINAL');
+});
+
+test('OpenAI-compatible response adapter compacts raw edit base64 payloads', () => {
+  const raw = {
+    created: 1,
+    data: [{ b64_json: 'A'.repeat(64), revised_prompt: 'done' }]
+  };
+
+  const compacted = compactOpenAiCompatibleResponseRaw(raw) as any;
+  assert.equal(compacted.created, 1);
+  assert.equal(compacted.data[0].revised_prompt, 'done');
+  assert.equal(compacted.data[0].b64_json, '[omitted inline image payload: 64 chars]');
 });
 
 test('OpenAI-compatible response adapter collects JSON images and parses SSE blocks', () => {

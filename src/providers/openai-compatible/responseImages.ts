@@ -2,16 +2,16 @@ import type { GeneratedImage } from '../../domain/generationTask';
 
 const LARGE_INLINE_IMAGE_KEYS = new Set(['b64_json', 'partial_image_b64', 'result']);
 
-function compactInlineImageRaw(value: unknown, depth = 0): unknown {
+export function compactOpenAiCompatibleInlineImageRaw(value: unknown, depth = 0): unknown {
   if (!value || typeof value !== 'object' || depth > 4) return value;
-  if (Array.isArray(value)) return value.map((item) => compactInlineImageRaw(item, depth + 1));
+  if (Array.isArray(value)) return value.map((item) => compactOpenAiCompatibleInlineImageRaw(item, depth + 1));
 
   const source = value as Record<string, unknown>;
   const compacted: Record<string, unknown> = {};
   for (const [key, entry] of Object.entries(source)) {
     compacted[key] = LARGE_INLINE_IMAGE_KEYS.has(key) && typeof entry === 'string'
       ? `[omitted inline image payload: ${entry.length} chars]`
-      : compactInlineImageRaw(entry, depth + 1);
+      : compactOpenAiCompatibleInlineImageRaw(entry, depth + 1);
   }
   return compacted;
 }
@@ -31,7 +31,7 @@ export function imageFromOpenAiCompatibleBase64(
     kind,
     index,
     createdAt: Date.now(),
-    raw: compactInlineImageRaw(raw)
+    raw: compactOpenAiCompatibleInlineImageRaw(raw)
   };
 }
 

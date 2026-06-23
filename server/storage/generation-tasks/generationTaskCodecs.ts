@@ -41,13 +41,30 @@ function imageFormatFromDataUrl(src: string, fallback: string): string {
   return match?.[1] ?? fallback;
 }
 
+function cloneDocumentImage(image: unknown): JsonObject | null {
+  if (!isRecord(image)) return null;
+  const src = typeof image.src === 'string' ? image.src : '';
+  if (!src || isImageDataUrl(src)) return null;
+  const cloned = structuredClone(image) as JsonObject;
+  cloned.raw = undefined;
+  if (isImageDataUrl(cloned.thumbnailSrc)) cloned.thumbnailSrc = undefined;
+  return cloned;
+}
+
+function cloneDocumentImages(images: unknown): JsonObject[] {
+  return Array.isArray(images) ? images.flatMap((image) => {
+    const cloned = cloneDocumentImage(image);
+    return cloned ? [cloned] : [];
+  }) : [];
+}
+
 export function cloneWithoutImages(task: JsonObject): JsonObject {
   const document = structuredClone(task) as JsonObject;
-  document.images = [];
+  document.images = cloneDocumentImages(document.images);
   if (isRecord(document.batch) && Array.isArray(document.batch.items)) {
     document.batch.items = document.batch.items.map((item: unknown) => {
       if (!isRecord(item)) return item;
-      return { ...item, images: [] };
+      return { ...item, images: cloneDocumentImages(item.images) };
     });
   }
   return document;
@@ -205,9 +222,9 @@ export function restoreTaskImages(
   assetMode: GenerationTaskAssetMode,
   loadDocument: (documentKey: string) => JsonObject | null
 ): JsonObject {
-  task.images = [];
+  task.images = cloneDocumentImages(task.images);
   if (isRecord(task.batch) && Array.isArray(task.batch.items)) {
-    task.batch.items = task.batch.items.map((item: unknown) => isRecord(item) ? { ...item, images: [] } : item);
+    task.batch.items = task.batch.items.map((item: unknown) => isRecord(item) ? { ...item, images: cloneDocumentImages(item.images) } : item);
   }
 
   const thumbnailByImage = new Map<string, AssetRow>();

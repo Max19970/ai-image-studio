@@ -53,6 +53,8 @@ export async function startServerGenerationRun(input: ServerGenerationRunInput):
 
   registerTaskController(taskId, controller);
   await mutateTasks((tasks) => [task, ...tasks.filter((item) => item.id !== taskId)], { persist: false });
-  void runTask(taskId, input, controller);
+  setImmediate(() => {
+    void runTask(taskId, input, controller);
+  });
   return task;
 }

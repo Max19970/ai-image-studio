@@ -3,7 +3,10 @@ import type { GeneratedImage, GenerationProgress, GenerationRequestSnapshot } fr
 import type { ProviderResponseAdapter } from '../../../src/entities/provider/types';
 import { createRunnerRetryPolicy, runWithRetryPolicy } from '../../../src/processes/generation-task-lifecycle/retryPolicy';
 import { comfyUiResponseAdapter } from '../../../src/providers/comfyui/responseAdapter';
-import { openAiCompatibleResponseAdapter } from '../../../src/providers/openai-compatible/responseAdapter';
+import {
+  compactOpenAiCompatibleResponseRaw,
+  openAiCompatibleResponseAdapter
+} from '../../../src/providers/openai-compatible/responseAdapter';
 import { getProviderAdapter } from '../../providers/registry';
 import type {
   ProviderPreviewStreamMode,
@@ -28,6 +31,10 @@ export interface ServerGenerationRunInput {
 
 function getResponseAdapter(adapterId: string | undefined): ProviderResponseAdapter {
   return adapterId === 'comfyui' ? comfyUiResponseAdapter : openAiCompatibleResponseAdapter;
+}
+
+function compactResponseRaw(input: ServerGenerationRunInput, raw: unknown): unknown {
+  return input.provider.adapterId === 'comfyui' ? raw : compactOpenAiCompatibleResponseRaw(raw);
 }
 
 function isStreamedRun(input: ServerGenerationRunInput): boolean {
@@ -165,7 +172,7 @@ export async function runGenerationRequestPipeline(args: {
 
     const raw = await readJsonOrThrow(upstream);
     const images = responseAdapter.collectImagesFromJson(raw, String(input.payload.output_format ?? 'png')).map(handlers.attachImage);
-    await handlers.onSucceeded({ images, raw, streamed: false });
+    await handlers.onSucceeded({ images, raw: compactResponseRaw(input, raw), streamed: false });
   } catch (error) {
     const cancelled = isAbortError(error) || signal.aborted;
     await handlers.onFailed(error, cancelled);

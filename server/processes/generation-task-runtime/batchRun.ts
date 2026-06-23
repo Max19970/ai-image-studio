@@ -211,7 +211,9 @@ export async function startServerBatchGenerationRun(input: ServerBatchGeneration
   const task = createBatchTask(input);
   const controller = new AbortController();
   registerTaskController(task.id, controller);
-  await mutateTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)]);
-  void runBatchTask(task, input, controller);
+  await mutateTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)], { persist: false });
+  setImmediate(() => {
+    void runBatchTask(task, input, controller);
+  });
   return task;
 }

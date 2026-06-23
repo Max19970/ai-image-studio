@@ -1,13 +1,17 @@
 import type { GeneratedImage } from '../../domain/generationTask';
 import type { ProviderResponseAdapter } from '../../entities/provider/types';
-import { imageFromOpenAiCompatibleBase64, urlImageFromOpenAiCompatibleItem } from './responseImages';
+import {
+  compactOpenAiCompatibleInlineImageRaw,
+  imageFromOpenAiCompatibleBase64,
+  urlImageFromOpenAiCompatibleItem
+} from './responseImages';
 
-function collectResponseCompletedImages(root: any, fallbackFormat: string): GeneratedImage[] {
-  if (root?.type !== 'response.completed' || !Array.isArray(root?.response?.output)) return [];
-  const format = root?.output_format ?? fallbackFormat;
+function collectResponseOutputImages(output: unknown, fallbackFormat: string): GeneratedImage[] {
+  if (!Array.isArray(output)) return [];
   const images: GeneratedImage[] = [];
 
-  root.response.output.forEach((item: any) => {
+  output.forEach((item: any) => {
+    const format = item?.output_format ?? fallbackFormat;
     const result = item?.result ?? item?.image?.b64_json ?? item?.b64_json;
     if (item?.type === 'image_generation_call' && typeof result === 'string' && result) {
       images.push(imageFromOpenAiCompatibleBase64(result, format, 'final', images.length, item));
@@ -15,6 +19,17 @@ function collectResponseCompletedImages(root: any, fallbackFormat: string): Gene
   });
 
   return images;
+}
+
+function collectResponseCompletedImages(root: any, fallbackFormat: string): GeneratedImage[] {
+  if (root?.type !== 'response.completed') return [];
+  const format = root?.output_format ?? root?.response?.output_format ?? fallbackFormat;
+  return collectResponseOutputImages(root?.response?.output, format);
+}
+
+function collectResponseObjectImages(root: any, fallbackFormat: string): GeneratedImage[] {
+  const format = root?.output_format ?? fallbackFormat;
+  return collectResponseOutputImages(root?.output, format);
 }
 
 function collectDataImages(root: any, format: string): GeneratedImage[] {
@@ -33,6 +48,7 @@ export function collectOpenAiCompatibleImagesFromJson(json: unknown, fallbackFor
   const format = root?.output_format ?? fallbackFormat;
 
   images.push(...collectResponseCompletedImages(root, format));
+  images.push(...collectResponseObjectImages(root, format));
   images.push(...collectDataImages(root, format));
 
   if (typeof root?.partial_image_b64 === 'string' && root.partial_image_b64) {
@@ -64,6 +80,10 @@ export function parseOpenAiCompatibleSseBlock(block: string): unknown[] {
       return [];
     }
   });
+}
+
+export function compactOpenAiCompatibleResponseRaw(raw: unknown): unknown {
+  return compactOpenAiCompatibleInlineImageRaw(raw);
 }
 
 export { imageFromOpenAiCompatibleBase64 };

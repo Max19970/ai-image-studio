@@ -6,7 +6,9 @@ import { openAiCompatibleGenerationParamProfile } from '../../providers/openai-c
 import { buildOpenAiCompatibleParamPayload } from './logicalRegistry';
 
 export function buildOpenAiCompatibleRequestSurfacePayload(params: ImageParams, provider: ProviderSettings, mode: WorkMode, providerMode?: ProviderGenerationModeDefinition | null): Record<string, unknown> {
+  const model = provider.modelId.trim();
   return {
+    ...(model ? { model } : {}),
     prompt: params.prompt.trim(),
     ...buildOpenAiCompatibleParamPayload(params, provider, mode, openAiCompatibleGenerationParamProfile, providerMode)
   };
