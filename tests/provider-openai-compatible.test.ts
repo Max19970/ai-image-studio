@@ -46,6 +46,22 @@ test('OpenAI-compatible payload trims prompt, serializes enabled params, and let
   assert.equal(payload.seed, 123);
 });
 
+test('OpenAI-compatible edit payload omits generate-only quality and moderation controls', () => {
+  const payload = buildOpenAiCompatibleImagePayload({
+    ...defaultImageParams,
+    prompt: 'edit fox',
+    quality: 'high',
+    moderation: 'low',
+    includeQuality: true,
+    includeModeration: true
+  }, defaultProviderSettings, 'edit');
+
+  assert.equal(payload.model, defaultProviderSettings.modelId);
+  assert.equal(payload.prompt, 'edit fox');
+  assert.equal('quality' in payload, false);
+  assert.equal('moderation' in payload, false);
+});
+
 test('OpenAI-compatible payload always includes the selected provider model', () => {
   const payload = buildOpenAiCompatibleImagePayload({
     ...defaultImageParams,

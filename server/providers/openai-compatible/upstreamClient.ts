@@ -22,7 +22,7 @@ type FetchUpstreamDiagnostics = UpstreamDiagnosticsInput;
 export async function fetchUpstream(
   endpoint: string,
   init: RequestInit,
-  attempts = 3,
+  attempts = 1,
   diagnostics?: FetchUpstreamDiagnostics
 ): Promise<Response> {
   let lastError: unknown;

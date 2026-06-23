@@ -36,7 +36,7 @@ export async function fetchOpenAiCompatibleGenerate(
     headers: buildOpenAiCompatibleHeaders(provider),
     body: JSON.stringify(payload),
     signal: resolveRequestSignal(provider, context)
-  }, 3, createOpenAiCompatibleUpstreamDiagnostics({
+  }, undefined, createOpenAiCompatibleUpstreamDiagnostics({
     operation: 'generate',
     provider,
     endpoint,
@@ -65,7 +65,7 @@ export async function fetchOpenAiCompatibleEdit(
     headers: buildOpenAiCompatibleHeaders(provider, true),
     body: form,
     signal: resolveRequestSignal(provider, context)
-  }, 3, createOpenAiCompatibleUpstreamDiagnostics({
+  }, undefined, createOpenAiCompatibleUpstreamDiagnostics({
     operation: 'edit',
     provider,
     endpoint,
