@@ -11,9 +11,9 @@ import {
 } from '../../entities/request-presets';
 import { sanitizeBatchDraftForSettings, sanitizeProviderModeDraftForModel } from '../../entities/provider/compatibility';
 import { resolveProviderGenerationModeForModelContext } from '../../entities/provider/modeResolution';
-import type { CreateAppCommandsArgs } from './appCommandTypes';
+import type { RequestPresetCommandDeps } from './appCommandTypes';
 
-function currentPresetMeta(args: CreateAppCommandsArgs): RequestPresetDisplayMeta {
+function currentPresetMeta(args: RequestPresetCommandDeps): RequestPresetDisplayMeta {
   return {
     providerId: args.activeProvider?.id,
     providerLabel: args.activeProvider?.name,
@@ -23,7 +23,7 @@ function currentPresetMeta(args: CreateAppCommandsArgs): RequestPresetDisplayMet
   };
 }
 
-function currentPresetSnapshot(args: CreateAppCommandsArgs): RequestPresetSnapshot {
+function currentPresetSnapshot(args: RequestPresetCommandDeps): RequestPresetSnapshot {
   return {
     providerModeId: args.providerModeId,
     selectedModelId: args.studioSettings.selectedModelId,
@@ -31,7 +31,7 @@ function currentPresetSnapshot(args: CreateAppCommandsArgs): RequestPresetSnapsh
   };
 }
 
-function getDraftModelAndProvider(args: CreateAppCommandsArgs, draft: BatchComposerDraft): {
+function getDraftModelAndProvider(args: RequestPresetCommandDeps, draft: BatchComposerDraft): {
   model: GenerationModel | null;
   provider: GenerationProvider | null;
 } {
@@ -42,7 +42,7 @@ function getDraftModelAndProvider(args: CreateAppCommandsArgs, draft: BatchCompo
   return { model, provider };
 }
 
-function draftPresetMeta(args: CreateAppCommandsArgs, draft: BatchComposerDraft): RequestPresetDisplayMeta {
+function draftPresetMeta(args: RequestPresetCommandDeps, draft: BatchComposerDraft): RequestPresetDisplayMeta {
   const { model, provider } = getDraftModelAndProvider(args, draft);
   const providerMode = resolveProviderGenerationModeForModelContext(args.studioSettings, model, draft.providerModeId).activeMode;
   return {
@@ -62,13 +62,13 @@ function draftPresetSnapshot(draft: BatchComposerDraft): RequestPresetSnapshot {
   };
 }
 
-function resolvePresetModelId(args: CreateAppCommandsArgs, preset: RequestPresetSnapshot, fallbackModelId = args.studioSettings.selectedModelId): string {
+function resolvePresetModelId(args: RequestPresetCommandDeps, preset: RequestPresetSnapshot, fallbackModelId = args.studioSettings.selectedModelId): string {
   return args.studioSettings.models.some((model) => model.id === preset.selectedModelId)
     ? preset.selectedModelId
     : fallbackModelId;
 }
 
-export function createRequestPresetCommands(args: CreateAppCommandsArgs): RequestPresetCommands {
+export function createRequestPresetCommands(args: RequestPresetCommandDeps): RequestPresetCommands {
   return {
     saveCurrent: (name, note) => {
       const preset = createRequestPreset({

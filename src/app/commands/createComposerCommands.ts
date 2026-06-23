@@ -1,16 +1,11 @@
 import type { ImageParams } from '../../domain/imageParams';
 import type { ComposerCommands, RequestPresetCommands } from '../../interface/context/commands';
-import {
-  applyComposerCompatibilityForModel,
-  getComposerModeForAttachmentRole,
-  setComposerDraftWithCompatibility,
-  setComposerProviderModeWithCompatibility,
-} from './providerCompatibilityCommands';
-import type { CreateAppCommandsArgs } from './appCommandTypes';
+import { applyComposerCompatibilityForModel, getComposerModeForAttachmentRole, setComposerDraftWithCompatibility, setComposerProviderModeWithCompatibility } from './providerCompatibilityCommands';
+import type { ComposerCommandDeps } from './appCommandTypes';
 import { submitSingleGenerationCommand } from './generationCommands';
 import { openBatchComposerCommand } from './workspaceCommands';
 
-export function createComposerCommands(args: CreateAppCommandsArgs, requestPresets: RequestPresetCommands): ComposerCommands {
+export function createComposerCommands(args: ComposerCommandDeps, requestPresets: RequestPresetCommands): ComposerCommands {
   const patchParams = (patch: Partial<ImageParams>) => args.setParams((prev) => ({ ...prev, ...patch }));
 
   return {
@@ -35,7 +30,6 @@ export function createComposerCommands(args: CreateAppCommandsArgs, requestPrese
       targetImage: args.targetImage,
       referenceImages: args.referenceImages,
       mask: args.mask,
-      taskHistory: args.taskHistory,
       setBusy: args.setBusy,
       setServerSubmission: args.setServerSubmission,
       t: args.t,

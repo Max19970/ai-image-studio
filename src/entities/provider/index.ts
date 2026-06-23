@@ -3,6 +3,7 @@ export * from './capabilities';
 export * from './registry';
 export * from './request';
 export * from './modeResolution';
+export * from './modeIntent';
 export * from './modelOptions';
 export * from './ui';
 export * from './valueConstraints';

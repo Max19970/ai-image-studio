@@ -6,9 +6,18 @@ import {
   getDefaultProviderGenerationMode,
   listProviderGenerationModes,
   mapLegacyWorkModeToProviderMode,
-  normalizeProviderGenerationMode
+  normalizeProviderGenerationMode,
+  resolveProviderGenerationModeForRestore
 } from '../src/entities/provider/modeResolution';
-import { defaultImageParams, defaultProviderSettings } from '../src/domain/defaults';
+import {
+  getProviderModeAttachmentRequirements,
+  getProviderModePromptPlaceholderKey,
+  getProviderModeSubmitActionLabelKey,
+  getProviderModeUiIntent,
+  isProviderModeEditLike,
+  isProviderModeGenerateLike
+} from '../src/entities/provider/modeIntent';
+import { defaultImageParams, defaultProviderSettings, defaultStudioSettings } from '../src/domain/defaults';
 import { comfyUiProviderDefinition } from '../src/providers/comfyui/definition';
 import {
   comfyUiHiresFixModeId,
@@ -210,6 +219,42 @@ test('ComfyUI Hires Fix payload is provider-mode scoped and single-image oriente
   assert.equal(payload.batch_size, 1);
   assert.equal(payload.hires_upscale_mode, 'ai');
   assert.equal(payload.hires_upscale_model, '4x-ultrasharp.pth');
+});
+
+test('provider mode UI intent is derived from transport and attachments, not legacyWorkMode checks', () => {
+  const comfyHiresMode = listProviderGenerationModes(comfyUiProviderDefinition)[1];
+
+  assert.equal(getProviderModeUiIntent(openAiCompatibleImageGenerateMode), 'generate-like');
+  assert.equal(isProviderModeGenerateLike(openAiCompatibleImageGenerateMode), true);
+  assert.equal(getProviderModePromptPlaceholderKey(openAiCompatibleImageGenerateMode), 'composer.placeholder.generate');
+  assert.equal(getProviderModeSubmitActionLabelKey(openAiCompatibleImageGenerateMode), 'composer.submitGenerate');
+
+  assert.equal(getProviderModeUiIntent(openAiCompatibleImageEditMode), 'edit-like');
+  assert.equal(isProviderModeEditLike(openAiCompatibleImageEditMode), true);
+  assert.equal(getProviderModePromptPlaceholderKey(openAiCompatibleImageEditMode, { compact: true }), 'composer.placeholder.editCompact');
+  assert.equal(getProviderModeSubmitActionLabelKey(openAiCompatibleImageEditMode), 'composer.submitEdit');
+
+  assert.equal(comfyHiresMode.legacyWorkMode, undefined);
+  assert.equal(getProviderModeUiIntent(comfyHiresMode), 'edit-like');
+  assert.equal(getProviderModePromptPlaceholderKey(comfyHiresMode), 'composer.placeholder.edit');
+  assert.deepEqual(getProviderModeAttachmentRequirements(comfyHiresMode).requiredRoles, ['targetImage']);
+});
+
+test('provider mode restore helper prefers stored provider mode and falls back to legacy snapshots', () => {
+  const restoredProviderMode = resolveProviderGenerationModeForRestore({
+    settings: defaultStudioSettings,
+    modelId: defaultStudioSettings.selectedModelId,
+    snapshotProviderModeId: openAiCompatibleImageEditModeId,
+    snapshotLegacyMode: 'generate'
+  });
+  assert.equal(restoredProviderMode.id, openAiCompatibleImageEditModeId);
+
+  const restoredLegacyMode = resolveProviderGenerationModeForRestore({
+    settings: defaultStudioSettings,
+    modelId: defaultStudioSettings.selectedModelId,
+    snapshotLegacyMode: 'edit'
+  });
+  assert.equal(restoredLegacyMode.legacyWorkMode, 'edit');
 });
 
 test('provider mode resolver normalizes selected and legacy modes safely', () => {

@@ -1,4 +1,4 @@
-import type { ComfyUiResolvedGenerationConfig, ComfyUiWorkflow } from './workflowTemplates';
+import type { ComfyUiResolvedGenerationConfig, ComfyUiWorkflow } from './workflowTypes';
 
 export type ComfyUiNodeRef = [string, number];
 
@@ -14,6 +14,12 @@ export interface ComfyUiWorkflowBuildContext extends ComfyUiWorkflowNodeAllocato
 export interface ComfyUiModelConditioningRefs {
   modelRef: ComfyUiNodeRef;
   clipRef: ComfyUiNodeRef;
+}
+
+export interface ComfyUiConditioningRefs extends ComfyUiModelConditioningRefs, ComfyUiWorkflowNodeAllocator {
+  vaeRef: ComfyUiNodeRef;
+  positiveRef: ComfyUiNodeRef;
+  negativeRef: ComfyUiNodeRef;
 }
 
 export interface ComfyUiWorkflowExtension {

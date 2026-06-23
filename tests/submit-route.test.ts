@@ -1,10 +1,36 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { once } from 'node:events';
-import { createImageStudioApp } from '../server/app';
-import { resetGenerationTaskRuntimeForTests } from '../server/processes/generationTaskRuntime';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import type { ProviderSettings } from '../server/providers/types';
+
+const originalDbPath = process.env.IMAGE_STUDIO_DB_PATH;
+const originalStorageKey = process.env.IMAGE_STUDIO_STORAGE_KEY;
+const originalStorageKeyFile = process.env.IMAGE_STUDIO_STORAGE_KEY_FILE;
+const storageTempDir = mkdtempSync(path.join(tmpdir(), 'image-studio-submit-route-test-'));
+process.env.IMAGE_STUDIO_DB_PATH = path.join(storageTempDir, 'storage.sqlite');
+process.env.IMAGE_STUDIO_STORAGE_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+delete process.env.IMAGE_STUDIO_STORAGE_KEY_FILE;
+
+const { createImageStudioApp } = await import('../server/app');
+const { resetGenerationTaskRuntimeForTests } = await import('../server/processes/generationTaskRuntime');
+const generationTaskStore = await import('../server/storage/generationTaskStore');
+const { closeStorageDbForTests } = await import('../server/storage/encryptedStore');
+
+after(() => {
+  resetGenerationTaskRuntimeForTests();
+  closeStorageDbForTests();
+  rmSync(storageTempDir, { recursive: true, force: true });
+  if (originalDbPath === undefined) delete process.env.IMAGE_STUDIO_DB_PATH;
+  else process.env.IMAGE_STUDIO_DB_PATH = originalDbPath;
+  if (originalStorageKey === undefined) delete process.env.IMAGE_STUDIO_STORAGE_KEY;
+  else process.env.IMAGE_STUDIO_STORAGE_KEY = originalStorageKey;
+  if (originalStorageKeyFile === undefined) delete process.env.IMAGE_STUDIO_STORAGE_KEY_FILE;
+  else process.env.IMAGE_STUDIO_STORAGE_KEY_FILE = originalStorageKeyFile;
+});
 
 const provider: ProviderSettings = {
   adapterId: 'openai-compatible',
@@ -217,6 +243,81 @@ test('server-owned generation route keeps active task available to new SSE subsc
   } finally {
     globalThis.fetch = originalFetch;
     resetGenerationTaskRuntimeForTests();
+  }
+});
+
+test('server-owned generation route does not wipe stored history while only empty active tasks exist', async () => {
+  resetGenerationTaskRuntimeForTests();
+  generationTaskStore.saveGenerationTaskHistoryDocuments([{
+    id: 'stored-task',
+    kind: 'single',
+    status: 'succeeded',
+    createdAt: 100,
+    updatedAt: 200,
+    request: {
+      createdAt: 100,
+      mode: 'generate',
+      prompt: 'stored fox',
+      endpoint: '/api/generate',
+      providerLabel: 'Stored provider',
+      model: 'image-model',
+      modelLabel: 'image-model',
+      payload: { prompt: 'stored fox' },
+      warnings: [],
+      attachments: [],
+      params: {}
+    },
+    images: [{ id: 'stored-img', src: 'data:image/png;base64,QUJDRA==', thumbnailSrc: 'data:image/webp;base64,VFhY', format: 'png', kind: 'final', index: 0, createdAt: 120 }]
+  }]);
+  resetGenerationTaskRuntimeForTests();
+
+  const originalFetch = globalThis.fetch;
+  const upstreamCalls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+  globalThis.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('http://127.0.0.1:')) return originalFetch(input, init);
+    upstreamCalls.push({ input, init });
+    return new Promise<Response>(() => undefined);
+  };
+
+  try {
+    await withServer(async (baseUrl) => {
+      const runResponse = await fetch(`${baseUrl}/api/generation-tasks/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          payload: { prompt: 'active empty fox', model: 'image-model' },
+          providerModeId: 'openai-compatible.image-generate',
+          transport: { kind: 'json', operation: 'generate', path: '/api/provider/submit' },
+          snapshot: {
+            createdAt: Date.now(),
+            mode: 'generate',
+            prompt: 'active empty fox',
+            endpoint: provider.generationEndpoint,
+            providerLabel: 'Test provider',
+            providerAdapterId: 'openai-compatible',
+            model: 'image-model',
+            modelLabel: 'image-model',
+            payload: { prompt: 'active empty fox', model: 'image-model' },
+            warnings: [],
+            attachments: [],
+            params: {}
+          }
+        })
+      });
+      assert.equal(runResponse.status, 202);
+      await waitForCondition(() => upstreamCalls.length === 1);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const stored = generationTaskStore.loadGenerationTaskHistoryDocuments({ assetMode: 'metadata' }).tasks as any[];
+      assert.equal(stored.length, 1);
+      assert.equal(stored[0].id, 'stored-task');
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    resetGenerationTaskRuntimeForTests();
+    generationTaskStore.clearGenerationTaskHistoryDocuments();
   }
 });
 

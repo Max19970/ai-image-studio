@@ -1,4 +1,4 @@
-import type { GeneratedImage, GenerationProgress, GenerationRequestSnapshot, GenerationTask } from '../domain/generationTask';
+import type { GenerationRequestSnapshot, GenerationTask } from '../domain/generationTask';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../domain/providerProbe';
 import type { ProviderSettings } from '../domain/providerSettings';
 import type { ProviderResourceKind, ProviderResourceList } from '../domain/providerResources';
@@ -6,7 +6,6 @@ import type { WorkMode } from '../domain/workMode';
 import type { ProviderGenerationModeDefinition } from '../domain/providerMode';
 import { normalizeGalleryPath } from '../domain/galleryFilesystem';
 import { getProviderAdapterForSettings } from '../entities/provider/registry';
-import type { ProviderResponseAdapter } from '../entities/provider/types';
 
 export interface SubmitRequest {
   provider: ProviderSettings;
@@ -16,9 +15,6 @@ export interface SubmitRequest {
   targetImage?: File | null;
   referenceImages?: File[];
   mask?: File | null;
-  onStreamImage?: (image: GeneratedImage) => void;
-  onProgress?: (progress: GenerationProgress) => void;
-  signal?: AbortSignal;
   galleryPath?: string;
 }
 
@@ -80,52 +76,6 @@ async function readJsonOrThrow(response: Response): Promise<unknown> {
   }
 
   return data;
-}
-
-async function consumeStream(
-  response: Response,
-  responseAdapter: ProviderResponseAdapter,
-  onStreamImage?: (image: GeneratedImage) => void,
-  onProgress?: (progress: GenerationProgress) => void
-): Promise<GeneratedImage[]> {
-  if (!response.ok || !response.body) {
-    await readJsonOrThrow(response);
-    return [];
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  const collected: GeneratedImage[] = [];
-
-  const collectBlock = (block: string) => {
-    for (const event of responseAdapter.parseSseBlock(block)) {
-      const streamError = responseAdapter.collectErrorFromJson?.(event);
-      if (streamError) throw new Error(streamError);
-
-      const progress = responseAdapter.collectProgressFromJson?.(event);
-      if (progress) onProgress?.(progress);
-
-      const imgs = responseAdapter.collectImagesFromJson(event);
-      imgs.forEach((img) => {
-        if (img.kind !== 'partial') collected.push(img);
-        onStreamImage?.(img);
-      });
-    }
-  };
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const blocks = buffer.split('\n\n');
-    buffer = blocks.pop() ?? '';
-    blocks.forEach(collectBlock);
-  }
-
-  if (buffer.trim()) collectBlock(buffer);
-
-  return collected;
 }
 
 function withServerTaskSnapshot(init: RequestInit, snapshot: GenerationRequestSnapshot): RequestInit {
@@ -219,20 +169,6 @@ export async function cancelServerGenerationTask(taskId: string): Promise<void> 
 
 export async function cancelServerBatchGenerationItem(taskId: string, itemId: string): Promise<void> {
   await readJsonOrThrow(await fetchProxy(`/api/generation-tasks/${encodeURIComponent(taskId)}/batch-items/${encodeURIComponent(itemId)}/cancel`, { method: 'POST' }));
-}
-
-export async function submitImageRequest(request: SubmitRequest): Promise<{ images: GeneratedImage[]; raw: unknown; streamed: boolean }> {
-  const adapter = getProviderAdapterForSettings(request.provider);
-  const proxyRequest = adapter.request.createSubmitProxyRequest(request);
-  const response = await fetchProxy(proxyRequest.path, proxyRequest.init);
-
-  if (proxyRequest.streamed) {
-    const images = await consumeStream(response, adapter.response, request.onStreamImage, request.onProgress);
-    return { images, raw: null, streamed: true };
-  }
-
-  const raw = await readJsonOrThrow(response);
-  return { images: adapter.response.collectImagesFromJson(raw, proxyRequest.fallbackFormat), raw, streamed: false };
 }
 
 export async function probeProvider(provider: ProviderSettings): Promise<ProviderProbeReport> {

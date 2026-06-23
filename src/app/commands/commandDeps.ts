@@ -1,0 +1,186 @@
+import type { GalleryFolder } from '../../domain/galleryFilesystem';
+import type { RequestPreset } from '../../entities/request-presets';
+import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
+import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
+import type { BatchComposerDraft } from '../../domain/generationTask';
+import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
+import type { ImageParams } from '../../domain/imageParams';
+import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
+import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
+import type { StudioSettings } from '../../domain/studioSettings';
+import type { WorkMode } from '../../domain/workMode';
+import type { ServerSubmissionSetter, StateSetter, TaskHistoryCommands, TranslateFn, WorkspaceNavigationCommands } from './types';
+
+export interface ProviderProbeCommandDeps {
+  setCapabilityReport: StateSetter<ProviderProbeReport | null>;
+  setProbeError: StateSetter<string | null>;
+  setProbingProviderId: StateSetter<string | null>;
+  setQuickCheckingProviderId: StateSetter<string | null>;
+  setQuickCheckResults: StateSetter<Record<string, ProviderQuickCheckResult>>;
+}
+
+export type ProviderProbeCommandState = ProviderProbeCommandDeps;
+
+export interface ComposerCompatibilityCommandDeps {
+  t: TranslateFn;
+  providerModeId: ProviderGenerationModeId;
+  studioSettings: StudioSettings;
+  targetImage: File | null;
+  referenceImages: File[];
+  mask: File | null;
+  setProviderModeId: StateSetter<ProviderGenerationModeId>;
+  setCompatibilityNotice: StateSetter<string | null>;
+  setTargetImage: StateSetter<File | null>;
+  setReferenceImages: StateSetter<File[]>;
+  setMask: StateSetter<File | null>;
+}
+
+export interface BatchCompatibilityCommandDeps {
+  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
+}
+
+export interface WorkspaceCommandDeps {
+  setWorkspaceTab: StateSetter<'images' | 'info' | 'settings'>;
+  setSidebarCollapsed: StateSetter<boolean>;
+}
+
+export interface ComposerCommandDeps extends ComposerCompatibilityCommandDeps {
+  mode: WorkMode;
+  providerMode: ProviderGenerationModeDefinition;
+  params: ImageParams;
+  provider: ProviderSettings;
+  activeProvider: GenerationProvider | null;
+  activeModel: GenerationModel | null;
+  payload: Record<string, unknown>;
+  warnings: string[];
+  canSubmit: boolean;
+  activeGalleryPath: string;
+  setParams: StateSetter<ImageParams>;
+  setStudioSettings: StateSetter<StudioSettings>;
+  setParametersOpen: StateSetter<boolean>;
+  setWorkspaceTab: StateSetter<'images' | 'info' | 'settings'>;
+  setBusy: StateSetter<boolean>;
+  setServerSubmission: ServerSubmissionSetter;
+  setBatchComposerOpen: StateSetter<boolean>;
+  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
+  normalizeSettings: (settings: StudioSettings) => StudioSettings;
+}
+
+export interface BatchComposerCommandDeps {
+  t: TranslateFn;
+  providerModeId: ProviderGenerationModeId;
+  params: ImageParams;
+  studioSettings: StudioSettings;
+  capabilityReport: ProviderProbeReport | null;
+  activeGalleryPath: string;
+  batchCanSubmit: boolean;
+  batchDrafts: BatchComposerDraft[];
+  batchIntervalSeconds: number;
+  setBusy: StateSetter<boolean>;
+  setBatchComposerOpen: StateSetter<boolean>;
+  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
+  setBatchIntervalSeconds: StateSetter<number>;
+  setBatchParametersDraftId: StateSetter<string | null>;
+}
+
+export interface GalleryHiresFixCommandDeps {
+  t: TranslateFn;
+  params: ImageParams;
+  studioSettings: StudioSettings;
+  setStudioSettings: StateSetter<StudioSettings>;
+  setProviderModeId: StateSetter<ProviderGenerationModeId>;
+  setParams: StateSetter<ImageParams>;
+  setTargetImage: StateSetter<File | null>;
+  setReferenceImages: StateSetter<File[]>;
+  setMask: StateSetter<File | null>;
+  setBatchComposerOpen: StateSetter<boolean>;
+  setWorkspaceTab: StateSetter<'images' | 'info' | 'settings'>;
+  setSelectedTaskId: StateSetter<string | null>;
+  setSelectedImageId: StateSetter<string | null>;
+  setCompatibilityNotice: StateSetter<string | null>;
+}
+
+export interface GalleryCommandDeps {
+  activeGalleryPath: string;
+  galleryFolders: GalleryFolder[];
+  galleryPins: GalleryPinItem[];
+  galleryTagRecords: GalleryTagRecord[];
+  selectedTaskId: string | null;
+  taskHistory: TaskHistoryCommands;
+  navigation: WorkspaceNavigationCommands;
+  hiresFix: GalleryHiresFixCommandDeps;
+  setSelectedTaskId: StateSetter<string | null>;
+  setSelectedImageId: StateSetter<string | null>;
+  setActiveGalleryPath: StateSetter<string>;
+  createGalleryFolder: (name: string) => Promise<void>;
+  deleteGalleryFolder: (path: string) => Promise<void>;
+  moveGalleryItem: (itemKind: 'task' | 'folder', itemId: string, targetPath: string) => Promise<void>;
+  pasteGalleryItems: (operation: GalleryClipboardOperation, items: GalleryClipboardItemPayload[], targetPath: string) => Promise<void>;
+  setGalleryItemPinned: (kind: GalleryMetadataKind, id: string, enabled: boolean) => Promise<void>;
+  setGalleryItemTags: (kind: GalleryMetadataKind, id: string, tags: string[]) => Promise<void>;
+}
+
+export interface SettingsCommandDeps {
+  studioSettings: StudioSettings;
+  activeProvider: GenerationProvider | null;
+  activeModel: GenerationModel | null;
+  setStudioSettings: StateSetter<StudioSettings>;
+  normalizeSettings: (settings: StudioSettings) => StudioSettings;
+  composerCompatibility: ComposerCompatibilityCommandDeps;
+  batchCompatibility: BatchCompatibilityCommandDeps;
+  providerProbe: ProviderProbeCommandDeps;
+}
+
+export interface DetailCommandDeps {
+  t: TranslateFn;
+  studioSettings: StudioSettings;
+  hiresFix: GalleryHiresFixCommandDeps;
+  setProviderModeId: StateSetter<ProviderGenerationModeId>;
+  setCompatibilityNotice: StateSetter<string | null>;
+  setBatchComposerOpen: StateSetter<boolean>;
+  setParams: StateSetter<ImageParams>;
+  setStudioSettings: StateSetter<StudioSettings>;
+  setSelectedTaskId: StateSetter<string | null>;
+  setSelectedImageId: StateSetter<string | null>;
+}
+
+export interface ParameterCommandDeps {
+  activeBatchDraft: BatchComposerDraft | null;
+  setParametersOpen: StateSetter<boolean>;
+  setParams: StateSetter<ImageParams>;
+  setBatchParametersDraftId: StateSetter<string | null>;
+  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
+}
+
+export interface RequestPresetCommandDeps {
+  t: TranslateFn;
+  providerModeId: ProviderGenerationModeId;
+  providerMode: ProviderGenerationModeDefinition;
+  params: ImageParams;
+  activeProvider: GenerationProvider | null;
+  activeModel: GenerationModel | null;
+  studioSettings: StudioSettings;
+  batchDrafts: BatchComposerDraft[];
+  requestPresets: RequestPreset[];
+  setProviderModeId: StateSetter<ProviderGenerationModeId>;
+  setCompatibilityNotice: StateSetter<string | null>;
+  setParams: StateSetter<ImageParams>;
+  setStudioSettings: StateSetter<StudioSettings>;
+  setTargetImage: StateSetter<File | null>;
+  setReferenceImages: StateSetter<File[]>;
+  setMask: StateSetter<File | null>;
+  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
+  setRequestPresets: StateSetter<RequestPreset[]>;
+  normalizeSettings: (settings: StudioSettings) => StudioSettings;
+}
+
+export interface CreateAppCommandsArgs {
+  workspace: WorkspaceCommandDeps;
+  composer: ComposerCommandDeps;
+  batchComposer: BatchComposerCommandDeps;
+  gallery: GalleryCommandDeps;
+  settings: SettingsCommandDeps;
+  detail: DetailCommandDeps;
+  parameters: ParameterCommandDeps;
+  requestPresets: RequestPresetCommandDeps;
+}

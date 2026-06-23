@@ -1,7 +1,7 @@
 import { HttpError, type ProviderSettings } from '../types';
 import { resolveComfyUiUrl } from './endpoints';
 import { fetchComfyUi } from './http';
-import type { ComfyUiResolvedGenerationConfig, ComfyUiWorkflow } from './workflowTemplates';
+import type { ComfyUiResolvedGenerationConfig, ComfyUiWorkflow } from './workflowTypes';
 
 export interface ComfyUiImageRef {
   filename: string;

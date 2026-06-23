@@ -3,7 +3,7 @@ import { clearServerGenerationTasks, deleteServerGenerationTask } from '../../in
 import { sanitizeProviderModeDraftForModel } from '../../entities/provider/compatibility';
 import { normalizeSelectedModel } from '../../entities/studio-settings';
 import { getProviderGenerationRequestSurfaceById } from '../../entities/generation-params/requestSurface';
-import { resolveProviderGenerationMode } from '../../entities/provider/modeResolution';
+import { resolveProviderGenerationModeForRestore } from '../../entities/provider/modeResolution';
 import type { BatchComposerDraft, GenerationRequestSnapshot } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderGenerationModeId } from '../../domain/providerMode';
@@ -78,13 +78,12 @@ export function openBatchComposerCommand(args: {
 export function restoreRequestToWorkspaceCommand(snapshot: GenerationRequestSnapshot, commands: RestoreRequestCommands) {
   const modelFromHistory = commands.settings.models.find((model) => model.modelId === snapshot.model || model.name === snapshot.modelLabel);
   const selectedModelId = modelFromHistory?.id ?? commands.settings.selectedModelId;
-  const snapshotWithProviderMode = snapshot as GenerationRequestSnapshot & { providerModeId?: ProviderGenerationModeId };
-  const restoredMode = resolveProviderGenerationMode({
+  const restoredMode = resolveProviderGenerationModeForRestore({
     settings: commands.settings,
     modelId: selectedModelId,
-    providerModeId: snapshotWithProviderMode.providerModeId,
-    legacyMode: snapshot.mode
-  }).activeMode;
+    snapshotProviderModeId: snapshot.providerModeId,
+    snapshotLegacyMode: snapshot.mode
+  });
   const sanitized = sanitizeProviderModeDraftForModel({
     providerModeId: restoredMode.id,
     targetImage: null,

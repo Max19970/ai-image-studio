@@ -13,7 +13,7 @@ import {
   mapComfyUiGenerationResult,
   type ComfyUiPromptResponse
 } from './responseMapper';
-import type { ComfyUiResolvedGenerationConfig, ComfyUiWorkflow } from './workflowTemplates';
+import type { ComfyUiResolvedGenerationConfig, ComfyUiWorkflow } from './workflowTypes';
 
 interface ComfyUiHistoryResponse {
   [promptId: string]: unknown;

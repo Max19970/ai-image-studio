@@ -38,8 +38,6 @@ A client adapter owns UI-facing request/response semantics for one provider fami
 
 Workspace, composer, gallery, detail and settings screens should consume these adapter contracts rather than checking raw provider names or models, except for user-facing warnings intentionally owned by the adapter request layer.
 
-
-
 ## Provider resources
 
 Provider resources are runtime-discovered lists owned by an adapter. Examples include ComfyUI checkpoints, LoRA files, samplers and schedulers. The browser must not call local provider servers directly. It should request resources through the local Express proxy route:
@@ -54,6 +52,8 @@ The route selects the server adapter through the registry and calls `fetchResour
 ## Provider generation modes
 
 `generationModes` is the client adapter's declaration of user-facing generation operations owned by the provider family. A mode owns its label/description keys, attachment policy, generation/detail surface IDs, and submit transport metadata. Legacy `WorkMode` values may temporarily map to provider modes through `legacyWorkMode`, but they are compatibility vocabulary rather than the target source of truth.
+
+Long-term source of truth: UI intent comes from active provider mode plus submit transport and attachment policy, attachment availability/requirements from `ProviderAttachmentPolicy`, and routing from `ProviderSubmitTransportDefinition`. `WorkMode` / `legacyWorkMode` may remain only for old snapshots/presets and legacy OpenAI-compatible payload/submit compatibility.
 
 Current OpenAI-compatible modes:
 
@@ -79,6 +79,12 @@ Current surfaces:
 - OpenAI-compatible: `api-image`, with generate/edit mode switching, image attachments, mask, parameters and batch.
 - ComfyUI: `local-workflow`, with model picker, LoRA registry quick controls, parameters and batch; no OpenAI-style edit, image attachments or masks in the MVP.
 
+## Provider manifest
+
+Each provider family owns a server provider manifest next to its adapter and a client provider manifest next to its definition. A manifest binds the provider id to the adapter/definition and declares provider-owned architecture evidence: required modules, the small composition file, phrase checks, and provider-specific source evidence.
+
+The central provider registries stay composition roots: they import manifests and expose runtime lookup lists/maps. Checks iterate those registered manifests, not separate hard-coded provider lists. Generation/request surface registries stay separate composition roots for implemented parameter surfaces; provider checks assert that every registered definition points to existing surface source.
+
 ## Adapter-specific settings
 
 Provider-specific settings must be registered by the adapter, not hard-coded in unrelated UI layers.
@@ -97,9 +103,7 @@ Current OpenAI-compatible settings fields include:
 The server also registers a zod settings schema for the same adapter family. Future providers can tighten or extend validation through their own adapter settings schema.
 
 ## Fixture and contract tests
-
 Stage 10 contract tests cover:
-
 - client/server adapter id alignment;
 - adapter settings field registration;
 - server settings schema parsing;
@@ -114,9 +118,7 @@ Stage 10 contract tests cover:
 These tests intentionally mock `fetch`. They do not require real API keys and do not perform network calls.
 
 ## Mock adapter candidate
-
 A second real provider adapter should only be added when we need a genuinely different API shape. Until then, the documented mock adapter candidate is:
-
 ```txt
 mock-fixture-provider
   generate: local JSON fixture response
@@ -128,20 +130,14 @@ mock-fixture-provider
 This mock adapter would be useful for end-to-end UI tests, demo mode, and provider registry contract checks. It should live under `server/providers/mock-fixture-provider` and `src/providers/mock-fixture-provider`, not inside OpenAI-compatible modules.
 
 ## Non-goals for Stage 10
-
 - Do not add a fake provider to production UI just to prove extensibility.
 - Do not move provider settings UI into a generic dynamic form yet.
 - Do not run live provider probes in automated tests.
 - Do not special-case provider internals in app commands or feature screens.
-
 ## Generation parameter profile
-
 Every client adapter definition must declare `generationParams: ProviderGenerationParamProfile`.
-
 This profile is the adapter-owned allow/deny layer for generation parameter modules. It lets a provider expose a completely different parameter surface without changing the shared parameter modal manually.
-
 The profile supports:
-
 - `include: 'all' | string[]` as the base logical parameter set;
 - optional `byMode.generate` / `byMode.edit` overrides;
 - optional `exclude` list;

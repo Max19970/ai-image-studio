@@ -8,19 +8,17 @@ import { createParameterCommands } from './createParameterCommands';
 import { createRequestPresetCommands } from './createRequestPresetCommands';
 import { createSettingsCommands } from './createSettingsCommands';
 import { createWorkspaceCommands } from './createWorkspaceCommands';
-import { createWorkspaceNavigationBinding } from './commandFactoryHelpers';
 
 export function createAppCommands(args: CreateAppCommandsArgs): AppCommands {
-  const navigation = createWorkspaceNavigationBinding(args);
-  const requestPresets = createRequestPresetCommands(args);
+  const requestPresets = createRequestPresetCommands(args.requestPresets);
 
   return {
-    workspace: createWorkspaceCommands(args),
-    composer: createComposerCommands(args, requestPresets),
-    gallery: createGalleryCommands(args, navigation),
-    batchComposer: createBatchComposerCommands(args, requestPresets),
-    settings: createSettingsCommands(args),
-    detail: createDetailCommands(args),
-    parameters: createParameterCommands(args)
+    workspace: createWorkspaceCommands(args.workspace),
+    composer: createComposerCommands(args.composer, requestPresets),
+    gallery: createGalleryCommands(args.gallery),
+    batchComposer: createBatchComposerCommands(args.batchComposer, requestPresets),
+    settings: createSettingsCommands(args.settings),
+    detail: createDetailCommands(args.detail),
+    parameters: createParameterCommands(args.parameters)
   };
 }

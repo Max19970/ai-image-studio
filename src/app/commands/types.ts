@@ -1,15 +1,14 @@
-import type { Dispatch, SetStateAction } from 'react';
 import type { GenerationProvider, GenerationModel } from '../../domain/providerSettings';
 import type { GenerationRequestSnapshot, GenerationTask } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
 import type { ProviderGenerationModeId } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
-import type { ServerSubmissionState } from '../workspace/state/useGenerationExecutionState';
+import type { ServerSubmissionState, StateSetter } from '../stateTypes';
 
 export type TranslateFn = (key: string, vars?: Record<string, string | number | boolean | null | undefined>) => string;
 
-export type StateSetter<T> = Dispatch<SetStateAction<T>>;
+export type { StateSetter } from '../stateTypes';
 
 export interface TaskHistoryCommands {
   setTasks: StateSetter<GenerationTask[]>;

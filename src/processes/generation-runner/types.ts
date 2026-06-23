@@ -25,7 +25,6 @@ export interface SingleGenerationRunInput {
   targetImage: File | null;
   referenceImages: File[];
   mask: File | null;
-  taskHistory: TaskHistoryPort;
   t: RunnerTranslateFn;
   galleryPath?: string;
 }

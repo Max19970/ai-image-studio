@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { BatchDraftLayoutContext } from '../../batchComposerTypes';
 import { useI18n } from '../../../../i18n';
+import { getProviderModePromptPlaceholderKey } from '../../../../entities/provider/modeIntent';
 import { useAutosizedTextarea } from '../../../../shared/hooks/useAutosizedTextarea';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import styles from './BatchDraftPromptSection.module.css';
@@ -21,10 +22,7 @@ export function BatchDraftPromptSection({ context }: ElementDefinitionProps<Batc
     focusedMaxRows: isMobileCompact ? 6 : 7
   });
 
-  const isGenerateLike = context.providerMode.legacyWorkMode !== 'edit';
-  const placeholder = isMobileCompact
-    ? isGenerateLike ? t('composer.placeholder.generateCompact') : t('composer.placeholder.editCompact')
-    : isGenerateLike ? t('composer.placeholder.generate') : t('composer.placeholder.edit');
+  const placeholder = t(getProviderModePromptPlaceholderKey(context.providerMode, { compact: isMobileCompact }));
 
   return (
     <div className={styles.promptWrap}>

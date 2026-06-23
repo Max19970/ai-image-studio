@@ -17,10 +17,9 @@ import {
   buildComfyUiHiresFixWorkflow,
   buildComfyUiTextToImageWorkflow,
   resolveComfyUiGenerationConfig,
-  resolveComfyUiHiresFixConfig,
-  type ComfyUiResolvedGenerationConfig,
-  type ComfyUiWorkflow
+  resolveComfyUiHiresFixConfig
 } from './workflowTemplates';
+import type { ComfyUiResolvedGenerationConfig, ComfyUiWorkflow } from './workflowTypes';
 
 interface ComfyUiHistoryResponse {
   [promptId: string]: unknown;

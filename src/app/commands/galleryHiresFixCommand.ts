@@ -8,7 +8,7 @@ import { writeProviderParamState } from '../../entities/generation-params/provid
 import { loadGenerationTaskAsset } from '../../infrastructure/storage/remoteGenerationTaskHistoryStore';
 import { normalizeSelectedModel, providerContextForModel } from '../../entities/studio-settings';
 import type { ProviderSettings } from '../../domain/providerSettings';
-import type { CreateAppCommandsArgs } from './appCommandTypes';
+import type { GalleryHiresFixCommandDeps } from './appCommandTypes';
 
 interface ImageDimensions {
   width: number;
@@ -65,7 +65,7 @@ async function resolveFullImageForHiresFix(image: GeneratedImage): Promise<Gener
   };
 }
 
-export function findFirstComfyUiModelId(args: Pick<CreateAppCommandsArgs, 'studioSettings'>): string | null {
+export function findFirstComfyUiModelId(args: Pick<GalleryHiresFixCommandDeps, 'studioSettings'>): string | null {
   const providerById = new Map(args.studioSettings.providers.map((provider) => [provider.id, provider]));
   const model = args.studioSettings.models.find((item) => providerById.get(item.providerId)?.adapterId === 'comfyui');
   return model?.id ?? null;
@@ -95,7 +95,7 @@ export function restoreParamsForHiresFix(args: {
   }));
 }
 
-export async function startGalleryHiresFixCommand(args: CreateAppCommandsArgs, task: GenerationTask, image?: GeneratedImage | null): Promise<void> {
+export async function startGalleryHiresFixCommand(args: GalleryHiresFixCommandDeps, task: GenerationTask, image?: GeneratedImage | null): Promise<void> {
   const activeImage = image ?? task.images[0] ?? null;
   if (!activeImage) return;
 

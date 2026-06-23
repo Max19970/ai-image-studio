@@ -9,7 +9,7 @@ import { enqueueServerBatchGenerationRequest } from '../../infrastructure/api';
 import { createAggregateSnapshot, prepareBatchItems } from '../../processes/batch-runner/requestBuilder';
 import { normalizeBatchIntervalSeconds } from '../../processes/batch-runner/schedule';
 import { runSingleGeneration } from '../../processes/generation-runner/singleRunner';
-import type { ServerSubmissionSetter, StateSetter, TaskHistoryCommands, TranslateFn } from './types';
+import type { ServerSubmissionSetter, StateSetter, TranslateFn } from './types';
 
 interface SingleGenerationCommandArgs {
   canSubmit: boolean;
@@ -24,7 +24,6 @@ interface SingleGenerationCommandArgs {
   targetImage: File | null;
   referenceImages: File[];
   mask: File | null;
-  taskHistory: TaskHistoryCommands;
   setBusy: StateSetter<boolean>;
   setServerSubmission: ServerSubmissionSetter;
   t: TranslateFn;
@@ -38,7 +37,6 @@ interface BatchGenerationCommandArgs {
   settings: StudioSettings;
   selectedModelId: string;
   capabilityReport: ProviderProbeReport | null;
-  taskHistory: TaskHistoryCommands;
   setBusy: StateSetter<boolean>;
   setBatchComposerOpen: StateSetter<boolean>;
   t: TranslateFn;
@@ -59,7 +57,6 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
     targetImage,
     referenceImages,
     mask,
-    taskHistory,
     setBusy,
     setServerSubmission,
     t,
@@ -82,7 +79,6 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
       targetImage,
       referenceImages,
       mask,
-      taskHistory,
       t,
       galleryPath
     });
@@ -103,7 +99,6 @@ export async function submitBatchGenerationCommand(args: BatchGenerationCommandA
     settings,
     selectedModelId,
     capabilityReport,
-    taskHistory,
     setBusy,
     setBatchComposerOpen,
     t,
@@ -120,7 +115,6 @@ export async function submitBatchGenerationCommand(args: BatchGenerationCommandA
       settings,
       selectedModelId,
       capabilityReport,
-      taskHistory,
       t
     });
     if (prepared.length === 0) return;

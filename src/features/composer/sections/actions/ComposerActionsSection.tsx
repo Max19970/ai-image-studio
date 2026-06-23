@@ -4,6 +4,7 @@ import { SlotHost } from '../../../../interface/SlotHost';
 import type { ComposerActionContext, ComposerLayoutContext } from '../../composerTypes';
 import { useI18n } from '../../../../i18n';
 import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/compatibility';
+import { getProviderModeSubmitActionLabelKey } from '../../../../entities/provider/modeIntent';
 import styles from '../../ComposerLayout.module.css';
 
 export function ComposerActionsSection({ context }: ElementDefinitionProps<ComposerLayoutContext>) {
@@ -36,7 +37,7 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
           data-testid="composer-submit"
           disabled={!context.canSubmit}
           onClick={context.actions.submit}
-          aria-label={context.providerMode.legacyWorkMode !== 'edit' ? t('composer.submitGenerate') : t('composer.submitEdit')}
+          aria-label={t(getProviderModeSubmitActionLabelKey(context.providerMode))}
         >
           {t('composer.send')}
         </button>

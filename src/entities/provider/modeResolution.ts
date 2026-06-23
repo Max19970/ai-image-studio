@@ -31,6 +31,13 @@ export interface ProviderGenerationModeResolution {
   activeMode: ProviderGenerationModeDefinition;
 }
 
+export interface ProviderGenerationModeRestoreInput {
+  settings: StudioSettings;
+  modelId: string;
+  snapshotProviderModeId?: ProviderGenerationModeId | null;
+  snapshotLegacyMode?: WorkMode | null;
+}
+
 const legacyProviderSubmitPath = '/api/provider/submit';
 const legacyGenerateTransport: ProviderSubmitTransportDefinition = { kind: 'json', operation: 'generate', path: legacyProviderSubmitPath };
 const legacyEditTransport: ProviderSubmitTransportDefinition = { kind: 'multipart', operation: 'edit', path: legacyProviderSubmitPath };
@@ -175,6 +182,17 @@ export function getProviderGenerationModesForProviderSettings(
 
 export function getLegacyWorkModeForProviderMode(providerMode: ProviderGenerationModeDefinition): WorkMode {
   return providerMode.legacyWorkMode ?? 'generate';
+}
+
+export function resolveProviderGenerationModeForRestore(
+  input: ProviderGenerationModeRestoreInput
+): ProviderGenerationModeDefinition {
+  return resolveProviderGenerationMode({
+    settings: input.settings,
+    modelId: input.modelId,
+    providerModeId: input.snapshotProviderModeId,
+    legacyMode: input.snapshotLegacyMode
+  }).activeMode;
 }
 
 export function findProviderGenerationModeForAttachmentRole(

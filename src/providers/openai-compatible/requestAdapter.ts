@@ -9,12 +9,10 @@ import {
   parseOpenAiCompatibleRawJson,
   shouldSendOutputFormat
 } from '../../entities/generation-params/serializers/openAiCompatible';
-import type { ProviderRequestAdapter, ProviderSubmitProxyRequestInput, ProviderSubmitProxyRequestConfig } from '../../entities/provider/types';
+import type { ProviderRequestAdapter } from '../../entities/provider/types';
 import { resolveModeImageSize } from '../../entities/provider/valueConstraints';
-import {
-  resolveOpenAiCompatibleLegacyMode,
-  resolveOpenAiCompatibleProviderMode
-} from '../../entities/generation-params/openai-compatible/modes';
+import { resolveOpenAiCompatibleLegacyMode } from '../../entities/generation-params/openai-compatible/modes';
+import { createOpenAiCompatibleSubmitProxyRequest } from './submitProxyRequest';
 
 export function getOpenAiCompatibleSizeFromParams(
   params: ImageParams,
@@ -86,49 +84,6 @@ export function explainOpenAiCompatiblePayloadWarnings(
   return warnings;
 }
 
-export function createOpenAiCompatibleSubmitProxyRequest(input: ProviderSubmitProxyRequestInput): ProviderSubmitProxyRequestConfig {
-  const providerMode = resolveOpenAiCompatibleProviderMode(input.providerMode, input.mode);
-
-  if (providerMode.submit.kind === 'json') {
-    return {
-      path: providerMode.submit.path ?? '/api/generate',
-      init: {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: input.provider,
-          payload: input.payload,
-          providerModeId: providerMode.id,
-          transport: providerMode.submit
-        }),
-        signal: input.signal
-      },
-      streamed: input.payload.stream === true,
-      fallbackFormat: String(input.payload.output_format ?? 'png')
-    };
-  }
-
-  const form = new FormData();
-  form.append('provider', JSON.stringify(input.provider));
-  form.append('payload', JSON.stringify(input.payload));
-  form.append('providerModeId', providerMode.id);
-  form.append('transport', JSON.stringify(providerMode.submit));
-  if (input.targetImage) form.append('image_target', input.targetImage, input.targetImage.name);
-  (input.referenceImages ?? []).forEach((file) => form.append('image_reference', file, file.name));
-  if (input.mask) form.append('mask', input.mask, input.mask.name);
-
-  return {
-    path: providerMode.submit.path ?? '/api/edit',
-    init: {
-      method: 'POST',
-      body: form,
-      signal: input.signal
-    },
-    streamed: input.payload.stream === true,
-    fallbackFormat: String(input.payload.output_format ?? 'png')
-  };
-}
-
 export const openAiCompatibleRequestAdapter: ProviderRequestAdapter = {
   getSize: getOpenAiCompatibleSizeFromParams,
   validateCustomSize: validateOpenAiCompatibleCustomSize,
@@ -138,4 +93,4 @@ export const openAiCompatibleRequestAdapter: ProviderRequestAdapter = {
   createSubmitProxyRequest: createOpenAiCompatibleSubmitProxyRequest
 };
 
-export { parseOpenAiCompatibleRawJson, shouldSendOutputFormat };
+export { createOpenAiCompatibleSubmitProxyRequest, parseOpenAiCompatibleRawJson, shouldSendOutputFormat };

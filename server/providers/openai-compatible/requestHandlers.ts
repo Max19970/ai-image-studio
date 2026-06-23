@@ -1,5 +1,4 @@
 import {
-  HttpError,
   validatePromptPayload,
   type ProviderFetchContext,
   type ProviderModeSubmitInput,
@@ -10,17 +9,8 @@ import {
 import { buildOpenAiCompatibleHeaders } from './auth';
 import { resolveOpenAiCompatibleEndpoint } from './endpoints';
 import { appendOpenAiCompatibleEditPayload, validateEditFiles } from './multipartEdit';
+import { resolveOpenAiCompatibleSubmitOperation } from './submitOperation';
 import { fetchUpstream, logOutboundRequest, timeoutSignal } from './upstreamClient';
-
-const openAiGenerateModeIds = new Set([
-  'openai-compatible.image-generate',
-  'openai-compatible.legacy-generate'
-]);
-
-const openAiEditModeIds = new Set([
-  'openai-compatible.image-edit',
-  'openai-compatible.legacy-edit'
-]);
 
 function resolveRequestSignal(provider: ProviderSettings, context: ProviderFetchContext): AbortSignal {
   const timeout = timeoutSignal(provider.timeoutMs);
@@ -66,19 +56,6 @@ export async function fetchOpenAiCompatibleEdit(
     signal: resolveRequestSignal(provider, context)
   });
   return { endpoint, upstream };
-}
-
-function resolveOpenAiCompatibleSubmitOperation(input: ProviderModeSubmitInput): 'generate' | 'edit' {
-  const providerModeId = String(input.providerModeId ?? '');
-  if (openAiGenerateModeIds.has(providerModeId)) return 'generate';
-  if (openAiEditModeIds.has(providerModeId)) return 'edit';
-
-  if (input.transport?.operation === 'generate') return 'generate';
-  if (input.transport?.operation === 'edit') return 'edit';
-  if (input.transport?.kind === 'json') return 'generate';
-  if (input.transport?.kind === 'multipart') return 'edit';
-
-  throw new HttpError(`Unsupported OpenAI-compatible provider mode: ${providerModeId || 'missing providerModeId'}.`, 400);
 }
 
 export async function submitOpenAiCompatibleProviderMode(input: ProviderModeSubmitInput): Promise<UpstreamRequestResult> {

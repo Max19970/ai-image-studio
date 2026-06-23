@@ -53,7 +53,6 @@ test('batch request builder keeps provider/model params isolated per draft', () 
     settings,
     selectedModelId: settings.selectedModelId,
     capabilityReport: null,
-    taskHistory: {} as never,
     t
   });
 

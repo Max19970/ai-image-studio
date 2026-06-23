@@ -1,18 +1,25 @@
-import { comfyUiProviderAdapter } from './comfyui/adapter';
-import { openAiCompatibleProviderAdapter } from './openai-compatible/adapter';
+import { comfyUiProviderServerManifest } from './comfyui/manifest';
+import { openAiCompatibleProviderServerManifest } from './openai-compatible/manifest';
+import type { ProviderServerManifest } from './manifest';
 import type { ProviderAdapterDefinition, ProviderSettings } from './types';
 
-const adapters = [openAiCompatibleProviderAdapter, comfyUiProviderAdapter] satisfies ProviderAdapterDefinition[];
+export const providerServerManifests = [
+  openAiCompatibleProviderServerManifest,
+  comfyUiProviderServerManifest
+] satisfies ProviderServerManifest[];
+
+export const providerServerManifestsById = new Map(providerServerManifests.map((manifest) => [manifest.id, manifest]));
+const adapters = providerServerManifests.map((manifest) => manifest.adapter) satisfies ProviderAdapterDefinition[];
 
 export const providerAdaptersById = new Map(adapters.map((adapter) => [adapter.id, adapter]));
 
-export function getProviderAdapter(adapterId = openAiCompatibleProviderAdapter.id): ProviderAdapterDefinition {
-  const adapter = providerAdaptersById.get(adapterId);
-  if (!adapter) {
-    console.warn(`[providers] Unknown adapter "${adapterId}". Falling back to ${openAiCompatibleProviderAdapter.id}.`);
-    return openAiCompatibleProviderAdapter;
+export function getProviderAdapter(adapterId = openAiCompatibleProviderServerManifest.id): ProviderAdapterDefinition {
+  const manifest = providerServerManifestsById.get(adapterId);
+  if (!manifest) {
+    console.warn(`[providers] Unknown adapter "${adapterId}". Falling back to ${openAiCompatibleProviderServerManifest.id}.`);
+    return openAiCompatibleProviderServerManifest.adapter;
   }
-  return adapter;
+  return manifest.adapter;
 }
 
 export function parseProviderSettings(value: unknown): ProviderSettings {

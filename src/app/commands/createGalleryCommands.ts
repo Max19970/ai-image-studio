@@ -1,10 +1,11 @@
 import type { GalleryCommands } from '../../interface/context/commands';
-import type { CreateAppCommandsArgs } from './appCommandTypes';
+import type { GalleryCommandDeps } from './appCommandTypes';
 import { startGalleryHiresFixCommand } from './galleryHiresFixCommand';
 import { clearTasksCommand, deleteTaskCommand } from './workspaceCommands';
-import type { WorkspaceNavigationCommands } from './types';
 
-export function createGalleryCommands(args: CreateAppCommandsArgs, navigation: WorkspaceNavigationCommands): GalleryCommands {
+export function createGalleryCommands(args: GalleryCommandDeps): GalleryCommands {
+  const { navigation } = args;
+
   return {
     activePath: args.activeGalleryPath,
     galleryFolders: args.galleryFolders,
@@ -21,7 +22,7 @@ export function createGalleryCommands(args: CreateAppCommandsArgs, navigation: W
       args.setSelectedTaskId(task.id);
       args.setSelectedImageId(image?.id ?? null);
     },
-    startHiresFix: (task, image) => startGalleryHiresFixCommand(args, task, image),
+    startHiresFix: (task, image) => startGalleryHiresFixCommand(args.hiresFix, task, image),
     setActivePath: args.setActiveGalleryPath,
     createFolder: args.createGalleryFolder,
     deleteFolder: args.deleteGalleryFolder,

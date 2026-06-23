@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from 'react';
 import type { AppCommands } from '../../interface/context/commands';
 import type { WorkspaceComposerDockContext, WorkspaceModalsContext } from '../../interface/context/workspace/composerDock';
 import type { WorkspaceMainContext } from '../../interface/context/workspace/main';
@@ -16,9 +15,9 @@ import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from 
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import type { TaskHistoryCommands } from '../commands/types';
-import type { ServerSubmissionState } from './state/useGenerationExecutionState';
+import type { ServerSubmissionState, StateSetter } from '../stateTypes';
 
-export type StateSetter<T> = Dispatch<SetStateAction<T>>;
+export type { ServerSubmissionState, StateSetter } from '../stateTypes';
 
 export interface WorkspaceState {
   providerModeId: ProviderGenerationModeId;

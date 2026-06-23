@@ -1,79 +1,16 @@
-import type { GalleryFolder } from '../../domain/galleryFilesystem';
-import type { RequestPreset } from '../../entities/request-presets';
-import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
-import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
-import type { BatchComposerDraft } from '../../domain/generationTask';
-import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
-import type { ImageParams } from '../../domain/imageParams';
-import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
-import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
-import type { StudioSettings } from '../../domain/studioSettings';
-import type { WorkMode } from '../../domain/workMode';
-import type { ServerSubmissionSetter, StateSetter, TaskHistoryCommands, TranslateFn } from './types';
-
-export interface ProviderProbeCommandState {
-  setCapabilityReport: StateSetter<ProviderProbeReport | null>;
-  setProbeError: StateSetter<string | null>;
-  setProbingProviderId: StateSetter<string | null>;
-  setQuickCheckingProviderId: StateSetter<string | null>;
-  setQuickCheckResults: StateSetter<Record<string, ProviderQuickCheckResult>>;
-}
-
-export interface CreateAppCommandsArgs {
-  t: TranslateFn;
-  mode: WorkMode;
-  providerModeId: ProviderGenerationModeId;
-  providerMode: ProviderGenerationModeDefinition;
-  providerModes: ProviderGenerationModeDefinition[];
-  params: ImageParams;
-  provider: ProviderSettings;
-  activeProvider: GenerationProvider | null;
-  activeModel: GenerationModel | null;
-  payload: Record<string, unknown>;
-  warnings: string[];
-  targetImage: File | null;
-  referenceImages: File[];
-  mask: File | null;
-  canSubmit: boolean;
-  batchCanSubmit: boolean;
-  batchDrafts: BatchComposerDraft[];
-  batchIntervalSeconds: number;
-  requestPresets: RequestPreset[];
-  activeBatchDraft: BatchComposerDraft | null;
-  studioSettings: StudioSettings;
-  capabilityReport: ProviderProbeReport | null;
-  selectedTaskId: string | null;
-  activeGalleryPath: string;
-  galleryFolders: GalleryFolder[];
-  galleryPins: GalleryPinItem[];
-  galleryTagRecords: GalleryTagRecord[];
-  taskHistory: TaskHistoryCommands;
-  providerProbeState: ProviderProbeCommandState;
-  setProviderModeId: StateSetter<ProviderGenerationModeId>;
-  setCompatibilityNotice: StateSetter<string | null>;
-  setParams: StateSetter<ImageParams>;
-  setStudioSettings: StateSetter<StudioSettings>;
-  setParametersOpen: StateSetter<boolean>;
-  setWorkspaceTab: StateSetter<'images' | 'info' | 'settings'>;
-  setSidebarCollapsed: StateSetter<boolean>;
-  setTargetImage: StateSetter<File | null>;
-  setReferenceImages: StateSetter<File[]>;
-  setMask: StateSetter<File | null>;
-  setSelectedTaskId: StateSetter<string | null>;
-  setSelectedImageId: StateSetter<string | null>;
-  setActiveGalleryPath: StateSetter<string>;
-  createGalleryFolder: (name: string) => Promise<void>;
-  deleteGalleryFolder: (path: string) => Promise<void>;
-  moveGalleryItem: (itemKind: 'task' | 'folder', itemId: string, targetPath: string) => Promise<void>;
-  pasteGalleryItems: (operation: GalleryClipboardOperation, items: GalleryClipboardItemPayload[], targetPath: string) => Promise<void>;
-  setGalleryItemPinned: (kind: GalleryMetadataKind, id: string, enabled: boolean) => Promise<void>;
-  setGalleryItemTags: (kind: GalleryMetadataKind, id: string, tags: string[]) => Promise<void>;
-  setBusy: StateSetter<boolean>;
-  setServerSubmission: ServerSubmissionSetter;
-  setBatchComposerOpen: StateSetter<boolean>;
-  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
-  setBatchIntervalSeconds: StateSetter<number>;
-  setRequestPresets: StateSetter<RequestPreset[]>;
-  setBatchParametersDraftId: StateSetter<string | null>;
-  normalizeSettings: (settings: StudioSettings) => StudioSettings;
-}
+export type {
+  BatchComposerCommandDeps,
+  BatchCompatibilityCommandDeps,
+  ComposerCommandDeps,
+  ComposerCompatibilityCommandDeps,
+  CreateAppCommandsArgs,
+  DetailCommandDeps,
+  GalleryCommandDeps,
+  GalleryHiresFixCommandDeps,
+  ParameterCommandDeps,
+  ProviderProbeCommandDeps,
+  ProviderProbeCommandState,
+  RequestPresetCommandDeps,
+  SettingsCommandDeps,
+  WorkspaceCommandDeps
+} from './commandDeps';

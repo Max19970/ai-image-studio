@@ -1,7 +1,7 @@
 import type { ParameterModalCommands } from '../../interface/context/commands';
-import type { CreateAppCommandsArgs } from './appCommandTypes';
+import type { ParameterCommandDeps } from './appCommandTypes';
 
-export function createParameterCommands(args: CreateAppCommandsArgs): ParameterModalCommands {
+export function createParameterCommands(args: ParameterCommandDeps): ParameterModalCommands {
   return {
     closeSingle: () => args.setParametersOpen(false),
     changeSingle: args.setParams,

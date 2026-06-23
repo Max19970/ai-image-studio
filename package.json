@@ -17,7 +17,7 @@
     "arch:check:strict": "node scripts/check-architecture.mjs --strict",
     "interface:check": "node scripts/check-interface-registry.mjs",
     "params:check": "node scripts/check-generation-params.mjs",
-    "providers:check": "node scripts/check-provider-adapters.mjs",
+    "providers:check": "tsx scripts/check-provider-adapters.mjs",
     "tasks:check": "node scripts/check-task-lifecycle.mjs",
     "storage:check": "node scripts/check-storage-architecture.mjs",
     "css:check": "node scripts/check-css-architecture.mjs",

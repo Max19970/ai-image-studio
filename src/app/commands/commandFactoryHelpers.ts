@@ -1,17 +1,17 @@
 import type { BatchComposerDraft } from '../../domain/generationTask';
-import type { CreateAppCommandsArgs } from './appCommandTypes';
+import type { BatchComposerCommandDeps, GalleryCommandDeps } from './appCommandTypes';
 import { makeBatchDraft } from './workspaceCommands';
 import type { WorkspaceNavigationCommands } from './types';
 
-export function createWorkspaceNavigationBinding(args: CreateAppCommandsArgs): WorkspaceNavigationCommands {
+export function createWorkspaceNavigationBinding(args: GalleryCommandDeps): WorkspaceNavigationCommands {
   return {
     setSelectedTaskId: args.setSelectedTaskId,
     setSelectedImageId: args.setSelectedImageId,
-    setBatchComposerOpen: args.setBatchComposerOpen
+    setBatchComposerOpen: args.hiresFix.setBatchComposerOpen
   };
 }
 
-export function createBatchDraftFromWorkspace(args: CreateAppCommandsArgs, source?: Partial<BatchComposerDraft>): BatchComposerDraft {
+export function createBatchDraftFromWorkspace(args: BatchComposerCommandDeps, source?: Partial<BatchComposerDraft>): BatchComposerDraft {
   return makeBatchDraft({
     source,
     fallbackParams: args.params,

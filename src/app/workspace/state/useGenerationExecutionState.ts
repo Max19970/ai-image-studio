@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useState, type SetStateAction } from 'react';
 import type { GenerationTask } from '../../../domain/generationTask';
-import type { StateSetter } from '../types';
-
-export interface ServerSubmissionState {
-  phase: 'idle' | 'submitting' | 'waiting-for-event' | 'failed';
-  taskId?: string | null;
-  error?: string | null;
-}
+import type { ServerSubmissionState, StateSetter } from '../../stateTypes';
 
 export interface GenerationExecutionState {
   busy: boolean;

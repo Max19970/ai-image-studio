@@ -1,4 +1,4 @@
-import type { CreateAppCommandsArgs } from './appCommandTypes';
+import type { BatchCompatibilityCommandDeps, ComposerCompatibilityCommandDeps } from './appCommandTypes';
 import type { ProviderGenerationModeId, ProviderAttachmentRole } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { ProviderCompatibilityChange } from '../../entities/provider/compatibility';
@@ -9,7 +9,7 @@ import {
 } from '../../entities/provider/compatibility';
 
 export function compatibilityNoticeForChanges(
-  t: CreateAppCommandsArgs['t'],
+  t: ComposerCompatibilityCommandDeps['t'],
   changes: readonly ProviderCompatibilityChange[]
 ): string | null {
   if (changes.length === 0) return null;
@@ -17,13 +17,13 @@ export function compatibilityNoticeForChanges(
 }
 
 export function setCompatibilityNoticeForChanges(
-  args: CreateAppCommandsArgs,
+  args: Pick<ComposerCompatibilityCommandDeps, 't' | 'setCompatibilityNotice'>,
   changes: readonly ProviderCompatibilityChange[]
 ) {
   args.setCompatibilityNotice(compatibilityNoticeForChanges(args.t, changes));
 }
 
-export function applyComposerCompatibilityForModel(args: CreateAppCommandsArgs, settings: StudioSettings, modelId: string) {
+export function applyComposerCompatibilityForModel(args: ComposerCompatibilityCommandDeps, settings: StudioSettings, modelId: string) {
   const result = sanitizeProviderModeDraftForModel({
     providerModeId: args.providerModeId,
     targetImage: args.targetImage,
@@ -43,7 +43,7 @@ export function applyComposerCompatibilityForModel(args: CreateAppCommandsArgs, 
 }
 
 export function setComposerDraftWithCompatibility(
-  args: CreateAppCommandsArgs,
+  args: ComposerCompatibilityCommandDeps,
   draft: {
     providerModeId?: ProviderGenerationModeId;
     targetImage: File | null;
@@ -65,7 +65,7 @@ export function setComposerDraftWithCompatibility(
   setCompatibilityNoticeForChanges(args, result.changes);
 }
 
-export function setComposerProviderModeWithCompatibility(args: CreateAppCommandsArgs, providerModeId: ProviderGenerationModeId) {
+export function setComposerProviderModeWithCompatibility(args: ComposerCompatibilityCommandDeps, providerModeId: ProviderGenerationModeId) {
   setComposerDraftWithCompatibility(args, {
     providerModeId,
     targetImage: args.targetImage,
@@ -74,7 +74,7 @@ export function setComposerProviderModeWithCompatibility(args: CreateAppCommands
   });
 }
 
-export function getComposerModeForAttachmentRole(args: CreateAppCommandsArgs, role: ProviderAttachmentRole): ProviderGenerationModeId {
+export function getComposerModeForAttachmentRole(args: ComposerCompatibilityCommandDeps, role: ProviderAttachmentRole): ProviderGenerationModeId {
   return getProviderModeForAttachmentRole(
     args.studioSettings,
     args.studioSettings.selectedModelId,
@@ -83,6 +83,6 @@ export function getComposerModeForAttachmentRole(args: CreateAppCommandsArgs, ro
   ).id;
 }
 
-export function sanitizeBatchDraftsAfterSettingsChange(args: CreateAppCommandsArgs, settings: StudioSettings) {
+export function sanitizeBatchDraftsAfterSettingsChange(args: BatchCompatibilityCommandDeps, settings: StudioSettings) {
   args.setBatchDrafts((prev) => sanitizeBatchDraftsForSettings(prev, settings));
 }
