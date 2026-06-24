@@ -12,7 +12,8 @@ import {
   describeAbortSignal,
   describeRuntimeError,
   logGenerationPipelineStart,
-  logGenerationPipelineTerminal
+  logGenerationPipelineTerminal,
+  logGenerationRuntimeEvent
 } from './runtimeDiagnostics';
 import type {
   ProviderPreviewStreamMode,
@@ -169,7 +170,10 @@ export async function runGenerationRequestPipeline(args: {
     const upstream = await runWithRetryPolicy({
       policy: createRunnerRetryPolicy({ attempts: input.retryAttempts ?? 0, delaySeconds: input.retryDelaySeconds ?? 0 }),
       run: async () => submitProviderRequest(input, signal, traceId),
-      onRetry: (retry) => publishRuntimeRequestEvent(() => handlers.onRetry(retry), 'request retry state'),
+      onRetry: (retry) => {
+        if (traceId) logGenerationRuntimeEvent(traceId, 'retry', retry as unknown as Record<string, unknown>);
+        publishRuntimeRequestEvent(() => handlers.onRetry(retry), 'request retry state');
+      },
       signal
     });
 

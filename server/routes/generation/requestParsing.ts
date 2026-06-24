@@ -90,7 +90,9 @@ export function parseSingleGenerationRunRequest(req: express.Request) {
     transport: parseTransport(req.body.transport),
     snapshot: parseSnapshot(req.body.snapshot),
     galleryPath: parseGalleryPath(req.body.galleryPath),
-    previewStreamMode: resolvePreviewStreamMode(req)
+    previewStreamMode: resolvePreviewStreamMode(req),
+    retryAttempts: numericField(req.body.retryAttempts, 0),
+    retryDelaySeconds: numericField(req.body.retryDelaySeconds, 0)
   };
 }
 

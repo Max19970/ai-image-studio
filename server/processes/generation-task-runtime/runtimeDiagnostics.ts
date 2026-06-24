@@ -76,6 +76,7 @@ export function logGenerationTaskQueued(taskId: string, input: RuntimeDiagnostic
     transport: input.transport ?? null,
     retryAttempts: input.retryAttempts ?? 0,
     retryDelaySeconds: input.retryDelaySeconds ?? 0,
+    providerTimeoutMs: input.provider.timeoutMs,
     payload: payloadSummary(input.payload),
     files: filesSummary(input.files)
   });
@@ -87,6 +88,7 @@ export function logGenerationPipelineStart(taskId: string, input: RuntimeDiagnos
     providerLabel: input.snapshot.providerLabel,
     mode: input.snapshot.mode,
     endpoint: input.snapshot.endpoint,
+    providerTimeoutMs: input.provider.timeoutMs,
     payload: payloadSummary(input.payload),
     files: filesSummary(input.files)
   });
@@ -112,6 +114,7 @@ export function logUpstreamAttempt(details: UpstreamDiagnosticsInput & { attempt
     operation: details.operation,
     adapterId: details.provider.adapterId,
     endpoint: compactEndpoint(details.endpoint),
+    providerTimeoutMs: details.provider.timeoutMs,
     payload: payloadSummary(details.payload),
     files: filesSummary(details.files ?? [])
   })}`);

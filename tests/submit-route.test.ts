@@ -246,6 +246,59 @@ test('server-owned generation route keeps active task available to new SSE subsc
   }
 });
 
+test('server-owned single route applies explicit retries and creates a fresh upstream signal per attempt', async () => {
+  resetGenerationTaskRuntimeForTests();
+  const originalFetch = globalThis.fetch;
+  const upstreamCalls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+  globalThis.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('http://127.0.0.1:')) return originalFetch(input, init);
+    upstreamCalls.push({ input, init });
+    if (upstreamCalls.length < 3) throw new Error(`upstream fail ${upstreamCalls.length}`);
+    return new Response('{"data":[{"b64_json":"QUJDRA=="}]}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+
+  try {
+    await withServer(async (baseUrl) => {
+      const runResponse = await fetch(`${baseUrl}/api/generation-tasks/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          payload: { prompt: 'retry fox', model: 'image-model' },
+          providerModeId: 'openai-compatible.image-generate',
+          transport: { kind: 'json', operation: 'generate', path: '/api/provider/submit' },
+          retryAttempts: 2,
+          retryDelaySeconds: 0,
+          snapshot: {
+            createdAt: Date.now(),
+            mode: 'generate',
+            prompt: 'retry fox',
+            endpoint: provider.generationEndpoint,
+            providerLabel: 'Test provider',
+            providerAdapterId: 'openai-compatible',
+            model: 'image-model',
+            modelLabel: 'image-model',
+            payload: { prompt: 'retry fox', model: 'image-model' },
+            warnings: [],
+            attachments: [],
+            params: { retryAttempts: 2, retryDelaySeconds: 0 }
+          }
+        })
+      });
+      assert.equal(runResponse.status, 202);
+      await waitForCondition(() => upstreamCalls.length === 3, 1000);
+      const signals = upstreamCalls.map((call) => call.init?.signal);
+      assert.ok(signals.every(Boolean));
+      assert.notEqual(signals[0], signals[1]);
+      assert.notEqual(signals[1], signals[2]);
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    resetGenerationTaskRuntimeForTests();
+  }
+});
+
 test('server-owned generation route does not wipe stored history while only empty active tasks exist', async () => {
   resetGenerationTaskRuntimeForTests();
   generationTaskStore.saveGenerationTaskHistoryDocuments([{
