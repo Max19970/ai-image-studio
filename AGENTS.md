@@ -69,9 +69,38 @@ For long tasks, also send progress updates after major stages, important finding
 
 Do not spam on every tiny action.
 
+Use the Telegram Bot MCP project-section API for Image Studio work updates:
+
+1. First call `Telegram_Bot_MCP.list_sections` and find the configured Image Studio section. The known working section is currently:
+
+   ```txt
+   section key: image-studio
+   title: Image Studio
+   chatId: -1003923795164
+   messageThreadId: 18
+   ```
+
+2. Send project progress/final notifications with `Telegram_Bot_MCP.post_update`, normally using:
+
+   ```json
+   {
+     "section": "image-studio",
+     "title": "Image Studio: <short title>",
+     "kind": "progress | milestone | result | warning | question | artifact | note",
+     "importance": "low | normal | high",
+     "task": "<short task id>",
+     "text": "<concise update>"
+   }
+   ```
+
+3. Do **not** use the `general` section for routine Image Studio project updates. Use `general` only as an explicit fallback when the `image-studio` section is unavailable and the update is important enough to send anyway.
+4. Do **not** use `Telegram_Bot_MCP.send_message` for routine Image Studio project updates. It is for direct allowlisted private-recipient messages/files and can fail with `Bad Request: chat_id is empty` when used for project notifications. Prefer `post_update` to the configured `image-studio` section.
+5. If `post_update` fails because the section is missing, call `list_sections` again. If no Image Studio section exists, create it with `create_section_topic` using `section: "Image Studio"`, `title: "Image Studio"`, and the known project chat id when available. The created stable key may be normalized to `image-studio`; use the returned key in later `post_update` calls. If target chat/topic details are unknown, report the Telegram blocker in chat instead of guessing.
+6. For local file attachments, pass exact absolute file paths only, never directories or glob patterns.
+
 Important: `без протокола`, `без плана`, or `можно на main` disables only the branch/worktree/planning parts. It does **not** disable Telegram notifications. Skip Telegram only if Max explicitly says not to notify in Telegram / не писать в Telegram.
 
-If Telegram tooling is unavailable, mention that explicitly in the chat final summary.
+If Telegram tooling is unavailable or delivery fails, mention that explicitly in the chat final summary with the MCP error.
 
 ## Agent-side project files
 
