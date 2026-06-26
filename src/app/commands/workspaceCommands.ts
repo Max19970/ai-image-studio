@@ -75,6 +75,31 @@ export function openBatchComposerCommand(args: {
   setWorkspaceTab('images');
 }
 
+export function addCurrentRequestToBatchComposerCommand(args: {
+  providerModeId: ProviderGenerationModeId;
+  params: ImageParams;
+  selectedModelId: string;
+  targetImage: File | null;
+  referenceImages: File[];
+  mask: File | null;
+  setDrafts: StateSetter<BatchComposerDraft[]>;
+  setOpen: StateSetter<boolean>;
+  setWorkspaceTab: StateSetter<'images' | 'info' | 'settings'>;
+}) {
+  const { providerModeId, params, selectedModelId, targetImage, referenceImages, mask, setDrafts, setOpen, setWorkspaceTab } = args;
+  setDrafts((current) => [
+    ...current,
+    makeBatchDraft({
+      source: { providerModeId, params, selectedModelId, targetImage, referenceImages, mask },
+      fallbackParams: params,
+      fallbackSelectedModelId: selectedModelId,
+      fallbackProviderModeId: providerModeId
+    })
+  ]);
+  setOpen(true);
+  setWorkspaceTab('images');
+}
+
 export function restoreRequestToWorkspaceCommand(snapshot: GenerationRequestSnapshot, commands: RestoreRequestCommands) {
   const modelFromHistory = commands.settings.models.find((model) => model.modelId === snapshot.model || model.name === snapshot.modelLabel);
   const selectedModelId = modelFromHistory?.id ?? commands.settings.selectedModelId;
@@ -92,7 +117,11 @@ export function restoreRequestToWorkspaceCommand(snapshot: GenerationRequestSnap
   }, commands.settings, selectedModelId, snapshot.mode);
 
   commands.setProviderModeId(sanitized.value.providerModeId);
-  commands.setCompatibilityNotice(sanitized.changed ? commands.t('composer.compatibilityAdjustedRequest') : null);
+  commands.setCompatibilityNotice(sanitized.changed
+    ? commands.t('composer.compatibilityAdjustedRequest')
+    : snapshot.attachments.length > 0
+      ? commands.t('composer.restoreNeedsFiles')
+      : null);
   commands.setBatchComposerOpen(false);
   commands.setParams((prev) => getProviderGenerationRequestSurfaceById(snapshot.surfaceId).restoreParamsFromSnapshot({ previous: prev, snapshot }));
 

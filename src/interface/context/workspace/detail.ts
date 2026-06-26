@@ -10,6 +10,7 @@ export interface DetailLayoutContext {
   onSelectImage?: (image: GeneratedImage) => void;
   onRestoreRequest?: (snapshot: GenerationRequestSnapshot) => void;
   onStartHiresFix?: (task: GenerationTask, image?: GeneratedImage | null) => Promise<void>;
+  onCancelTask?: (taskId: string) => Promise<void>;
   setActiveImage: (image: GeneratedImage | null) => void;
 }
 

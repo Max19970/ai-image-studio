@@ -82,6 +82,14 @@ export function MultiImageComposer({
 
   const selectedDraftIndex = useMemo(() => drafts.findIndex((draft) => draft.id === selectedDraftId), [drafts, selectedDraftId]);
 
+  const submitWithPreflight = useEventCallback(() => {
+    if (validDrafts < drafts.length) {
+      const ok = window.confirm(t('batch.partialSubmitConfirm', { valid: validDrafts, total: drafts.length }));
+      if (!ok) return;
+    }
+    submit();
+  });
+
   const contextActions = useMemo<BatchComposerLayoutContext['actions']>(() => ({
     changeIntervalSeconds: setIntervalSeconds,
     changeDraft: patchDraft,
@@ -91,7 +99,7 @@ export function MultiImageComposer({
     duplicateDraft,
     removeDraft,
     openParameters,
-    submit,
+    submit: submitWithPreflight,
     cancel: close,
     requestPresets: commands.requestPresets
   }), [
@@ -102,7 +110,7 @@ export function MultiImageComposer({
     duplicateDraft,
     removeDraft,
     openParameters,
-    submit,
+    submitWithPreflight,
     close,
     commands.requestPresets
   ]);

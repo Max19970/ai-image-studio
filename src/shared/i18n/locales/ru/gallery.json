@@ -103,6 +103,11 @@
   "gallery.selectionLinkCopy": "Ссылочная копия",
   "gallery.selectionDeepCopy": "Глубокая копия",
   "gallery.selectionPaste": "Вставить сюда: {count}",
+  "gallery.selectionSelectVisible": "Выбрать видимые",
+  "gallery.selectionClear": "Снять выбор",
+  "gallery.selectionDownload": "Скачать ZIP: {count}",
   "gallery.selectionDelete": "Удалить",
-  "gallery.selectionCancel": "Отмена"
+  "gallery.selectionDeleteConfirm": "Удалить выбранные элементы: {count}?",
+  "gallery.selectionCancel": "Отмена",
+  "gallery.actionCancel": "Отменить запрос"
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   cacheKeyForComfyUiResources,
   readComfyUiSettingsData,
@@ -263,6 +263,12 @@ export function LoraStackField({ context }: { context: ProviderGenerationSurface
   const { t } = useI18n();
   const state = readComfyUiParamState(context.params, context.provider);
   const registrations = readComfyUiSettingsData(context.studioSettings ?? { adapterData: {} }).loras.filter((lora) => lora.loraName.trim());
+  const [search, setSearch] = useState('');
+  const visibleRegistrations = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return registrations;
+    return registrations.filter((registration) => [registration.displayName, registration.loraName, registration.notes].join('\n').toLowerCase().includes(query));
+  }, [registrations, search]);
   const activeByName = new Map(state.loras.map((lora) => [lora.name, lora] as const));
 
   const patchLoras = (next: ComfyUiLoraSelection[]) => patchState(context, 'loras', next);
@@ -287,7 +293,15 @@ export function LoraStackField({ context }: { context: ProviderGenerationSurface
           <p className={controls.note}>{t('params.comfy.loras.empty')}</p>
         ) : (
           <div className={controls.loraStack} data-testid="parameters-comfy-loras">
-            {registrations.map((registration) => {
+            <input
+              className={controls.loraSearch}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t('params.comfy.loras.search')}
+              aria-label={t('params.comfy.loras.search')}
+            />
+            {visibleRegistrations.length === 0 ? <p className={controls.note}>{t('params.comfy.loras.noMatches')}</p> : null}
+            {visibleRegistrations.map((registration) => {
               const name = registration.loraName.trim();
               const current = activeByName.get(name);
               const enabled = Boolean(current?.enabled);

@@ -67,6 +67,7 @@ export function GalleryGridSection({ context }: ElementDefinitionProps<GalleryLa
                   index,
                   onOpenTask: (image) => context.commands.openTaskDetail(item.task, image),
                   onDeleteTask: () => context.commands.deleteTask(item.task.id),
+                  onCancelTask: () => context.commands.cancelTask(item.task.id),
                   onMoveTask: (targetPath) => context.commands.moveItem('task', item.task.id, targetPath),
                   pinned: item.pinned,
                   tags: item.tags,

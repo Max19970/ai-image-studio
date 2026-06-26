@@ -1,5 +1,6 @@
 import type { GalleryCommands } from '../../interface/context/commands';
 import type { GalleryCommandDeps } from './appCommandTypes';
+import { cancelServerGenerationTask } from '../../infrastructure/api';
 import { startGalleryHiresFixCommand } from './galleryHiresFixCommand';
 import { clearTasksCommand, deleteTaskCommand } from './workspaceCommands';
 
@@ -18,6 +19,7 @@ export function createGalleryCommands(args: GalleryCommandDeps): GalleryCommands
       navigation,
       taskHistory: args.taskHistory
     }),
+    cancelTask: (taskId) => cancelServerGenerationTask(taskId),
     openTaskDetail: (task, image) => {
       args.setSelectedTaskId(task.id);
       args.setSelectedImageId(image?.id ?? null);

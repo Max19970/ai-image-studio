@@ -34,6 +34,7 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
     galleryIndex: index,
     onOpenTask: context.onOpenTask,
     onDeleteTask: context.onDeleteTask,
+    onCancelTask: context.onCancelTask,
     onMoveTask: context.onMoveTask,
     pinned: context.pinned,
     tags: context.tags,

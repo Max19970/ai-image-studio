@@ -123,6 +123,28 @@
   background: rgba(0,0,0,.12);
 }
 
+.loraSearch {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 13px;
+  padding: 9px 10px;
+  background: rgba(0,0,0,.18);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.loraSearch:focus {
+  border-color: color-mix(in srgb, var(--accent) 38%, rgba(255,255,255,.16));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.loraSearch::placeholder {
+  color: var(--faint);
+}
+
 .loraNavButton {
   display: grid;
   width: 100%;

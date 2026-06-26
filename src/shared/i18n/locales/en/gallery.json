@@ -103,6 +103,11 @@
   "gallery.selectionLinkCopy": "Linked copy",
   "gallery.selectionDeepCopy": "Deep copy",
   "gallery.selectionPaste": "Paste here: {count}",
+  "gallery.selectionSelectVisible": "Select visible",
+  "gallery.selectionClear": "Clear selection",
+  "gallery.selectionDownload": "Download ZIP: {count}",
   "gallery.selectionDelete": "Delete",
-  "gallery.selectionCancel": "Cancel"
+  "gallery.selectionDeleteConfirm": "Delete selected items: {count}?",
+  "gallery.selectionCancel": "Cancel",
+  "gallery.actionCancel": "Cancel request"
 }

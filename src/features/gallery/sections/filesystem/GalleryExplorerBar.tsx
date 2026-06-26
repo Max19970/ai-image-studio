@@ -22,6 +22,7 @@ export function GalleryExplorerBar({ context }: { context: GalleryLayoutContext 
   const pinnedTasks = context.allTasks.filter((task) => pinKeys.has(galleryMetadataKey('task', task.id))).slice(0, 8);
   const hasPinned = pinnedFolders.length > 0 || pinnedTasks.length > 0;
   const selectedCount = context.selection.selectedItems.length;
+  const selectedTaskCount = context.selection.selectedTaskIds.length;
   const clipboardCount = context.selection.clipboard?.items.length ?? 0;
   const activeLabel = breadcrumbs.at(-1)?.label ?? t('gallery.rootFolder');
 
@@ -38,6 +39,18 @@ export function GalleryExplorerBar({ context }: { context: GalleryLayoutContext 
       setName('');
       setCreatorOpen(false);
       setExplorerOpen(true);
+    });
+  };
+
+  const deleteSelected = () => {
+    if (selectedCount === 0) return;
+    if (!window.confirm(t('gallery.selectionDeleteConfirm', { count: selectedCount }))) return;
+    context.selection.deleteSelected();
+  };
+
+  const downloadSelected = () => {
+    void context.selection.downloadSelected().catch((error) => {
+      window.alert(error instanceof Error ? error.message : String(error));
     });
   };
 
@@ -113,10 +126,13 @@ export function GalleryExplorerBar({ context }: { context: GalleryLayoutContext 
             {context.selection.mode && (
               <>
                 <span className={styles.selectedCount}>{t('gallery.selectionCount', { count: selectedCount })}</span>
+                <button type="button" className={styles.selectionButton} onClick={context.selection.selectVisible}>{t('gallery.selectionSelectVisible')}</button>
+                <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={context.selection.clearSelection}>{t('gallery.selectionClear')}</button>
+                <button type="button" className={styles.selectionButton} disabled={selectedTaskCount === 0} onClick={downloadSelected}>{t('gallery.selectionDownload', { count: selectedTaskCount })}</button>
                 <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={() => context.selection.copyToClipboard('move')}>{t('gallery.selectionMove')}</button>
                 <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={() => context.selection.copyToClipboard('link-copy')}>{t('gallery.selectionLinkCopy')}</button>
                 <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={() => context.selection.copyToClipboard('deep-copy')}>{t('gallery.selectionDeepCopy')}</button>
-                <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={context.selection.deleteSelected}>{t('gallery.selectionDelete')}</button>
+                <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={deleteSelected}>{t('gallery.selectionDelete')}</button>
                 <button type="button" className={styles.selectionButton} onClick={context.selection.cancel}>{t('gallery.selectionCancel')}</button>
               </>
             )}

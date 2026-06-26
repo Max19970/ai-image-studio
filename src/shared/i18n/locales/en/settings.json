@@ -141,6 +141,7 @@
   "settings.comfy.notLoaded": "not loaded",
   "settings.comfy.loraRegistry": "LoRA registry",
   "settings.comfy.loraRegistryText": "Register local LoRA files under app-friendly names and default strengths.",
+  "settings.comfy.loraSearch": "Search LoRA",
   "settings.comfy.addLora": "LoRA",
   "settings.comfy.noLoras": "No registered LoRA",
   "settings.comfy.noLorasText": "Add a LoRA registration after refreshing resources, or enter the file name manually.",

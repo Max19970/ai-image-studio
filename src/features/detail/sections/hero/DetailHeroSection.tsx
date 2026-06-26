@@ -1,3 +1,6 @@
+import { useMemo, useState } from 'react';
+import type { GeneratedImage } from '../../../../domain/generationTask';
+import { downloadGenerationImagesArchive } from '../../../../infrastructure/api';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import { SlotHost } from '../../../../interface/SlotHost';
 import type { DetailActionContext, DetailLayoutContext } from '../../../../interface/context/workspace/detail';
@@ -10,6 +13,7 @@ import styles from './DetailHeroSection.module.css';
 export function DetailHeroSection({ context }: ElementDefinitionProps<DetailLayoutContext>) {
   const { t } = useI18n();
   const { task, activeImage, fallbackActiveImage, label, shouldUseCarousel } = context;
+  const [selectedDownloadImageIds, setSelectedDownloadImageIds] = useState<Set<string>>(() => new Set());
   const snapshot = task.request;
   const detailActionContext: DetailActionContext = {
     activeImage,
@@ -23,6 +27,35 @@ export function DetailHeroSection({ context }: ElementDefinitionProps<DetailLayo
     if (!image) return;
     context.setActiveImage(image);
     context.onSelectImage?.(image);
+  };
+
+  const downloadableImages = useMemo(() => task.images.filter((image) => image.src || image.storageAssetKey), [task.images]);
+  const selectedDownloadImages = useMemo(
+    () => downloadableImages.filter((image) => selectedDownloadImageIds.has(image.id)),
+    [downloadableImages, selectedDownloadImageIds]
+  );
+  const allDownloadImagesSelected = downloadableImages.length > 0 && selectedDownloadImages.length === downloadableImages.length;
+  const toggleDownloadImage = (image: GeneratedImage) => {
+    setSelectedDownloadImageIds((current) => {
+      const next = new Set(current);
+      if (next.has(image.id)) next.delete(image.id);
+      else next.add(image.id);
+      return next;
+    });
+  };
+  const selectAllDownloadImages = () => setSelectedDownloadImageIds(new Set(downloadableImages.map((image) => image.id)));
+  const clearDownloadImages = () => setSelectedDownloadImageIds(new Set());
+  const downloadSelectedImages = () => {
+    if (selectedDownloadImages.length === 0) return;
+    const imageRefs = selectedDownloadImages.map((image) => ({
+      taskId: task.id,
+      imageId: image.id,
+      storageAssetKey: image.storageAssetKey,
+      filename: `image-${image.index + 1}.${(image.format || 'png').replace(/^image\//, '')}`
+    }));
+    void downloadGenerationImagesArchive(imageRefs, `${task.id}-images.zip`).catch((error) => {
+      window.alert(error instanceof Error ? error.message : String(error));
+    });
   };
 
   return (
@@ -50,10 +83,35 @@ export function DetailHeroSection({ context }: ElementDefinitionProps<DetailLayo
         </div>
 
         {task.images.length > 1 && (
-          <div className={styles.outputStrip} data-detail-slot="output-strip">
-            {task.images.map((item) => (
-              <DetailThumb key={item.id} item={item} active={activeImage?.id === item.id} onClick={() => selectImage(item)} />
-            ))}
+          <div className={styles.outputDeck} data-detail-slot="output-strip">
+            <div className={styles.outputTools}>
+              <span>{t('detail.imageSelectionCount', { count: selectedDownloadImages.length, total: downloadableImages.length })}</span>
+              <button type="button" onClick={allDownloadImagesSelected ? clearDownloadImages : selectAllDownloadImages}>
+                {allDownloadImagesSelected ? t('detail.clearImageSelection') : t('detail.selectAllImages')}
+              </button>
+              <button type="button" disabled={selectedDownloadImages.length === 0} onClick={downloadSelectedImages}>
+                {t('detail.downloadSelectedImages')}
+              </button>
+            </div>
+            <div className={styles.outputStrip}>
+              {task.images.map((item) => {
+                const selected = selectedDownloadImageIds.has(item.id);
+                return (
+                  <div key={item.id} className={styles.thumbChoice} data-selected={selected ? 'true' : 'false'}>
+                    <DetailThumb item={item} active={activeImage?.id === item.id} onClick={() => selectImage(item)} />
+                    <button
+                      type="button"
+                      className={styles.thumbSelect}
+                      aria-pressed={selected}
+                      aria-label={t('detail.selectImageForArchive', { index: item.index + 1 })}
+                      onClick={() => toggleDownloadImage(item)}
+                    >
+                      {selected ? '✓' : '+'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

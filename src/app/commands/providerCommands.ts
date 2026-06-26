@@ -4,6 +4,10 @@ import { toProviderSettings } from '../../entities/studio-settings';
 import { clearProviderProbeReport, saveProviderProbeReport } from '../../processes/storage-sync';
 import type { ProviderProbeStateCommands, SettingsSelectionContext } from './types';
 
+export function providerCheckKey(provider: GenerationProvider, model: GenerationModel | null): string {
+  return `${provider.id}:${model?.id ?? model?.modelId ?? 'no-model'}`;
+}
+
 export async function probeProviderCommand(args: {
   provider: GenerationProvider;
   model: GenerationModel | null;
@@ -33,14 +37,15 @@ export async function quickCheckProviderCommand(args: {
   state: ProviderProbeStateCommands;
 }) {
   const { provider, model, state } = args;
-  state.setQuickCheckingProviderId(provider.id);
+  const key = providerCheckKey(provider, model);
+  state.setQuickCheckingProviderId(key);
   try {
     const result = await quickCheckProvider(toProviderSettings(provider, model));
-    state.setQuickCheckResults((prev) => ({ ...prev, [provider.id]: result }));
+    state.setQuickCheckResults((prev) => ({ ...prev, [key]: result }));
   } catch (e) {
     state.setQuickCheckResults((prev) => ({
       ...prev,
-      [provider.id]: {
+      [key]: {
         ok: false,
         status: null,
         message: e instanceof Error ? e.message : String(e),

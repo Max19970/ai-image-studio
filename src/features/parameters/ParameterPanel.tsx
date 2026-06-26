@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ImageParams } from '../../domain/imageParams';
+import { defaultImageParams } from '../../domain/defaults';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
@@ -61,6 +62,7 @@ export function ParameterPanel({ mode, providerMode, params, provider, capabilit
 
   const activeTabMeta = surfaceTabs.find((tab) => tab.id === activeTab) ?? surfaceTabs[0];
   const activeTabFields = activeTabMeta ? surface.renderSlot(activeTabMeta.slot, fieldContext) : [];
+  const resetParams = () => onChange({ ...defaultImageParams, prompt: params.prompt });
 
   useEffect(() => {
     const rail = tabRailRef.current;
@@ -97,7 +99,10 @@ export function ParameterPanel({ mode, providerMode, params, provider, capabilit
         {activeTabMeta && (
           <section className={`inspector-group ${styles.tabPanel} ${activeTabMeta.panelClassKey ? styles[activeTabMeta.panelClassKey] : ''}`.trim()} data-param-slot={activeTabMeta.slot}>
             <header className={styles.panelHead}>
-              <h3 className={styles.panelTitle}>{t(activeTabMeta.labelKey)}</h3>
+              <div className={styles.panelTitleRow}>
+                <h3 className={styles.panelTitle}>{t(activeTabMeta.labelKey)}</h3>
+                <button type="button" className={styles.resetButton} onClick={resetParams}>{t('params.resetAll')}</button>
+              </div>
               <p className={styles.panelHint}>{t(activeTabMeta.hintKey)}</p>
             </header>
             <div className={styles.fieldGrid}>

@@ -5,12 +5,16 @@ export interface GallerySelectionContext {
   mode: boolean;
   selectedIds: Set<string>;
   selectedItems: GalleryClipboardItemPayload[];
+  selectedTaskIds: string[];
   clipboard: GalleryClipboardState | null;
   begin: () => void;
   cancel: () => void;
+  selectVisible: () => void;
+  clearSelection: () => void;
   toggleItem: (item: GalleryItem) => void;
   isSelected: (item: GalleryItem) => boolean;
   copyToClipboard: (operation: GalleryClipboardOperation) => void;
   pasteToActivePath: () => Promise<void>;
+  downloadSelected: () => Promise<void>;
   deleteSelected: () => void;
 }
