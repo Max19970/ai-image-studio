@@ -38,6 +38,7 @@ export function ImageDetailPage({ task, image, commands }: Props) {
     onSelectImage: commands.selectImage,
     onRestoreRequest: commands.restoreRequest,
     onStartHiresFix: commands.startHiresFix,
+    onCancelTask: commands.cancelTask,
     setActiveImage
   };
 

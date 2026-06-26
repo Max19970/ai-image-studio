@@ -141,6 +141,7 @@
   "settings.comfy.notLoaded": "не загружено",
   "settings.comfy.loraRegistry": "Реестр LoRA",
   "settings.comfy.loraRegistryText": "Зарегистрируй локальные LoRA под удобными именами и дефолтными strength-значениями.",
+  "settings.comfy.loraSearch": "Поиск LoRA",
   "settings.comfy.addLora": "LoRA",
   "settings.comfy.noLoras": "LoRA не зарегистрированы",
   "settings.comfy.noLorasText": "Добавь регистрацию после обновления ресурсов или введи имя файла вручную.",

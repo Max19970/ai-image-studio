@@ -17,6 +17,8 @@ export function ProviderCheckCard({ context, mobile = false }: { context: Settin
     commands
   } = context;
   if (!selectedProvider) return null;
+  const quickCheckKey = selectedProvider.id + ':' + (probeModel?.id ?? probeModel?.modelId ?? 'no-model');
+  const quickChecking = quickCheckingProviderId === quickCheckKey;
 
   return (
     <div className={mobile ? '' : styles.providerCheckCard}>
@@ -29,8 +31,8 @@ export function ProviderCheckCard({ context, mobile = false }: { context: Settin
         </div>
       )}
       <div className={styles.probeActions}>
-        <Button variant="secondary" onClick={() => commands.quickCheckProvider(selectedProvider, probeModel)} disabled={quickCheckingProviderId === selectedProvider.id}>
-          {quickCheckingProviderId === selectedProvider.id ? t('settings.quickChecking') : t('settings.quickCheck')}
+        <Button variant="secondary" onClick={() => commands.quickCheckProvider(selectedProvider, probeModel)} disabled={quickChecking}>
+          {quickChecking ? t('settings.quickChecking') : t('settings.quickCheck')}
         </Button>
         <Button variant="primary" onClick={() => commands.probeProvider(selectedProvider, probeModel)} disabled={probingProviderId === selectedProvider.id}>
           {probingProviderId === selectedProvider.id ? t('settings.probeRunningShort') : t('settings.probeButtonShort')}

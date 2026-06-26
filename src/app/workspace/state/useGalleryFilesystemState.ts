@@ -37,14 +37,25 @@ export interface GalleryFilesystemState {
   setGalleryItemTags: (itemKind: GalleryMetadataKind, itemId: string, tags: string[]) => Promise<void>;
 }
 
+const activeGalleryPathStorageKey = 'image-studio.active-gallery-path.v1';
+
+function loadActiveGalleryPath(): string {
+  if (typeof window === 'undefined') return galleryRootPath;
+  return normalizeGalleryPath(window.localStorage.getItem(activeGalleryPathStorageKey));
+}
+
 export function useGalleryFilesystemState(): GalleryFilesystemState {
-  const [activeGalleryPath, setActiveGalleryPathState] = useState(galleryRootPath);
+  const [activeGalleryPath, setActiveGalleryPathState] = useState(loadActiveGalleryPath);
   const [galleryFolders, setGalleryFolders] = useState<GalleryFolder[]>([]);
   const [galleryPins, setGalleryPins] = useState<GalleryPinItem[]>([]);
   const [galleryTagRecords, setGalleryTagRecords] = useState<GalleryTagRecord[]>([]);
 
   const setActiveGalleryPath: StateSetter<string> = (value) => {
-    setActiveGalleryPathState((prev) => normalizeGalleryPath(typeof value === 'function' ? value(prev) : value));
+    setActiveGalleryPathState((prev) => {
+      const next = normalizeGalleryPath(typeof value === 'function' ? value(prev) : value);
+      if (typeof window !== 'undefined') window.localStorage.setItem(activeGalleryPathStorageKey, next);
+      return next;
+    });
   };
 
   const refreshGalleryFolders = async () => {
@@ -65,6 +76,7 @@ export function useGalleryFilesystemState(): GalleryFilesystemState {
         setGalleryFolders(folders);
         setGalleryPins(pins);
         setGalleryTagRecords(tags);
+        setActiveGalleryPath((current) => current === galleryRootPath || folders.some((folder) => folder.path === current) ? current : galleryRootPath);
       })
       .catch((error) => {
         console.warn('Could not load gallery filesystem metadata.', error);

@@ -75,6 +75,7 @@ export function ImageComposer({
   const submit = useEventCallback(commands.submit);
   const openParameters = useEventCallback(commands.openParameters);
   const openBatchComposer = useEventCallback(commands.openBatchComposer);
+  const addCurrentToBatchComposer = useEventCallback(commands.addCurrentToBatchComposer);
   const setTargetImage = useEventCallback(commands.setTargetImage);
   const setReferenceImages = useEventCallback(commands.setReferenceImages);
   const setImageAttachments = useEventCallback(commands.setImageAttachments);
@@ -170,6 +171,7 @@ export function ImageComposer({
       changeModel: setModel,
       changeParams,
       openBatchComposer,
+      addCurrentToBatchComposer,
       openParameters,
       clearAttachments,
       setMask: setMaskAttachment,
@@ -198,6 +200,7 @@ export function ImageComposer({
     setModel,
     changeParams,
     openBatchComposer,
+    addCurrentToBatchComposer,
     openParameters,
     clearAttachments,
     setMaskAttachment,

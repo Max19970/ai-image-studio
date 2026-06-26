@@ -17,6 +17,7 @@ export interface GalleryCardActionContext {
   galleryIndex: number;
   onOpenTask: (image?: GeneratedImage) => void;
   onDeleteTask: () => void;
+  onCancelTask: () => Promise<void>;
   onMoveTask: (targetPath: string) => void;
   pinned: boolean;
   tags: string[];
@@ -30,6 +31,7 @@ export interface GalleryTaskCardContext {
   index: number;
   onOpenTask: (image?: GeneratedImage) => void;
   onDeleteTask: () => void;
+  onCancelTask: () => Promise<void>;
   onMoveTask: (targetPath: string) => void;
   pinned: boolean;
   tags: string[];

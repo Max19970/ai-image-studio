@@ -72,6 +72,12 @@ export function ComfyUiSettingsPanel({ context }: Props) {
   }));
   const loraOptions = resourceOptions(comfyUiLoraCache);
   const [selectedLoraId, setSelectedLoraId] = useState(() => comfyUiData.loras[0]?.id ?? '');
+  const [loraSearch, setLoraSearch] = useState('');
+  const visibleLoras = useMemo(() => {
+    const query = loraSearch.trim().toLowerCase();
+    if (!query) return comfyUiData.loras;
+    return comfyUiData.loras.filter((lora) => [lora.displayName, lora.loraName, lora.notes].join('\n').toLowerCase().includes(query));
+  }, [comfyUiData.loras, loraSearch]);
   const selectedLora = useMemo(
     () => comfyUiData.loras.find((lora) => lora.id === selectedLoraId) ?? comfyUiData.loras[0] ?? null,
     [comfyUiData.loras, selectedLoraId]
@@ -164,7 +170,14 @@ export function ComfyUiSettingsPanel({ context }: Props) {
         ) : (
           <div className={styles.loraRegistryLayout}>
             <nav className={styles.loraNav} aria-label={t('settings.comfy.loraRegistry')}>
-              {comfyUiData.loras.map((lora) => (
+              <input
+                className={styles.loraSearch}
+                value={loraSearch}
+                onChange={(event) => setLoraSearch(event.target.value)}
+                placeholder={t('settings.comfy.loraSearch')}
+                aria-label={t('settings.comfy.loraSearch')}
+              />
+              {visibleLoras.map((lora) => (
                 <button
                   key={lora.id}
                   type="button"

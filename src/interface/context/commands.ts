@@ -30,6 +30,7 @@ export interface ComposerCommands {
   submit: () => Promise<void>;
   openParameters: () => void;
   openBatchComposer: () => void;
+  addCurrentToBatchComposer: () => void;
   setTargetImage: (file: File | null) => void;
   setReferenceImages: (files: File[]) => void;
   setImageAttachments: (targetImage: File | null, referenceImages: File[]) => void;
@@ -44,6 +45,7 @@ export interface GalleryCommands {
   galleryTagRecords: GalleryTagRecord[];
   clearResults: () => void;
   deleteTask: (taskId: string) => void;
+  cancelTask: (taskId: string) => Promise<void>;
   openTaskDetail: (task: GenerationTask, image?: GeneratedImage) => void;
   startHiresFix: (task: GenerationTask, image?: GeneratedImage | null) => Promise<void>;
   setActivePath: (path: string) => void;
@@ -81,6 +83,7 @@ export interface DetailCommands {
   selectImage: (image: GeneratedImage) => void;
   restoreRequest: (snapshot: GenerationRequestSnapshot) => void;
   startHiresFix: (task: GenerationTask, image?: GeneratedImage | null) => Promise<void>;
+  cancelTask: (taskId: string) => Promise<void>;
 }
 
 export interface ParameterModalCommands {

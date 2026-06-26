@@ -47,6 +47,9 @@ function MenuContent({ context, onOpenPresets }: { context: ComposerActionContex
   const openBatch = () => {
     context.actions.openBatchComposer();
   };
+  const addCurrentToBatch = () => {
+    context.actions.addCurrentToBatchComposer();
+  };
   const clearAttachments = () => {
     context.actions.clearAttachments();
   };
@@ -138,13 +141,22 @@ function MenuContent({ context, onOpenPresets }: { context: ComposerActionContex
           </span>
         </button>
         {context.controlSurface.showBatch && (
-          <button type="button" className={styles.action} data-testid="composer-batch" onClick={openBatch}>
-            <span className={styles.icon} aria-hidden="true">☷</span>
-            <span className={styles.copy}>
-              <strong>{t('batch.open')}</strong>
-              <small>{t('composer.batchDescription')}</small>
-            </span>
-          </button>
+          <>
+            <button type="button" className={styles.action} data-testid="composer-batch" onClick={openBatch}>
+              <span className={styles.icon} aria-hidden="true">☷</span>
+              <span className={styles.copy}>
+                <strong>{t('batch.open')}</strong>
+                <small>{t('composer.batchDescription')}</small>
+              </span>
+            </button>
+            <button type="button" className={styles.action} data-testid="composer-add-current-to-batch" onClick={addCurrentToBatch}>
+              <span className={styles.icon} aria-hidden="true">＋</span>
+              <span className={styles.copy}>
+                <strong>{t('batch.addCurrent')}</strong>
+                <small>{t('composer.batchAddCurrentDescription')}</small>
+              </span>
+            </button>
+          </>
         )}
         {(canUseImages || canUseMask) && context.attachmentsCount > 0 && (
           <button type="button" className={`${styles.action} ${styles.danger}`} onClick={clearAttachments}>

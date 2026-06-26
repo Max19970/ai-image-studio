@@ -136,19 +136,90 @@
   line-height: 1.6;
 }
 
-.outputStrip {
-  display: flex;
-  gap: 9px;
-  overflow-x: auto;
+.outputDeck {
+  display: grid;
+  gap: 8px;
+  overflow: hidden;
   border-top: 1px solid var(--surface-border-soft);
   padding: 10px 12px;
   background: rgba(255,255,255,.032);
 }
 
+.outputTools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.outputTools span {
+  margin-right: auto;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.outputTools button,
+.thumbSelect {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.outputTools button {
+  min-height: 28px;
+  padding: 6px 10px;
+}
+
+.outputTools button:disabled {
+  opacity: .48;
+}
+
+.outputStrip {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+}
+
+.thumbChoice {
+  position: relative;
+  flex: 0 0 68px;
+  width: 68px;
+}
+
+.thumbChoice[data-selected='true'] .thumb {
+  border-color: color-mix(in srgb, var(--accent) 58%, rgba(255,255,255,.28));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.thumbSelect {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  place-items: center;
+  background: rgba(0,0,0,.54);
+  backdrop-filter: blur(12px);
+}
+
+.thumbSelect[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--accent) 52%, rgba(255,255,255,.18));
+  background: color-mix(in srgb, var(--accent) 28%, rgba(0,0,0,.58));
+}
+
 .thumb {
   overflow: hidden;
-  width: 68px;
-  flex: 0 0 68px;
+  width: 100%;
+  flex: 0 0 auto;
   border: 1px solid var(--surface-border-soft);
   border-radius: 14px;
   padding: 0;
@@ -228,11 +299,19 @@
     max-width: calc(100% - 28px);
   }
 
-  .outputStrip {
+  .outputDeck {
     padding: 8px;
   }
 
-  .thumb {
+  .outputTools {
+    flex-wrap: wrap;
+  }
+
+  .outputTools span {
+    flex-basis: 100%;
+  }
+
+  .thumbChoice {
     width: 54px;
     flex-basis: 54px;
   }

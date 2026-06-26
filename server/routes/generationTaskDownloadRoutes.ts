@@ -1,14 +1,75 @@
 import type express from 'express';
-import { loadGenerationTaskAssetDocument } from '../storage/generationTaskStore';
+import type { GeneratedImage, GenerationTask } from '../../src/domain/generationTask';
+import { loadGenerationTaskAssetDocument, loadGenerationTaskHistoryDocuments } from '../storage/generationTaskStore';
 import { sendServerError } from '../http/errors';
 import {
   absolutePublicUrl,
   createTemporaryImageDownload,
+  createZipArchive,
   getTemporaryImageDownload,
   parseImageDataUrlForDownload,
   sanitizeDownloadFilename,
-  sendImageDownloadResponse
+  sendImageDownloadResponse,
+  type ZipDownloadEntry
 } from './generationTaskDownloadHelpers';
+
+interface ArchiveImageRef {
+  taskId: string;
+  imageId?: string;
+  storageAssetKey?: string;
+  filename?: string;
+}
+
+function taskImages(task: GenerationTask): GeneratedImage[] {
+  const seen = new Set<string>();
+  const images: GeneratedImage[] = [];
+  const add = (image: GeneratedImage) => {
+    const key = image.id || image.storageAssetKey || image.src;
+    if (seen.has(key)) return;
+    seen.add(key);
+    images.push(image);
+  };
+  task.images.forEach(add);
+  task.batch?.items.forEach((item) => item.images.forEach(add));
+  return images;
+}
+
+function archiveBaseName(task: GenerationTask, index: number): string {
+  const prompt = task.request.prompt.trim().replace(/\s+/g, '-').replace(/[^a-zа-яё0-9._-]+/gi, '').slice(0, 42);
+  return prompt || task.request.modelLabel || task.id || `task-${index + 1}`;
+}
+
+function uniqueArchiveFilename(used: Set<string>, filename: string): string {
+  let safe = filename;
+  let counter = 2;
+  while (used.has(safe)) {
+    safe = filename.replace(/(\.[a-z0-9]{2,5})$/i, `-${counter}$1`);
+    counter += 1;
+  }
+  used.add(safe);
+  return safe;
+}
+
+function parseArchiveImageRefs(value: unknown): ArchiveImageRef[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item): ArchiveImageRef[] => {
+    if (!item || typeof item !== 'object') return [];
+    const record = item as Record<string, unknown>;
+    const taskId = typeof record.taskId === 'string' ? record.taskId : '';
+    const imageId = typeof record.imageId === 'string' ? record.imageId : '';
+    const storageAssetKey = typeof record.storageAssetKey === 'string' ? record.storageAssetKey : '';
+    const filename = typeof record.filename === 'string' ? record.filename : '';
+    if (!taskId || (!imageId && !storageAssetKey)) return [];
+    return [{ taskId, imageId, storageAssetKey, filename }];
+  }).slice(0, 400);
+}
+
+function matchesArchiveImageRef(ref: ArchiveImageRef, task: GenerationTask, image: GeneratedImage): boolean {
+  if (ref.taskId !== task.id && ref.taskId !== image.taskId) return false;
+  if (ref.imageId && ref.imageId === image.id) return true;
+  if (ref.storageAssetKey && ref.storageAssetKey === image.storageAssetKey) return true;
+  return false;
+}
 
 export function registerGenerationTaskDownloadRoutes(app: express.Express) {
   app.post('/api/storage/generation-task-downloads', (req, res) => {
@@ -45,6 +106,65 @@ export function registerGenerationTaskDownloadRoutes(app: express.Express) {
         expiresAt: download.expiresAt,
         mediaType: download.parsed.mediaType
       });
+    } catch (error) {
+      sendServerError(res, error);
+    }
+  });
+
+  app.post('/api/storage/generation-task-downloads/archive', (req, res) => {
+    try {
+      const requestedIds = Array.isArray(req.body?.taskIds)
+        ? req.body.taskIds.filter((id: unknown): id is string => typeof id === 'string')
+        : [];
+      const imageRefs = parseArchiveImageRefs(req.body?.imageRefs);
+      const uniqueIds = [...new Set(requestedIds)].slice(0, 200);
+      if (uniqueIds.length === 0 && imageRefs.length === 0) {
+        res.status(400).json({ error: { message: 'No generation tasks or images were selected for archive download.' } });
+        return;
+      }
+
+      const selectedIds = new Set(uniqueIds);
+      const imageRefsByTask = new Map<string, ArchiveImageRef[]>();
+      imageRefs.forEach((ref) => {
+        const list = imageRefsByTask.get(ref.taskId) ?? [];
+        list.push(ref);
+        imageRefsByTask.set(ref.taskId, list);
+      });
+      const { tasks } = loadGenerationTaskHistoryDocuments({ assetMode: 'full' });
+      const entries: ZipDownloadEntry[] = [];
+      const usedNames = new Set<string>();
+      (tasks as GenerationTask[])
+        .filter((task) => selectedIds.has(task.id) || imageRefsByTask.has(task.id))
+        .forEach((task, taskIndex) => {
+          const refs = imageRefsByTask.get(task.id) ?? [];
+          const includeAllTaskImages = selectedIds.has(task.id);
+          taskImages(task).forEach((image, imageIndex) => {
+            const matchedRef = includeAllTaskImages ? null : refs.find((ref) => matchesArchiveImageRef(ref, task, image));
+            if (!includeAllTaskImages && !matchedRef) return;
+            const parsed = parseImageDataUrlForDownload(typeof image.src === 'string' ? image.src : '');
+            if (!parsed) return;
+            const base = archiveBaseName(task, taskIndex);
+            const filename = uniqueArchiveFilename(
+              usedNames,
+              sanitizeDownloadFilename(matchedRef?.filename || `${base}-${imageIndex + 1}.${parsed.extension}`, parsed.extension)
+            );
+            entries.push({ filename, buffer: parsed.buffer });
+          });
+        });
+
+      if (entries.length === 0) {
+        res.status(422).json({ error: { message: 'Selected generation tasks do not contain downloadable full-size images.' } });
+        return;
+      }
+
+      const archive = createZipArchive(entries);
+      const filename = sanitizeDownloadFilename(req.body?.filename || 'image-studio-selection.zip', 'zip');
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Length', String(archive.length));
+      res.setHeader('Content-Disposition', `attachment; filename="${filename.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_')}"`);
+      res.setHeader('Cache-Control', 'private, max-age=60, no-transform');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.end(archive);
     } catch (error) {
       sendServerError(res, error);
     }

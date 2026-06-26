@@ -3,7 +3,7 @@ import type { ComposerCommands, RequestPresetCommands } from '../../interface/co
 import { applyComposerCompatibilityForModel, getComposerModeForAttachmentRole, setComposerDraftWithCompatibility, setComposerProviderModeWithCompatibility } from './providerCompatibilityCommands';
 import type { ComposerCommandDeps } from './appCommandTypes';
 import { submitSingleGenerationCommand } from './generationCommands';
-import { openBatchComposerCommand } from './workspaceCommands';
+import { addCurrentRequestToBatchComposerCommand, openBatchComposerCommand } from './workspaceCommands';
 
 export function createComposerCommands(args: ComposerCommandDeps, requestPresets: RequestPresetCommands): ComposerCommands {
   const patchParams = (patch: Partial<ImageParams>) => args.setParams((prev) => ({ ...prev, ...patch }));
@@ -37,6 +37,17 @@ export function createComposerCommands(args: ComposerCommandDeps, requestPresets
     }),
     openParameters: () => args.setParametersOpen(true),
     openBatchComposer: () => openBatchComposerCommand({
+      providerModeId: args.providerModeId,
+      params: args.params,
+      selectedModelId: args.studioSettings.selectedModelId,
+      targetImage: args.targetImage,
+      referenceImages: args.referenceImages,
+      mask: args.mask,
+      setDrafts: args.setBatchDrafts,
+      setOpen: args.setBatchComposerOpen,
+      setWorkspaceTab: args.setWorkspaceTab
+    }),
+    addCurrentToBatchComposer: () => addCurrentRequestToBatchComposerCommand({
       providerModeId: args.providerModeId,
       params: args.params,
       selectedModelId: args.studioSettings.selectedModelId,

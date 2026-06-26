@@ -36,6 +36,7 @@ export interface ComposerActionContext {
     changeModel: (modelId: string) => void;
     changeParams: (params: ImageParams) => void;
     openBatchComposer: () => void;
+    addCurrentToBatchComposer: () => void;
     openParameters: () => void;
     clearAttachments: () => void;
     setMask: (file: File | null) => void;

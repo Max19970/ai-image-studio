@@ -17,6 +17,7 @@ export function GalleryPlaceholderCardSection({ context }: ElementDefinitionProp
     galleryIndex: context.index,
     onOpenTask: context.onOpenTask,
     onDeleteTask: context.onDeleteTask,
+    onCancelTask: context.onCancelTask,
     onMoveTask: context.onMoveTask,
     pinned: context.pinned,
     tags: context.tags,

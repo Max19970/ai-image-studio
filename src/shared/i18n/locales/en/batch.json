@@ -36,5 +36,7 @@
   "batch.queueImagesValue": "{count} img",
   "batch.queueAttachmentsValue": "{count} files",
   "batch.emptyQueueTitle": "No requests in queue",
-  "batch.emptyQueueText": "Add a request to start building a batch generation queue."
+  "batch.emptyQueueText": "Add a request to start building a batch generation queue.",
+  "batch.addCurrent": "Add current to queue",
+  "batch.partialSubmitConfirm": "Only {valid} of {total} requests are ready. Start the ready ones?"
 }

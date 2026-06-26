@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { downloadGenerationTasksArchive } from '../../../infrastructure/api';
 import type { GalleryClipboardItemPayload, GalleryClipboardOperation, GalleryClipboardState } from '../../../entities/gallery/galleryClipboard';
 import type { GalleryItem } from '../../../entities/gallery/galleryItems';
 import type { GalleryCommands } from '../../../interface/context/commands';
@@ -23,6 +24,10 @@ export function useGallerySelectionState(
     () => archiveResult.items.filter((item) => selectedIds.has(item.id)).map(itemClipboardPayload),
     [archiveResult.items, selectedIds]
   );
+  const selectedTaskIds = useMemo(
+    () => archiveResult.items.flatMap((item) => item.kind === 'task' && selectedIds.has(item.id) ? [item.task.id] : []),
+    [archiveResult.items, selectedIds]
+  );
 
   const clearSelection = () => setSelectedIds(new Set());
 
@@ -30,12 +35,18 @@ export function useGallerySelectionState(
     mode: selectionMode,
     selectedIds,
     selectedItems,
+    selectedTaskIds,
     clipboard,
     begin: () => setSelectionMode(true),
     cancel: () => {
       setSelectionMode(false);
       clearSelection();
     },
+    selectVisible: () => {
+      setSelectionMode(true);
+      setSelectedIds(new Set(archiveResult.items.map((item) => item.id)));
+    },
+    clearSelection,
     toggleItem: (item: GalleryItem) => {
       setSelectionMode(true);
       setSelectedIds((current) => {
@@ -58,6 +69,10 @@ export function useGallerySelectionState(
       setClipboard(null);
       clearSelection();
     },
+    downloadSelected: async () => {
+      if (selectedTaskIds.length === 0) return;
+      await downloadGenerationTasksArchive(selectedTaskIds);
+    },
     deleteSelected: () => {
       for (const item of archiveResult.items) {
         if (!selectedIds.has(item.id)) continue;
@@ -67,5 +82,5 @@ export function useGallerySelectionState(
       clearSelection();
       setSelectionMode(false);
     }
-  }), [selectionMode, selectedIds, selectedItems, clipboard, commands, archiveResult.items]);
+  }), [selectionMode, selectedIds, selectedItems, selectedTaskIds, clipboard, commands, archiveResult.items]);
 }

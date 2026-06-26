@@ -36,5 +36,7 @@
   "batch.queueImagesValue": "{count} изобр.",
   "batch.queueAttachmentsValue": "{count} файлов",
   "batch.emptyQueueTitle": "В очереди нет запросов",
-  "batch.emptyQueueText": "Добавь запрос, чтобы начать собирать очередь мульти-генерации."
+  "batch.emptyQueueText": "Добавь запрос, чтобы начать собирать очередь мульти-генерации.",
+  "batch.addCurrent": "Добавить текущий в очередь",
+  "batch.partialSubmitConfirm": "Готово к отправке только {valid} из {total}. Запустить готовые?"
 }

@@ -33,6 +33,10 @@ function makeProvider(): GenerationProvider {
   };
 }
 
+function quickCheckKey(provider: GenerationProvider, model: GenerationModel | null): string {
+  return provider.id + ':' + (model?.id ?? model?.modelId ?? 'no-model');
+}
+
 function makeModel(providerId: string, adapterId = 'openai-compatible'): GenerationModel {
   const isComfy = adapterId === 'comfyui';
   return {
@@ -178,7 +182,7 @@ export function useGenerationApiSettingsDraft({
   }));
 
   const probeModel = selectedProvider ? (selectedModel?.providerId === selectedProvider.id ? selectedModel : firstModelForProvider(draft, selectedProvider.id)) : null;
-  const quickResult = selectedProvider ? quickCheckResults[selectedProvider.id] : null;
+  const quickResult = selectedProvider ? quickCheckResults[quickCheckKey(selectedProvider, probeModel)] : null;
   const showReport = selectedProvider && selectedModel?.providerId === selectedProvider.id && selectedModel.id === settings.selectedModelId ? report : null;
 
   return {

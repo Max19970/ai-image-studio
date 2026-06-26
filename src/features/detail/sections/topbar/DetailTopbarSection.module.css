@@ -20,6 +20,19 @@
   flex: 0 0 auto;
 }
 
+.statusActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cancelButton {
+  min-height: 32px;
+  padding-inline: 12px;
+}
+
 .titleBlock {
   min-width: 0;
   text-align: center;
@@ -59,6 +72,10 @@
     min-width: 0;
   }
 
+  .statusActions {
+    justify-self: end;
+  }
+
   .statusPill {
     justify-self: end;
   }
@@ -86,6 +103,14 @@
 @media (max-width: 560px) {
   .statusPill {
     display: none;
+  }
+
+  .statusActions {
+    justify-self: stretch;
+  }
+
+  .cancelButton {
+    width: 100%;
   }
 
   .topbar {

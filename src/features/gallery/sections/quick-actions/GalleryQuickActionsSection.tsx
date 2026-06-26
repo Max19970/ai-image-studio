@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isTerminalGenerationStatus } from '../../../../domain/generationStatus';
 import { Button } from '../../../../shared/ui';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { GalleryCardActionContext } from '../../../../interface/context/workspace/gallery';
@@ -16,6 +17,11 @@ function GalleryActionList({ context, close, onEditTags }: { context: GalleryCar
     close();
   };
 
+  const cancelTask = () => {
+    void context.onCancelTask();
+    close();
+  };
+
   const setPinned = () => {
     context.onSetPinned();
     close();
@@ -26,6 +32,11 @@ function GalleryActionList({ context, close, onEditTags }: { context: GalleryCar
       <Button variant="ghost" size="compact" fullWidth className={styles.actionItem} role="menuitem" onClick={openDetails}>
         {t('gallery.actionOpenDetails')}
       </Button>
+      {!isTerminalGenerationStatus(context.task.status) && (
+        <Button variant="ghost" size="compact" fullWidth className={styles.actionItem} role="menuitem" onClick={cancelTask}>
+          {t('gallery.actionCancel')}
+        </Button>
+      )}
       <Button variant="ghost" size="compact" fullWidth className={styles.actionItem} role="menuitem" onClick={setPinned}>
         {context.pinned ? t('gallery.actionUnpin') : t('gallery.actionPin')}
       </Button>
