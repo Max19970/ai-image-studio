@@ -136,7 +136,7 @@ function MenuContent({ context, onOpenPresets, close }: { context: BatchDraftLay
           </button>
         )}
         {context.controlSurface.showParameters && (
-          <button type="button" className={menuStyles.action} onClick={openParameters}>
+          <button type="button" className={menuStyles.action} data-testid="batch-draft-parameters" onClick={openParameters}>
             <span className={menuStyles.icon} aria-hidden="true">⚙</span>
             <span className={menuStyles.copy}>
               <strong>{t('composer.paramsTitle')}</strong>

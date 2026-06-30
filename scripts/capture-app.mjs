@@ -77,6 +77,34 @@ const stop = () => new Promise((resolve) => server.close(resolve));
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 
+function createScreenshotApiMockResponse(request, scenario) {
+  const url = new URL(request.url());
+  const method = request.method().toUpperCase();
+  const json = (body, status = 200) => ({ status, contentType: 'application/json; charset=utf-8', body: JSON.stringify(body) });
+
+  if (url.pathname === '/api/storage/generation-tasks') {
+    if (method === 'GET') {
+      return json({
+        tasks: scenario.seedTasks ?? seedData.tasks,
+        storage: { backend: 'screenshot-fixture', schemaVersion: 1, dbPath: `screenshot:${scenario.name}` }
+      });
+    }
+    if (method === 'PUT' || method === 'DELETE') {
+      return json({ ok: true, storage: { backend: 'screenshot-fixture', schemaVersion: 1, dbPath: `screenshot:${scenario.name}` } });
+    }
+  }
+
+  if (url.pathname === '/api/storage/generation-task-asset') {
+    return json({ image: null });
+  }
+
+  if (url.pathname === '/api/generation-tasks/events') {
+    return { status: 204, contentType: 'text/plain; charset=utf-8', body: '' };
+  }
+
+  return null;
+}
+
 function createIntegrationApiMockResponse(request, fixture) {
   if (!fixture) return null;
   const url = new URL(request.url());
@@ -159,7 +187,55 @@ async function screenshot(page, viewportName, scenarioName) {
   await page.screenshot({ path: path.join(outDir, `${viewportName}-${scenarioName}.png`), fullPage });
 }
 
+async function waitForComposerEditMode(page, timeout = 12000) {
+  await page.waitForFunction(() => {
+    return Array.from(document.querySelectorAll('button')).some((button) => {
+      const text = (button.textContent || '').toLowerCase();
+      const rect = button.getBoundingClientRect();
+      const style = window.getComputedStyle(button);
+      return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none' && (text.includes('редакт') || text.includes('edit'));
+    });
+  }, { timeout });
+}
+
+async function clickComposerEditMode(page) {
+  const clicked = await page.evaluate(() => {
+    const button = Array.from(document.querySelectorAll('button')).find((item) => {
+      const text = (item.textContent || '').toLowerCase();
+      const rect = item.getBoundingClientRect();
+      const style = window.getComputedStyle(item);
+      return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none' && (text.includes('редакт') || text.includes('edit'));
+    });
+    if (!button) return false;
+    button.click();
+    return true;
+  });
+  if (!clicked) throw new Error('No visible composer edit mode button by text.');
+}
+
 async function runStep(page, step, viewportName, scenarioName) {
+  if (scenarioName === 'composer-comfy-controls' && step.type === 'waitForSelector' && step.selector === '[data-testid="composer-parameters"]') {
+    await page.waitForSelector(step.selector, { timeout: step.timeout ?? 12000 });
+    await clickFirstVisible(page, step.selector);
+    await page.waitForSelector('[data-testid="parameters-modal"]', { timeout: step.timeout ?? 12000 });
+    return;
+  }
+  if (scenarioName === 'batch-comfy-controls' && step.type === 'waitForSelector' && step.selector === '[data-testid="batch-draft-comfy-loras"]') {
+    await page.waitForSelector('[data-testid="batch-draft-parameters"]', { timeout: step.timeout ?? 12000 });
+    await clickFirstVisible(page, '[data-testid="batch-draft-parameters"]');
+    await page.waitForSelector('[data-testid="parameters-modal"]', { timeout: step.timeout ?? 12000 });
+    return;
+  }
+  if (scenarioName === 'composer-edit-status' && step.selector === '[data-testid="composer-mode-edit"]') {
+    if (step.type === 'waitForSelector') {
+      await waitForComposerEditMode(page, step.timeout ?? 12000);
+      return;
+    }
+    if (step.type === 'click') {
+      await clickComposerEditMode(page);
+      return;
+    }
+  }
   if (step.type === 'wait') await wait(step.ms ?? 150);
   if (step.type === 'waitForSelector') await page.waitForSelector(step.selector, { timeout: step.timeout ?? 12000 });
   if (step.type === 'click') await clickFirstVisible(page, step.selector, Boolean(step.optional));
@@ -200,7 +276,7 @@ async function bootPage(browser, viewportName, scenario) {
     await page.setViewport(viewport);
     await page.setRequestInterception(true);
     page.on('request', (request) => {
-      const apiMock = createIntegrationApiMockResponse(request, scenario.integrationApiFixture);
+      const apiMock = createScreenshotApiMockResponse(request, scenario) ?? createIntegrationApiMockResponse(request, scenario.integrationApiFixture);
       if (apiMock) {
         request.respond(apiMock);
         return;

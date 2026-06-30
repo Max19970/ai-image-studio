@@ -379,7 +379,7 @@ export const scenarios = [
     steps: [
       { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
       { type: 'click', selector: '[data-testid="composer-controls"]' },
-      { type: 'waitForSelector', selector: '[data-testid="composer-comfy-loras"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-parameters"]' },
       { type: 'wait', ms: 240 },
       { type: 'screenshot' }
     ]
