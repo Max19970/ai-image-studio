@@ -13,6 +13,7 @@ export type ComfyUiTiledGenerationBackend = 'bnkTiledKSampler' | 'tiledDiffusion
 export type ComfyUiTilingStrategy = 'random' | 'randomStrict' | 'padded' | 'simple';
 export type ComfyUiTiledDiffusionMethod = 'MultiDiffusion' | 'Mixture of Diffusers' | 'SpotDiffusion';
 export type ComfyUiSpotDiffusionShiftMethod = 'random' | 'sorted' | 'fibonacci';
+export type ComfyUiWorkflowBuilderItemKind = 'tiledGeneration' | 'tiledVae' | 'pag' | 'freeuV2' | 'perpGuider' | 'loraStack';
 
 export interface ComfyUiLoraSelection {
   name: string;
@@ -39,6 +40,7 @@ export interface ComfyUiParamState {
   hiresScale: number;
   hiresInputWidth: number;
   hiresInputHeight: number;
+  workflowBuilder: ComfyUiWorkflowBuilderItemKind[];
   tiledGenerationEnabled: boolean;
   tiledGenerationBackend: ComfyUiTiledGenerationBackend;
   tiledGenerationTileWidth: number;
@@ -57,13 +59,18 @@ export interface ComfyUiParamState {
   tiledVaeTemporalOverlap: number;
   pagEnabled: boolean;
   pagScale: number;
+  freeuV2Enabled: boolean;
+  freeuV2B1: number;
+  freeuV2B2: number;
+  freeuV2S1: number;
+  freeuV2S2: number;
   perpGuiderEnabled: boolean;
   perpGuiderScale: number;
   perpGuiderBlankConditioning: string;
   loras: ComfyUiLoraSelection[];
 }
 
-export const COMFYUI_MAX_SEED = 2 ** 31 - 1;
+export const COMFYUI_MAX_SEED = Number.MAX_SAFE_INTEGER;
 
 export const comfyUiSamplerOptions = ['euler', 'euler_ancestral', 'heun', 'dpm_2', 'dpmpp_2m', 'dpmpp_sde', 'dpmpp_3m_sde'] as const;
 export const comfyUiSchedulerOptions = ['normal', 'karras', 'exponential', 'sgm_uniform', 'simple', 'ddim_uniform'] as const;
@@ -71,6 +78,7 @@ export const comfyUiTiledGenerationBackendOptions = ['bnkTiledKSampler', 'tiledD
 export const comfyUiTilingStrategyOptions = ['random', 'randomStrict', 'padded', 'simple'] as const;
 export const comfyUiTiledDiffusionMethodOptions = ['MultiDiffusion', 'Mixture of Diffusers', 'SpotDiffusion'] as const;
 export const comfyUiSpotDiffusionShiftMethodOptions = ['random', 'sorted', 'fibonacci'] as const;
+export const comfyUiWorkflowBuilderItemOptions = ['tiledGeneration', 'tiledVae', 'pag', 'freeuV2', 'perpGuider', 'loraStack'] as const;
 
 export const defaultComfyUiParamState: ComfyUiParamState = {
   negativePrompt: '',
@@ -90,6 +98,7 @@ export const defaultComfyUiParamState: ComfyUiParamState = {
   hiresScale: 2,
   hiresInputWidth: 0,
   hiresInputHeight: 0,
+  workflowBuilder: [],
   tiledGenerationEnabled: false,
   tiledGenerationBackend: 'bnkTiledKSampler',
   tiledGenerationTileWidth: 512,
@@ -108,6 +117,11 @@ export const defaultComfyUiParamState: ComfyUiParamState = {
   tiledVaeTemporalOverlap: 8,
   pagEnabled: false,
   pagScale: 3,
+  freeuV2Enabled: false,
+  freeuV2B1: 1.3,
+  freeuV2B2: 1.4,
+  freeuV2S1: 0.9,
+  freeuV2S2: 0.2,
   perpGuiderEnabled: false,
   perpGuiderScale: 1,
   perpGuiderBlankConditioning: '',
@@ -140,22 +154,88 @@ function isHiresFixMode(providerMode: ProviderGenerationModeDefinition | null | 
 
 function normalizeLoras(value: unknown): ComfyUiLoraSelection[] {
   if (!Array.isArray(value)) return [];
-  return value.flatMap((item): ComfyUiLoraSelection[] => {
-    if (!isPlainRecord(item)) return [];
+  const byName = new Map<string, ComfyUiLoraSelection>();
+  for (const item of value) {
+    if (!isPlainRecord(item)) continue;
     const name = stringValue(item.name ?? item.lora_name).trim();
-    if (!name) return [];
+    if (!name) continue;
     const strengthModel = numberInRange(item.strengthModel ?? item.strength_model, 1, -10, 10);
-    return [{
+    if (byName.has(name)) byName.delete(name);
+    byName.set(name, {
       name,
       strengthModel,
       strengthClip: numberInRange(item.strengthClip ?? item.strength_clip, strengthModel, -10, 10),
       enabled: item.enabled !== false
-    }];
+    });
+  }
+  return [...byName.values()];
+}
+
+function normalizeWorkflowBuilderKind(value: unknown): ComfyUiWorkflowBuilderItemKind | null {
+  switch (value) {
+    case 'tiledGeneration':
+    case 'tiled_generation':
+      return 'tiledGeneration';
+    case 'tiledVae':
+    case 'tiled_vae':
+      return 'tiledVae';
+    case 'pag':
+      return 'pag';
+    case 'freeuV2':
+    case 'freeu_v2':
+      return 'freeuV2';
+    case 'perpGuider':
+    case 'perp_neg_guider':
+      return 'perpGuider';
+    case 'loraStack':
+    case 'lora_stack':
+      return 'loraStack';
+    default:
+      return null;
+  }
+}
+
+function normalizeWorkflowBuilderList(value: unknown): ComfyUiWorkflowBuilderItemKind[] | null {
+  if (!Array.isArray(value)) return null;
+  const seen = new Set<ComfyUiWorkflowBuilderItemKind>();
+  return value.flatMap((item): ComfyUiWorkflowBuilderItemKind[] => {
+    const kind = normalizeWorkflowBuilderKind(item);
+    if (!kind || seen.has(kind)) return [];
+    seen.add(kind);
+    return [kind];
   });
+}
+
+function legacyWorkflowBuilder(source: Record<string, unknown>, loras: readonly ComfyUiLoraSelection[]): ComfyUiWorkflowBuilderItemKind[] {
+  const next: ComfyUiWorkflowBuilderItemKind[] = [];
+  if (booleanValue(source.pagEnabled ?? source.pag_enabled)) next.push('pag');
+  if (loras.some((lora) => lora.enabled && lora.name.trim())) next.push('loraStack');
+  if (booleanValue(source.freeuV2Enabled ?? source.freeu_v2_enabled)) next.push('freeuV2');
+  if (booleanValue(source.tiledGenerationEnabled ?? source.tiled_generation_enabled)) next.push('tiledGeneration');
+  if (booleanValue(source.tiledVaeEncodeEnabled ?? source.tiled_vae_encode_enabled) || booleanValue(source.tiledVaeDecodeEnabled ?? source.tiled_vae_decode_enabled)) next.push('tiledVae');
+  if (booleanValue(source.perpGuiderEnabled ?? source.perp_guider_enabled)) next.push('perpGuider');
+  return next;
+}
+
+function workflowBuilderFromState(state: ComfyUiParamState): ComfyUiWorkflowBuilderItemKind[] {
+  if (state.workflowBuilder.length) return [...state.workflowBuilder];
+  const next: ComfyUiWorkflowBuilderItemKind[] = [];
+  if (state.pagEnabled) next.push('pag');
+  if (state.loras.some((lora) => lora.enabled && lora.name.trim())) next.push('loraStack');
+  if (state.freeuV2Enabled) next.push('freeuV2');
+  if (state.tiledGenerationEnabled) next.push('tiledGeneration');
+  if (state.tiledVaeEncodeEnabled || state.tiledVaeDecodeEnabled) next.push('tiledVae');
+  if (state.perpGuiderEnabled) next.push('perpGuider');
+  return next;
 }
 
 export function normalizeComfyUiParamState(value: unknown): ComfyUiParamState {
   const source = isPlainRecord(value) ? value : {};
+  const loras = normalizeLoras(source.loras);
+  const workflowBuilderSource = normalizeWorkflowBuilderList(source.workflowBuilder ?? source.workflow_builder);
+  const explicitWorkflowBuilder = workflowBuilderSource !== null;
+  const workflowBuilder = workflowBuilderSource ?? legacyWorkflowBuilder(source, loras);
+  const workflowBuilderSet = new Set(workflowBuilder);
   return {
     negativePrompt: stringValue(source.negativePrompt ?? source.negative_prompt),
     width: numberInRange(source.width, defaultComfyUiParamState.width, 64, 4096, true),
@@ -174,7 +254,8 @@ export function normalizeComfyUiParamState(value: unknown): ComfyUiParamState {
     hiresScale: numberInRange(source.hiresScale ?? source.hires_scale ?? source.hires_upscale_factor, defaultComfyUiParamState.hiresScale, 0.1, 8),
     hiresInputWidth: numberInRange(source.hiresInputWidth ?? source.hires_input_width, defaultComfyUiParamState.hiresInputWidth, 0, 4096, true),
     hiresInputHeight: numberInRange(source.hiresInputHeight ?? source.hires_input_height, defaultComfyUiParamState.hiresInputHeight, 0, 4096, true),
-    tiledGenerationEnabled: booleanValue(source.tiledGenerationEnabled ?? source.tiled_generation_enabled),
+    workflowBuilder,
+    tiledGenerationEnabled: workflowBuilderSet.has('tiledGeneration'),
     tiledGenerationBackend: enumValue(source.tiledGenerationBackend ?? source.tiled_generation_backend, comfyUiTiledGenerationBackendOptions, defaultComfyUiParamState.tiledGenerationBackend),
     tiledGenerationTileWidth: numberInRange(source.tiledGenerationTileWidth ?? source.tiled_generation_tile_width, defaultComfyUiParamState.tiledGenerationTileWidth, 256, 8192, true),
     tiledGenerationTileHeight: numberInRange(source.tiledGenerationTileHeight ?? source.tiled_generation_tile_height, defaultComfyUiParamState.tiledGenerationTileHeight, 256, 8192, true),
@@ -184,18 +265,23 @@ export function normalizeComfyUiParamState(value: unknown): ComfyUiParamState {
     tiledDiffusionTileBatchSize: numberInRange(source.tiledDiffusionTileBatchSize ?? source.tiled_diffusion_tile_batch_size, defaultComfyUiParamState.tiledDiffusionTileBatchSize, 1, 8192, true),
     tiledDiffusionShiftMethod: enumValue(source.tiledDiffusionShiftMethod ?? source.tiled_diffusion_shift_method, comfyUiSpotDiffusionShiftMethodOptions, defaultComfyUiParamState.tiledDiffusionShiftMethod),
     tiledDiffusionShiftSeed: numberInRange(source.tiledDiffusionShiftSeed ?? source.tiled_diffusion_shift_seed, defaultComfyUiParamState.tiledDiffusionShiftSeed, 0, COMFYUI_MAX_SEED, true),
-    tiledVaeEncodeEnabled: booleanValue(source.tiledVaeEncodeEnabled ?? source.tiled_vae_encode_enabled),
-    tiledVaeDecodeEnabled: booleanValue(source.tiledVaeDecodeEnabled ?? source.tiled_vae_decode_enabled),
+    tiledVaeEncodeEnabled: workflowBuilderSet.has('tiledVae') && booleanValue(source.tiledVaeEncodeEnabled ?? source.tiled_vae_encode_enabled, explicitWorkflowBuilder),
+    tiledVaeDecodeEnabled: workflowBuilderSet.has('tiledVae') && booleanValue(source.tiledVaeDecodeEnabled ?? source.tiled_vae_decode_enabled, explicitWorkflowBuilder),
     tiledVaeTileSize: numberInRange(source.tiledVaeTileSize ?? source.tiled_vae_tile_size, defaultComfyUiParamState.tiledVaeTileSize, 64, 4096, true),
     tiledVaeOverlap: numberInRange(source.tiledVaeOverlap ?? source.tiled_vae_overlap, defaultComfyUiParamState.tiledVaeOverlap, 0, 4096, true),
     tiledVaeTemporalSize: numberInRange(source.tiledVaeTemporalSize ?? source.tiled_vae_temporal_size, defaultComfyUiParamState.tiledVaeTemporalSize, 8, 4096, true),
     tiledVaeTemporalOverlap: numberInRange(source.tiledVaeTemporalOverlap ?? source.tiled_vae_temporal_overlap, defaultComfyUiParamState.tiledVaeTemporalOverlap, 4, 4096, true),
-    pagEnabled: booleanValue(source.pagEnabled ?? source.pag_enabled),
+    pagEnabled: workflowBuilderSet.has('pag'),
     pagScale: numberInRange(source.pagScale ?? source.pag_scale, defaultComfyUiParamState.pagScale, 0, 100),
-    perpGuiderEnabled: booleanValue(source.perpGuiderEnabled ?? source.perp_guider_enabled),
+    freeuV2Enabled: workflowBuilderSet.has('freeuV2'),
+    freeuV2B1: numberInRange(source.freeuV2B1 ?? source.freeu_v2_b1, defaultComfyUiParamState.freeuV2B1, 0, 10),
+    freeuV2B2: numberInRange(source.freeuV2B2 ?? source.freeu_v2_b2, defaultComfyUiParamState.freeuV2B2, 0, 10),
+    freeuV2S1: numberInRange(source.freeuV2S1 ?? source.freeu_v2_s1, defaultComfyUiParamState.freeuV2S1, 0, 10),
+    freeuV2S2: numberInRange(source.freeuV2S2 ?? source.freeu_v2_s2, defaultComfyUiParamState.freeuV2S2, 0, 10),
+    perpGuiderEnabled: workflowBuilderSet.has('perpGuider'),
     perpGuiderScale: numberInRange(source.perpGuiderScale ?? source.perp_guider_scale, defaultComfyUiParamState.perpGuiderScale, 0, 100),
     perpGuiderBlankConditioning: stringValue(source.perpGuiderBlankConditioning ?? source.perp_guider_blank_conditioning, defaultComfyUiParamState.perpGuiderBlankConditioning),
-    loras: normalizeLoras(source.loras)
+    loras
   };
 }
 
@@ -222,6 +308,7 @@ export function toComfyUiProviderParamState(state: ComfyUiParamState): ProviderP
     hiresScale: state.hiresScale,
     hiresInputWidth: state.hiresInputWidth,
     hiresInputHeight: state.hiresInputHeight,
+    workflowBuilder: workflowBuilderFromState(state),
     tiledGenerationEnabled: state.tiledGenerationEnabled,
     tiledGenerationBackend: state.tiledGenerationBackend,
     tiledGenerationTileWidth: state.tiledGenerationTileWidth,
@@ -240,6 +327,11 @@ export function toComfyUiProviderParamState(state: ComfyUiParamState): ProviderP
     tiledVaeTemporalOverlap: state.tiledVaeTemporalOverlap,
     pagEnabled: state.pagEnabled,
     pagScale: state.pagScale,
+    freeuV2Enabled: state.freeuV2Enabled,
+    freeuV2B1: state.freeuV2B1,
+    freeuV2B2: state.freeuV2B2,
+    freeuV2S1: state.freeuV2S1,
+    freeuV2S2: state.freeuV2S2,
     perpGuiderEnabled: state.perpGuiderEnabled,
     perpGuiderScale: state.perpGuiderScale,
     perpGuiderBlankConditioning: state.perpGuiderBlankConditioning,

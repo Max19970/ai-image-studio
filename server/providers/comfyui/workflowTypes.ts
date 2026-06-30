@@ -11,6 +11,7 @@ export type ComfyUiTiledGenerationBackend = 'bnk_tiled_ksampler' | 'tiled_diffus
 export type ComfyUiTilingStrategy = 'random' | 'random strict' | 'padded' | 'simple';
 export type ComfyUiTiledDiffusionMethod = 'MultiDiffusion' | 'Mixture of Diffusers' | 'SpotDiffusion';
 export type ComfyUiSpotDiffusionShiftMethod = 'random' | 'sorted' | 'fibonacci';
+export type ComfyUiWorkflowPluginKind = 'tiled_generation' | 'tiled_vae' | 'pag' | 'freeu_v2' | 'perp_neg_guider' | 'lora_stack';
 
 export interface ComfyUiTiledGenerationInput {
   enabled?: boolean;
@@ -45,6 +46,14 @@ export interface ComfyUiPerpGuiderInput {
   blank_conditioning?: string;
 }
 
+export interface ComfyUiFreeuV2Input {
+  enabled?: boolean;
+  b1?: number;
+  b2?: number;
+  s1?: number;
+  s2?: number;
+}
+
 export interface ComfyUiGenerationPayload {
   prompt: string;
   negative_prompt?: string;
@@ -73,7 +82,9 @@ export interface ComfyUiGenerationPayload {
   tiled_generation?: ComfyUiTiledGenerationInput;
   tiled_vae?: ComfyUiTiledVaeInput;
   pag?: ComfyUiPagInput;
+  freeu_v2?: ComfyUiFreeuV2Input;
   perp_neg_guider?: ComfyUiPerpGuiderInput;
+  workflow_order?: ComfyUiWorkflowPluginKind[];
 }
 
 export type ComfyUiWorkflowNode = {
@@ -84,6 +95,7 @@ export type ComfyUiWorkflowNode = {
 export type ComfyUiWorkflow = Record<string, ComfyUiWorkflowNode>;
 
 export interface ComfyUiResolvedWorkflowPlugins {
+  order: ComfyUiWorkflowPluginKind[];
   tiledGeneration: {
     enabled: boolean;
     backend: ComfyUiTiledGenerationBackend;
@@ -107,6 +119,13 @@ export interface ComfyUiResolvedWorkflowPlugins {
   pag: {
     enabled: boolean;
     scale: number;
+  };
+  freeuV2: {
+    enabled: boolean;
+    b1: number;
+    b2: number;
+    s1: number;
+    s2: number;
   };
   perpGuider: {
     enabled: boolean;

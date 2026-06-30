@@ -179,6 +179,165 @@
   min-width: 100%;
 }
 
+.workflowBuilder {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+}
+
+.workflowBuilderIntro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 16px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 46%),
+    rgba(255,255,255,.035);
+}
+
+.workflowBuilderIntro strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.workflowBuilderIntro p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.workflowBuilderAddRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.workflowBuilderButton,
+.workflowBuilderRemove {
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 12px;
+  padding: 0 12px;
+  background: rgba(255,255,255,.055);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  transition: border-color .16s ease, background .16s ease, opacity .16s ease;
+}
+
+.workflowBuilderButton:not(:disabled):hover,
+.workflowBuilderRemove:hover {
+  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.095);
+}
+
+.workflowBuilderButton:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+
+.workflowBuilderList {
+  display: grid;
+  gap: 8px;
+}
+
+.workflowBuilderItem {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 16px;
+  background: rgba(0,0,0,.13);
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+
+.workflowBuilderItem[data-dragging='true'] {
+  border-color: color-mix(in srgb, var(--accent) 42%, rgba(255,255,255,.16));
+  background: color-mix(in srgb, var(--accent) 9%, rgba(0,0,0,.18));
+  transform: scale(.992);
+}
+
+.workflowBuilderSummary {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  cursor: grab;
+  list-style: none;
+}
+
+.workflowBuilderSummary::-webkit-details-marker {
+  display: none;
+}
+
+.workflowBuilderHandle {
+  color: color-mix(in srgb, var(--accent) 65%, var(--muted));
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: -.18em;
+  user-select: none;
+}
+
+.workflowBuilderStep {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  background: rgba(255,255,255,.045);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.workflowBuilderCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.workflowBuilderCopy strong,
+.workflowBuilderCopy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflowBuilderCopy strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.workflowBuilderCopy small {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.workflowBuilderRemove {
+  min-height: 30px;
+}
+
+.workflowBuilderSettings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding: 10px;
+  background: rgba(255,255,255,.025);
+}
+
 .loraStack {
   display: grid;
   gap: 8px;
@@ -291,7 +450,9 @@
     grid-template-columns: 1fr;
   }
 
-  .loraRow {
+  .loraRow,
+  .workflowBuilderSettings,
+  .workflowBuilderAddRow {
     grid-template-columns: 1fr;
   }
 }
@@ -305,6 +466,16 @@
   .card {
     border-radius: 15px !important;
     padding: 10px !important;
+  }
+
+  .workflowBuilderSummary {
+    grid-template-columns: auto auto minmax(0, 1fr);
+  }
+
+  .workflowBuilderRemove {
+    grid-column: 3;
+    justify-self: start;
+    min-height: 28px;
   }
 }
 

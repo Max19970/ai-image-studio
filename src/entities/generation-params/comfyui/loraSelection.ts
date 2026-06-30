@@ -50,12 +50,12 @@ export function toggleComfyUiRegisteredLora(
 ): ImageParams {
   const state = readComfyUiParamState(params, provider);
   const hasEnabled = state.loras.some((lora) => lora.name === registration.loraName && lora.enabled);
+  const hasExisting = state.loras.some((lora) => lora.name === registration.loraName);
   const nextLoras = hasEnabled
     ? state.loras.map((lora) => lora.name === registration.loraName ? { ...lora, enabled: false } : lora)
-    : [
-      ...state.loras.filter((lora) => lora.name !== registration.loraName),
-      createSelection(registration)
-    ];
+    : hasExisting
+      ? state.loras.map((lora) => lora.name === registration.loraName ? { ...lora, enabled: true } : lora)
+      : [...state.loras, createSelection(registration)];
 
   return {
     ...params,

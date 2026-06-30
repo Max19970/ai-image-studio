@@ -6,7 +6,8 @@ export function getEnabledComfyUiLoras(loras: readonly ComfyUiLoraSelection[]) {
   return loras.filter((lora) => lora.enabled && lora.name.trim());
 }
 
-export function buildComfyUiLoraPayload(loras: readonly ComfyUiLoraSelection[]): Record<string, unknown> {
+export function buildComfyUiLoraPayload(loras: readonly ComfyUiLoraSelection[], workflowBuilder: readonly string[] = ['loraStack']): Record<string, unknown> {
+  if (!workflowBuilder.includes('loraStack')) return {};
   const active = getEnabledComfyUiLoras(loras);
   if (!active.length) return {};
   return {
@@ -31,6 +32,9 @@ export function createComfyUiLoraSummaryEntry(loras: readonly ComfyUiLoraSelecti
 export const comfyUiLoraPayloadExtension: ProviderGenerationExtension = {
   id: 'comfyui.extension.lora-stack.payload',
   order: 30,
-  buildPayload: ({ params, provider }) => buildComfyUiLoraPayload(readComfyUiParamState(params, provider).loras),
+  buildPayload: ({ params, provider }) => {
+    const state = readComfyUiParamState(params, provider);
+    return buildComfyUiLoraPayload(state.loras, state.workflowBuilder);
+  },
   captureParameterSummaryEntries: ({ params, provider }) => [createComfyUiLoraSummaryEntry(readComfyUiParamState(params, provider).loras)]
 };

@@ -9,10 +9,11 @@ import type {
   ComfyUiSpotDiffusionShiftMethod,
   ComfyUiTiledDiffusionMethod,
   ComfyUiTiledGenerationBackend,
-  ComfyUiTilingStrategy
+  ComfyUiTilingStrategy,
+  ComfyUiWorkflowPluginKind
 } from './workflowTypes';
 
-const MAX_SEED = 2 ** 31 - 1;
+const MAX_SEED = Number.MAX_SAFE_INTEGER;
 const MIN_SIZE = 64;
 const MAX_SIZE = 4096;
 
@@ -76,14 +77,48 @@ function normalizeSpotDiffusionShiftMethod(value: unknown): ComfyUiSpotDiffusion
   return value === 'sorted' || value === 'fibonacci' ? value : 'random';
 }
 
+const workflowPluginKinds = ['tiled_generation', 'tiled_vae', 'pag', 'freeu_v2', 'perp_neg_guider', 'lora_stack'] as const satisfies readonly ComfyUiWorkflowPluginKind[];
+
+function normalizeWorkflowPluginKind(value: unknown): ComfyUiWorkflowPluginKind | null {
+  return typeof value === 'string' && (workflowPluginKinds as readonly string[]).includes(value) ? value as ComfyUiWorkflowPluginKind : null;
+}
+
+function hasEnabledLoras(value: unknown): boolean {
+  return Array.isArray(value) && value.some((item) => item && typeof item === 'object' && (item as ComfyUiLoraInput).enabled !== false && String((item as ComfyUiLoraInput).lora_name ?? (item as ComfyUiLoraInput).name ?? '').trim());
+}
+
+function normalizeWorkflowOrder(value: unknown, typed: ComfyUiGenerationPayload): ComfyUiWorkflowPluginKind[] {
+  if (Array.isArray(value)) {
+    const seen = new Set<ComfyUiWorkflowPluginKind>();
+    return value.flatMap((item): ComfyUiWorkflowPluginKind[] => {
+      const kind = normalizeWorkflowPluginKind(item);
+      if (!kind || seen.has(kind)) return [];
+      seen.add(kind);
+      return [kind];
+    });
+  }
+  const order: ComfyUiWorkflowPluginKind[] = [];
+  if (typed.pag?.enabled === true) order.push('pag');
+  if (hasEnabledLoras(typed.loras)) order.push('lora_stack');
+  if (typed.freeu_v2?.enabled === true) order.push('freeu_v2');
+  if (typed.tiled_generation?.enabled === true) order.push('tiled_generation');
+  if (typed.tiled_vae?.encode === true || typed.tiled_vae?.decode === true) order.push('tiled_vae');
+  if (typed.perp_neg_guider?.enabled === true) order.push('perp_neg_guider');
+  return order;
+}
+
 export function normalizeComfyUiWorkflowPlugins(typed: ComfyUiGenerationPayload): ComfyUiResolvedWorkflowPlugins {
   const tiledGeneration = typed.tiled_generation ?? {};
   const tiledVae = typed.tiled_vae ?? {};
   const pag = typed.pag ?? {};
+  const freeuV2 = typed.freeu_v2 ?? {};
   const perpGuider = typed.perp_neg_guider ?? {};
+  const order = normalizeWorkflowOrder(typed.workflow_order, typed);
+  const active = new Set(order);
   return {
+    order,
     tiledGeneration: {
-      enabled: tiledGeneration.enabled === true,
+      enabled: active.has('tiled_generation'),
       backend: normalizeTiledGenerationBackend(tiledGeneration.backend),
       tileWidth: clampInt(tiledGeneration.tile_width, 512, 256, 8192),
       tileHeight: clampInt(tiledGeneration.tile_height, 512, 256, 8192),
@@ -95,19 +130,26 @@ export function normalizeComfyUiWorkflowPlugins(typed: ComfyUiGenerationPayload)
       shiftSeed: clampInt(tiledGeneration.shift_seed, 0, 0, MAX_SEED)
     },
     tiledVae: {
-      encode: tiledVae.encode === true,
-      decode: tiledVae.decode === true,
+      encode: active.has('tiled_vae') && tiledVae.encode === true,
+      decode: active.has('tiled_vae') && tiledVae.decode === true,
       tileSize: clampInt(tiledVae.tile_size, 512, 64, 4096),
       overlap: clampInt(tiledVae.overlap, 64, 0, 4096),
       temporalSize: clampInt(tiledVae.temporal_size, 64, 8, 4096),
       temporalOverlap: clampInt(tiledVae.temporal_overlap, 8, 4, 4096)
     },
     pag: {
-      enabled: pag.enabled === true,
+      enabled: active.has('pag'),
       scale: clampFloat(pag.scale, 3, 0, 100)
     },
+    freeuV2: {
+      enabled: active.has('freeu_v2'),
+      b1: clampFloat(freeuV2.b1, 1.3, 0, 10),
+      b2: clampFloat(freeuV2.b2, 1.4, 0, 10),
+      s1: clampFloat(freeuV2.s1, 0.9, 0, 10),
+      s2: clampFloat(freeuV2.s2, 0.2, 0, 10)
+    },
     perpGuider: {
-      enabled: perpGuider.enabled === true,
+      enabled: active.has('perp_neg_guider'),
       negScale: clampFloat(perpGuider.neg_scale, 1, 0, 100),
       blankConditioning: String(perpGuider.blank_conditioning ?? '').trim()
     }

@@ -124,6 +124,11 @@ test('ComfyUI request surface builds provider-owned payload and parameter summar
     tiledVaeOverlap: 96,
     pagEnabled: true,
     pagScale: 2.25,
+    freeuV2Enabled: true,
+    freeuV2B1: 1.3,
+    freeuV2B2: 1.4,
+    freeuV2S1: 0.9,
+    freeuV2S2: 0.2,
     perpGuiderEnabled: true,
     perpGuiderScale: 1.4,
     loras: [{ name: 'style.safetensors', strengthModel: 0.8, strengthClip: 0.7, enabled: true }]
@@ -142,14 +147,17 @@ test('ComfyUI request surface builds provider-owned payload and parameter summar
   assert.equal(payload.seed, 42);
   assert.deepEqual(payload.loras, [{ lora_name: 'style.safetensors', strength_model: 0.8, strength_clip: 0.7 }]);
   assert.deepEqual(payload.tiled_generation, { enabled: true, backend: 'tiled_diffusion', tile_width: 640, tile_height: 768, method: 'Mixture of Diffusers', tile_overlap: 96, tile_batch_size: 3, shift_method: 'random', shift_seed: 0 });
+  assert.deepEqual(payload.freeu_v2, { enabled: true, b1: 1.3, b2: 1.4, s1: 0.9, s2: 0.2 });
 
   const snapshotState = surface.captureProviderParamsSnapshot({ params, provider: comfyProvider, mode: 'generate', payload });
   assert.equal(snapshotState?.steps, 32);
   assert.equal(snapshotState?.samplerName, 'dpmpp_2m');
   assert.equal(snapshotState?.tiledGenerationEnabled, true);
   assert.equal(snapshotState?.tiledGenerationBackend, 'tiledDiffusion');
+  assert.equal(snapshotState?.freeuV2Enabled, true);
 
   const summary = surface.captureParameterSummary({ params, provider: comfyProvider, mode: 'generate', payload });
   assert.equal(summary?.surfaceId, 'comfyui.text-to-image');
   assert.ok(summary?.entries.some((entry) => entry.id === 'checkpoint' && entry.value === 'realistic.safetensors'));
+  assert.ok(summary?.entries.some((entry) => entry.id === 'freeuV2' && entry.value === 'b 1.3/1.4 · s 0.9/0.2'));
 });

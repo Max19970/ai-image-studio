@@ -1,7 +1,6 @@
 import type { ProviderGenerationExtension } from '../../extensionTypes';
 import type { ProviderGenerationSurfaceContext, ProviderGenerationSurfacePatchContext } from '../../surfaceTypes';
 import type { GenerationParamSlot } from '../../types';
-import { LoraStackField } from '../ComfyUiSurfaceFields';
 import { readComfyUiParamState } from '../state';
 import { getEnabledComfyUiLoras } from './loraPayloadExtension';
 
@@ -11,9 +10,8 @@ function loraTabStat(context: ProviderGenerationSurfaceContext) {
   return activeCount ? `${activeCount} LoRA` : 'no LoRA';
 }
 
-function renderLoraSlot(slot: GenerationParamSlot, context: ProviderGenerationSurfacePatchContext) {
-  if (slot !== 'composer/parameters/service') return [];
-  return [<LoraStackField key="comfyui-loras" context={context} />];
+function renderLoraSlot(_slot: GenerationParamSlot, _context: ProviderGenerationSurfacePatchContext) {
+  return [];
 }
 
 export const comfyUiLoraGenerationExtension: ProviderGenerationExtension = {

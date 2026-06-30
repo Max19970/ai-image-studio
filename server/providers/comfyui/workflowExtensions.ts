@@ -1,4 +1,5 @@
 import type { ComfyUiWorkflowBuildContext, ComfyUiWorkflowExtension, ComfyUiModelConditioningRefs } from './workflowExtensionTypes';
+import type { ComfyUiWorkflowPluginKind } from './workflowTypes';
 
 const pagWorkflowExtension: ComfyUiWorkflowExtension = {
   id: 'comfyui.workflow-extension.pag',
@@ -45,6 +46,27 @@ const loraStackWorkflowExtension: ComfyUiWorkflowExtension = {
   }
 };
 
+const freeuV2WorkflowExtension: ComfyUiWorkflowExtension = {
+  id: 'comfyui.workflow-extension.freeu-v2',
+  order: 35,
+  applyModelConditioning(context: ComfyUiWorkflowBuildContext, refs: ComfyUiModelConditioningRefs): ComfyUiModelConditioningRefs {
+    const settings = context.config.workflowPlugins.freeuV2;
+    if (!settings.enabled) return refs;
+    const nodeId = context.nextNodeId();
+    context.workflow[nodeId] = {
+      class_type: 'FreeU_V2',
+      inputs: {
+        model: refs.modelRef,
+        b1: settings.b1,
+        b2: settings.b2,
+        s1: settings.s1,
+        s2: settings.s2
+      }
+    };
+    return { ...refs, modelRef: [nodeId, 0] };
+  }
+};
+
 const tiledDiffusionWorkflowExtension: ComfyUiWorkflowExtension = {
   id: 'comfyui.workflow-extension.tiled-diffusion',
   order: 40,
@@ -83,15 +105,23 @@ const tiledDiffusionWorkflowExtension: ComfyUiWorkflowExtension = {
 export const comfyUiWorkflowExtensions = [
   pagWorkflowExtension,
   loraStackWorkflowExtension,
+  freeuV2WorkflowExtension,
   tiledDiffusionWorkflowExtension
 ] as const satisfies readonly ComfyUiWorkflowExtension[];
+
+const modelConditioningExtensionsByWorkflowKind: Partial<Record<ComfyUiWorkflowPluginKind, ComfyUiWorkflowExtension>> = {
+  pag: pagWorkflowExtension,
+  lora_stack: loraStackWorkflowExtension,
+  freeu_v2: freeuV2WorkflowExtension,
+  tiled_generation: tiledDiffusionWorkflowExtension
+};
 
 export function applyComfyUiModelConditioningExtensions(
   context: ComfyUiWorkflowBuildContext,
   refs: ComfyUiModelConditioningRefs
 ): ComfyUiModelConditioningRefs {
-  return comfyUiWorkflowExtensions
-    .slice()
-    .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
-    .reduce((nextRefs, extension) => extension.applyModelConditioning?.(context, nextRefs) ?? nextRefs, refs);
+  return context.config.workflowPlugins.order.reduce((nextRefs, kind) => {
+    const extension = modelConditioningExtensionsByWorkflowKind[kind];
+    return extension?.applyModelConditioning?.(context, nextRefs) ?? nextRefs;
+  }, refs);
 }
