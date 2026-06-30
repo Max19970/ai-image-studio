@@ -5,7 +5,7 @@ import type { StudioSettings } from '../../domain/studioSettings';
 import type { RequestPreset } from '../../entities/request-presets';
 import type { BatchComposerCommands } from '../../interface/context/commands';
 import { useI18n } from '../../i18n';
-import { hasProviderModeRequiredAttachments } from '../../entities/provider/compatibility';
+import { hasProviderModeRequiredAttachments } from '../../entities/provider/attachmentCompatibility';
 import { resolveProviderGenerationMode } from '../../entities/provider/modeResolution';
 import { SlotHost } from '../../interface/SlotHost';
 import { useEventCallback } from '../../shared/hooks/useEventCallback';

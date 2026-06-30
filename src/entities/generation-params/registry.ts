@@ -13,7 +13,9 @@ import type {
 } from './types';
 
 const definitionModules = import.meta.glob('./fields/**/definition.ts', { eager: true }) as Record<string, unknown>;
-const placementModules = import.meta.glob('./placements/**/*.placement.ts', { eager: true }) as Record<string, unknown>;
+const fieldPlacementModules = import.meta.glob('./fields/**/placement.ts', { eager: true }) as Record<string, unknown>;
+const legacyPlacementModules = import.meta.glob('./placements/**/*.placement.ts', { eager: true }) as Record<string, unknown>;
+const placementModules = { ...legacyPlacementModules, ...fieldPlacementModules };
 
 type DefinitionModule = {
   default?: GenerationParamFieldDefinition;

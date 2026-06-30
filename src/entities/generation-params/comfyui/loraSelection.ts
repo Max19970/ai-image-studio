@@ -2,7 +2,8 @@ import type { ImageParams } from '../../../domain/imageParams';
 import type { ProviderSettings } from '../../../domain/providerSettings';
 import type { StudioSettings } from '../../../domain/studioSettings';
 import { readComfyUiSettingsData, type ComfyUiLoraRegistration } from '../../../domain/comfyUiSettings';
-import { readComfyUiParamState, toComfyUiProviderParamState, type ComfyUiLoraSelection } from './state';
+import { readComfyUiParamState, type ComfyUiLoraSelection } from './state';
+import { toComfyUiProviderParamState } from './stateSerializers';
 
 export interface ComfyUiLoraControlOption {
   id: string;

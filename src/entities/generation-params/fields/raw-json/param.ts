@@ -3,6 +3,7 @@ import { parseOpenAiCompatibleRawJson } from '../../serializers/openAiCompatible
 
 export const rawJsonParam = defineGenerationParam({
   id: 'generationParam.rawJson',
+  order: 999,
   fieldDefinitionId: 'generationParams.rawJson',
   placementIds: ['composer.params.service.rawJson'],
   i18nNamespace: 'params.rawJson',

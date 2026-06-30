@@ -9,19 +9,13 @@ import {
 import { buildOpenAiCompatibleHeaders } from './auth';
 import { resolveOpenAiCompatibleEndpoint } from './endpoints';
 import { appendOpenAiCompatibleEditPayload, validateEditFiles } from './multipartEdit';
+import { resolveOpenAiCompatibleRequestSignal } from './requestSignal';
 import { resolveOpenAiCompatibleSubmitOperation } from './submitOperation';
 import {
   createOpenAiCompatibleUpstreamDiagnostics,
   fetchUpstream,
-  logOutboundRequest,
-  timeoutSignal
+  logOutboundRequest
 } from './upstreamClient';
-
-function resolveRequestSignal(provider: ProviderSettings, context: ProviderFetchContext): AbortSignal {
-  const timeout = timeoutSignal(provider.timeoutMs);
-  if (!context.signal) return timeout;
-  return typeof AbortSignal.any === 'function' ? AbortSignal.any([context.signal, timeout]) : context.signal;
-}
 
 export async function fetchOpenAiCompatibleGenerate(
   provider: ProviderSettings,
@@ -35,7 +29,7 @@ export async function fetchOpenAiCompatibleGenerate(
     method: 'POST',
     headers: buildOpenAiCompatibleHeaders(provider),
     body: JSON.stringify(payload),
-    signal: resolveRequestSignal(provider, context)
+    signal: resolveOpenAiCompatibleRequestSignal(provider, context)
   }, undefined, createOpenAiCompatibleUpstreamDiagnostics({
     operation: 'generate',
     provider,
@@ -64,7 +58,7 @@ export async function fetchOpenAiCompatibleEdit(
     method: 'POST',
     headers: buildOpenAiCompatibleHeaders(provider, true),
     body: form,
-    signal: resolveRequestSignal(provider, context)
+    signal: resolveOpenAiCompatibleRequestSignal(provider, context)
   }, undefined, createOpenAiCompatibleUpstreamDiagnostics({
     operation: 'edit',
     provider,

@@ -1,5 +1,5 @@
 import type { BatchComposerCommands, RequestPresetCommands } from '../../interface/context/commands';
-import { sanitizeBatchDraftForSettings } from '../../entities/provider/compatibility';
+import { sanitizeBatchDraftForSettings } from '../../entities/provider/attachmentCompatibility';
 import type { BatchComposerCommandDeps } from './appCommandTypes';
 import { createBatchDraftFromWorkspace } from './commandFactoryHelpers';
 import { submitBatchGenerationCommand } from './generationCommands';

@@ -4,51 +4,47 @@ import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
+import { resolveGenerationParamProfileAvailability } from './availability';
+import { logicalGenerationParamGeneratedModules } from './logicalRegistry.generated';
+import { normalizeProviderParamBucket } from './providerState';
 import type {
   GenerationParamCopyDescriptor,
   GenerationParamCopyKey,
   GenerationParamDefinition,
   GenerationParamOptionDescriptor,
-  GenerationParamOptionGroup
+  GenerationParamOptionGroup,
+  ProviderGenerationParamProfile
 } from './types';
-import { resolveGenerationParamProfileAvailability } from './availability';
-import type { ProviderGenerationParamProfile } from './types';
-import { normalizeProviderParamBucket } from './providerState';
-import { sizeParam } from './fields/size/param';
-import { nParam } from './fields/n/param';
-import { qualityParam } from './fields/quality/param';
-import { backgroundParam } from './fields/background/param';
-import { moderationParam } from './fields/moderation/param';
-import { styleParam } from './fields/style/param';
-import { inputFidelityParam } from './fields/input-fidelity/param';
-import { outputFormatParam } from './fields/output-format/param';
-import { outputCompressionParam } from './fields/output-compression/param';
-import { streamParam } from './fields/stream/param';
-import { partialImagesParam } from './fields/partial-images/param';
-import { responseFormatParam } from './fields/response-format/param';
-import { userParam } from './fields/user/param';
-import { includeModelParam } from './fields/include-model/param';
-import { rawJsonParam } from './fields/raw-json/param';
-import { retryPolicyParam } from './fields/retry-policy/param';
 
-export const logicalGenerationParamDefinitions: readonly GenerationParamDefinition[] = [
-  includeModelParam,
-  sizeParam,
-  nParam,
-  qualityParam,
-  backgroundParam,
-  moderationParam,
-  styleParam,
-  inputFidelityParam,
-  outputFormatParam,
-  outputCompressionParam,
-  streamParam,
-  partialImagesParam,
-  responseFormatParam,
-  userParam,
-  retryPolicyParam,
-  rawJsonParam
-];
+type GenerationParamModule = Record<string, unknown>;
+type ImportMetaWithGlob = ImportMeta & {
+  glob?: (pattern: string, options: { eager: true }) => Record<string, GenerationParamModule>;
+};
+
+const paramModules = ((import.meta as ImportMetaWithGlob).glob?.('./fields/**/param.ts', { eager: true }) ??
+  logicalGenerationParamGeneratedModules) as Record<string, GenerationParamModule>;
+
+function isGenerationParamDefinition(value: unknown): value is GenerationParamDefinition {
+  const candidate = value as Partial<GenerationParamDefinition> | null;
+  return Boolean(candidate?.id && candidate.fieldDefinitionId && candidate.stateKeys && candidate.placementIds);
+}
+
+function exportedParamDefinitions() {
+  return Object.entries(paramModules)
+    .flatMap(([sourcePath, rawModule]) =>
+      Object.values(rawModule)
+        .filter(isGenerationParamDefinition)
+        .map((definition) => ({ definition, sourcePath }))
+    )
+    .sort((a, b) =>
+      (a.definition.order ?? 100).toString().localeCompare((b.definition.order ?? 100).toString(), undefined, { numeric: true }) ||
+      a.sourcePath.localeCompare(b.sourcePath) ||
+      a.definition.id.localeCompare(b.definition.id)
+    )
+    .map(({ definition }) => definition);
+}
+
+export const logicalGenerationParamDefinitions: readonly GenerationParamDefinition[] = exportedParamDefinitions();
 
 export const logicalGenerationParamDefinitionsById = new Map(
   logicalGenerationParamDefinitions.map((definition) => [definition.id, definition])

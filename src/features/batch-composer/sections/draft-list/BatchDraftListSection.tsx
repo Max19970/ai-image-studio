@@ -7,7 +7,7 @@ import type { BatchComposerLayoutContext, BatchDraftLayoutContext } from '../../
 import type { I18nContextValue } from '../../../../shared/i18n/types';
 import { useI18n } from '../../../../i18n';
 import { getProviderModelOptions } from '../../../../entities/provider/modelOptions';
-import { addImageFilesToProviderModeDraft, hasProviderModeRequiredAttachments } from '../../../../entities/provider/compatibility';
+import { addImageFilesToProviderModeDraft, hasProviderModeRequiredAttachments } from '../../../../entities/provider/attachmentCompatibility';
 import { resolveProviderControlSurface } from '../../../../entities/provider/controlSurface';
 import { resolveProviderGenerationModeForModelContext } from '../../../../entities/provider/modeResolution';
 import { toProviderSettings } from '../../../../entities/studio-settings';

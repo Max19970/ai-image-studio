@@ -9,7 +9,7 @@ import {
   type RequestPresetDisplayMeta,
   type RequestPresetSnapshot
 } from '../../entities/request-presets';
-import { sanitizeBatchDraftForSettings, sanitizeProviderModeDraftForModel } from '../../entities/provider/compatibility';
+import { sanitizeBatchDraftForSettings, sanitizeProviderModeDraftForModel } from '../../entities/provider/attachmentCompatibility';
 import { resolveProviderGenerationModeForModelContext } from '../../entities/provider/modeResolution';
 import type { RequestPresetCommandDeps } from './appCommandTypes';
 

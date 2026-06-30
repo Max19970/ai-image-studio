@@ -3,7 +3,7 @@ import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
 import { useI18n } from '../../../../i18n';
 import type { ComposerActionContext } from '../../composerTypes';
 import { ProviderModelPicker } from '../../../../entities/provider/ui';
-import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/compatibility';
+import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/attachmentCompatibility';
 import { RequestPresetManagerDialog, createComposerPresetManagerController } from '../../../request-presets/elements/preset-menu/RequestPresetMenuAction';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import styles from './ComposerControlMenu.module.css';

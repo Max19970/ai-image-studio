@@ -5,6 +5,7 @@ import {
   imageFromOpenAiCompatibleBase64,
   urlImageFromOpenAiCompatibleItem
 } from './responseImages';
+import { parseOpenAiCompatibleSseBlock } from './responseSse';
 
 function collectResponseOutputImages(output: unknown, fallbackFormat: string): GeneratedImage[] {
   if (!Array.isArray(output)) return [];
@@ -65,22 +66,7 @@ export function collectOpenAiCompatibleImagesFromJson(json: unknown, fallbackFor
   return images;
 }
 
-export function parseOpenAiCompatibleSseBlock(block: string): unknown[] {
-  const dataLines = block
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('data:'))
-    .map((line) => line.slice(5).trim())
-    .filter((line) => line && line !== '[DONE]');
-
-  return dataLines.flatMap((line) => {
-    try {
-      return [JSON.parse(line)];
-    } catch {
-      return [];
-    }
-  });
-}
+export { parseOpenAiCompatibleSseBlock } from './responseSse';
 
 export function compactOpenAiCompatibleResponseRaw(raw: unknown): unknown {
   return compactOpenAiCompatibleInlineImageRaw(raw);

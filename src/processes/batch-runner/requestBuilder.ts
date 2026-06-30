@@ -1,5 +1,5 @@
 import type { GenerationRequestSnapshot } from '../../domain/generationTask';
-import { hasProviderModeRequiredAttachments } from '../../entities/provider/compatibility';
+import { hasProviderModeRequiredAttachments } from '../../entities/provider/attachmentCompatibility';
 import {
   getLegacyWorkModeForProviderMode,
   resolveProviderGenerationModeForModelContext

@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
 import type { BatchDraftLayoutContext } from '../../batchComposerTypes';
-import { getProviderModeForAttachmentRole, providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/compatibility';
+import { getProviderModeForAttachmentRole, providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/attachmentCompatibility';
 import { ProviderModelPicker } from '../../../../entities/provider/ui';
 import { RequestPresetManagerDialog, type RequestPresetManagerController } from '../../../request-presets/elements/preset-menu/RequestPresetMenuAction';
 import { useI18n } from '../../../../i18n';

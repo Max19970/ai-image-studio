@@ -15,7 +15,7 @@ import {
 import {
   getProviderModeAttachmentStatusText,
   hasProviderModeRequiredAttachments
-} from '../../entities/provider/compatibility';
+} from '../../entities/provider/attachmentCompatibility';
 import type { TranslateFn } from '../commands/types';
 import type { WorkspaceDerivedState, WorkspaceState } from './types';
 

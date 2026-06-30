@@ -1,12 +1,12 @@
 import type { BatchCompatibilityCommandDeps, ComposerCompatibilityCommandDeps } from './appCommandTypes';
 import type { ProviderGenerationModeId, ProviderAttachmentRole } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
-import type { ProviderCompatibilityChange } from '../../entities/provider/compatibility';
+import type { ProviderCompatibilityChange } from '../../entities/provider/compatibilityTypes';
 import {
   getProviderModeForAttachmentRole,
   sanitizeBatchDraftsForSettings,
   sanitizeProviderModeDraftForModel
-} from '../../entities/provider/compatibility';
+} from '../../entities/provider/attachmentCompatibility';
 
 export function compatibilityNoticeForChanges(
   t: ComposerCompatibilityCommandDeps['t'],

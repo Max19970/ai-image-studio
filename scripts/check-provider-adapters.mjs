@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { providerServerManifests } from '../server/providers/registry.ts';
-import { providerClientManifests } from '../src/entities/provider/registry.ts';
 
 const root = process.cwd();
+const providerClientManifests = await collectClientProviderManifests();
 
 function fail(message) {
   console.error(`Provider adapter check failed: ${message}`);
@@ -21,6 +22,20 @@ function read(filePath) {
 
 function linesOf(filePath) {
   return read(filePath).split('\n').length;
+}
+
+async function collectClientProviderManifests() {
+  const providersRoot = path.join(root, 'src/providers');
+  const manifestFiles = fs.readdirSync(providersRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(providersRoot, entry.name, 'manifest.ts'))
+    .filter((file) => fs.existsSync(file));
+
+  const modules = await Promise.all(manifestFiles.map((file) => import(pathToFileURL(file).href)));
+  return modules
+    .flatMap((module) => Object.values(module))
+    .filter((value) => value?.id && value?.definition && value?.architecture)
+    .sort((left, right) => left.id.localeCompare(right.id));
 }
 
 function collectSourceFiles(basePath) {

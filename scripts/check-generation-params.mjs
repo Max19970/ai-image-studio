@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const fieldsDir = path.join(root, 'src', 'entities', 'generation-params', 'fields');
-const placementsFile = path.join(root, 'src', 'entities', 'generation-params', 'placements', 'composer.parameters.placement.ts');
+const legacyPlacementsDir = path.join(root, 'src', 'entities', 'generation-params', 'placements');
 const defaultsFile = path.join(root, 'src', 'data', 'studio.defaults.json');
 const localeFiles = ['en', 'ru'].map((locale) => path.join(root, 'src', 'shared', 'i18n', 'locales', locale, 'params.json'));
 
@@ -33,6 +33,15 @@ function matchStringArrayProperty(source, property) {
   const match = source.match(new RegExp(`${property}\\s*:\\s*\\[([\\s\\S]*?)\\]`));
   if (!match) return [];
   return [...match[1].matchAll(/['"]([^'"]+)['"]/g)].map((item) => item[1]);
+}
+
+function collectFiles(dir, predicate) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return collectFiles(full, predicate);
+    return entry.isFile() && predicate(full) ? [full] : [];
+  });
 }
 
 function lineNumbersFor(source, pattern) {
@@ -84,9 +93,15 @@ const modules = folders.map((folder) => {
   };
 });
 
-const placementSource = read(placementsFile);
-const placementRecords = [...placementSource.matchAll(/\{\s*id\s*:\s*['"]([^'"]+)['"][\s\S]*?use\s*:\s*['"]([^'"]+)['"][\s\S]*?\}/g)]
-  .map((match) => ({ id: match[1], use: match[2] }));
+const placementFiles = [
+  ...collectFiles(fieldsDir, (file) => file.endsWith(`${path.sep}placement.ts`)),
+  ...collectFiles(legacyPlacementsDir, (file) => file.endsWith('.placement.ts'))
+].sort();
+const placementRecords = placementFiles.flatMap((file) => {
+  const source = read(file);
+  return [...source.matchAll(/\{\s*id\s*:\s*['"]([^'"]+)['"][\s\S]*?use\s*:\s*['"]([^'"]+)['"][\s\S]*?\}/g)]
+    .map((match) => ({ id: match[1], use: match[2], file: rel(file), lineNumbers: lineNumbersFor(source, /use\s*:/) }));
+});
 const placementIds = placementRecords.map((placement) => placement.id);
 const placementById = new Map(placementRecords.map((placement) => [placement.id, placement]));
 const placementUses = placementRecords.map((placement) => placement.use);
@@ -126,14 +141,13 @@ const issues = [
   ...missingPlacementTargets.map((id) => `Placement references missing generation parameter field definition: ${id}`),
   ...unusedFieldIds.map((id) => `Generation parameter field definition is not placed anywhere: ${id}`),
   ...unownedFieldIds.map((id) => `Generation parameter field definition is not owned by a logical param: ${id}`),
-  ...unownedPlacementIds.map((id) => `Generation parameter placement is not owned by a logical param: ${id}`),
+  ...unownedPlacementIds.map((id) => `Generation parameter placement is not owned by a logical param`),
   ...modules.flatMap((module) => module.copyAndOptionI18nKeys.flatMap((key) => localeDictionaries.filter(({ dictionary }) => !(key in dictionary)).map(({ file }) => `Missing i18n key "${key}" in ${file} referenced from ${module.paramFile}`)))
 ];
 
 const payloadCount = modules.filter((module) => module.hasPayloadSerializer).length;
 const snapshotCount = modules.filter((module) => module.snapshotKeys.length > 0).length;
 const normalizedCount = modules.filter((module) => module.hasNormalize).length;
-const linkLineNumbers = lineNumbersFor(placementSource, /use\s*:/);
 
 console.log('Generation parameter registry summary:');
 console.log(`${String(modules.length).padStart(5)} logical parameter modules`);
@@ -148,7 +162,8 @@ console.log(`${String(modules.filter((module) => module.placementIds.length).len
 if (issues.length > 0) {
   console.error('\nGeneration parameter registry check failed:');
   for (const issue of issues) console.error(`  - ${issue}`);
-  if (linkLineNumbers.length) console.error(`\nPlacement use declarations found at ${rel(placementsFile)}:${linkLineNumbers.join(',')}`);
+  const placementLinks = placementRecords.flatMap((placement) => placement.lineNumbers.map((line) => `${placement.file}:${line}`));
+  if (placementLinks.length) console.error(`\nPlacement use declarations found at ${placementLinks.join(', ')}`);
   process.exit(1);
 }
 

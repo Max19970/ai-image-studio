@@ -11,9 +11,9 @@ import {
   COMFYUI_SURFACE_ID,
   defaultComfyUiParamState,
   normalizeComfyUiParamState,
-  readComfyUiParamState,
-  toComfyUiProviderParamState
+  readComfyUiParamState
 } from './state';
+import { toComfyUiProviderParamState } from './stateSerializers';
 import { buildComfyUiPayload } from './payload';
 import { createComfyUiParameterSummaryFromParams } from './summary';
 import { comfyUiGenerationRequestSurface } from './requestSurface';

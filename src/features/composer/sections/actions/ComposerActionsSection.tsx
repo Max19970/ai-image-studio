@@ -3,7 +3,7 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 import { SlotHost } from '../../../../interface/SlotHost';
 import type { ComposerActionContext, ComposerLayoutContext } from '../../composerTypes';
 import { useI18n } from '../../../../i18n';
-import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/compatibility';
+import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/attachmentCompatibility';
 import { getProviderModeSubmitActionLabelKey } from '../../../../entities/provider/modeIntent';
 import styles from '../../ComposerLayout.module.css';
 

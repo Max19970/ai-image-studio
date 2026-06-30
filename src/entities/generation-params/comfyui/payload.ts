@@ -3,7 +3,7 @@ import type { ProviderGenerationModeDefinition } from '../../../domain/providerM
 import type { ProviderSettings } from '../../../domain/providerSettings';
 import type { WorkMode } from '../../../domain/workMode';
 import { buildGenerationExtensionPayload } from '../extensionTypes';
-import { buildComfyUiBasePayload } from './state';
+import { buildComfyUiBasePayload } from './basePayload';
 import { comfyUiPayloadExtensions } from './extensions/payloadRegistry';
 
 export function buildComfyUiPayload(

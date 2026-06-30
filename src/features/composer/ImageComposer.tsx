@@ -14,7 +14,7 @@ import type { ComposerActionContext, ComposerLayoutContext, ComposerModelOption,
 import { getReferenceAttachmentId, useFlatAttachmentPreviewItems } from '../../shared/image';
 import { getProviderModelOptions, getSelectedModel } from '../../entities/provider/modelOptions';
 import { resolveProviderControlSurface } from '../../entities/provider/controlSurface';
-import { addImageFilesToProviderModeDraft } from '../../entities/provider/compatibility';
+import { addImageFilesToProviderModeDraft } from '../../entities/provider/attachmentCompatibility';
 import styles from './ComposerLayout.module.css';
 
 function cx(...values: Array<string | false | null | undefined>) {

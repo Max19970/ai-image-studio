@@ -2,7 +2,8 @@ import { captureGenerationRequestParamsSnapshot, restoreImageParamsFromRequestSn
 import type { ProviderGenerationRequestSurface } from '../requestSurfaceTypes';
 import { buildComfyUiPayload } from './payload';
 import { createComfyUiParameterSummaryFromParams } from './summary';
-import { COMFYUI_SURFACE_ID, readComfyUiParamState, toComfyUiProviderParamState } from './state';
+import { COMFYUI_SURFACE_ID, readComfyUiParamState } from './state';
+import { toComfyUiProviderParamState } from './stateSerializers';
 
 export const comfyUiGenerationRequestSurface: ProviderGenerationRequestSurface = {
   id: COMFYUI_SURFACE_ID,

@@ -149,6 +149,7 @@ export interface NormalizeGenerationParamContext {
 
 export interface GenerationParamDefinition {
   id: string;
+  order?: number;
   stateKeys: readonly (keyof ImageParams)[];
   fieldDefinitionId: string;
   placementIds: readonly string[];

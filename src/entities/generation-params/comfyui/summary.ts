@@ -5,7 +5,8 @@ import type { ProviderSettings } from '../../../domain/providerSettings';
 import type { WorkMode } from '../../../domain/workMode';
 import { captureGenerationExtensionSummaryEntries } from '../extensionTypes';
 import { comfyUiPayloadExtensions } from './extensions/payloadRegistry';
-import { createComfyUiBaseParameterSummary, readComfyUiParamState } from './state';
+import { createComfyUiBaseParameterSummary } from './baseSummary';
+import { readComfyUiParamState } from './state';
 
 export function createComfyUiParameterSummaryFromParams(
   params: ImageParams,

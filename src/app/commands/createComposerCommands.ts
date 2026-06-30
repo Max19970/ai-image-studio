@@ -1,6 +1,7 @@
 import type { ImageParams } from '../../domain/imageParams';
 import type { ComposerCommands, RequestPresetCommands } from '../../interface/context/commands';
-import { applyComposerCompatibilityForModel, getComposerModeForAttachmentRole, setComposerDraftWithCompatibility, setComposerProviderModeWithCompatibility } from './providerCompatibilityCommands';
+import { setComposerImageAttachments, setComposerMask, setComposerReferenceImages, setComposerTargetImage } from './composerAttachmentCommands';
+import { applyComposerCompatibilityForModel, setComposerProviderModeWithCompatibility } from './providerCompatibilityCommands';
 import type { ComposerCommandDeps } from './appCommandTypes';
 import { submitSingleGenerationCommand } from './generationCommands';
 import { addCurrentRequestToBatchComposerCommand, openBatchComposerCommand } from './workspaceCommands';
@@ -58,43 +59,10 @@ export function createComposerCommands(args: ComposerCommandDeps, requestPresets
       setOpen: args.setBatchComposerOpen,
       setWorkspaceTab: args.setWorkspaceTab
     }),
-    setTargetImage: (file) => {
-      setComposerDraftWithCompatibility(args, {
-        providerModeId: file ? getComposerModeForAttachmentRole(args, 'targetImage') : args.providerModeId,
-        targetImage: file,
-        referenceImages: args.referenceImages,
-        mask: args.mask
-      });
-    },
-    setReferenceImages: (files) => {
-      setComposerDraftWithCompatibility(args, {
-        providerModeId: files.length > 0 ? getComposerModeForAttachmentRole(args, 'referenceImage') : args.providerModeId,
-        targetImage: args.targetImage,
-        referenceImages: files,
-        mask: args.mask
-      });
-    },
-    setImageAttachments: (targetImage, referenceImages) => {
-      const providerModeId = targetImage
-        ? getComposerModeForAttachmentRole(args, 'targetImage')
-        : referenceImages.length > 0
-          ? getComposerModeForAttachmentRole(args, 'referenceImage')
-          : args.providerModeId;
-      setComposerDraftWithCompatibility(args, {
-        providerModeId,
-        targetImage,
-        referenceImages,
-        mask: args.mask
-      });
-    },
-    setMask: (file) => {
-      setComposerDraftWithCompatibility(args, {
-        providerModeId: file ? getComposerModeForAttachmentRole(args, 'mask') : args.providerModeId,
-        targetImage: args.targetImage,
-        referenceImages: args.referenceImages,
-        mask: file
-      });
-    },
+    setTargetImage: (file) => setComposerTargetImage(args, file),
+    setReferenceImages: (files) => setComposerReferenceImages(args, files),
+    setImageAttachments: (targetImage, referenceImages) => setComposerImageAttachments(args, targetImage, referenceImages),
+    setMask: (file) => setComposerMask(args, file),
     requestPresets
   };
 }

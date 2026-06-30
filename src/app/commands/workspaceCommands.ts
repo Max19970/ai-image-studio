@@ -1,6 +1,6 @@
 import { cloneParams } from '../../domain/generationSnapshots';
 import { clearServerGenerationTasks, deleteServerGenerationTask } from '../../infrastructure/api';
-import { sanitizeProviderModeDraftForModel } from '../../entities/provider/compatibility';
+import { sanitizeProviderModeDraftForModel } from '../../entities/provider/attachmentCompatibility';
 import { normalizeSelectedModel } from '../../entities/studio-settings';
 import { getProviderGenerationRequestSurfaceById } from '../../entities/generation-params/requestSurface';
 import { resolveProviderGenerationModeForRestore } from '../../entities/provider/modeResolution';

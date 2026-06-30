@@ -16,7 +16,7 @@ export interface ModelCapabilities {
   edit: Partial<Record<CapabilityKey, CapabilityEntry>>;
 }
 
-export type ProviderAdapterKind = 'openai-compatible' | 'comfyui';
+export type ProviderAdapterKind = string;
 
 export interface ProviderRuntimeCapabilities {
   supportsGenerate: boolean;
@@ -105,7 +105,7 @@ export interface ProviderAdapterSettingsField {
 }
 
 export interface ProviderAdapterDefinition {
-  id: ProviderAdapterKind | string;
+  id: ProviderAdapterKind;
   label: string;
   description: string;
   defaultGenerationEndpoint: string;
