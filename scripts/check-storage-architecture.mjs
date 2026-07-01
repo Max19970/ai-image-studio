@@ -25,6 +25,7 @@ const requiredFiles = [
   'server/storage/migrations/registry.ts',
   'server/storage/migrations/registry.generated.ts',
   'server/storage/migrations/types.ts',
+  'server/gallery/descriptors.ts',
   'server/storage/galleryFoldersStore.ts',
   'server/routes/galleryFolderRoutes.ts',
   'src/infrastructure/storage/remoteGalleryFolderStore.ts',
@@ -65,7 +66,11 @@ const appDocumentDescriptors = fs.readFileSync(path.join(root, 'server/storage/a
 const appDocumentStore = fs.readFileSync(path.join(root, 'server/storage/appDocumentStore.ts'), 'utf8');
 const appDocumentRoutes = fs.readFileSync(path.join(root, 'server/routes/appDocumentStorageRoutes.ts'), 'utf8');
 const remoteHistoryStore = fs.readFileSync(path.join(root, 'src/infrastructure/storage/remoteGenerationTaskHistoryStore.ts'), 'utf8');
+const galleryDescriptors = fs.readFileSync(path.join(root, 'server/gallery/descriptors.ts'), 'utf8');
 const galleryFoldersStore = fs.readFileSync(path.join(root, 'server/storage/galleryFoldersStore.ts'), 'utf8');
+const galleryFolderRoutes = fs.readFileSync(path.join(root, 'server/routes/galleryFolderRoutes.ts'), 'utf8');
+const galleryMutations = fs.readFileSync(path.join(root, 'server/processes/generation-task-runtime/galleryMutations.ts'), 'utf8');
+const galleryMetadataStore = fs.readFileSync(path.join(root, 'server/storage/galleryMetadataStore.ts'), 'utf8');
 const remoteGalleryFolderStore = fs.readFileSync(path.join(root, 'src/infrastructure/storage/remoteGalleryFolderStore.ts'), 'utf8');
 const storageSyncHistory = fs.readFileSync(path.join(root, 'src/processes/storage-sync/generationTaskHistory.ts'), 'utf8');
 const storageSyncSettings = fs.readFileSync(path.join(root, 'src/processes/storage-sync/studioSettings.ts'), 'utf8');
@@ -95,6 +100,7 @@ const expectations = [
   ['app document descriptors own buckets and routes', /appDocumentBuckets/.test(appDocumentDescriptors) && /listAppDocumentRouteDescriptors/.test(appDocumentDescriptors) && /integration-settings\.v1/.test(appDocumentDescriptors) && /for \(const descriptor of listAppDocumentRouteDescriptors\(\)\)/.test(appDocumentRoutes)],
   ['app document store exists', /studioSettingsBucket/.test(appDocumentStore) && /providerProbeCacheBucket/.test(appDocumentStore)],
   ['remote history store supports asset endpoint', /generationTaskAssetEndpoint/.test(remoteHistoryStore) && /loadGenerationTaskAsset/.test(remoteHistoryStore)],
+  ['gallery descriptors own item kinds and paste operation policies', /galleryItemKindDescriptors/.test(galleryDescriptors) && /galleryPasteOperationDescriptors/.test(galleryDescriptors) && /galleryItemCanContainChildren/.test(galleryFoldersStore) && /galleryPasteOperationDuplicatesTasks/.test(galleryMutations) && /parseGalleryItemKind/.test(galleryFolderRoutes) && /normalizeGalleryMetadataKind/.test(galleryMetadataStore)],
   ['gallery folder store uses encrypted documents', /generationGalleryFolderBucket/.test(galleryFoldersStore) && /saveEncryptedDocument/.test(galleryFoldersStore) && /loadGalleryFolders/.test(galleryFoldersStore)],
   ['remote gallery folder store exists', /gallery-folders/.test(remoteGalleryFolderStore) && /moveRemoteGalleryItem/.test(remoteGalleryFolderStore)],
   ['history sync creates thumbnails before persistence', /createOptimizedThumbnail/.test(storageSyncHistory) && /withGeneratedImageThumbnails/.test(storageSyncHistory)],
@@ -117,6 +123,7 @@ console.log(`  ${migrationFiles.length} descriptor-owned storage migrations`);
 console.log('  descriptor-driven storage migration registry enabled');
 console.log('  storage path, key, codec and SQLite connection ports enabled');
 console.log('  normalized generation task table enabled');
+console.log('  gallery item kind and paste operation descriptors enabled');
 console.log('  gallery path index and encrypted folder descriptors enabled');
 console.log('  separated encrypted image asset documents enabled');
 console.log('  encrypted thumbnail asset documents enabled');

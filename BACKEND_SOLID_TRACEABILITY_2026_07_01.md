@@ -10,8 +10,8 @@ This is a strict traceability check, not a success-only summary. `Fixed` means t
 | Status | Count |
 | --- | ---: |
 | Fixed | 8 |
-| Partial | 19 |
-| Open | 10 |
+| Partial | 20 |
+| Open | 9 |
 
 ## Finding matrix
 
@@ -45,7 +45,7 @@ This is a strict traceability check, not a success-only summary. `Fixed` means t
 | B-SOLID-026 | Cancellation state is global and tightly coupled to task reducers | Partial | Cancellation controller maps and cancel flags moved into `cancellationRegistry.ts`; runtime task access moved behind `GenerationCancellationTaskStorePort`; batch cancel reducer adapter moved to `cancellationBatchReducer.ts`. | Default cancellation registry is still global for compatibility, and task-kind cancellation policy is not descriptor-owned yet. |
 | B-SOLID-027 | Task SSE event bus is global and closed to event channel extension | Partial | Delta calculation moved to `taskEventDelta.ts`, SSE writer/keepalive to `taskEventTransport.ts`, and bus lifecycle to `taskEventBus.ts`; `taskEvents.ts` is a compatibility facade over `createGenerationTaskEventBus`. | Default global bus remains for compatibility, and there is still only the task event channel. |
 | B-SOLID-028 | Live image cache is a process-global storage/serialization service | Partial | `liveGenerationImageAssets.ts` adds `createLiveGenerationImageStore`, id factory, TTL/max policy, data URL parser, and URL builder; `liveGenerationImageStore.ts` is now the serialization facade. | Default live image store remains process-global for existing route compatibility. |
-| B-SOLID-029 | Gallery folder/store code is closed over item kinds and operation kinds | Open | Gallery item/operation model was not generalized. | Add gallery item-kind and operation descriptors used by routes, stores, metadata, and runtime mutation. |
+| B-SOLID-029 | Gallery folder/store code is closed over item kinds and operation kinds | Partial | `server/gallery/descriptors.ts` now owns gallery item kind descriptors and paste operation policies; routes parse item kinds through descriptor helpers; folder store, runtime mutations, and metadata store use descriptor helpers instead of local string checks. | Descriptors are still local constants, not generated/discovered from feature-owned gallery modules. |
 | B-SOLID-030 | Download/archive flow mixes route policy, temp cache, data URL parsing, ZIP implementation, and media mapping | Partial | `downloadUseCases.ts` now owns image download registration, stored-asset registration, archive image-ref parsing, task/image selection, filename uniqueness, and ZIP assembly; route keeps HTTP response concerns. | Temp image cache and ZIP/media primitives still live in route helper module and should become injected archive/media/temp-cache ports. |
 | B-SOLID-031 | Infrastructure helpers are placed inside provider contract module | Fixed | `HttpError`, `compactCause`, and `env` now live in `server/http/*` and `server/config/env.ts`; HTTP modules no longer import provider types; provider request validation moved to `server/providers/requestValidation.ts`. | Provider types still import some shared domain types from `src/domain/generationTask`; that belongs to B-SOLID-004 rather than this finding. |
 | B-SOLID-032 | Environment loading mutates `process.env` directly | Partial | `EnvReader` / `env` abstraction exists; provider/HTTP imports were moved away from provider contracts; storage path/key config now uses `processEnvReader` through `resolveStoragePathConfig` and `createStorageKeyProvider`. | `server/env/loadEnv.ts`, `server/index.ts`, and several composition points still rely on global process env. Need injected config object/app context. |
@@ -57,7 +57,7 @@ This is a strict traceability check, not a success-only summary. `Fixed` means t
 
 ## Immediate next implementation slices
 
-1. Storage/runtime slice: continue B-SOLID-023, B-SOLID-024, B-SOLID-029 and finish B-SOLID-021/B-SOLID-022/B-SOLID-025/B-SOLID-026/B-SOLID-027/B-SOLID-028/B-SOLID-030/B-SOLID-037 by replacing compatibility globals with app-context-injected instances.
+1. Storage/runtime slice: continue B-SOLID-023 and B-SOLID-024, then finish partial storage/runtime/gallery items by replacing compatibility globals and local descriptor constants with app-context-injected/generated registries.
 2. ComfyUI/provider slice: B-SOLID-006 through B-SOLID-011 plus B-SOLID-005 follow-up.
 3. Route/use-case slice: B-SOLID-012, B-SOLID-016, B-SOLID-022, B-SOLID-029, B-SOLID-030.
 4. Integration discovery slice: B-SOLID-017, B-SOLID-019 metadata discovery, B-SOLID-020 webhook strategy/runtime.
