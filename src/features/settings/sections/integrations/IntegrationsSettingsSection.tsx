@@ -5,7 +5,7 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 import { useI18n } from '../../../../i18n';
 import type { SettingsSectionContext, SettingsSectionVariant } from '../../settingsTypes';
 import { IntegrationSubTabs } from './IntegrationSubTabs';
-import { TelegramIntegrationPanel } from './TelegramIntegrationPanel';
+import { integrationSettingsPanelDescriptorsById } from './integrationPanels';
 import styles from './IntegrationsSettingsSection.module.css';
 
 type IntegrationsSettingsSectionProps = {
@@ -15,8 +15,10 @@ type IntegrationsSettingsSectionProps = {
 export function IntegrationsSettingsSection({ props }: ElementDefinitionProps<SettingsSectionContext, IntegrationsSettingsSectionProps>) {
   const { t } = useI18n();
   const definitions = useMemo(() => listIntegrationDefinitions(), []);
-  const [activeId, setActiveId] = useState<IntegrationId>(definitions[0]?.id ?? 'telegram');
+  const [activeId, setActiveId] = useState<IntegrationId>(definitions[0]?.id ?? '');
   const activeDefinition = getIntegrationDefinition(activeId) ?? definitions[0] ?? null;
+  const activePanel = activeDefinition ? integrationSettingsPanelDescriptorsById.get(activeDefinition.id) : null;
+  const Panel = activePanel?.Component;
   const variant = props.variant;
 
   if (!activeDefinition) {
@@ -32,11 +34,7 @@ export function IntegrationsSettingsSection({ props }: ElementDefinitionProps<Se
     <section className={styles.subpage} data-settings-section="integrations" data-settings-variant={variant}>
       <Header variant={variant} />
       <IntegrationSubTabs definitions={definitions} activeId={activeDefinition.id} onChange={setActiveId} variant={variant} />
-      {activeDefinition.id === 'telegram' ? (
-        <TelegramIntegrationPanel definition={activeDefinition} variant={variant} />
-      ) : (
-        <div className={styles.empty}>{t('settings.integrations.unsupported')}</div>
-      )}
+      {Panel ? <Panel definition={activeDefinition} variant={variant} /> : <div className={styles.empty}>{t('settings.integrations.unsupported')}</div>}
     </section>
   );
 }

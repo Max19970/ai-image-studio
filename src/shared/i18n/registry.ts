@@ -1,23 +1,42 @@
-import { enDictionary } from './locales/en';
-import { ruDictionary } from './locales/ru';
-import type { Dictionary, Locale, LocaleOption, TranslationVars } from './types';
+import { localeFallbackModules } from './registry.generated';
+import type { Dictionary, Locale, LocaleDictionaryModule, LocaleOption, TranslationVars } from './types';
 
 export const localeStorageKey = 'gpt-image-2-studio.locale.v1';
 
-export const locales: LocaleOption[] = [
-  { value: 'ru', label: 'Russian', nativeLabel: 'Русский' },
-  { value: 'en', label: 'English', nativeLabel: 'English' }
-];
-
-export const dictionaries: Record<Locale, Dictionary> = {
-  ru: ruDictionary,
-  en: enDictionary
+type ImportMetaWithGlob = ImportMeta & {
+  glob?: (pattern: string, options: { eager: true }) => Record<string, LocaleDictionaryModule>;
 };
 
-export type TranslationKey = keyof typeof enDictionary;
+const discoveredLocaleModules = (import.meta as ImportMetaWithGlob).glob?.('./locales/*/index.ts', { eager: true }) ?? {};
+const localeModules = {
+  ...localeFallbackModules,
+  ...discoveredLocaleModules
+} as Record<string, LocaleDictionaryModule>;
+
+function isLocaleOption(value: unknown): value is LocaleOption {
+  const candidate = value as Partial<LocaleOption> | null;
+  return Boolean(candidate?.value && candidate.label && candidate.nativeLabel);
+}
+
+function collectLocaleEntries(modules: Record<string, LocaleDictionaryModule>) {
+  return Object.entries(modules)
+    .flatMap(([sourcePath, module]) => {
+      if (!isLocaleOption(module.locale) || !module.dictionary) return [];
+      return [{ locale: module.locale, dictionary: module.dictionary, sourcePath }];
+    })
+    .sort((a, b) => Number(Boolean(b.locale.default)) - Number(Boolean(a.locale.default)) || a.locale.value.localeCompare(b.locale.value) || a.sourcePath.localeCompare(b.sourcePath));
+}
+
+const localeEntries = collectLocaleEntries(localeModules);
+const defaultLocale = localeEntries[0]?.locale.value ?? 'en';
+
+export const locales: LocaleOption[] = localeEntries.map((entry) => entry.locale);
+export const dictionaries: Record<Locale, Dictionary> = Object.fromEntries(localeEntries.map((entry) => [entry.locale.value, entry.dictionary]));
+
+export type TranslationKey = string;
 
 export function normalizeLocale(value: string | null): Locale {
-  return value === 'en' || value === 'ru' ? value : 'ru';
+  return value && dictionaries[value] ? value : defaultLocale;
 }
 
 export function interpolate(template: string, vars?: TranslationVars): string {
@@ -26,11 +45,13 @@ export function interpolate(template: string, vars?: TranslationVars): string {
 }
 
 export function translate(locale: Locale, key: string, vars?: TranslationVars): string {
-  return interpolate(dictionaries[locale][key] ?? dictionaries.en[key] ?? key, vars);
+  const dictionary = dictionaries[normalizeLocale(locale)];
+  const fallbackDictionary = dictionaries[defaultLocale] ?? dictionary;
+  return interpolate(dictionary?.[key] ?? fallbackDictionary?.[key] ?? key, vars);
 }
 
-export function getMissingTranslationKeys(source: Locale = 'en', target: Locale = 'ru'): string[] {
-  const sourceDictionary = dictionaries[source];
-  const targetDictionary = dictionaries[target];
+export function getMissingTranslationKeys(source: Locale = defaultLocale, target: Locale = 'ru'): string[] {
+  const sourceDictionary = dictionaries[normalizeLocale(source)] ?? {};
+  const targetDictionary = dictionaries[normalizeLocale(target)] ?? {};
   return Object.keys(sourceDictionary).filter((key) => !(key in targetDictionary));
 }

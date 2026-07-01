@@ -11,7 +11,7 @@ import type { GenerationModel, GenerationProvider } from '../../../../../domain/
 import type { StudioSettings } from '../../../../../domain/studioSettings';
 import { getProviderAdapterForSettings } from '../../../../../entities/provider/registry';
 import { toProviderSettings } from '../../../../../entities/studio-settings';
-import { fetchProviderResources } from '../../../../../infrastructure/api';
+import { fetchProviderResources } from '../../../../../processes/server-generation-actions';
 import type { ApiFocus } from '../../../settingsTypes';
 import { firstModelForProvider } from '../../../model/settingsDraftSelection';
 

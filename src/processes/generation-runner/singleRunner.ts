@@ -1,4 +1,4 @@
-import { enqueueServerGenerationRequest } from '../../infrastructure/api';
+import { enqueueServerGenerationRequest } from '../../infrastructure/api/generationTasks';
 import type { SingleGenerationEventSink } from './events';
 import { captureRequestSnapshot } from './requestSnapshots';
 import type { SingleGenerationRunInput } from './types';

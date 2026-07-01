@@ -69,7 +69,7 @@ test('Telegram Mini App runtime is isolated from regular workspace flows', () =>
   const indexHtml = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const integrationSources = `${hookSource}\n${bridgeSource}`;
 
-  assert.match(appSource, /useTelegramMiniApp/);
+  assert.match(appSource, /useHostEnvironment/);
   assert.match(hookSource, /webApp\.ready\(\)/);
   assert.match(hookSource, /webApp\.expand\(\)/);
   assert.match(hookSource, /validateTelegramMiniAppSession\(webApp\.initData\)/);

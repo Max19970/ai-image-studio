@@ -13,7 +13,7 @@ import {
   createPersistableGenerationTaskHistorySnapshot,
   getGenerationTaskHistoryPersistenceSignature,
   shouldPersistGenerationTaskHistory
-} from '../src/processes/storage-sync';
+} from '../src/processes/storage-sync/generationTaskHistory';
 import { normalizeGenerationTasks } from '../src/entities/storage';
 
 test('generation lifecycle normalizes old statuses and classifies active work', () => {

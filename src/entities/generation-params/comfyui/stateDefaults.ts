@@ -1,3 +1,4 @@
+import { workflowPluginKinds } from './extensions/plugins';
 import type { ComfyUiParamState } from './stateTypes';
 
 export const COMFYUI_MAX_SEED = Number.MAX_SAFE_INTEGER;
@@ -8,7 +9,7 @@ export const comfyUiTiledGenerationBackendOptions = ['bnkTiledKSampler', 'tiledD
 export const comfyUiTilingStrategyOptions = ['random', 'randomStrict', 'padded', 'simple'] as const;
 export const comfyUiTiledDiffusionMethodOptions = ['MultiDiffusion', 'Mixture of Diffusers', 'SpotDiffusion'] as const;
 export const comfyUiSpotDiffusionShiftMethodOptions = ['random', 'sorted', 'fibonacci'] as const;
-export const comfyUiWorkflowBuilderItemOptions = ['tiledGeneration', 'tiledVae', 'pag', 'freeuV2', 'perpGuider', 'loraStack'] as const;
+export const comfyUiWorkflowBuilderItemOptions = workflowPluginKinds;
 
 export const defaultComfyUiParamState: ComfyUiParamState = {
   negativePrompt: '',

@@ -1,22 +1,8 @@
-export type CapabilityKey =
-  | 'model'
-  | 'n'
-  | 'size'
-  | 'quality'
-  | 'background'
-  | 'moderation'
-  | 'output_format'
-  | 'output_compression'
-  | 'stream'
-  | 'partial_images'
-  | 'response_format'
-  | 'input_fidelity'
-  | 'user'
-  | 'style';
+export type CapabilityKey = string & {};
 
 export interface CapabilityEntry {
   supported: boolean;
-  status: 'accepted' | 'rejected' | 'error' | 'unknown';
+  status: 'accepted' | 'rejected' | 'error' | 'unknown' | (string & {});
   message?: string;
   testedValue?: unknown;
 }

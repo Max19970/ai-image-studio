@@ -1,36 +1,43 @@
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import { getCachedProviderProbeReport, normalizeProviderProbeCache, withoutCachedProviderProbeReport, withCachedProviderProbeReport } from '../../entities/provider-probe-cache';
+import type { ProviderProbeCacheMap } from '../../entities/provider-probe-cache';
 import { localProviderProbeCache } from '../../infrastructure/storage/localProviderProbeCache';
 import { remoteProviderProbeCache } from '../../infrastructure/storage/remoteProviderProbeCache';
+import { createSyncDocumentRuntime, type SyncDocumentDescriptor } from './documentSyncEngine';
+
+export const providerProbeCacheSyncDescriptor = {
+  id: 'provider-probe-cache',
+  loadFallback: () => localProviderProbeCache.load(),
+  saveFallback: (cache) => localProviderProbeCache.save(cache),
+  loadRemote: () => remoteProviderProbeCache.load(),
+  saveRemote: (cache) => remoteProviderProbeCache.save(cache),
+  normalize: (cache) => normalizeProviderProbeCache(cache),
+  messages: {
+    loadRemoteFailed: 'Could not load provider probe cache from encrypted storage. Using local probe cache fallback.',
+    saveRemoteFailed: 'Could not persist provider probe cache to encrypted storage. Local cache fallback was updated.'
+  }
+} satisfies SyncDocumentDescriptor<ProviderProbeCacheMap>;
+
+const providerProbeCacheSync = createSyncDocumentRuntime(providerProbeCacheSyncDescriptor);
+
+export function loadProviderProbeCache(): ProviderProbeCacheMap {
+  return providerProbeCacheSync.loadFallback(undefined);
+}
 
 export function loadProviderProbeReport(settings: ProviderSettings): ProviderProbeReport | null {
-  return getCachedProviderProbeReport(localProviderProbeCache.load(), settings);
+  return getCachedProviderProbeReport(loadProviderProbeCache(), settings);
 }
 
 export async function loadProviderProbeReportFromDatabase(settings: ProviderSettings): Promise<ProviderProbeReport | null> {
-  try {
-    const map = normalizeProviderProbeCache(await remoteProviderProbeCache.load());
-    localProviderProbeCache.save(map);
-    return getCachedProviderProbeReport(map, settings);
-  } catch (error) {
-    console.warn('Could not load provider probe cache from encrypted storage. Using local probe cache fallback.', error);
-    return loadProviderProbeReport(settings);
-  }
+  const map = await providerProbeCacheSync.loadFromRemote(undefined);
+  return getCachedProviderProbeReport(map, settings);
 }
 
 export function saveProviderProbeReport(report: ProviderProbeReport) {
-  const map = withCachedProviderProbeReport(localProviderProbeCache.load(), report);
-  localProviderProbeCache.save(map);
-  void remoteProviderProbeCache.save(map).catch((error) => {
-    console.warn('Could not persist provider probe cache to encrypted storage. Local cache fallback was updated.', error);
-  });
+  providerProbeCacheSync.save(withCachedProviderProbeReport(loadProviderProbeCache(), report), undefined);
 }
 
 export function clearProviderProbeReport(settings: ProviderSettings) {
-  const map = withoutCachedProviderProbeReport(localProviderProbeCache.load(), settings);
-  localProviderProbeCache.save(map);
-  void remoteProviderProbeCache.save(map).catch((error) => {
-    console.warn('Could not persist provider probe cache removal to encrypted storage. Local cache fallback was updated.', error);
-  });
+  providerProbeCacheSync.save(withoutCachedProviderProbeReport(loadProviderProbeCache(), settings), undefined);
 }

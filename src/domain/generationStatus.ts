@@ -1,33 +1,41 @@
+import { generationStatusFallbackModules } from './generationStatus.generated';
 import type { BatchGenerationItem, GenerationStatus, GenerationTask } from './types';
+import type { GenerationStatusDescriptor } from './generationStatusTypes';
 
-export const GENERATION_LIFECYCLE_STATUSES = [
-  'created',
-  'queued',
-  'sending',
-  'running',
-  'retrying',
-  'succeeded',
-  'failed',
-  'cancelled',
-  'deleted'
-] as const;
+export type { GenerationStatusDescriptor } from './generationStatusTypes';
 
+function isGenerationStatusDescriptor(value: unknown): value is GenerationStatusDescriptor {
+  const candidate = value as Partial<GenerationStatusDescriptor> | null;
+  return Boolean(candidate?.status && typeof candidate.persisted === 'boolean' && typeof candidate.active === 'boolean' && typeof candidate.terminal === 'boolean' && candidate.uiTone && candidate.interruptedStatus);
+}
+
+export const generationStatusDescriptors: readonly GenerationStatusDescriptor[] = Object.values(generationStatusFallbackModules)
+  .flatMap((module) => Object.values(module).filter(isGenerationStatusDescriptor))
+  .sort((a, b) => a.status.localeCompare(b.status));
+
+export const generationStatusDescriptorsByStatus: ReadonlyMap<string, GenerationStatusDescriptor> = new Map(generationStatusDescriptors.map((descriptor) => [descriptor.status, descriptor] as const));
+
+export const GENERATION_LIFECYCLE_STATUSES = generationStatusDescriptors.map((descriptor) => descriptor.status);
 export type GenerationLifecycleStatus = typeof GENERATION_LIFECYCLE_STATUSES[number];
-export type PersistedGenerationStatus = Exclude<GenerationLifecycleStatus, 'deleted'>;
+export type PersistedGenerationStatus = Extract<GenerationLifecycleStatus, GenerationStatus>;
 
-export const ACTIVE_GENERATION_STATUSES: readonly GenerationStatus[] = ['created', 'queued', 'sending', 'running', 'retrying'];
-export const TERMINAL_GENERATION_STATUSES: readonly GenerationStatus[] = ['succeeded', 'failed', 'cancelled'];
+export const ACTIVE_GENERATION_STATUSES: readonly GenerationStatus[] = generationStatusDescriptors
+  .filter((descriptor) => descriptor.active && descriptor.persisted)
+  .map((descriptor) => descriptor.status as GenerationStatus);
+export const TERMINAL_GENERATION_STATUSES: readonly GenerationStatus[] = generationStatusDescriptors
+  .filter((descriptor) => descriptor.terminal && descriptor.persisted)
+  .map((descriptor) => descriptor.status as GenerationStatus);
 
 export function isGenerationStatus(value: unknown): value is GenerationStatus {
-  return typeof value === 'string' && (GENERATION_LIFECYCLE_STATUSES as readonly string[]).includes(value) && value !== 'deleted';
+  return typeof value === 'string' && Boolean(generationStatusDescriptorsByStatus.get(value)?.persisted);
 }
 
 export function isActiveGenerationStatus(status: GenerationStatus) {
-  return (ACTIVE_GENERATION_STATUSES as readonly string[]).includes(status);
+  return generationStatusDescriptorsByStatus.get(status)?.active === true;
 }
 
 export function isTerminalGenerationStatus(status: GenerationStatus) {
-  return (TERMINAL_GENERATION_STATUSES as readonly string[]).includes(status);
+  return generationStatusDescriptorsByStatus.get(status)?.terminal === true;
 }
 
 export function normalizeGenerationStatus(status: unknown, fallback: GenerationStatus = 'failed'): GenerationStatus {
@@ -37,15 +45,11 @@ export function normalizeGenerationStatus(status: unknown, fallback: GenerationS
 }
 
 export function interruptedStatusToFailed(status: GenerationStatus) {
-  return isActiveGenerationStatus(status) ? 'failed' : status;
+  return generationStatusDescriptorsByStatus.get(status)?.interruptedStatus ?? status;
 }
 
 export function statusToUiTone(status: GenerationStatus): 'queued' | 'streaming' | 'succeeded' | 'failed' | 'cancelled' {
-  if (status === 'succeeded') return 'succeeded';
-  if (status === 'failed') return 'failed';
-  if (status === 'cancelled') return 'cancelled';
-  if (status === 'running' || status === 'sending' || status === 'retrying') return 'streaming';
-  return 'queued';
+  return generationStatusDescriptorsByStatus.get(status)?.uiTone ?? 'failed';
 }
 
 export function taskHasActiveWork(task: GenerationTask) {

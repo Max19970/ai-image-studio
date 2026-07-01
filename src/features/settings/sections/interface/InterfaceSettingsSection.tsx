@@ -4,37 +4,56 @@ import { PopoverSelect } from '../../../../shared/ui';
 import { FieldShell, InfoTip } from '../../components/SettingsControls';
 import selectStyles from '../../components/SettingsPopoverSelect.module.css';
 import type { SettingsSectionContext, SettingsSectionVariant } from '../../settingsTypes';
-import { interfaceThemes, themePreviewMeta } from '../../themePreview';
+import { interfaceThemeDescriptors, themePreviewMeta, type InterfaceThemeDescriptor } from '../../themePreview';
 import styles from './InterfaceSettingsSection.module.css';
-
-
-const themeChoiceClass = {
-  glass: styles.themeChoiceGlass,
-  midnight: styles.themeChoiceMidnight,
-  ember: styles.themeChoiceEmber,
-  meadow: styles.themeChoiceMeadow,
-  mono: styles.themeChoiceMono
-} as const;
-
-const themePreviewClass = {
-  glass: styles.themeSwatchGlass,
-  midnight: styles.themeSwatchMidnight,
-  ember: styles.themeSwatchEmber,
-  meadow: styles.themeSwatchMeadow,
-  mono: styles.themeSwatchMono
-} as const;
-
-const themeAccentClass = {
-  glass: styles.themeAccentGlass,
-  midnight: styles.themeAccentMidnight,
-  ember: styles.themeAccentEmber,
-  meadow: styles.themeAccentMeadow,
-  mono: styles.themeAccentMono
-} as const;
 
 type InterfaceSettingsSectionProps = {
   variant: SettingsSectionVariant;
 } & Record<string, unknown>;
+
+function themeClass(classKey: string | undefined): string {
+  return classKey ? styles[classKey] ?? '' : '';
+}
+
+function ThemePreview({ theme }: { theme: InterfaceThemeDescriptor }) {
+  return (
+    <span className={`${styles.themePreview} ${themeClass(themePreviewMeta[theme.id].classKeys.preview)}`} aria-hidden="true">
+      <span className={styles.themePreviewSidebar} />
+      <span className={styles.themePreviewCanvas}>
+        <i className={`${styles.themePreviewLine} ${styles.themePreviewLineStrong}`} />
+        <i className={styles.themePreviewLine} />
+        <i className={styles.themePreviewButton} />
+      </span>
+    </span>
+  );
+}
+
+function ThemeButton({ theme, active, onSelect, showMeta }: { theme: InterfaceThemeDescriptor; active: boolean; onSelect: () => void; showMeta?: boolean }) {
+  const { t } = useI18n();
+  const meta = themePreviewMeta[theme.id];
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      className={`${styles.themeChoice} ${themeClass(meta.classKeys.choice)} ${active ? styles.themeChoiceActive : ''}`}
+      onClick={onSelect}
+    >
+      <ThemePreview theme={theme} />
+      <span className={styles.themeChoiceCopy}>
+        <strong>{t(`settings.theme.${theme.id}.title`)}</strong>
+        <span>{t(`settings.theme.${theme.id}.description`)}</span>
+      </span>
+      {showMeta ? (
+        <span className={styles.themeChoiceMeta}>
+          <span><i className={`${styles.themeAccentDot} ${themeClass(meta.classKeys.accent)}`} />{meta.accent}</span>
+          <span>{meta.font}</span>
+          <span>{t(`settings.theme.${theme.id}.tone`)}</span>
+        </span>
+      ) : null}
+    </button>
+  );
+}
 
 export function InterfaceSettingsSection({ context, props }: ElementDefinitionProps<SettingsSectionContext, InterfaceSettingsSectionProps>) {
   const { t } = useI18n();
@@ -81,28 +100,8 @@ export function InterfaceSettingsSection({ context, props }: ElementDefinitionPr
             <InfoTip id="mobileInterfaceTheme" text={t('settings.info.theme')} activeId={activeInfo} onToggle={setActiveInfo} />
           </div>
           <div className="mobile-theme-strip" role="radiogroup" aria-label={t('settings.themeTitle')}>
-            {interfaceThemes.map((theme) => (
-              <button
-                type="button"
-                key={theme}
-                role="radio"
-                aria-checked={activeTheme === theme}
-                className={`${styles.themeChoice} ${themeChoiceClass[theme]} ${activeTheme === theme ? styles.themeChoiceActive : ''}`}
-                onClick={() => selectTheme(theme)}
-              >
-                <span className={`${styles.themePreview} ${themePreviewClass[theme]}`} aria-hidden="true">
-                  <span className={styles.themePreviewSidebar} />
-                  <span className={styles.themePreviewCanvas}>
-                    <i className={`${styles.themePreviewLine} ${styles.themePreviewLineStrong}`} />
-                    <i className={styles.themePreviewLine} />
-                    <i className={styles.themePreviewButton} />
-                  </span>
-                </span>
-                <span className={styles.themeChoiceCopy}>
-                  <strong>{t(`settings.theme.${theme}.title`)}</strong>
-                  <span>{t(`settings.theme.${theme}.description`)}</span>
-                </span>
-              </button>
+            {interfaceThemeDescriptors.map((theme) => (
+              <ThemeButton key={theme.id} theme={theme} active={activeTheme === theme.id} onSelect={() => selectTheme(theme.id)} />
             ))}
           </div>
         </article>
@@ -148,33 +147,8 @@ export function InterfaceSettingsSection({ context, props }: ElementDefinitionPr
         </div>
 
         <div className={styles.themeGrid} role="radiogroup" aria-label={t('settings.themeTitle')}>
-          {interfaceThemes.map((theme) => (
-            <button
-              type="button"
-              key={theme}
-              role="radio"
-              aria-checked={activeTheme === theme}
-              className={`${styles.themeChoice} ${themeChoiceClass[theme]} ${activeTheme === theme ? styles.themeChoiceActive : ''}`}
-              onClick={() => selectTheme(theme)}
-            >
-              <span className={`${styles.themePreview} ${themePreviewClass[theme]}`} aria-hidden="true">
-                <span className={styles.themePreviewSidebar} />
-                <span className={styles.themePreviewCanvas}>
-                  <i className={`${styles.themePreviewLine} ${styles.themePreviewLineStrong}`} />
-                  <i className={styles.themePreviewLine} />
-                  <i className={styles.themePreviewButton} />
-                </span>
-              </span>
-              <span className={styles.themeChoiceCopy}>
-                <strong>{t(`settings.theme.${theme}.title`)}</strong>
-                <span>{t(`settings.theme.${theme}.description`)}</span>
-              </span>
-              <span className={styles.themeChoiceMeta}>
-                <span><i className={`${styles.themeAccentDot} ${themeAccentClass[theme]}`} />{themePreviewMeta[theme].accent}</span>
-                <span>{themePreviewMeta[theme].font}</span>
-                <span>{t(`settings.theme.${theme}.tone`)}</span>
-              </span>
-            </button>
+          {interfaceThemeDescriptors.map((theme) => (
+            <ThemeButton key={theme.id} theme={theme} active={activeTheme === theme.id} onSelect={() => selectTheme(theme.id)} showMeta />
           ))}
         </div>
       </div>

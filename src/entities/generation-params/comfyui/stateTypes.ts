@@ -2,7 +2,7 @@ export type ComfyUiTiledGenerationBackend = 'bnkTiledKSampler' | 'tiledDiffusion
 export type ComfyUiTilingStrategy = 'random' | 'randomStrict' | 'padded' | 'simple';
 export type ComfyUiTiledDiffusionMethod = 'MultiDiffusion' | 'Mixture of Diffusers' | 'SpotDiffusion';
 export type ComfyUiSpotDiffusionShiftMethod = 'random' | 'sorted' | 'fibonacci';
-export type ComfyUiWorkflowBuilderItemKind = 'tiledGeneration' | 'tiledVae' | 'pag' | 'freeuV2' | 'perpGuider' | 'loraStack';
+export type ComfyUiWorkflowBuilderItemKind = string & {};
 
 export interface ComfyUiLoraSelection {
   name: string;

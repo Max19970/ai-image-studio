@@ -6,14 +6,10 @@ import {
 } from '../../state';
 import { NumberPluginField, SelectPluginField } from '../workflowPluginFields';
 import type { WorkflowPluginDefinition } from '../workflowPluginTypes';
+import { tiledGenerationPluginCore } from './tiledGeneration.plugin';
 
 export const tiledGenerationPlugin: WorkflowPluginDefinition = {
-  kind: 'tiledGeneration',
-  labelKey: 'params.comfy.workflowPlugins.tiledGeneration',
-  descriptionKey: 'params.comfy.workflowPlugins.tiledGeneration.description',
-  getSummary: (state) => state.tiledGenerationBackend === 'tiledDiffusion'
-    ? `ComfyUI_TiledDiffusion · ${state.tiledDiffusionMethod}`
-    : `BNK_TiledKSampler · ${state.tiledGenerationStrategy}`,
+  ...tiledGenerationPluginCore,
   renderSettings: (context, state) => {
     const usesBnk = state.tiledGenerationBackend === 'bnkTiledKSampler';
     const usesTiledDiffusion = state.tiledGenerationBackend === 'tiledDiffusion';

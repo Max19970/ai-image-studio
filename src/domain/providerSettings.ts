@@ -1,4 +1,5 @@
 export interface ProviderSettings {
+  [key: string]: unknown;
   adapterId?: string;
   generationEndpoint: string;
   editEndpoint: string;
@@ -13,6 +14,7 @@ export interface ProviderSettings {
 }
 
 export interface GenerationProvider {
+  [key: string]: unknown;
   id: string;
   name: string;
   adapterId?: string;

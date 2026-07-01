@@ -9,12 +9,10 @@ import type { ComposerCommands } from '../../interface/context/commands';
 import { useI18n } from '../../i18n';
 import { SlotHost } from '../../interface/SlotHost';
 import { useEventCallback } from '../../shared/hooks/useEventCallback';
-import type { AttachmentPreviewItem } from '../../shared/image';
 import type { ComposerActionContext, ComposerLayoutContext, ComposerModelOption, ComposerPopoverId } from './composerTypes';
-import { getReferenceAttachmentId, useFlatAttachmentPreviewItems } from '../../shared/image';
+import { useComposerAttachments } from './useComposerAttachments';
 import { getProviderModelOptions, getSelectedModel } from '../../entities/provider/modelOptions';
 import { resolveProviderControlSurface } from '../../entities/provider/controlSurface';
-import { addImageFilesToProviderModeDraft } from '../../entities/provider/attachmentCompatibility';
 import styles from './ComposerLayout.module.css';
 
 function cx(...values: Array<string | false | null | undefined>) {
@@ -81,41 +79,28 @@ export function ImageComposer({
   const setImageAttachments = useEventCallback(commands.setImageAttachments);
   const setMask = useEventCallback(commands.setMask);
 
-  const flatImages = useMemo(() => [
-    ...(targetImage ? [{ id: 'target', file: targetImage, role: 'image' as const }] : []),
-    ...referenceImages.map((file, index) => ({ id: getReferenceAttachmentId(file, index), file, role: 'image' as const })),
-    ...(mask ? [{ id: 'mask', file: mask, role: 'mask' as const, label: t('composer.mask') }] : [])
-  ], [targetImage, referenceImages, mask, t]);
-
   const getAttachmentLabel = useCallback((index: number) => t('composer.imageAttachmentLabel', { index }), [t]);
-
-  const attachments = useFlatAttachmentPreviewItems({
-    images: flatImages,
-    label: getAttachmentLabel
+  const composerAttachments = useComposerAttachments({
+    providerMode,
+    targetImage,
+    referenceImages,
+    mask,
+    actions: {
+      setTargetImage,
+      setReferenceImages,
+      setImageAttachments,
+      setMask
+    },
+    labels: {
+      mask: t('composer.mask'),
+      imageAttachment: getAttachmentLabel
+    }
   });
-  const hasImageAttachments = attachments.length > 0;
+  const { attachments, hasImageAttachments, removeAttachment, clearAttachments, addAttachments } = composerAttachments;
   const hasStatusContent = Boolean(statusText);
   const revealSecondary = expanded || hasStatusContent;
 
   const modelOptions = useMemo<ComposerModelOption[]>(() => getProviderModelOptions(models, providers), [models, providers]);
-
-  const removeAttachment = useCallback((item: AttachmentPreviewItem) => {
-    if (item.id === 'target') {
-      setTargetImage(null);
-      return;
-    }
-    if (item.id === 'mask') {
-      setMask(null);
-      return;
-    }
-    setReferenceImages(referenceImages.filter((file, index) => item.id !== getReferenceAttachmentId(file, index)));
-  }, [setMask, setReferenceImages, setTargetImage, referenceImages]);
-
-  const clearAttachments = useCallback(() => {
-    setTargetImage(null);
-    setReferenceImages([]);
-    setMask(null);
-  }, [setMask, setReferenceImages, setTargetImage]);
 
   const setMaskAttachment = useCallback((file: File | null) => {
     setMask(file);
@@ -124,16 +109,6 @@ export function ImageComposer({
   const clearMask = useCallback(() => {
     setMask(null);
   }, [setMask]);
-
-  const addAttachments = useCallback((files: File[]) => {
-    const next = addImageFilesToProviderModeDraft({
-      providerModeId: providerMode.id,
-      targetImage,
-      referenceImages,
-      mask
-    }, providerMode, files);
-    setImageAttachments(next.targetImage, next.referenceImages);
-  }, [mask, providerMode, referenceImages, setImageAttachments, targetImage]);
 
   const toggleExpanded = useCallback(() => {
     setExpanded((value) => !value);

@@ -1,6 +1,6 @@
 import type { DetailCommands } from '../../interface/context/commands';
 import type { DetailCommandDeps } from './appCommandTypes';
-import { cancelServerGenerationTask } from '../../infrastructure/api';
+import { cancelServerGenerationTask } from '../../processes/server-generation-actions';
 import { restoreRequestToWorkspaceCommand } from './workspaceCommands';
 import { startGalleryHiresFixCommand } from './galleryHiresFixCommand';
 

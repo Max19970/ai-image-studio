@@ -87,14 +87,19 @@ async function main() {
   assert(serverRuntime.includes('saveGenerationTaskHistoryDocuments') && serverRuntime.includes('loadGenerationTaskHistoryDocuments'), 'server runtime split does not preserve persisted task history ownership.');
   assert(serverRuntime.includes('moveServerGalleryFolderTasks') && serverRuntime.includes('pasteServerGalleryItems'), 'server runtime split does not preserve gallery task mutations.');
 
-  const batchTaskReducer = await read('src/processes/batch-runner/batchTaskReducer.ts');
+  const batchTaskReducer = await readCombined([
+    'src/processes/batch-runner/batchTaskReducer.ts',
+    'src/processes/batch-runner/batchTaskReducer.generated.ts',
+    'src/processes/batch-runner/handlers/builtInBatchTaskHandlers.ts'
+  ]);
   assert(
     batchTaskReducer.includes("status: 'sending'")
       && batchTaskReducer.includes("status: 'running'")
       && batchTaskReducer.includes("status: 'retrying'")
       && batchTaskReducer.includes("status: 'cancelled'")
-      && batchTaskReducer.includes("status: 'failed'"),
-    'batch task reducer does not support the server-owned lifecycle statuses.'
+      && batchTaskReducer.includes("status: 'failed'")
+      && batchTaskReducer.includes('batchTaskReducerHandlerFallbackModules'),
+    'batch task reducer does not support descriptor-owned server lifecycle statuses.'
   );
 
   const singleRunner = await read('src/processes/generation-runner/singleRunner.ts');

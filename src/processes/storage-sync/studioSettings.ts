@@ -3,28 +3,33 @@ import type { StudioSettings } from '../../domain/studioSettings';
 import { getEffectiveProviderSettings, mergeProviderSettingsIntoStudioSettings, normalizeStudioSettings } from '../../entities/studio-settings';
 import { localStudioSettingsStore } from '../../infrastructure/storage/localStudioSettingsStore';
 import { remoteStudioSettingsStore } from '../../infrastructure/storage/remoteStudioSettingsStore';
+import { createSyncDocumentRuntime, voidContext, type SyncDocumentDescriptor } from './documentSyncEngine';
+
+export const studioSettingsSyncDescriptor = {
+  id: 'studio-settings',
+  loadFallback: () => localStudioSettingsStore.load(),
+  saveFallback: (settings) => localStudioSettingsStore.save(settings),
+  loadRemote: () => remoteStudioSettingsStore.load(),
+  saveRemote: (settings) => remoteStudioSettingsStore.save(settings),
+  normalize: (settings) => normalizeStudioSettings(settings),
+  messages: {
+    loadRemoteFailed: 'Could not load studio settings from encrypted storage. Using local settings fallback.',
+    saveRemoteFailed: 'Could not persist studio settings to encrypted storage. Local settings fallback was updated.'
+  }
+} satisfies SyncDocumentDescriptor<StudioSettings>;
+
+const studioSettingsSync = createSyncDocumentRuntime(studioSettingsSyncDescriptor);
 
 export function loadStudioSettings(): StudioSettings {
-  return localStudioSettingsStore.load();
+  return studioSettingsSync.loadFallback(voidContext());
 }
 
-export async function loadStudioSettingsFromDatabase(): Promise<StudioSettings> {
-  try {
-    const settings = normalizeStudioSettings(await remoteStudioSettingsStore.load());
-    localStudioSettingsStore.save(settings);
-    return settings;
-  } catch (error) {
-    console.warn('Could not load studio settings from encrypted storage. Using local settings fallback.', error);
-    return loadStudioSettings();
-  }
+export function loadStudioSettingsFromDatabase(): Promise<StudioSettings> {
+  return studioSettingsSync.loadFromRemote(voidContext());
 }
 
 export function saveStudioSettings(settings: StudioSettings) {
-  const safeSettings = normalizeStudioSettings(settings);
-  localStudioSettingsStore.save(safeSettings);
-  void remoteStudioSettingsStore.save(safeSettings).catch((error) => {
-    console.warn('Could not persist studio settings to encrypted storage. Local settings fallback was updated.', error);
-  });
+  studioSettingsSync.save(settings, voidContext());
 }
 
 export function loadProviderSettings(): ProviderSettings {

@@ -1,5 +1,5 @@
 import { cloneParams } from '../../domain/generationSnapshots';
-import { clearServerGenerationTasks, deleteServerGenerationTask } from '../../infrastructure/api';
+import { clearServerGenerationTasks, deleteServerGenerationTask } from '../../processes/server-generation-actions';
 import { sanitizeProviderModeDraftForModel } from '../../entities/provider/attachmentCompatibility';
 import { normalizeSelectedModel } from '../../entities/studio-settings';
 import { getProviderGenerationRequestSurfaceById } from '../../entities/generation-params/requestSurface';

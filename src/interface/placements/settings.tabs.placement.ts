@@ -1,41 +1,17 @@
+import { settingsSectionDescriptors } from '../../features/settings/sections/sectionRegistry';
 import type { ElementPlacement } from '../registry/types';
 import type { SettingsTabContext } from '../context/workspace/tabs';
+import type { SettingsTab } from '../../features/settings/settingsTypes';
 
-type SettingsTab = 'interface' | 'generationApi' | 'integrations';
-
-export default [
-  {
-    id: 'settings.tabs.interface',
-    slot: 'settings/tabs',
-    use: 'settings.tab',
-    order: 10,
-    props: {
-      tab: 'interface',
-      labelKey: 'settings.tab.interface',
-      hintKey: 'settings.tab.interfaceHint'
-    }
+export default settingsSectionDescriptors.map((descriptor) => ({
+  id: `settings.tabs.${descriptor.id}`,
+  slot: 'settings/tabs',
+  use: 'settings.tab',
+  order: descriptor.order,
+  props: {
+    tab: descriptor.tab,
+    labelKey: descriptor.labelKey,
+    hintKey: descriptor.hintKey
   },
-  {
-    id: 'settings.tabs.generation-api',
-    slot: 'settings/tabs',
-    use: 'settings.tab',
-    order: 20,
-    props: {
-      tab: 'generationApi',
-      labelKey: 'settings.tab.generationApi',
-      hintKey: 'settings.tab.generationApiHint'
-    },
-    requiresFeature: 'providerProbing'
-  },
-  {
-    id: 'settings.tabs.integrations',
-    slot: 'settings/tabs',
-    use: 'settings.tab',
-    order: 30,
-    props: {
-      tab: 'integrations',
-      labelKey: 'settings.tab.integrations',
-      hintKey: 'settings.tab.integrationsHint'
-    }
-  }
-] satisfies ElementPlacement<SettingsTabContext<SettingsTab>>[];
+  requiresFeature: descriptor.requiresFeature
+})) satisfies ElementPlacement<SettingsTabContext<SettingsTab>>[];

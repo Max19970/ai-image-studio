@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { GeneratedImage } from '../../../../domain/generationTask';
-import { downloadGenerationImagesArchive } from '../../../../infrastructure/api';
+import { downloadGenerationImagesArchive } from '../../../../processes/server-generation-actions';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import { SlotHost } from '../../../../interface/SlotHost';
 import type { DetailActionContext, DetailLayoutContext } from '../../../../interface/context/workspace/detail';

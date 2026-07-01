@@ -92,16 +92,25 @@ export interface ProviderResponseAdapter {
 }
 
 
-export type ProviderAdapterSettingsFieldKind = 'endpoint' | 'secret' | 'text' | 'json' | 'number';
-export type ProviderAdapterEndpointOperation = 'generate' | 'edit' | 'responses';
+export type ProviderAdapterSettingsFieldKind = string & {};
+export type ProviderAdapterSettingsFieldKey = string & {};
+export type ProviderAdapterSettingsSection = string & {};
+export type ProviderAdapterEndpointOperation = 'generate' | 'edit' | 'responses' | (string & {});
 
 export interface ProviderAdapterSettingsField {
-  key: keyof ProviderSettings;
+  key: ProviderAdapterSettingsFieldKey;
   label: string;
   kind: ProviderAdapterSettingsFieldKind;
+  section?: ProviderAdapterSettingsSection;
   operation?: ProviderAdapterEndpointOperation;
   required?: boolean;
   sensitive?: boolean;
+  infoKey?: string;
+  placeholder?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  wide?: boolean;
 }
 
 export interface ProviderAdapterDefinition {

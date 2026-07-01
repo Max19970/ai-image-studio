@@ -5,10 +5,9 @@ import { useI18n } from '../../../../i18n';
 import { SideInspector } from '../../../../shared/ui';
 import { cx } from '../../model/detailHelpers';
 import { SnapshotSections } from '../snapshot/DetailSnapshotSections';
-import type { DetailInspectorTab } from '../snapshot/DetailSnapshotSections';
+import { detailInspectorTabs, type DetailInspectorTab } from '../snapshot/detailInspectorTabs';
 import styles from './DetailRequestDrawerSection.module.css';
 
-const tabs: DetailInspectorTab[] = ['prompt', 'params', 'files', 'technical'];
 
 export function DetailRequestDrawerSection({ context }: ElementDefinitionProps<DetailLayoutContext>) {
   const { t } = useI18n();
@@ -27,7 +26,7 @@ export function DetailRequestDrawerSection({ context }: ElementDefinitionProps<D
       data-detail-slot="request-drawer"
     >
       <nav className={styles.mobileTabs} aria-label={t('detail.inspectorTabs')}>
-        {tabs.map((tab) => (
+        {detailInspectorTabs.map((tab) => (
           <button
             key={tab}
             type="button"

@@ -22,16 +22,18 @@ export function normalizeInterfaceTheme(value: unknown): InterfaceTheme {
 
 export function normalizeProvider(provider: Partial<GenerationProvider>, fallback = defaultGenerationProvider): GenerationProvider {
   return {
+    ...fallback,
+    ...provider,
     id: provider.id || fallback.id || createStorageUid('provider'),
     name: provider.name || fallback.name || 'Provider',
     adapterId: provider.adapterId ?? fallback.adapterId ?? 'openai-compatible',
-    generationEndpoint: provider.generationEndpoint ?? fallback.generationEndpoint,
-    editEndpoint: provider.editEndpoint ?? fallback.editEndpoint,
-    responsesEndpoint: provider.responsesEndpoint ?? fallback.responsesEndpoint,
-    apiKey: provider.apiKey ?? fallback.apiKey,
-    authHeaderName: provider.authHeaderName ?? fallback.authHeaderName,
-    authScheme: provider.authScheme ?? fallback.authScheme,
-    customHeadersJson: provider.customHeadersJson ?? fallback.customHeadersJson,
+    generationEndpoint: String(provider.generationEndpoint ?? fallback.generationEndpoint),
+    editEndpoint: String(provider.editEndpoint ?? fallback.editEndpoint),
+    responsesEndpoint: String(provider.responsesEndpoint ?? fallback.responsesEndpoint),
+    apiKey: String(provider.apiKey ?? fallback.apiKey),
+    authHeaderName: String(provider.authHeaderName ?? fallback.authHeaderName),
+    authScheme: String(provider.authScheme ?? fallback.authScheme),
+    customHeadersJson: String(provider.customHeadersJson ?? fallback.customHeadersJson),
     timeoutMs: Number(provider.timeoutMs ?? fallback.timeoutMs),
     persistApiKey: Boolean(provider.persistApiKey ?? fallback.persistApiKey)
   };
@@ -118,7 +120,9 @@ export function getProviderForModel(settings: StudioSettings, model: GenerationM
 export function toProviderSettings(provider: GenerationProvider | null, model: GenerationModel | null): ProviderSettings {
   const safeProvider = provider ?? defaultGenerationProvider;
   const safeModel = model ?? defaultGenerationModel;
+  const { id: _id, name: _name, ...providerSettings } = safeProvider;
   return {
+    ...providerSettings,
     adapterId: safeProvider.adapterId ?? 'openai-compatible',
     generationEndpoint: safeProvider.generationEndpoint,
     editEndpoint: safeProvider.editEndpoint,

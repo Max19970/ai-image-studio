@@ -6,7 +6,8 @@ import { useI18n } from '../../i18n';
 import { SlotHost } from '../../interface/SlotHost';
 import { resolveSafeSelectedModelId } from './model/settingsDraftSelection';
 import { useGenerationApiSettingsDraft } from './sections/generation-api/useGenerationApiSettingsDraft';
-import type { SettingsLayoutContext, SettingsSectionContext, SettingsTab } from './settingsTypes';
+import { createSettingsSectionContext } from './createSettingsSectionContext';
+import type { SettingsLayoutContext, SettingsTab } from './settingsTypes';
 import './mobileSettingsPrimitives.css';
 import styles from './SettingsPage.module.css';
 
@@ -76,7 +77,7 @@ export function SettingsPage({
 
   const activeTheme = draft.interfaceTheme ?? 'glass';
 
-  const sectionContext: Omit<SettingsSectionContext, 'variant'> = {
+  const sectionContext = createSettingsSectionContext({
     activeTab: tab,
     locale,
     setLocale,
@@ -85,49 +86,12 @@ export function SettingsPage({
     activeTheme,
     selectTheme,
     draft,
-    apiFocus: generationApi.apiFocus,
-    setApiFocus: generationApi.setApiFocus,
-    selectedProvider: generationApi.selectedProvider,
-    selectedModel: generationApi.selectedModel,
-    selectedProviderId: generationApi.selectedProviderId,
-    selectedModelId: generationApi.selectedModelId,
-    setSelectedProviderId: generationApi.setSelectedProviderId,
-    setSelectedModelId: generationApi.setSelectedModelId,
-    modelsForSelectedProvider: generationApi.modelsForSelectedProvider,
-    providerOptions: generationApi.providerOptions,
-    probeModel: generationApi.probeModel,
-    quickResult: generationApi.quickResult,
-    showReport: generationApi.showReport,
+    generationApi,
     probingProviderId,
     quickCheckingProviderId,
     probeError,
-    addProvider: generationApi.addProvider,
-    removeProvider: generationApi.removeProvider,
-    addModel: generationApi.addModel,
-    removeModel: generationApi.removeModel,
-    selectModel: generationApi.selectModel,
-    patchProvider: generationApi.patchProvider,
-    patchModel: generationApi.patchModel,
-    firstModelForProvider: generationApi.firstModelForProvider,
-    comfyUiData: generationApi.comfyUiData,
-    comfyUiProviders: generationApi.comfyUiProviders,
-    selectedComfyUiProviderId: generationApi.selectedComfyUiProviderId,
-    selectedComfyUiProvider: generationApi.selectedComfyUiProvider,
-    setSelectedComfyUiProviderId: generationApi.setSelectedComfyUiProviderId,
-    comfyUiCheckpointCache: generationApi.comfyUiCheckpointCache,
-    comfyUiLoraCache: generationApi.comfyUiLoraCache,
-    comfyUiSamplerCache: generationApi.comfyUiSamplerCache,
-    comfyUiSchedulerCache: generationApi.comfyUiSchedulerCache,
-    comfyUiUpscaleModelCache: generationApi.comfyUiUpscaleModelCache,
-    comfyUiResourcesLoading: generationApi.comfyUiResourcesLoading,
-    comfyUiResourcesError: generationApi.comfyUiResourcesError,
-    refreshComfyUiResources: generationApi.refreshComfyUiResources,
-    addComfyUiProvider: generationApi.addComfyUiProvider,
-    addComfyUiLora: generationApi.addComfyUiLora,
-    removeComfyUiLora: generationApi.removeComfyUiLora,
-    patchComfyUiLora: generationApi.patchComfyUiLora,
     commands
-  };
+  });
 
   const layoutContext: SettingsLayoutContext = {
     activeTab: tab,
