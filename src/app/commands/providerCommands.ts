@@ -1,7 +1,7 @@
 import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
-import { probeProvider, quickCheckProvider } from '../../infrastructure/api';
+import { probeProvider, quickCheckProvider } from '../../processes/server-generation-actions';
 import { toProviderSettings } from '../../entities/studio-settings';
-import { clearProviderProbeReport, saveProviderProbeReport } from '../../processes/storage-sync';
+import { clearProviderProbeReport, saveProviderProbeReport } from '../../processes/storage-sync/providerProbeCache';
 import type { ProviderProbeStateCommands, SettingsSelectionContext } from './types';
 
 export function providerCheckKey(provider: GenerationProvider, model: GenerationModel | null): string {

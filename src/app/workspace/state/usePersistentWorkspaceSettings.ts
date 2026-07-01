@@ -2,14 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { normalizeSelectedModel } from '../../../entities/studio-settings';
 import type { ImageParams } from '../../../domain/imageParams';
 import type { StudioSettings } from '../../../domain/studioSettings';
-import {
-  loadImageParams,
-  loadImageParamsFromDatabase,
-  loadStudioSettings,
-  loadStudioSettingsFromDatabase,
-  saveImageParams,
-  saveStudioSettings
-} from '../../../processes/storage-sync';
+import { loadImageParams, loadImageParamsFromDatabase, saveImageParams } from '../../../processes/storage-sync/imageParams';
+import { loadStudioSettings, loadStudioSettingsFromDatabase, saveStudioSettings } from '../../../processes/storage-sync/studioSettings';
 import type { StateSetter } from '../types';
 
 export interface PersistentWorkspaceSettingsState {

@@ -1,6 +1,7 @@
 import type { ImageParams } from '../../../domain/imageParams';
 import type { ProviderSettings } from '../../../domain/providerSettings';
 import { isPlainRecord, readProviderParamState } from '../providerState';
+import { workflowPluginDefinitions, workflowPluginKindAliases } from './extensions/plugins';
 import {
   COMFYUI_MAX_SEED,
   comfyUiSamplerOptions,
@@ -80,27 +81,8 @@ function normalizeLoras(value: unknown): ComfyUiLoraSelection[] {
 }
 
 function normalizeWorkflowBuilderKind(value: unknown): ComfyUiWorkflowBuilderItemKind | null {
-  switch (value) {
-    case 'tiledGeneration':
-    case 'tiled_generation':
-      return 'tiledGeneration';
-    case 'tiledVae':
-    case 'tiled_vae':
-      return 'tiledVae';
-    case 'pag':
-      return 'pag';
-    case 'freeuV2':
-    case 'freeu_v2':
-      return 'freeuV2';
-    case 'perpGuider':
-    case 'perp_neg_guider':
-      return 'perpGuider';
-    case 'loraStack':
-    case 'lora_stack':
-      return 'loraStack';
-    default:
-      return null;
-  }
+  if (typeof value !== 'string') return null;
+  return workflowPluginKindAliases.get(value) ?? null;
 }
 
 function normalizeWorkflowBuilderList(value: unknown): ComfyUiWorkflowBuilderItemKind[] | null {
@@ -116,12 +98,14 @@ function normalizeWorkflowBuilderList(value: unknown): ComfyUiWorkflowBuilderIte
 
 function legacyWorkflowBuilder(source: Record<string, unknown>, loras: readonly ComfyUiLoraSelection[]): ComfyUiWorkflowBuilderItemKind[] {
   const next: ComfyUiWorkflowBuilderItemKind[] = [];
-  if (booleanValue(source.pagEnabled ?? source.pag_enabled)) next.push('pag');
-  if (loras.some((lora) => lora.enabled && lora.name.trim())) next.push('loraStack');
-  if (booleanValue(source.freeuV2Enabled ?? source.freeu_v2_enabled)) next.push('freeuV2');
-  if (booleanValue(source.tiledGenerationEnabled ?? source.tiled_generation_enabled)) next.push('tiledGeneration');
-  if (booleanValue(source.tiledVaeEncodeEnabled ?? source.tiled_vae_encode_enabled) || booleanValue(source.tiledVaeDecodeEnabled ?? source.tiled_vae_decode_enabled)) next.push('tiledVae');
-  if (booleanValue(source.perpGuiderEnabled ?? source.perp_guider_enabled)) next.push('perpGuider');
+  for (const definition of workflowPluginDefinitions) {
+    if (definition.kind === 'loraStack' && loras.some((lora) => lora.enabled && lora.name.trim())) {
+      next.push(definition.kind);
+      continue;
+    }
+    const keys = [definition.kind, definition.payloadKey, ...(definition.legacyPayloadKeys ?? []), ...(definition.legacyKinds ?? [])];
+    if (keys.some((key) => booleanValue(source[`${key}Enabled`] ?? source[`${key}_enabled`] ?? source[key]))) next.push(definition.kind);
+  }
   return next;
 }
 

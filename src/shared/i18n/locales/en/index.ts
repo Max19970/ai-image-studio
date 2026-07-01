@@ -1,30 +1,25 @@
-import type { Dictionary } from '../../types';
-import app from './app.json';
-import nav from './nav.json';
-import status from './status.json';
-import composer from './composer.json';
-import batch from './batch.json';
-import gallery from './gallery.json';
-import info from './info.json';
-import settings from './settings.json';
-import params from './params.json';
-import attachment from './attachment.json';
-import detail from './detail.json';
-import requestPreview from './requestPreview.json';
-import requestPresets from './requestPresets.json';
+import { locale } from './locale';
+import type { Dictionary, LocaleDictionaryModule } from '../../types';
 
-export const enDictionary = Object.freeze({
-  ...app,
-  ...nav,
-  ...status,
-  ...composer,
-  ...batch,
-  ...gallery,
-  ...info,
-  ...settings,
-  ...params,
-  ...attachment,
-  ...detail,
-  ...requestPreview,
-  ...requestPresets,
-}) satisfies Dictionary;
+type JsonDictionaryModule = { default?: unknown } | unknown;
+type ImportMetaWithGlob = ImportMeta & {
+  glob?: (pattern: string, options: { eager: true }) => Record<string, JsonDictionaryModule>;
+};
+
+const namespaceModules = ((import.meta as ImportMetaWithGlob).glob?.('./*.json', { eager: true }) ?? {}) as Record<string, JsonDictionaryModule>;
+
+function isDictionary(value: unknown): value is Dictionary {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function readDictionary(module: JsonDictionaryModule): Dictionary {
+  const defaultExport = (module as { default?: unknown }).default;
+  if (isDictionary(defaultExport)) return defaultExport;
+  if (isDictionary(module)) return module;
+  return {};
+}
+
+export const dictionary: Dictionary = Object.assign({}, ...Object.values(namespaceModules).map((module) => readDictionary(module)));
+export { locale };
+export const enDictionary = dictionary;
+export default { locale, dictionary } satisfies LocaleDictionaryModule;

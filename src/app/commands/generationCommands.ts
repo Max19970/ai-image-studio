@@ -5,7 +5,7 @@ import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
-import { enqueueServerBatchGenerationRequest } from '../../infrastructure/api';
+import { enqueueServerBatchGenerationRequest } from '../../processes/server-generation-actions';
 import { createAggregateSnapshot, prepareBatchItems } from '../../processes/batch-runner/requestBuilder';
 import { normalizeBatchIntervalSeconds } from '../../processes/batch-runner/schedule';
 import { runSingleGeneration } from '../../processes/generation-runner/singleRunner';

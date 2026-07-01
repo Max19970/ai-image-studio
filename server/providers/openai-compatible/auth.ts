@@ -11,6 +11,9 @@ export function getProviderApiKey(provider: ProviderSettings): string {
 
 export function buildOpenAiCompatibleHeaders(provider: ProviderSettings, isMultipart = false): Headers {
   const headers = new Headers();
+  headers.set('Accept', 'application/json, text/event-stream');
+  headers.set('Accept-Encoding', 'identity');
+  headers.set('Connection', 'close');
   if (!isMultipart) headers.set('Content-Type', 'application/json');
 
   const key = getProviderApiKey(provider);

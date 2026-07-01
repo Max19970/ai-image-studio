@@ -5,7 +5,7 @@ import type { StudioSettings } from '../../../domain/studioSettings';
 import {
   loadProviderProbeReport,
   loadProviderProbeReportFromDatabase
-} from '../../../processes/storage-sync';
+} from '../../../processes/storage-sync/providerProbeCache';
 import type { StateSetter } from '../types';
 
 export interface ProviderProbeWorkspaceState {

@@ -1,6 +1,6 @@
 import type { GenerationTask } from '../../domain/generationTask';
 
-export type StorageBackendKind = 'local-fallback' | 'remote-encrypted';
+export type StorageBackendKind = string & {};
 export type GenerationTaskAssetLoadMode = 'full' | 'thumbnail' | 'metadata';
 
 export interface StorageOperationResult {

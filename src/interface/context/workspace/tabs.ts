@@ -1,6 +1,6 @@
 export type WorkspaceTab = 'images' | 'info' | 'settings';
-export type SidebarSlotVariant = 'expanded' | 'collapsed' | 'mobile' | 'bottom';
-export type SettingsSlotVariant = 'desktop' | 'mobile';
+export type SidebarSlotVariant = string & {};
+export type SettingsSlotVariant = string & {};
 
 export interface SidebarTabContext {
   activeTab: WorkspaceTab;

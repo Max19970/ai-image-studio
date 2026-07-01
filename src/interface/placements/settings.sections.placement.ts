@@ -1,53 +1,17 @@
+import { settingsSectionDescriptors } from '../../features/settings/sections/sectionRegistry';
 import type { ElementPlacement } from '../registry/types';
-import type { SettingsSectionContext } from '../../features/settings/settingsTypes';
+import type { SettingsSectionContext, SettingsSectionVariant } from '../../features/settings/settingsTypes';
 
-export const placements: ElementPlacement<SettingsSectionContext>[] = [
-  {
-    id: 'settings.sections.interface.desktop',
+const sectionVariants: readonly SettingsSectionVariant[] = ['desktop', 'mobile'];
+
+export const placements: ElementPlacement<SettingsSectionContext>[] = settingsSectionDescriptors.flatMap((descriptor) =>
+  sectionVariants.map((variant) => ({
+    id: `settings.sections.${descriptor.id}.${variant}`,
     slot: 'settings/sections',
-    use: 'settingsSections.interface',
-    order: 10,
-    props: { variant: 'desktop' },
-    enabled: (context) => context.activeTab === 'interface' && context.variant === 'desktop'
-  },
-  {
-    id: 'settings.sections.interface.mobile',
-    slot: 'settings/sections',
-    use: 'settingsSections.interface',
-    order: 10,
-    props: { variant: 'mobile' },
-    enabled: (context) => context.activeTab === 'interface' && context.variant === 'mobile'
-  },
-  {
-    id: 'settings.sections.generation-api.desktop',
-    slot: 'settings/sections',
-    use: 'settingsSections.generationApi',
-    order: 20,
-    props: { variant: 'desktop' },
-    enabled: (context) => context.activeTab === 'generationApi' && context.variant === 'desktop'
-  },
-  {
-    id: 'settings.sections.generation-api.mobile',
-    slot: 'settings/sections',
-    use: 'settingsSections.generationApi',
-    order: 20,
-    props: { variant: 'mobile' },
-    enabled: (context) => context.activeTab === 'generationApi' && context.variant === 'mobile'
-  },
-  {
-    id: 'settings.sections.integrations.desktop',
-    slot: 'settings/sections',
-    use: 'settingsSections.integrations',
-    order: 30,
-    props: { variant: 'desktop' },
-    enabled: (context) => context.activeTab === 'integrations' && context.variant === 'desktop'
-  },
-  {
-    id: 'settings.sections.integrations.mobile',
-    slot: 'settings/sections',
-    use: 'settingsSections.integrations',
-    order: 30,
-    props: { variant: 'mobile' },
-    enabled: (context) => context.activeTab === 'integrations' && context.variant === 'mobile'
-  }
-];
+    use: descriptor.elementUse,
+    order: descriptor.order,
+    props: { variant },
+    enabled: (context) => context.activeTab === descriptor.tab && context.variant === variant,
+    requiresFeature: descriptor.requiresFeature
+  }))
+);

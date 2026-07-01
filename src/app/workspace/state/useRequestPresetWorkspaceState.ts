@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RequestPreset } from '../../../entities/request-presets';
-import {
-  loadRequestPresets,
-  loadRequestPresetsFromDatabase,
-  saveRequestPresets
-} from '../../../processes/storage-sync';
+import { loadRequestPresets, loadRequestPresetsFromDatabase, saveRequestPresets } from '../../../processes/storage-sync/requestPresets';
 import type { StateSetter } from '../types';
 
 export interface RequestPresetWorkspaceState {

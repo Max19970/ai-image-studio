@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { downloadGenerationTasksArchive } from '../../../infrastructure/api';
+import { downloadGenerationTasksArchive } from '../../../processes/server-generation-actions';
 import type { GalleryClipboardItemPayload, GalleryClipboardOperation, GalleryClipboardState } from '../../../entities/gallery/galleryClipboard';
 import type { GalleryItem } from '../../../entities/gallery/galleryItems';
 import type { GalleryCommands } from '../../../interface/context/commands';

@@ -34,42 +34,12 @@ export interface ProviderGenerationParamProfile {
   isAvailable?: (context: GenerationParamAvailabilityContext) => boolean;
 }
 
-export type BuiltInGenerationParamTab = 'frame' | 'render' | 'output' | 'service' | 'retry';
-export type GenerationParamTab = BuiltInGenerationParamTab | (string & {});
-export type GenerationParamSlot = `composer/parameters/${GenerationParamTab}`;
+export type BuiltInGenerationParamTab = string & {};
+export type GenerationParamTab = BuiltInGenerationParamTab;
+export type GenerationParamSlot = `composer/parameters/${string}`;
 
-export type GenerationParamCopyKey =
-  | 'n'
-  | 'sizeMode'
-  | 'preset'
-  | 'width'
-  | 'height'
-  | 'quality'
-  | 'background'
-  | 'moderation'
-  | 'style'
-  | 'inputFidelity'
-  | 'outputFormat'
-  | 'compression'
-  | 'stream'
-  | 'partialImages'
-  | 'responseFormat'
-  | 'user'
-  | 'includeModel'
-  | 'rawJson'
-  | 'retryAttempts'
-  | 'retryDelaySeconds';
-
-export type GenerationParamOptionGroup =
-  | 'sizeMode'
-  | 'boolean'
-  | 'outputFormat'
-  | 'quality'
-  | 'background'
-  | 'inputFidelity'
-  | 'moderation'
-  | 'style'
-  | 'responseFormat';
+export type GenerationParamCopyKey = keyof ImageParams | string;
+export type GenerationParamOptionGroup = string & {};
 
 export interface GenerationParamCopyDescriptor {
   labelKey: string;

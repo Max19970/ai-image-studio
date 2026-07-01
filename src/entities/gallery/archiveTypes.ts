@@ -1,8 +1,8 @@
 import type { GenerationStatus } from '../../domain/generationTask';
 
-export type GalleryStatusFilter = 'all' | 'active' | 'terminal' | GenerationStatus;
-export type GalleryKindFilter = 'all' | 'single' | 'batch';
-export type GallerySortMode = 'newest' | 'oldest' | 'updated' | 'images';
+export type GalleryStatusFilter = GenerationStatus | (string & {});
+export type GalleryKindFilter = string & {};
+export type GallerySortMode = string & {};
 
 export interface GalleryArchiveSummary {
   totalCount: number;

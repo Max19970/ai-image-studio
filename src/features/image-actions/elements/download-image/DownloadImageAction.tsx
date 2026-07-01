@@ -6,9 +6,9 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 import type { ImageDownloadActionContext } from '../../../../interface/context/adapters/imageDownload';
 import {
   assetDownloadHref,
-  isTelegramMiniAppDownloadRoute,
+  hasHostImageFileTransport,
   requestDownloadFallback,
-  requestTelegramDownloadFallback,
+  requestHostImageFileFallback,
   shouldRouteThroughServer
 } from './downloadImageRequest';
 import styles from './DownloadImageAction.module.css';
@@ -36,9 +36,9 @@ export function DownloadImageAction({ context, props }: ElementDefinitionProps<I
   const handleClick = async (event: MouseEvent<HTMLElement>) => {
     context.onClick?.(event);
 
-    if (isTelegramMiniAppDownloadRoute()) {
+    if (hasHostImageFileTransport()) {
       event.preventDefault();
-      await requestTelegramDownloadFallback({ href, sourceHref, filename: context.filename, storageAssetKey: context.storageAssetKey });
+      await requestHostImageFileFallback({ href, sourceHref, filename: context.filename, storageAssetKey: context.storageAssetKey });
       return;
     }
 

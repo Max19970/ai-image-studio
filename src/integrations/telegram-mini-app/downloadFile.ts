@@ -1,6 +1,6 @@
+import { resolveServerImageFile, type ResolvedServerImageFile } from '../../infrastructure/host-environment';
 import { getTelegramWebApp, type TelegramWebAppBridge } from './telegramWebApp';
 
-const temporaryDownloadsPath = '/api/storage/generation-task-downloads';
 const directUrlVerificationTimeoutMs = 2500;
 
 export interface TelegramMiniAppImageDownloadRequest {
@@ -9,26 +9,8 @@ export interface TelegramMiniAppImageDownloadRequest {
   storageAssetKey?: string;
 }
 
-interface DownloadRegistrationRequest {
-  filename: string;
-  src?: string;
-  storageAssetKey?: string;
-}
-
-interface DownloadRegistrationResponse {
-  url?: unknown;
-  filename?: unknown;
-  mediaType?: unknown;
-}
-
-export interface ResolvedServerImageDownload {
-  url: string;
-  filename: string;
-  mediaType: string;
-  trustedImage: boolean;
-}
-
-type ResolvedTelegramDownload = ResolvedServerImageDownload;
+export type ResolvedServerImageDownload = ResolvedServerImageFile;
+type ResolvedTelegramDownload = ResolvedServerImageFile;
 
 export function shouldUseTelegramMiniAppDownload(webApp: TelegramWebAppBridge | null = getTelegramWebApp()): boolean {
   return Boolean(webApp && (typeof webApp.downloadFile === 'function' || typeof webApp.openLink === 'function'));
@@ -72,21 +54,11 @@ export async function resolveTelegramDownloadUrl(request: TelegramMiniAppImageDo
 }
 
 export async function resolveServerImageDownload(request: TelegramMiniAppImageDownloadRequest): Promise<ResolvedServerImageDownload | null> {
-  if (request.storageAssetKey) {
-    return registerDownload({ filename: request.filename, storageAssetKey: request.storageAssetKey });
-  }
-
-  if (/^data:image\//i.test(request.href)) return registerDownload({ filename: request.filename, src: request.href });
-  if (/^blob:/i.test(request.href)) {
-    const dataUrl = await readBlobUrlAsDataUrl(request.href);
-    return dataUrl ? registerDownload({ filename: request.filename, src: dataUrl }) : null;
-  }
-
-  return null;
+  return resolveServerImageFile(request);
 }
 
 async function resolveTelegramDownload(request: TelegramMiniAppImageDownloadRequest): Promise<ResolvedTelegramDownload | null> {
-  const serverDownload = await resolveServerImageDownload(request);
+  const serverDownload = await resolveServerImageFile(request);
   if (serverDownload) return serverDownload;
 
   try {
@@ -97,22 +69,6 @@ async function resolveTelegramDownload(request: TelegramMiniAppImageDownloadRequ
   } catch {
     return null;
   }
-}
-
-async function registerDownload(request: DownloadRegistrationRequest): Promise<ResolvedTelegramDownload | null> {
-  const response = await fetch(temporaryDownloadsPath, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request)
-  });
-  if (!response.ok) throw new Error(await response.text());
-
-  const data = await response.json() as DownloadRegistrationResponse;
-  if (typeof data.url !== 'string') return null;
-
-  const filename = typeof data.filename === 'string' && data.filename.trim() ? data.filename : request.filename;
-  const mediaType = typeof data.mediaType === 'string' ? data.mediaType : '';
-  return { url: data.url, filename, mediaType, trustedImage: /^image\//i.test(mediaType) };
 }
 
 async function verifyTelegramDownloadUrl(url: string): Promise<boolean> {
@@ -130,16 +86,4 @@ async function verifyTelegramDownloadUrl(url: string): Promise<boolean> {
   } finally {
     if (timeout) clearTimeout(timeout);
   }
-}
-
-async function readBlobUrlAsDataUrl(href: string): Promise<string | null> {
-  const response = await fetch(href);
-  if (!response.ok) return null;
-  const blob = await response.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null);
-    reader.onerror = () => reject(reader.error ?? new Error('Could not read image blob.'));
-    reader.readAsDataURL(blob);
-  });
 }

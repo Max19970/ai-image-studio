@@ -1,16 +1,17 @@
 import { capabilityOrder } from '../../domain/defaults';
 import type { ImageParams } from '../../domain/imageParams';
-import type { ProviderSettings } from '../../domain/providerSettings';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
+import type { ProviderSettings } from '../../domain/providerSettings';
 import type { WorkMode } from '../../domain/workMode';
+import { openAiCompatibleGenerationRequestSurface } from '../../providers/openai-compatible/generationRequestSurface';
 import { getGenerationParamPrimaryLabelKey } from './availability';
 import { normalizeImageParamsFromDefinitions } from './logicalRegistry';
+import { buildOpenAiCompatibleRequestSurfacePayload } from './requestSurface';
 import { getHiddenCapabilityKeys, getHiddenProviderParamDefinitions, renderGenerationParamSlot } from './registry';
 import { generationParamTabs } from './tabs';
 import type { GenerationParamTab } from './types';
 import { readProviderParamState, getProviderParamStateKey } from './providerState';
 import type { ProviderGenerationSurface, ProviderGenerationSurfaceContext, ProviderGenerationSurfacePatchContext, ProviderGenerationSurfacePayloadContext, ProviderGenerationSurfaceSnapshotContext } from './surfaceTypes';
-import { buildOpenAiCompatibleRequestSurfacePayload, openAiCompatibleGenerationRequestSurface } from './requestSurface';
 
 function createOpenAiTabStats(params: ImageParams, retryOffLabel: string): Record<GenerationParamTab, string> {
   return {

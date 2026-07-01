@@ -9,12 +9,11 @@ import controls from '../../ParamControls.module.css';
 import workflowControls from '../ComfyUiWorkflowControls.module.css';
 import { ConflictWarning } from './workflowPluginFields';
 import {
-  comfyUiWorkflowBuilderItemOptions,
   readComfyUiParamState,
   type ComfyUiParamState,
   type ComfyUiWorkflowBuilderItemKind
 } from '../state';
-import { workflowPluginDefinitionsByKind } from './plugins';
+import { workflowPluginDefinitions, workflowPluginDefinitionsByKind } from './plugins';
 
 function enabledCount(state: ComfyUiParamState): number {
   return state.workflowBuilder.length;
@@ -27,16 +26,17 @@ function pluginTabStat(context: ProviderGenerationSurfaceContext) {
 }
 
 function syncWorkflowBuilder(context: ProviderGenerationSurfacePatchContext, state: ComfyUiParamState, nextBuilder: ComfyUiWorkflowBuilderItemKind[]) {
-  const has = (kind: ComfyUiWorkflowBuilderItemKind) => nextBuilder.includes(kind);
+  const builderSet = new Set(nextBuilder);
+  const pluginStatePatch = Object.fromEntries(
+    workflowPluginDefinitions.flatMap((definition) => {
+      const patch = definition.enableInState?.(state, builderSet.has(definition.kind));
+      return patch ? Object.entries(patch) : [];
+    })
+  );
   context.setProviderParams({
     ...state,
-    workflowBuilder: nextBuilder,
-    tiledGenerationEnabled: has('tiledGeneration'),
-    pagEnabled: has('pag'),
-    freeuV2Enabled: has('freeuV2'),
-    perpGuiderEnabled: has('perpGuider'),
-    tiledVaeEncodeEnabled: has('tiledVae') && (state.tiledVaeEncodeEnabled || (!state.tiledVaeEncodeEnabled && !state.tiledVaeDecodeEnabled)),
-    tiledVaeDecodeEnabled: has('tiledVae') && (state.tiledVaeDecodeEnabled || (!state.tiledVaeEncodeEnabled && !state.tiledVaeDecodeEnabled))
+    ...pluginStatePatch,
+    workflowBuilder: nextBuilder
   });
 }
 
@@ -53,12 +53,12 @@ function moveWorkflowBuilderItem(items: readonly ComfyUiWorkflowBuilderItemKind[
 function WorkflowBuilder({ context }: { context: ProviderGenerationSurfacePatchContext }) {
   const { t } = useI18n();
   const state = readComfyUiParamState(context.params, context.provider);
-  const [addKind, setAddKind] = useState<ComfyUiWorkflowBuilderItemKind>('tiledGeneration');
+  const [addKind, setAddKind] = useState<ComfyUiWorkflowBuilderItemKind>(() => workflowPluginDefinitions[0]?.kind ?? '');
   const [draggingKind, setDraggingKind] = useState<ComfyUiWorkflowBuilderItemKind | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
   const builderSet = new Set(state.workflowBuilder);
-  const available = comfyUiWorkflowBuilderItemOptions.filter((kind) => !builderSet.has(kind));
-  const selectedAddKind = available.includes(addKind) ? addKind : available[0] ?? 'tiledGeneration';
+  const available = workflowPluginDefinitions.map((definition) => definition.kind).filter((kind) => !builderSet.has(kind));
+  const selectedAddKind = available.includes(addKind) ? addKind : available[0] ?? '';
   const addOptions = available.map((kind) => {
     const definition = workflowPluginDefinitionsByKind.get(kind)!;
     return { value: kind, label: t(definition.labelKey), description: t(definition.descriptionKey) };
@@ -72,7 +72,7 @@ function WorkflowBuilder({ context }: { context: ProviderGenerationSurfacePatchC
 
   const applyBuilder = (next: ComfyUiWorkflowBuilderItemKind[]) => syncWorkflowBuilder(context, state, next);
   const addPlugin = () => {
-    if (!available.includes(selectedAddKind)) return;
+    if (!selectedAddKind || !available.includes(selectedAddKind)) return;
     applyBuilder([...state.workflowBuilder, selectedAddKind]);
   };
   const removePlugin = (kind: ComfyUiWorkflowBuilderItemKind) => applyBuilder(state.workflowBuilder.filter((item) => item !== kind));

@@ -25,6 +25,6 @@ export {
   integrationDefinitionsById,
   isKnownIntegrationId,
   listIntegrationDefinitions,
-  requireIntegrationDefinition,
-  telegramIntegrationDefinition
+  requireIntegrationDefinition
 } from './registry';
+export { telegramIntegrationDefinition } from '../../integrations/telegram/definition';

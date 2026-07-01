@@ -1,15 +1,14 @@
 import { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
-import type { ElementDefinitionProps } from '../../../../interface/registry/types';
-import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
-import type { BatchDraftLayoutContext } from '../../batchComposerTypes';
 import { getProviderModeForAttachmentRole, providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/attachmentCompatibility';
-import { ProviderModelPicker } from '../../../../entities/provider/ui';
-import { RequestPresetManagerDialog, type RequestPresetManagerController } from '../../../request-presets/elements/preset-menu/RequestPresetMenuAction';
 import { useI18n } from '../../../../i18n';
+import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
+import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
+import { RequestPresetManagerDialog, type RequestPresetManagerController } from '../../../request-presets/elements/preset-menu/RequestPresetMenuAction';
+import type { BatchDraftLayoutContext } from '../../batchComposerTypes';
+import { BatchDraftControlsMenu } from './BatchDraftControlsMenu';
 import styles from './BatchDraftToolbarSection.module.css';
-import menuStyles from './BatchDraftControlsMenu.module.css';
 
 function getDefaultDraftName(context: BatchDraftLayoutContext) {
   const prompt = context.draft.params.prompt.trim().replace(/\s+/g, ' ');
@@ -26,159 +25,6 @@ function createDraftPresetManagerController(context: BatchDraftLayoutContext): R
     updatePreset: context.actions.updatePreset,
     deletePreset: context.actions.deletePreset
   };
-}
-
-function MenuContent({ context, onOpenPresets, close }: { context: BatchDraftLayoutContext; onOpenPresets: () => void; close: () => void }) {
-  const { t } = useI18n();
-
-  const chooseProviderMode = (providerModeId: string) => {
-    context.actions.patchDraft({ providerModeId });
-    close();
-  };
-  const canUseImages = providerModeAllowsImageAttachments(context.providerMode);
-  const canUseMask = providerModeAllowsMask(context.providerMode);
-
-  const openImages = () => {
-    context.fileInputs.attachments.current?.click();
-    close();
-  };
-
-  const openMask = () => {
-    context.fileInputs.mask.current?.click();
-    close();
-  };
-
-  const clearMask = () => {
-    context.actions.patchDraft({ mask: null });
-    close();
-  };
-
-  const openParameters = () => {
-    context.actions.openParameters();
-    close();
-  };
-
-  const duplicateDraft = () => {
-    context.actions.duplicateDraft();
-    close();
-  };
-
-  const removeDraft = () => {
-    context.actions.removeDraft();
-    close();
-  };
-
-  const clearAttachments = () => {
-    context.actions.clearAttachments();
-    close();
-  };
-
-  return (
-    <div className={menuStyles.menu} data-control-surface={context.controlSurface.id}>
-      {context.providerModes.length > 1 && (
-        <div className={menuStyles.group}>
-          <span className={menuStyles.groupTitle}>{t('composer.mode')}</span>
-          <div className={menuStyles.modeGrid}>
-            {context.providerModes.map((mode) => (
-              <button key={mode.id} type="button" className={menuStyles.modeButton} data-active={context.providerMode.id === mode.id} onClick={() => chooseProviderMode(mode.id)}>
-                <strong>{t(mode.labelKey)}</strong>
-                {mode.descriptionKey && <small>{t(mode.descriptionKey)}</small>}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      <div className={menuStyles.group}>
-        <span className={menuStyles.groupTitle}>{t('composer.model')}</span>
-        <ProviderModelPicker
-          value={context.selectedModel?.id ?? ''}
-          models={context.models}
-          providers={context.providers}
-          onChange={(modelId) => context.actions.patchDraft({ selectedModelId: modelId })}
-          ariaLabel={t('composer.model')}
-          placeholder={t('detail.notSet')}
-          emptyText={t('app.warningNoModel')}
-          className={menuStyles.menuModelSelect}
-          triggerClassName={menuStyles.menuModelTrigger}
-          panelClassName={menuStyles.menuModelPanel}
-          minWidth={340}
-          testId="batch-draft-model-picker"
-        />
-      </div>
-
-      <div className={menuStyles.group}>
-        <span className={menuStyles.groupTitle}>{t('composer.actions')}</span>
-        {canUseImages && (
-          <button type="button" className={menuStyles.action} onClick={openImages}>
-            <span className={menuStyles.icon} aria-hidden="true">＋</span>
-            <span className={menuStyles.copy}>
-              <strong>{t('composer.addImages')}</strong>
-              <small>{t('composer.addImagesDescription')}</small>
-            </span>
-          </button>
-        )}
-        {canUseMask && (
-          <button type="button" className={menuStyles.action} onClick={openMask}>
-            <span className={menuStyles.icon} aria-hidden="true">◌</span>
-            <span className={menuStyles.copy}>
-              <strong>{context.draft.mask ? t('composer.replaceMask') : t('composer.addMask')}</strong>
-              <small>{t('composer.addMaskDescription')}</small>
-            </span>
-          </button>
-        )}
-        {canUseMask && context.draft.mask && (
-          <button type="button" className={menuStyles.action} onClick={clearMask}>
-            <span className={menuStyles.icon} aria-hidden="true">−</span>
-            <span className={menuStyles.copy}>
-              <strong>{t('composer.clearMask')}</strong>
-              <small>{t('composer.clearMaskDescription')}</small>
-            </span>
-          </button>
-        )}
-        {context.controlSurface.showParameters && (
-          <button type="button" className={menuStyles.action} data-testid="batch-draft-parameters" onClick={openParameters}>
-            <span className={menuStyles.icon} aria-hidden="true">⚙</span>
-            <span className={menuStyles.copy}>
-              <strong>{t('composer.paramsTitle')}</strong>
-              <small>{t('composer.paramsDescription')}</small>
-            </span>
-          </button>
-        )}
-        <button type="button" className={menuStyles.action} data-testid="batch-request-presets-open" onClick={onOpenPresets}>
-          <span className={menuStyles.icon} aria-hidden="true">✦</span>
-          <span className={menuStyles.copy}>
-            <strong>{t('requestPresets.open')}</strong>
-            <small>{t('requestPresets.applyToDraft')}</small>
-          </span>
-        </button>
-        <button type="button" className={menuStyles.action} onClick={duplicateDraft}>
-          <span className={menuStyles.icon} aria-hidden="true">⧉</span>
-          <span className={menuStyles.copy}>
-            <strong>{t('batch.duplicate')}</strong>
-            <small>{t('batch.requestLabel', { index: context.index + 1 })}</small>
-          </span>
-        </button>
-        {context.canRemove && (
-          <button type="button" className={`${menuStyles.action} ${menuStyles.danger}`} onClick={removeDraft}>
-            <span className={menuStyles.icon} aria-hidden="true">×</span>
-            <span className={menuStyles.copy}>
-              <strong>{t('batch.remove')}</strong>
-              <small>{t('batch.requestLabel', { index: context.index + 1 })}</small>
-            </span>
-          </button>
-        )}
-        {(canUseImages || canUseMask) && context.attachmentsCount > 0 && (
-          <button type="button" className={`${menuStyles.action} ${menuStyles.danger}`} onClick={clearAttachments}>
-            <span className={menuStyles.icon} aria-hidden="true">×</span>
-            <span className={menuStyles.copy}>
-              <strong>{t('composer.clearAttachments')}</strong>
-              <small>{t('composer.clearAttachmentsDescription')}</small>
-            </span>
-          </button>
-        )}
-      </div>
-    </div>
-  );
 }
 
 export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<BatchDraftLayoutContext>) {
@@ -236,7 +82,7 @@ export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<Bat
           minWidth={310}
           onDismiss={close}
         >
-          <MenuContent context={context} onOpenPresets={openPresets} close={close} />
+          <BatchDraftControlsMenu context={context} onOpenPresets={openPresets} close={close} />
         </FloatingPopover>
       )}
 
@@ -249,7 +95,7 @@ export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<Bat
           onClose={close}
         >
           <div className={styles.sheetBody}>
-            <MenuContent context={context} onOpenPresets={openPresets} close={close} />
+            <BatchDraftControlsMenu context={context} onOpenPresets={openPresets} close={close} />
           </div>
         </BottomSheet>
       )}

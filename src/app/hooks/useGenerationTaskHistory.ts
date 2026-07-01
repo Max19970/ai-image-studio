@@ -7,7 +7,7 @@ import {
   clearGenerationTaskHistory,
   loadGenerationTaskHistory,
   loadGenerationTaskHistoryFallback
-} from '../../processes/storage-sync';
+} from '../../processes/storage-sync/generationTaskHistory';
 
 interface GenerationTasksEvent {
   revision: number;

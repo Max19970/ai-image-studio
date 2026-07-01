@@ -14,6 +14,33 @@ export interface BatchRunProgressTracker {
   resolveTerminal: (task: GenerationTask) => BatchTerminalResolution;
 }
 
+interface BatchTerminalRuleContext {
+  task: GenerationTask;
+  errorText: string;
+  cancelledByIndex: readonly boolean[];
+}
+
+interface BatchTerminalRule {
+  status: GenerationStatus;
+  matches: (context: BatchTerminalRuleContext) => boolean;
+}
+
+const batchTerminalRules: readonly BatchTerminalRule[] = [
+  { status: 'succeeded', matches: ({ task }) => task.images.length > 0 },
+  { status: 'succeeded', matches: ({ errorText }) => !errorText },
+  {
+    status: 'cancelled',
+    matches: ({ task, cancelledByIndex }) => task.batch?.items.length
+      ? task.batch.items.every((item) => item.status === 'cancelled')
+      : cancelledByIndex.every(Boolean)
+  },
+  { status: 'failed', matches: () => true }
+];
+
+function resolveBatchTerminalStatus(context: BatchTerminalRuleContext): GenerationStatus {
+  return batchTerminalRules.find((rule) => rule.matches(context))?.status ?? 'failed';
+}
+
 export function createBatchRunProgressTracker(itemCount: number, t: RunnerTranslateFn): BatchRunProgressTracker {
   let globalImageIndex = 0;
   const errorsByIndex: Array<string | null> = Array(itemCount).fill(null);
@@ -34,11 +61,7 @@ export function createBatchRunProgressTracker(itemCount: number, t: RunnerTransl
     getAggregateError,
     resolveTerminal(task) {
       const errorText = getAggregateError();
-      const hasImages = task.images.length > 0;
-      const everyTerminalCancelled = task.batch?.items.length
-        ? task.batch.items.every((item) => item.status === 'cancelled')
-        : cancelledByIndex.every(Boolean);
-      const finalStatus: GenerationStatus = hasImages || !errorText ? 'succeeded' : everyTerminalCancelled ? 'cancelled' : 'failed';
+      const finalStatus = resolveBatchTerminalStatus({ task, errorText, cancelledByIndex });
       return {
         status: finalStatus,
         error: errorText || null,

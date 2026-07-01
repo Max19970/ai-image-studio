@@ -6,9 +6,8 @@ import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain
 import type { SettingsCommands } from '../../interface/context/commands';
 import type { Locale } from '../../i18n';
 
-// Keep this union at the settings-tab level only. Concrete integration state stays inside integration feature owners.
-export type SettingsTab = 'interface' | 'generationApi' | 'integrations';
-export type ApiFocus = 'providers' | 'models' | 'comfyui';
+export type SettingsTab = 'interface' | 'generationApi' | 'integrations' | (string & {});
+export type ApiFocus = 'providers' | 'models' | 'comfyui' | (string & {});
 export type SettingsSectionVariant = 'desktop' | 'mobile';
 
 export type SettingsSelectOption = {
@@ -17,17 +16,28 @@ export type SettingsSelectOption = {
   description?: string;
 };
 
-export interface SettingsSectionContext {
+export interface SettingsNavigationContextSlice {
   activeTab: SettingsTab;
   variant: SettingsSectionVariant;
+}
+
+export interface SettingsLocaleContextSlice {
   locale: Locale;
   setLocale: (locale: Locale) => void;
+}
+
+export interface SettingsInfoContextSlice {
   activeInfo: string | null;
   setActiveInfo: (id: string | null) => void;
+}
+
+export interface SettingsAppearanceContextSlice {
   activeTheme: InterfaceTheme;
   selectTheme: (theme: InterfaceTheme) => void;
-
   draft: StudioSettings;
+}
+
+export interface SettingsGenerationApiContextSlice {
   apiFocus: ApiFocus;
   setApiFocus: Dispatch<SetStateAction<ApiFocus>>;
   selectedProvider: GenerationProvider | null;
@@ -41,18 +51,23 @@ export interface SettingsSectionContext {
   probeModel: GenerationModel | null;
   quickResult: ProviderQuickCheckResult | null;
   showReport: ProviderProbeReport | null;
-  probingProviderId: string | null;
-  quickCheckingProviderId: string | null;
-  probeError: string | null;
   addProvider: () => void;
   removeProvider: () => void;
   addModel: () => void;
   removeModel: () => void;
   selectModel: (model: GenerationModel) => void;
-  patchProvider: (key: keyof GenerationProvider, value: GenerationProvider[keyof GenerationProvider]) => void;
+  patchProvider: (key: string, value: unknown) => void;
   patchModel: (key: keyof GenerationModel, value: GenerationModel[keyof GenerationModel]) => void;
   firstModelForProvider: (settings: StudioSettings, providerId: string) => GenerationModel | null;
+}
 
+export interface SettingsProviderProbeContextSlice {
+  probingProviderId: string | null;
+  quickCheckingProviderId: string | null;
+  probeError: string | null;
+}
+
+export interface SettingsComfyUiContextSlice {
   comfyUiData: ComfyUiSettingsData;
   comfyUiProviders: GenerationProvider[];
   selectedComfyUiProviderId: string;
@@ -70,7 +85,29 @@ export interface SettingsSectionContext {
   addComfyUiLora: () => void;
   removeComfyUiLora: (id: string) => void;
   patchComfyUiLora: <K extends keyof ComfyUiLoraRegistration>(id: string, key: K, value: ComfyUiLoraRegistration[K]) => void;
+}
+
+export interface SettingsCommandsContextSlice {
   commands: SettingsCommands;
+}
+
+export type SettingsSectionContext =
+  SettingsNavigationContextSlice &
+  SettingsLocaleContextSlice &
+  SettingsInfoContextSlice &
+  SettingsAppearanceContextSlice &
+  SettingsGenerationApiContextSlice &
+  SettingsProviderProbeContextSlice &
+  SettingsComfyUiContextSlice &
+  SettingsCommandsContextSlice;
+
+export type SettingsGenerationApiDraftContext = SettingsGenerationApiContextSlice & SettingsComfyUiContextSlice;
+
+export interface SettingsSectionContextInput extends Omit<SettingsNavigationContextSlice, 'variant'>, SettingsInfoContextSlice, SettingsAppearanceContextSlice {
+  generationApi: SettingsGenerationApiDraftContext;
+  probingProviderId: string | null;
+  quickCheckingProviderId: string | null;
+  probeError: string | null;
 }
 
 export interface SettingsLayoutContext {

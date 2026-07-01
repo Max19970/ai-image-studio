@@ -93,7 +93,7 @@ export function useGenerationApiSettingsDraft({
     [draft.models, selectedProvider]
   );
 
-  const patchProvider = (key: keyof GenerationProvider, value: GenerationProvider[keyof GenerationProvider]) => {
+  const patchProvider = (key: string, value: unknown) => {
     if (!selectedProvider) return;
     markDirty();
     setDraft((prev) => ({

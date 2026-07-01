@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import type { BatchGenerationItem, GeneratedImage, GenerationStatus, GenerationTask } from '../../../../domain/generationTask';
-import { cancelServerBatchGenerationItem } from '../../../../infrastructure/api';
+import { cancelServerBatchGenerationItem } from '../../../../processes/server-generation-actions';
 import { useI18n } from '../../../../i18n';
 import { getProviderDetailDescriptor } from '../../model/detailDescriptors';
 import {

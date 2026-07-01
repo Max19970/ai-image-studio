@@ -5,9 +5,10 @@ import { AttachmentImageStrip } from '../../../../shared/ui';
 import type { AttachmentPreviewItem } from '../../../../shared/ui';
 import { cx, expectedImageCount } from '../../model/detailHelpers';
 import { createDetailDescriptorContext, getProviderDetailDescriptor, type DetailDataRow } from '../../model/detailDescriptors';
+import type { DetailInspectorTab } from './detailInspectorTabs';
 import styles from './DetailSnapshotSections.module.css';
 
-export type DetailInspectorTab = 'prompt' | 'params' | 'files' | 'technical';
+export type { DetailInspectorTab } from './detailInspectorTabs';
 
 export function DataRow({ label, value }: { label: string; value: string | number | boolean | null | undefined }) {
   const { t } = useI18n();
@@ -126,6 +127,4 @@ export function TechnicalBlocks({ snapshot, raw, activeImage }: { snapshot: Gene
   return <div className={styles.technicalStack}>{blocks.map((block) => <TechnicalDetails key={block.id} title={block.title} value={block.value} defaultOpen={block.defaultOpen} />)}</div>;
 }
 
-export function visible(activeMobileTab: DetailInspectorTab | undefined, tab: DetailInspectorTab) {
-  return !activeMobileTab || activeMobileTab === tab;
-}
+export { visible } from './detailInspectorTabs';

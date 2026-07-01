@@ -1,11 +1,9 @@
 import { InlineBooleanPluginField, NumberPluginField } from '../workflowPluginFields';
 import type { WorkflowPluginDefinition } from '../workflowPluginTypes';
+import { tiledVaePluginCore } from './tiledVae.plugin';
 
 export const tiledVaePlugin: WorkflowPluginDefinition = {
-  kind: 'tiledVae',
-  labelKey: 'params.comfy.workflowPlugins.tiledVae',
-  descriptionKey: 'params.comfy.workflowPlugins.tiledVae.description',
-  getSummary: (state) => `${state.tiledVaeEncodeEnabled ? 'encode' : ''}${state.tiledVaeEncodeEnabled && state.tiledVaeDecodeEnabled ? ' + ' : ''}${state.tiledVaeDecodeEnabled ? 'decode' : ''} · tile ${state.tiledVaeTileSize}` || `tile ${state.tiledVaeTileSize}`,
+  ...tiledVaePluginCore,
   renderSettings: (context) => [
     <InlineBooleanPluginField key="tiled-vae-encode" context={context} labelKey="params.comfy.workflowPlugins.tiledVaeEncode" descriptionKey="params.comfy.workflowPlugins.tiledVaeEncode.description" stateKey="tiledVaeEncodeEnabled" />,
     <InlineBooleanPluginField key="tiled-vae-decode" context={context} labelKey="params.comfy.workflowPlugins.tiledVaeDecode" descriptionKey="params.comfy.workflowPlugins.tiledVaeDecode.description" stateKey="tiledVaeDecodeEnabled" />,

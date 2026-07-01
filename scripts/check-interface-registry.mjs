@@ -63,9 +63,44 @@ const definitions = definitionFiles.map((file) => ({
   id: matchStringProperty(fs.readFileSync(file, 'utf8'), 'id')
 }));
 
+const settingsSectionDescriptorFiles = walk(path.join(featuresDir, 'settings', 'sections'), (file) => toPosixPath(file).endsWith('/sectionDescriptor.ts'));
+const settingsSectionDescriptors = settingsSectionDescriptorFiles.map((file) => {
+  const source = fs.readFileSync(file, 'utf8');
+  return {
+    file: rel(file),
+    id: matchStringProperty(source, 'id'),
+    tab: matchStringProperty(source, 'tab'),
+    elementUse: matchStringProperty(source, 'elementUse')
+  };
+}).filter((descriptor) => descriptor.id && descriptor.tab && descriptor.elementUse);
+
+function derivedSettingsPlacements(file, source) {
+  if (!source.includes('settingsSectionDescriptors')) return null;
+  const name = path.basename(file);
+  if (name === 'settings.tabs.placement.ts') {
+    return settingsSectionDescriptors.map((descriptor) => ({
+      file: rel(file),
+      id: `settings.tabs.${descriptor.id}`,
+      slot: 'settings/tabs',
+      use: 'settings.tab'
+    }));
+  }
+  if (name === 'settings.sections.placement.ts') {
+    return settingsSectionDescriptors.flatMap((descriptor) => ['desktop', 'mobile'].map((variant) => ({
+      file: rel(file),
+      id: `settings.sections.${descriptor.id}.${variant}`,
+      slot: 'settings/sections',
+      use: descriptor.elementUse
+    })));
+  }
+  return null;
+}
+
 const placementFiles = walk(placementsDir, (file) => file.endsWith('.placement.ts'));
 const placements = placementFiles.flatMap((file) => {
   const source = fs.readFileSync(file, 'utf8');
+  const derived = derivedSettingsPlacements(file, source);
+  if (derived) return derived;
   const ids = matchAllStringProperty(source, 'id');
   const slots = matchAllStringProperty(source, 'slot');
   const uses = matchAllStringProperty(source, 'use');

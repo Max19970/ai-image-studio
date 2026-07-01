@@ -38,7 +38,7 @@ export interface GenerationProgress {
   updatedAt: number;
 }
 
-export type GenerationStatus = 'created' | 'queued' | 'sending' | 'running' | 'retrying' | 'succeeded' | 'failed' | 'cancelled';
+export type GenerationStatus = 'created' | 'queued' | 'sending' | 'running' | 'retrying' | 'succeeded' | 'failed' | 'cancelled' | (string & {});
 
 export interface BatchGenerationItem {
   id: string;

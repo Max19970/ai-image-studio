@@ -5,12 +5,13 @@ import test from 'node:test';
 test('settings placements expose integrations tab and desktop/mobile sections', () => {
   const tabsSource = readFileSync(new URL('../src/interface/placements/settings.tabs.placement.ts', import.meta.url), 'utf8');
   const sectionsSource = readFileSync(new URL('../src/interface/placements/settings.sections.placement.ts', import.meta.url), 'utf8');
+  const descriptorSource = readFileSync(new URL('../src/features/settings/sections/integrations/sectionDescriptor.ts', import.meta.url), 'utf8');
   const definitionSource = readFileSync(new URL('../src/features/settings/sections/integrations/definition.ts', import.meta.url), 'utf8');
 
-  assert.match(tabsSource, /settings\.tabs\.integrations/);
-  assert.match(tabsSource, /tab:\s*'integrations'/);
-  assert.match(sectionsSource, /settings\.sections\.integrations\.desktop/);
-  assert.match(sectionsSource, /settings\.sections\.integrations\.mobile/);
+  assert.match(tabsSource, /settingsSectionDescriptors/);
+  assert.match(sectionsSource, /settingsSectionDescriptors/);
+  assert.match(descriptorSource, /tab:\s*'integrations'/);
+  assert.match(descriptorSource, /elementUse:\s*'settingsSections\.integrations'/);
   assert.match(definitionSource, /id:\s*'settingsSections\.integrations'/);
 });
 

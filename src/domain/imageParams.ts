@@ -1,9 +1,9 @@
-export type OutputFormat = 'png' | 'jpeg' | 'webp';
-export type Quality = '' | 'auto' | 'low' | 'medium' | 'high' | 'standard' | 'hd';
-export type Background = '' | 'auto' | 'opaque' | 'transparent';
-export type Moderation = '' | 'auto' | 'low';
-export type ResponseFormat = '' | 'b64_json' | 'url';
-export type InputFidelity = '' | 'low' | 'high';
+export type OutputFormat = string & {};
+export type Quality = string & {};
+export type Background = string & {};
+export type Moderation = string & {};
+export type ResponseFormat = string & {};
+export type InputFidelity = string & {};
 
 export type ProviderParamsBySurface = Record<string, Record<string, unknown>>;
 

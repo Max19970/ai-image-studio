@@ -1,6 +1,6 @@
 import type { GenerationModel, GenerationProvider } from './providerSettings';
 
-export type InterfaceTheme = 'glass' | 'midnight' | 'ember' | 'meadow' | 'mono';
+export type InterfaceTheme = string & {};
 
 export interface StudioSettings {
   providers: GenerationProvider[];
