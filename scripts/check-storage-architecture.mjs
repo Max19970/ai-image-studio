@@ -5,6 +5,10 @@ import path from 'node:path';
 const root = process.cwd();
 const requiredFiles = [
   'server/storage/schema.ts',
+  'server/storage/config.ts',
+  'server/storage/keyProvider.ts',
+  'server/storage/jsonCodec.ts',
+  'server/storage/sqliteConnection.ts',
   'server/storage/encryptedStore.ts',
   'server/storage/generationTaskStore.ts',
   'server/storage/generation-tasks/generationTaskRepository.ts',
@@ -17,6 +21,9 @@ const requiredFiles = [
   'server/storage/appDocumentStore.ts',
   'server/storage/migrations/002_storage_v2_documents.ts',
   'server/storage/migrations/003_gallery_paths.ts',
+  'server/storage/migrations/registry.ts',
+  'server/storage/migrations/registry.generated.ts',
+  'server/storage/migrations/types.ts',
   'server/storage/galleryFoldersStore.ts',
   'server/routes/galleryFolderRoutes.ts',
   'src/infrastructure/storage/remoteGalleryFolderStore.ts',
@@ -34,7 +41,14 @@ if (missing.length) {
 }
 
 const schema = fs.readFileSync(path.join(root, 'server/storage/schema.ts'), 'utf8');
+const storageConfig = fs.readFileSync(path.join(root, 'server/storage/config.ts'), 'utf8');
+const storageKeyProvider = fs.readFileSync(path.join(root, 'server/storage/keyProvider.ts'), 'utf8');
+const storageJsonCodec = fs.readFileSync(path.join(root, 'server/storage/jsonCodec.ts'), 'utf8');
+const storageConnection = fs.readFileSync(path.join(root, 'server/storage/sqliteConnection.ts'), 'utf8');
 const encryptedStore = fs.readFileSync(path.join(root, 'server/storage/encryptedStore.ts'), 'utf8');
+const storageMigrationRegistry = fs.readFileSync(path.join(root, 'server/storage/migrations/registry.ts'), 'utf8');
+const storageMigrationGeneratedRegistry = fs.readFileSync(path.join(root, 'server/storage/migrations/registry.generated.ts'), 'utf8');
+const storageMigrationIndex = fs.readFileSync(path.join(root, 'server/storage/migrations/index.ts'), 'utf8');
 const taskStoreFiles = [
   'server/storage/generationTaskStore.ts',
   'server/storage/generation-tasks/generationTaskRepository.ts',
@@ -62,6 +76,8 @@ const expectations = [
   ['generation task table exists', /generation_tasks/.test(schema)],
   ['generation tasks have gallery path index', /gallery_path/.test(schema) && /idx_generation_tasks_gallery_path/.test(schema)],
   ['generation task asset table exists', /generation_task_assets/.test(schema)],
+  ['storage migrations are descriptor-driven', /listStorageMigrations/.test(storageMigrationRegistry) && /storageMigrationGeneratedModules/.test(storageMigrationGeneratedRegistry) && /listStorageMigrations\(\)/.test(storageMigrationIndex) && !/const\s+storageMigrations\s*=\s*\[/.test(storageMigrationIndex)],
+  ['storage env/path/key/codec/connection ports are split from encrypted store', /resolveStoragePathConfig/.test(storageConfig) && /createStorageKeyProvider/.test(storageKeyProvider) && /createEncryptedJsonCodec/.test(storageJsonCodec) && /sqliteStorageConnectionFactory/.test(storageConnection) && /createStorageRuntimeContext/.test(encryptedStore)],
   ['encrypted document API exists', /saveEncryptedDocument/.test(encryptedStore) && /loadEncryptedDocument/.test(encryptedStore)],
   ['generation task store splits images', /cloneWithoutImages/.test(taskStore) && /collectImages/.test(taskStore)],
   ['generation task store stores thumbnails', /thumbnail/.test(taskStore) && /thumbnailCount/.test(taskStore)],
@@ -88,10 +104,12 @@ if (failed.length) {
   process.exit(1);
 }
 
-const migrationFiles = fs.readdirSync(path.join(root, 'server/storage/migrations')).filter((file) => file.endsWith('.ts'));
+const migrationFiles = fs.readdirSync(path.join(root, 'server/storage/migrations')).filter((file) => /^\d{3}_.+\.ts$/.test(file));
 console.log('Storage architecture summary:');
 console.log(`  schema version: 3`);
-console.log(`  ${migrationFiles.length - 1} storage migrations plus registry`);
+console.log(`  ${migrationFiles.length} descriptor-owned storage migrations`);
+console.log('  descriptor-driven storage migration registry enabled');
+console.log('  storage path, key, codec and SQLite connection ports enabled');
 console.log('  normalized generation task table enabled');
 console.log('  gallery path index and encrypted folder descriptors enabled');
 console.log('  separated encrypted image asset documents enabled');
