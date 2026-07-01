@@ -65,8 +65,10 @@ export function parsePreviewStreamMode(value: unknown): ProviderPreviewStreamMod
   return null;
 }
 
+const PREVIEW_STREAM_HEADER = 'x-image-studio-preview-stream';
+
 export function resolvePreviewStreamMode(req: express.Request): ProviderPreviewStreamMode {
-  return parsePreviewStreamMode(req.get('x-image-studio-comfyui-preview-stream')) ?? 'throttled';
+  return parsePreviewStreamMode(req.get(PREVIEW_STREAM_HEADER)) ?? 'throttled';
 }
 
 export function numericField(value: unknown, fallback: number): number {

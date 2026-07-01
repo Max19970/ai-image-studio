@@ -1,12 +1,6 @@
 import { isAbortError } from '../../../src/domain/asyncFlow';
 import type { GeneratedImage, GenerationProgress, GenerationRequestSnapshot } from '../../../src/domain/generationTask';
-import type { ProviderResponseAdapter } from '../../../src/entities/provider/types';
 import { createRunnerRetryPolicy, runWithRetryPolicy } from '../../../src/processes/generation-task-lifecycle/retryPolicy';
-import { comfyUiResponseAdapter } from '../../../src/providers/comfyui/responseAdapter';
-import {
-  compactOpenAiCompatibleResponseRaw,
-  openAiCompatibleResponseAdapter
-} from '../../../src/providers/openai-compatible/responseAdapter';
 import { getProviderAdapter } from '../../providers/registry';
 import {
   describeAbortSignal,
@@ -17,6 +11,7 @@ import {
 } from './runtimeDiagnostics';
 import type {
   ProviderPreviewStreamMode,
+  ProviderResponseAdapter,
   ProviderSettings,
   ProviderSubmitTransportDefinition,
   UploadedFile
@@ -34,18 +29,6 @@ export interface ServerGenerationRunInput {
   retryAttempts?: number;
   retryDelaySeconds?: number;
   galleryPath?: string;
-}
-
-function getResponseAdapter(adapterId: string | undefined): ProviderResponseAdapter {
-  return adapterId === 'comfyui' ? comfyUiResponseAdapter : openAiCompatibleResponseAdapter;
-}
-
-function compactResponseRaw(input: ServerGenerationRunInput, raw: unknown): unknown {
-  return input.provider.adapterId === 'comfyui' ? raw : compactOpenAiCompatibleResponseRaw(raw);
-}
-
-function isStreamedRun(input: ServerGenerationRunInput): boolean {
-  return input.provider.adapterId === 'comfyui' || input.payload.stream === true;
 }
 
 async function readJsonOrThrow(response: Response): Promise<unknown> {
@@ -160,7 +143,9 @@ export async function runGenerationRequestPipeline(args: {
   traceId?: string;
 }) {
   const { input, signal, handlers, traceId } = args;
-  const responseAdapter = getResponseAdapter(input.provider.adapterId);
+  const providerAdapter = getProviderAdapter(input.provider.adapterId);
+  const responsePolicy = providerAdapter.response;
+  const responseAdapter = responsePolicy.adapter;
 
   const started = Date.now();
   if (traceId) logGenerationPipelineStart(traceId, input);
@@ -179,7 +164,7 @@ export async function runGenerationRequestPipeline(args: {
 
     publishRuntimeRequestEvent(handlers.onRunning, 'request running state');
 
-    if (isStreamedRun(input)) {
+    if (responsePolicy.shouldStream?.({ payload: input.payload, provider: input.provider }) ?? false) {
       const streamedImages = await consumeStreamedRuntimeGeneration(upstream, responseAdapter, handlers);
       if (traceId) logGenerationPipelineTerminal(traceId, 'succeeded', { elapsedMs: Date.now() - started, streamed: true, imageCount: streamedImages.length });
       await handlers.onSucceeded({ images: sortImages(streamedImages), raw: null, streamed: true });
@@ -189,7 +174,7 @@ export async function runGenerationRequestPipeline(args: {
     const raw = await readJsonOrThrow(upstream);
     const images = responseAdapter.collectImagesFromJson(raw, String(input.payload.output_format ?? 'png')).map(handlers.attachImage);
     if (traceId) logGenerationPipelineTerminal(traceId, 'succeeded', { elapsedMs: Date.now() - started, streamed: false, imageCount: images.length });
-    await handlers.onSucceeded({ images, raw: compactResponseRaw(input, raw), streamed: false });
+    await handlers.onSucceeded({ images, raw: responsePolicy.compactRaw?.(raw) ?? raw, streamed: false });
   } catch (error) {
     const cancelled = isAbortError(error) || signal.aborted;
     if (traceId) logGenerationPipelineTerminal(traceId, cancelled ? 'cancelled' : 'failed', {

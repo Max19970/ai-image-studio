@@ -1,19 +1,11 @@
 import type express from 'express';
 import type multer from 'multer';
-import { registerAppDocumentStorageRoutes } from './appDocumentStorageRoutes';
-import { registerDefaultRoutes } from './defaultRoutes';
-import { registerGenerationRoutes } from './generationRoutes';
-import { registerGenerationTaskStorageRoutes } from './generationTaskStorageRoutes';
-import { registerIntegrationRoutes } from './integrationRoutes';
-import { registerProviderRoutes } from './providerRoutes';
-import { registerTelegramMiniAppRoutes } from './telegramMiniAppRoutes';
+import type { BackendAppContext } from '../appContext';
+import { listBackendRouteGroups } from './registry';
 
-export function registerApiRoutes(app: express.Express, upload: multer.Multer) {
-  registerGenerationRoutes(app, upload);
-  registerProviderRoutes(app);
-  registerGenerationTaskStorageRoutes(app);
-  registerAppDocumentStorageRoutes(app);
-  registerIntegrationRoutes(app);
-  registerTelegramMiniAppRoutes(app);
-  registerDefaultRoutes(app);
+export function registerApiRoutes(app: express.Express, upload: multer.Multer, context: BackendAppContext) {
+  const routeContext = { ...context, upload };
+  for (const group of listBackendRouteGroups()) {
+    group.register(app, routeContext);
+  }
 }

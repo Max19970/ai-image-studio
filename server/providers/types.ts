@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import type { GeneratedImage, GenerationProgress } from '../../src/domain/generationTask';
+import { HttpError } from '../http/httpError';
+export { env } from '../config/env';
+export { compactCause } from '../http/errorCause';
+export { HttpError } from '../http/httpError';
 
 export const ProviderSchema = z.object({
   adapterId: z.string().default('openai-compatible'),
@@ -16,12 +21,6 @@ export const ProviderSchema = z.object({
 
 export type ProviderSettings = z.infer<typeof ProviderSchema>;
 export type UploadedFile = Express.Multer.File;
-
-export class HttpError extends Error {
-  constructor(message: string, readonly statusCode: number) {
-    super(message);
-  }
-}
 
 export type ProviderOperationKind = 'generate' | 'edit';
 export type ProviderSubmitTransportKind = 'json' | 'multipart';
@@ -102,6 +101,24 @@ export type UpstreamRequestResult = {
 
 export type ProviderPreviewStreamMode = 'full' | 'throttled' | 'off';
 
+export interface ProviderResponseAdapter {
+  collectImagesFromJson(json: unknown, fallbackFormat?: string): GeneratedImage[];
+  collectProgressFromJson?(json: unknown): GenerationProgress | null;
+  collectErrorFromJson?(json: unknown): string | null;
+  parseSseBlock(block: string): unknown[];
+}
+
+export interface ProviderStreamDecisionInput {
+  payload: Record<string, unknown>;
+  provider: ProviderSettings;
+}
+
+export interface ProviderRuntimeResponsePolicy {
+  adapter: ProviderResponseAdapter;
+  compactRaw?(raw: unknown): unknown;
+  shouldStream?(input: ProviderStreamDecisionInput): boolean;
+}
+
 export interface ProviderFetchContext {
   signal?: AbortSignal;
   previewStreamMode?: ProviderPreviewStreamMode;
@@ -124,6 +141,7 @@ export interface ProviderAdapterDefinition {
   fingerprint(provider: ProviderSettings): string;
   capabilities: ProviderRuntimeCapabilities;
   resources: ProviderResourceDescriptor;
+  response: ProviderRuntimeResponsePolicy;
   submitProviderMode(input: ProviderModeSubmitInput): Promise<UpstreamRequestResult>;
   fetchGenerate(provider: ProviderSettings, payload: Record<string, unknown>, context?: ProviderFetchContext): Promise<UpstreamRequestResult>;
   fetchEdit(provider: ProviderSettings, payload: Record<string, unknown>, files: UploadedFile[], context?: ProviderFetchContext): Promise<UpstreamRequestResult>;
@@ -137,32 +155,6 @@ export const ProviderResourceRequestSchema = z.object({
   provider: z.unknown(),
   kind: z.string().min(1)
 });
-
-export function env(name: string, fallback = ''): string {
-  return process.env[name] || fallback;
-}
-
-export function compactCause(error: unknown): string | undefined {
-  const anyError = error as any;
-  const cause = anyError?.cause;
-  const parts: string[] = [];
-
-  if (anyError?.name && anyError.name !== 'Error') parts.push(String(anyError.name));
-  if (anyError?.code) parts.push(String(anyError.code));
-
-  if (cause && typeof cause === 'object') {
-    if ((cause as any).code) parts.push(String((cause as any).code));
-    if ((cause as any).syscall) parts.push(String((cause as any).syscall));
-    if ((cause as any).hostname) parts.push(String((cause as any).hostname));
-    if ((cause as any).address) parts.push(String((cause as any).address));
-    if ((cause as any).port) parts.push(String((cause as any).port));
-    if ((cause as any).message) parts.push(String((cause as any).message));
-  } else if (typeof cause === 'string') {
-    parts.push(cause);
-  }
-
-  return [...new Set(parts.filter(Boolean))].join(' · ') || undefined;
-}
 
 export function normalizePayload(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {

@@ -7,6 +7,7 @@ import {
 } from './requestHandlers';
 import { probeOpenAiCompatibleProvider, quickCheckOpenAiCompatibleProvider } from './probeSuite';
 import { openAiCompatibleProviderSettingsSchema } from './settingsSchema';
+import { compactOpenAiCompatibleResponseRaw, openAiCompatibleResponseAdapter } from './responseAdapter';
 
 export const openAiCompatibleProviderAdapter: ProviderAdapterDefinition = {
   id: 'openai-compatible',
@@ -24,6 +25,11 @@ export const openAiCompatibleProviderAdapter: ProviderAdapterDefinition = {
   },
   resources: {
     kinds: []
+  },
+  response: {
+    adapter: openAiCompatibleResponseAdapter,
+    compactRaw: compactOpenAiCompatibleResponseRaw,
+    shouldStream: ({ payload }) => payload.stream === true
   },
   submitProviderMode: submitOpenAiCompatibleProviderMode,
   fetchGenerate: fetchOpenAiCompatibleGenerate,
