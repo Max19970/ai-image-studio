@@ -18,6 +18,7 @@ const requiredFiles = [
   'server/storage/generation-tasks/generationTaskStats.ts',
   'server/storage/generation-tasks/generationTaskDiagnostics.ts',
   'server/storage/generation-tasks/generationTaskLegacyFallback.ts',
+  'server/storage/appDocumentDescriptors.ts',
   'server/storage/appDocumentStore.ts',
   'server/storage/migrations/002_storage_v2_documents.ts',
   'server/storage/migrations/003_gallery_paths.ts',
@@ -60,7 +61,9 @@ const taskStoreFiles = [
   'server/storage/generation-tasks/generationTaskLegacyFallback.ts'
 ];
 const taskStore = taskStoreFiles.map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
+const appDocumentDescriptors = fs.readFileSync(path.join(root, 'server/storage/appDocumentDescriptors.ts'), 'utf8');
 const appDocumentStore = fs.readFileSync(path.join(root, 'server/storage/appDocumentStore.ts'), 'utf8');
+const appDocumentRoutes = fs.readFileSync(path.join(root, 'server/routes/appDocumentStorageRoutes.ts'), 'utf8');
 const remoteHistoryStore = fs.readFileSync(path.join(root, 'src/infrastructure/storage/remoteGenerationTaskHistoryStore.ts'), 'utf8');
 const galleryFoldersStore = fs.readFileSync(path.join(root, 'server/storage/galleryFoldersStore.ts'), 'utf8');
 const remoteGalleryFolderStore = fs.readFileSync(path.join(root, 'src/infrastructure/storage/remoteGalleryFolderStore.ts'), 'utf8');
@@ -68,6 +71,7 @@ const storageSyncHistory = fs.readFileSync(path.join(root, 'src/processes/storag
 const storageSyncSettings = fs.readFileSync(path.join(root, 'src/processes/storage-sync/studioSettings.ts'), 'utf8');
 const storageSyncParams = fs.readFileSync(path.join(root, 'src/processes/storage-sync/imageParams.ts'), 'utf8');
 const storageSyncProbeCache = fs.readFileSync(path.join(root, 'src/processes/storage-sync/providerProbeCache.ts'), 'utf8');
+const generationTaskDownloadUseCases = fs.readFileSync(path.join(root, 'server/processes/generation-task-downloads/downloadUseCases.ts'), 'utf8');
 const serverApiRoutes = ['server/index.ts', 'server/routes/generationTaskStorageRoutes.ts', 'server/routes/generationTaskAssetRoutes.ts', 'server/routes/generationTaskDiagnosticsRoutes.ts', 'server/routes/generationTaskDownloadRoutes.ts', 'server/routes/generationTaskHistoryRoutes.ts'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
 
 const expectations = [
@@ -87,7 +91,9 @@ const expectations = [
   ['generation task store is split into repository modules', /generationTaskRepository/.test(taskStore) && /generationTaskCodecs/.test(taskStore) && /generationTaskRows/.test(taskStore)],
   ['server exposes lazy asset endpoint', /generation-task-asset/.test(serverApiRoutes) && /loadGenerationTaskAssetDocument/.test(serverApiRoutes)],
   ['server exposes storage diagnostics and audit endpoints', /generation-tasks\/diagnostics/.test(serverApiRoutes) && /generation-tasks\/audit/.test(serverApiRoutes) && /getGenerationTaskStorageDiagnostics/.test(taskStore) && /auditGenerationTaskStorageDocuments/.test(taskStore)],
-  ['app document store exists', /studio-settings\.v2/.test(appDocumentStore) && /provider-probe-cache\.v2/.test(appDocumentStore)],
+  ['generation task download archive use cases are split from routes', /createGenerationTaskImageDownloadRegistration/.test(generationTaskDownloadUseCases) && /createGenerationTaskArchiveDownload/.test(generationTaskDownloadUseCases) && /archiveContentDisposition/.test(serverApiRoutes)],
+  ['app document descriptors own buckets and routes', /appDocumentBuckets/.test(appDocumentDescriptors) && /listAppDocumentRouteDescriptors/.test(appDocumentDescriptors) && /integration-settings\.v1/.test(appDocumentDescriptors) && /for \(const descriptor of listAppDocumentRouteDescriptors\(\)\)/.test(appDocumentRoutes)],
+  ['app document store exists', /studioSettingsBucket/.test(appDocumentStore) && /providerProbeCacheBucket/.test(appDocumentStore)],
   ['remote history store supports asset endpoint', /generationTaskAssetEndpoint/.test(remoteHistoryStore) && /loadGenerationTaskAsset/.test(remoteHistoryStore)],
   ['gallery folder store uses encrypted documents', /generationGalleryFolderBucket/.test(galleryFoldersStore) && /saveEncryptedDocument/.test(galleryFoldersStore) && /loadGalleryFolders/.test(galleryFoldersStore)],
   ['remote gallery folder store exists', /gallery-folders/.test(remoteGalleryFolderStore) && /moveRemoteGalleryItem/.test(remoteGalleryFolderStore)],
@@ -115,6 +121,8 @@ console.log('  gallery path index and encrypted folder descriptors enabled');
 console.log('  separated encrypted image asset documents enabled');
 console.log('  encrypted thumbnail asset documents enabled');
 console.log('  lazy history asset modes and single asset endpoint enabled');
+console.log('  descriptor-owned app document buckets and routes enabled');
 console.log('  settings, params and provider probe cache document buckets enabled');
+console.log('  generation task download registration and archive use cases enabled');
 console.log('  storage diagnostics and orphan audit enabled');
 console.log('Storage architecture check passed.');

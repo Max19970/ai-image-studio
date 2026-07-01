@@ -15,6 +15,9 @@ const serverRuntimeFiles = [
   'server/processes/generation-task-runtime/batchRun.ts',
   'server/processes/generation-task-runtime/providerPipeline.ts',
   'server/processes/generation-task-runtime/cancellation.ts',
+  'server/processes/generation-task-runtime/cancellationRegistry.ts',
+  'server/processes/generation-task-runtime/cancellationTaskStore.ts',
+  'server/processes/generation-task-runtime/cancellationBatchReducer.ts',
   'server/processes/generation-task-runtime/galleryMutations.ts',
   'server/processes/generation-task-runtime/imageState.ts',
   'server/processes/liveGenerationImageAssets.ts',
@@ -90,6 +93,7 @@ async function main() {
   );
   assert(serverRuntime.includes('subscribeGenerationTaskEvents') && serverRuntime.includes("'tasks-delta'") && serverRuntime.includes('createGenerationTaskEventBus'), 'server runtime split does not preserve SSE task delta publication.');
   assert(serverRuntime.includes('saveGenerationTaskHistoryDocuments') && serverRuntime.includes('loadGenerationTaskHistoryDocuments'), 'server runtime split does not preserve persisted task history ownership.');
+  assert(serverRuntime.includes('createGenerationCancellationRegistry') && serverRuntime.includes('GenerationCancellationTaskStorePort') && serverRuntime.includes('reduceCancelledBatchItem'), 'server runtime cancellation is not split into controller registry, task-store port and reducer adapter.');
   assert(serverRuntime.includes('createGenerationTaskRuntimeStore') && serverRuntime.includes('RuntimeTaskPersistencePort') && serverRuntime.includes('RuntimeTaskEventPublisherPort'), 'server runtime store does not expose injected persistence/serialization/event ports.');
   assert(serverRuntime.includes('createLiveGenerationImageStore') && serverRuntime.includes('defaultLiveImageUrl'), 'server runtime does not split live image cache policy from serialization facade.');
   assert(serverRuntime.includes('moveServerGalleryFolderTasks') && serverRuntime.includes('pasteServerGalleryItems'), 'server runtime split does not preserve gallery task mutations.');

@@ -7,13 +7,14 @@ import {
   storageDbPath
 } from './encryptedStore';
 import { storageSchemaVersion } from './schema';
+import { appDocumentBuckets, currentDocumentKey } from './appDocumentDescriptors';
+export { appDocumentBuckets, currentDocumentKey, listAppDocumentRouteDescriptors } from './appDocumentDescriptors';
 
-export const studioSettingsBucket = 'studio-settings.v2';
-export const imageParamsBucket = 'image-params.v2';
-export const providerProbeCacheBucket = 'provider-probe-cache.v2';
-export const requestPresetsBucket = 'request-presets.v1';
-export const integrationSettingsBucket = 'integration-settings.v1';
-export const currentDocumentKey = 'current';
+export const studioSettingsBucket = appDocumentBuckets.studioSettings.bucket;
+export const imageParamsBucket = appDocumentBuckets.imageParams.bucket;
+export const providerProbeCacheBucket = appDocumentBuckets.providerProbeCache.bucket;
+export const requestPresetsBucket = appDocumentBuckets.requestPresets.bucket;
+export const integrationSettingsBucket = appDocumentBuckets.integrationSettings.bucket;
 
 export interface AppDocumentStorageStats {
   backend: string;
