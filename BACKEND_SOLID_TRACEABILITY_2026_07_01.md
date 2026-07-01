@@ -1,0 +1,64 @@
+# Backend SOLID audit traceability - 2026-07-01
+
+Source audit: `BACKEND_SOLID_AUDIT_2026_06_30.md`.
+Branch/worktree: `update/backend-solid-refactor` / `worktrees/backend-solid-refactor`.
+
+This is a strict traceability check, not a success-only summary. `Fixed` means the specific violation called out in the audit has a concrete code change. `Partial` means the code moved in the right direction but still violates the audit's strict no-edit/dynamic-discovery interpretation. `Open` means the finding remains materially unresolved.
+
+## Summary
+
+| Status | Count |
+| --- | ---: |
+| Fixed | 8 |
+| Partial | 10 |
+| Open | 19 |
+
+## Finding matrix
+
+| ID | Audit finding | Status | Evidence / notes | Remaining work |
+| --- | --- | --- | --- | --- |
+| B-SOLID-001 | Provider registry is static, not discovery-based | Fixed | `scripts/generate-provider-registry.mjs` now discovers both client and server provider manifests and writes generated registries; `server/providers/registry.ts` collects manifests from `registry.generated.ts`. | This is codegen discovery, not runtime plugin loading. If runtime plugin loading is required, replace generated imports with loader-owned module discovery. |
+| B-SOLID-002 | Unknown provider id silently falls back to OpenAI-compatible | Fixed | `assertKnownProviderAdapterId`, `resolveProviderAdapterId`, and `getProviderAdapter` now throw on unknown adapter ids; only missing ids use the compatibility default. | None for this finding. |
+| B-SOLID-003 | Server generation pipeline branches on concrete adapter ids | Fixed | `providerPipeline.ts` now uses `providerAdapter.response` for response adapter, raw compaction, and stream decision. Grep for `adapterId === 'comfyui'` in `server/**` returns no matches. | None for the audited branch. |
+| B-SOLID-004 | Backend imports frontend/client provider adapters and shared process modules | Partial | Server no longer imports client provider response adapters from `src/providers/*`; server-owned response adapters were added. | Server still imports several `src/processes` / `src/entities` modules, e.g. retry policy, scheduler, reducers, storage normalization, gallery metadata, integration definitions. Move shared domain/application logic behind backend-safe packages or server ports. |
+| B-SOLID-005 | Provider adapter interface is too fat | Partial | Response behavior was split into `ProviderRuntimeResponsePolicy`. | `ProviderAdapterDefinition` still combines generate/edit/provider-mode/resources/quick-check/probe/settings. Split into capability-specific ports and route/use-case consumers. |
+| B-SOLID-006 | Shared `ProviderSchema` is OpenAI-shaped | Open | `server/providers/types.ts` still owns the common OpenAI-shaped `ProviderSchema`. | Move provider settings schemas behind adapter-owned config contracts; introduce a neutral persisted provider envelope plus adapter-specific settings payload. |
+| B-SOLID-007 | Provider submit operation modes are manually enumerated | Open | OpenAI-compatible and ComfyUI submit-operation resolution still uses hard-coded mode ids/branches. | Introduce provider mode descriptors with submit handlers contributed by provider modules. |
+| B-SOLID-008 | OpenAI-compatible probe matrix is hard-coded | Open | Probe suite remains centralized in `server/providers/openai-compatible/probeSuite.ts`. | Generate probes from parameter/profile manifests or adapter-owned probe descriptors. |
+| B-SOLID-009 | ComfyUI workflow plugin system is statically wired | Open | Workflow plugin kinds/defaults/validation/extension maps were not refactored in this pass. | Introduce discoverable ComfyUI workflow plugin descriptors with schema, defaults, ordering, validation, and graph hooks. |
+| B-SOLID-010 | ComfyUI sampler/resource behavior uses explicit branches | Open | Sampler/resource code still uses explicit kind/backend branching. | Register sampler builders and resource handlers by descriptor instead of switch/if chains. |
+| B-SOLID-011 | ComfyUI request/history logic is duplicated and partially dead | Open | Request/polling/stream history logic was not consolidated. | Deduplicate prompt submission, node-error checks, history waiting, and decide whether the non-stream workflow runner remains needed. |
+| B-SOLID-012 | Route registration is static and centralized | Partial | `server/routes/index.ts` now consumes route groups through `server/routes/registry.ts` / `registry.generated.ts`; integration-contributed routes were added. | The route registry itself is still a generated/static list without a generator workflow. Provider-owned route contributions are not implemented. |
+| B-SOLID-013 | `createImageStudioApp` mutates global integration registry | Fixed | `createImageStudioApp` now receives a `BackendAppContext`; built-ins are composed through `createBackendAppContext` rather than app factory mutation. | None for this finding. |
+| B-SOLID-014 | Generation task routes erase type safety with dynamic string keys | Fixed | `GenerationTaskRuntimePort` replaced string-concatenated runtime function access in `taskRoutes.ts`. | None for this finding. |
+| B-SOLID-015 | Request parsing contains provider-specific protocol knowledge | Fixed | ComfyUI-specific preview header was replaced with generic `x-image-studio-preview-stream`. | Future provider-specific request flags should move into provider/request descriptors. |
+| B-SOLID-016 | Routes mix HTTP concerns, use cases, storage, runtime mutation, and response shaping | Open | Route modules were not decomposed into use-case/application services in this pass. | Introduce use-case modules/ports for provider resources, gallery operations, storage docs, downloads, and integrations. |
+| B-SOLID-017 | Integration definitions are static and Telegram-only | Partial | Server registry now supports registry instances and built-in registry composition. | Client/domain integration definitions remain centralized in `src/domain/integrations.ts`, and built-ins still import Telegram directly. Add integration manifests/metadata discovery. |
+| B-SOLID-018 | Telegram Mini App has a dedicated route instead of integration-owned route contribution | Fixed | Telegram Mini App route moved to `server/integrations/telegram/miniAppRoutes.ts`; adapters can expose `routes`; generic `registerIntegrationContributedRoutes` mounts integration-owned routes. | Remove the compatibility re-export `server/routes/telegramMiniAppRoutes.ts` once callers no longer need it. |
+| B-SOLID-019 | Integration runtime action dispatch is string-based and closed | Partial | Route-level `start-runtime` / `stop-runtime` dispatch moved to `actionDispatcher.ts`; Telegram actions now use an injectable action-handler map rather than an if-chain. | API action ids are still string ids and action metadata is not discoverable by client manifests yet. |
+| B-SOLID-020 | Integration launch modes are declared extensible but runtime rejects extension | Partial | Telegram launch mode validation now goes through a `TelegramLaunchModeStrategy` registry; no hard `launchMode !== 'polling'` branch remains. | Webhook strategy/runtime is still not implemented or discovered from integration modules. |
+| B-SOLID-021 | Encrypted storage is a global concrete SQLite/encryption singleton | Open | Storage singleton was not refactored. | Split env/path, key provider, encryption, compression, SQLite connection, migrations, document/blob repositories, and stats behind injected ports. |
+| B-SOLID-022 | App document buckets and storage routes are hard-coded | Open | App document buckets/routes were not refactored. | Add document bucket descriptors and route registration from discovered bucket modules. |
+| B-SOLID-023 | Generation task repository mixes persistence formats, compatibility, assets, rows, stats, and transactions | Open | Generation task repository was not split. | Separate repositories/codecs/assets/legacy migration/stats/transactions behind storage ports. |
+| B-SOLID-024 | Generation task codecs are closed over current task/image shapes | Open | Codecs were not opened to task/image-kind registration. | Add task-kind/image-asset extractors and codec registries. |
+| B-SOLID-025 | Runtime store is a module-level singleton combining cache, persistence, serialization, and event publication | Open | Runtime store remains a singleton. | Introduce runtime instance factory with injected cache, persistence queue, serializer, and event publisher. |
+| B-SOLID-026 | Cancellation state is global and tightly coupled to task reducers | Open | Cancellation module remains global and reducer-coupled. | Move cancellation policies into task-kind/runtime ports. |
+| B-SOLID-027 | Task SSE event bus is global and closed to event channel extension | Open | SSE event bus was not refactored. | Split event store, channel registry, transport writer, keepalive, and diffing. |
+| B-SOLID-028 | Live image cache is a process-global storage/serialization service | Open | Live image cache remains process-global. | Introduce live image store interface, id provider, TTL policy, URL builder, and serializer. |
+| B-SOLID-029 | Gallery folder/store code is closed over item kinds and operation kinds | Open | Gallery item/operation model was not generalized. | Add gallery item-kind and operation descriptors used by routes, stores, metadata, and runtime mutation. |
+| B-SOLID-030 | Download/archive flow mixes route policy, temp cache, data URL parsing, ZIP implementation, and media mapping | Open | Download/archive flow was not split. | Add archive writer/media handler/temp-cache ports and route-level use case orchestration. |
+| B-SOLID-031 | Infrastructure helpers are placed inside provider contract module | Fixed | `HttpError`, `compactCause`, and `env` now live in `server/http/*` and `server/config/env.ts`; HTTP modules no longer import provider types; provider request validation moved to `server/providers/requestValidation.ts`. | Provider types still import some shared domain types from `src/domain/generationTask`; that belongs to B-SOLID-004 rather than this finding. |
+| B-SOLID-032 | Environment loading mutates `process.env` directly | Partial | A small `EnvReader` / `env` abstraction exists and provider/HTTP imports were moved away from provider contracts. | `server/env/loadEnv.ts`, `server/index.ts`, storage, and other modules still rely on global process env. Need injected config object/app context. |
+| B-SOLID-033 | Architecture checks are phrase-based and tied to static manifests | Partial | Provider registry check now validates generated provider registries. | Architecture checks still rely heavily on static manifests and phrase checks. Convert them to contract/discovery validation. |
+| B-SOLID-034 | Manifests describe architecture but do not provide loading boundaries | Partial | Provider manifests now feed the generated server/client registry boundary. | Manifests are still not the universal loading boundary for routes, integrations, storage, workflows, resources, etc. |
+| B-SOLID-035 | No dependency-injected application context | Partial | `BackendAppContext` and provider/integration registry ports were added. | Storage, runtime store, cancellation, event bus, tunnel, and many route use cases are still imported as globals/singletons. |
+| B-SOLID-036 | Tunnel launcher mixes config parsing, process lifecycle, log parsing, cleanup, and shutdown hooks | Open | Tunnel launcher was not refactored. | Split tunnel strategy, config parser, child-process adapter, log parser, cleanup policy, and lifecycle hooks. |
+| B-SOLID-037 | Storage schema and migrations are statically registered | Open | Storage schema/migrations were not refactored. | Add schema/migration descriptors owned by storage modules and discovered by storage composition. |
+
+## Immediate next implementation slices
+
+1. Storage/runtime slice: B-SOLID-021 through B-SOLID-028 plus B-SOLID-037. This is the largest remaining backend architecture debt.
+2. ComfyUI/provider slice: B-SOLID-006 through B-SOLID-011 plus B-SOLID-005 follow-up.
+3. Route/use-case slice: B-SOLID-012, B-SOLID-016, B-SOLID-022, B-SOLID-029, B-SOLID-030.
+4. Integration discovery slice: B-SOLID-017, B-SOLID-019 metadata discovery, B-SOLID-020 webhook strategy/runtime.
+5. Tooling slice: B-SOLID-033 and remaining B-SOLID-034 boundaries.

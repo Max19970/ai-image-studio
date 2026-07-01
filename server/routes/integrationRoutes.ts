@@ -6,10 +6,10 @@ import {
   type IntegrationDefinition
 } from '../../src/entities/integrations';
 import { sendServerError } from '../http/errors';
+import { HttpError } from '../http/httpError';
 import { runIntegrationRuntimeAction } from '../integrations/actionDispatcher';
 import { defaultIntegrationRegistry, type IntegrationRegistryPort } from '../integrations/registry';
 import type { IntegrationActionResult, IntegrationRuntimeStatus } from '../integrations/types';
-import { HttpError } from '../providers/types';
 import {
   loadIntegrationRuntimeConfig,
   loadIntegrationSettings,

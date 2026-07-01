@@ -1,4 +1,5 @@
-import { HttpError, type ProviderSettings } from '../types';
+import { HttpError } from '../../http/httpError';
+import type { ProviderSettings } from '../types';
 import { describeComfyUiError, normalizeComfyUiFetchFailure } from './errorNormalizer';
 
 export interface ComfyUiRequestOptions extends RequestInit {

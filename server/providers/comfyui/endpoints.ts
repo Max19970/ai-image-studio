@@ -1,4 +1,6 @@
-import { env, HttpError, type ProviderOperationKind, type ProviderSettings } from '../types';
+import { env } from '../../config/env';
+import { HttpError } from '../../http/httpError';
+import type { ProviderOperationKind, ProviderSettings } from '../types';
 
 const DEFAULT_COMFYUI_BASE_URL = 'http://127.0.0.1:8188';
 const knownLeafRoutes = ['/prompt', '/view', '/object_info', '/system_stats', '/queue', '/interrupt'];

@@ -1,4 +1,4 @@
-import { env } from '../providers/types';
+import { env } from '../config/env';
 
 export function splitOrigins(value: string): string[] {
   return value

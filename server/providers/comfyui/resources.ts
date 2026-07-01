@@ -1,4 +1,5 @@
-import { HttpError, type ProviderResourceEntry, type ProviderResourceKind, type ProviderResourceList, type ProviderSettings } from '../types';
+import { HttpError } from '../../http/httpError';
+import type { ProviderResourceEntry, ProviderResourceKind, ProviderResourceList, ProviderSettings } from '../types';
 import { resolveComfyUiUrl } from './endpoints';
 import { fetchComfyUiJson } from './http';
 

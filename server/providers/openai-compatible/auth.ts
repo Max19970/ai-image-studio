@@ -1,4 +1,5 @@
-import { env, type ProviderSettings } from '../types';
+import { env } from '../../config/env';
+import type { ProviderSettings } from '../types';
 
 export function getProviderApiKey(provider: ProviderSettings): string {
   const key = (provider.apiKey || env('OPENAI_API_KEY') || '').trim();

@@ -1,12 +1,8 @@
 import type express from 'express';
 import { normalizeGalleryPath } from '../../../src/domain/galleryFilesystem';
 import { parseProviderSettings } from '../../providers/registry';
-import {
-  normalizePayload,
-  type ProviderPreviewStreamMode,
-  type ProviderSubmitTransportDefinition,
-  type UploadedFile
-} from '../../providers/types';
+import { normalizePayload } from '../../providers/requestValidation';
+import type { ProviderPreviewStreamMode, ProviderSubmitTransportDefinition, UploadedFile } from '../../providers/types';
 
 export function createRequestAbortSignal(req: express.Request, res: express.Response): AbortSignal {
   const controller = new AbortController();

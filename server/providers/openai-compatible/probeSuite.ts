@@ -1,4 +1,5 @@
-import { HttpError, type ProbeEntry, type ProbeReport, type ProviderQuickCheckResult, type ProviderSettings } from '../types';
+import { HttpError } from '../../http/httpError';
+import type { ProbeEntry, ProbeReport, ProviderQuickCheckResult, ProviderSettings } from '../types';
 import { getProviderApiKey, buildOpenAiCompatibleHeaders } from './auth';
 import { providerFingerprint, resolveOpenAiCompatibleEndpoint } from './endpoints';
 import { extractUpstreamMessage } from './errorNormalizer';

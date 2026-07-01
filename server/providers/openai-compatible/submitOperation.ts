@@ -1,4 +1,5 @@
-import { HttpError, type ProviderModeSubmitInput } from '../types';
+import { HttpError } from '../../http/httpError';
+import type { ProviderModeSubmitInput } from '../types';
 
 const openAiGenerateModeIds = new Set([
   'openai-compatible.image-generate',

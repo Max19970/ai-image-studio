@@ -1,4 +1,5 @@
-import { compactCause, type ProviderSettings, type ProviderSubmitTransportDefinition, type UploadedFile } from '../../providers/types';
+import { compactCause } from '../../http/errorCause';
+import type { ProviderSettings, ProviderSubmitTransportDefinition, UploadedFile } from '../../providers/types';
 import type { GenerationRequestSnapshot } from '../../../src/domain/generationTask';
 
 function compactEndpoint(endpoint: string): string {

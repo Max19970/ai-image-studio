@@ -1,7 +1,9 @@
 import type express from 'express';
 import { sendServerError } from '../http/errors';
+import { HttpError } from '../http/httpError';
 import { getProviderAdapter, parseProviderSettings } from '../providers/registry';
-import { HttpError, ProviderResourceRequestSchema, type ProviderResourceKind } from '../providers/types';
+import { ProviderResourceRequestSchema } from '../providers/requestValidation';
+import type { ProviderResourceKind } from '../providers/types';
 
 export function registerProviderRoutes(app: express.Express) {
   app.post('/api/provider/quick-check', async (req, res) => {

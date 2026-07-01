@@ -1,8 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createImageStudioApp } from './app';
+import { env } from './config/env';
 import { registerStaticClient } from './http/staticClient';
-import { env } from './providers/types';
 import { startOptionalCloudflaredTunnel } from './tunnel/cloudflaredTunnel';
 
 const __filename = fileURLToPath(import.meta.url);

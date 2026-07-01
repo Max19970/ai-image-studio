@@ -4,9 +4,9 @@ import { registerAppDocumentStorageRoutes } from './appDocumentStorageRoutes';
 import { registerDefaultRoutes } from './defaultRoutes';
 import { registerGenerationRoutes } from './generationRoutes';
 import { registerGenerationTaskStorageRoutes } from './generationTaskStorageRoutes';
+import { registerIntegrationContributedRoutes } from './integrationContributedRoutes';
 import { registerIntegrationRoutes } from './integrationRoutes';
 import { registerProviderRoutes } from './providerRoutes';
-import { registerTelegramMiniAppRoutes } from './telegramMiniAppRoutes';
 import type { BackendRouteGroup } from './types';
 
 export const backendRouteGroupGeneratedModules: Record<string, BackendRouteGroup> = {
@@ -30,9 +30,9 @@ export const backendRouteGroupGeneratedModules: Record<string, BackendRouteGroup
     id: 'integrations',
     register: (app, context) => registerIntegrationRoutes(app, context.integrations)
   },
-  'telegram-mini-app': {
-    id: 'telegram-mini-app',
-    register: (app) => registerTelegramMiniAppRoutes(app)
+  'integration-contributed-routes': {
+    id: 'integration-contributed-routes',
+    register: (app, context) => registerIntegrationContributedRoutes(app, context.integrations)
   },
   defaults: {
     id: 'defaults',

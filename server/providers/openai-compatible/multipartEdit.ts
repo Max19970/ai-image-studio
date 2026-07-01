@@ -1,4 +1,5 @@
-import { HttpError, type UploadedFile } from '../types';
+import { HttpError } from '../../http/httpError';
+import type { UploadedFile } from '../types';
 
 export function imageFilesForEdit(files: UploadedFile[]) {
   return files.filter((file) => ['image_target', 'image_reference', 'image'].includes(file.fieldname));
