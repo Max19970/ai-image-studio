@@ -74,18 +74,29 @@ function getWorkerProcess(): ChildProcess {
   return workerProcess;
 }
 
+function rejectRequest(id: number, error: Error) {
+  const pending = pendingRequests.get(id);
+  if (!pending) return;
+  pendingRequests.delete(id);
+  pending.reject(error);
+}
+
 function callWorker<T extends GenerationTaskStoreWorkerOperation['type']>(
   operation: Extract<GenerationTaskStoreWorkerOperation, { type: T }>
 ): Promise<GenerationTaskStoreWorkerValue<T>> {
   const id = nextRequestId++;
   const request: GenerationTaskStoreWorkerRequest = { id, operation };
   return new Promise((resolve, reject) => {
-    pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject });
     const target = getWorkerProcess();
-    if (!target.send?.(request)) {
-      pendingRequests.delete(id);
-      reject(new Error('Generation task store process is not accepting requests.'));
+    if (!target.connected || typeof target.send !== 'function') {
+      reject(new Error('Generation task store process is not connected.'));
+      return;
     }
+
+    pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject });
+    target.send(request, (error) => {
+      if (error) rejectRequest(id, error instanceof Error ? error : new Error(String(error)));
+    });
   });
 }
 

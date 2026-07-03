@@ -13,7 +13,11 @@ process.env.IMAGE_STUDIO_STORAGE_KEY = '0123456789abcdef0123456789abcdef01234567
 delete process.env.IMAGE_STUDIO_STORAGE_KEY_FILE;
 
 const generationTaskStore = await import('../server/storage/generationTaskStore');
-const { loadGenerationTaskHistoryDocumentsAsync, closeGenerationTaskStoreWorkerForTests } = await import('../server/storage/generationTaskStoreAsync');
+const {
+  closeGenerationTaskStoreWorkerForTests,
+  loadGenerationTaskHistoryDocumentsAsync,
+  saveGenerationTaskHistoryDocumentsAsync
+} = await import('../server/storage/generationTaskStoreAsync');
 const { closeStorageDbForTests } = await import('../server/storage/encryptedStore');
 
 after(async () => {
@@ -73,5 +77,14 @@ test('generation task storage worker does not monopolize the server event loop w
 
   assert.equal(firstSettled, 'event-loop-tick');
   const result = await loading;
+  assert.equal(result.tasks.length, 8);
+});
+
+test('generation task storage worker persists large snapshots even when IPC applies backpressure', async () => {
+  const tasks = Array.from({ length: 8 }, (_, index) => createStoredTask(100 + index));
+
+  await saveGenerationTaskHistoryDocumentsAsync(tasks);
+
+  const result = await loadGenerationTaskHistoryDocumentsAsync({ limit: 8, offset: 0, assetMode: 'metadata' });
   assert.equal(result.tasks.length, 8);
 });
