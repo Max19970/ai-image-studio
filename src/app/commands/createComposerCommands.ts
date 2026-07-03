@@ -31,6 +31,7 @@ export function createComposerCommands(args: ComposerCommandDeps, requestPresets
       targetImage: args.targetImage,
       referenceImages: args.referenceImages,
       mask: args.mask,
+      taskHistory: args.taskHistory,
       setBusy: args.setBusy,
       setServerSubmission: args.setServerSubmission,
       t: args.t,

@@ -53,17 +53,21 @@ function sanitizeRequestSnapshot(snapshot: Partial<GenerationTask['request']>): 
 }
 
 function sanitizeGeneratedImage(image: Partial<GeneratedImage>, fallbackIndex = 0): GeneratedImage | null {
-  if (!image.src || typeof image.src !== 'string') return null;
-  if (image.src.startsWith('blob:')) return null;
+  const src = typeof image.src === 'string' ? image.src : '';
+  const storageAssetKey = typeof image.storageAssetKey === 'string' && image.storageAssetKey.trim() ? image.storageAssetKey : undefined;
+  const storageThumbnailKey = typeof image.storageThumbnailKey === 'string' && image.storageThumbnailKey.trim() ? image.storageThumbnailKey : undefined;
+  if (!src && !storageAssetKey) return null;
+  if (src.startsWith('blob:')) return null;
+  const thumbnailSrc = typeof image.thumbnailSrc === 'string' && !image.thumbnailSrc.startsWith('blob:') ? image.thumbnailSrc : undefined;
   return {
     id: image.id || uid('image'),
     taskId: image.taskId,
     batchItemId: image.batchItemId,
     batchItemIndex: image.batchItemIndex,
-    src: image.src,
-    thumbnailSrc: typeof image.thumbnailSrc === 'string' && !image.thumbnailSrc.startsWith('blob:') ? image.thumbnailSrc : undefined,
-    storageAssetKey: typeof image.storageAssetKey === 'string' ? image.storageAssetKey : undefined,
-    storageThumbnailKey: typeof image.storageThumbnailKey === 'string' ? image.storageThumbnailKey : undefined,
+    src,
+    thumbnailSrc,
+    storageAssetKey,
+    storageThumbnailKey,
     storageAssetLoaded: typeof image.storageAssetLoaded === 'boolean' ? image.storageAssetLoaded : undefined,
     filename: typeof image.filename === 'string' && image.filename.trim() ? image.filename.trim() : undefined,
     format: image.format || 'png',

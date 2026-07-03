@@ -1,14 +1,8 @@
 import type express from 'express';
 import type { GeneratedImage, GenerationProgress, GenerationTask } from '../../../src/domain/generationTask';
+import type { GenerationTasksDeltaEvent } from '../../../src/domain/generationTaskEvents';
 
 type Client = express.Response;
-
-export interface GenerationTasksDeltaEvent {
-  revision: number;
-  taskIds: string[];
-  upserted: GenerationTask[];
-  deletedIds: string[];
-}
 
 const clients = new Set<Client>();
 let taskEventsRevision = 0;
@@ -68,14 +62,20 @@ function taskDeltaSignature(task: GenerationTask): string {
   });
 }
 
+function hasTaskOrderChanged(previousTasks: GenerationTask[], nextTasks: GenerationTask[]): boolean {
+  if (previousTasks.length !== nextTasks.length) return true;
+  return nextTasks.some((task, index) => previousTasks[index]?.id !== task.id);
+}
+
 function createTasksDelta(previousTasks: GenerationTask[], nextTasks: GenerationTask[], revision: number): GenerationTasksDeltaEvent {
   const previousSignatures = new Map(previousTasks.map((task) => [task.id, taskDeltaSignature(task)]));
   const nextIds = new Set(nextTasks.map((task) => task.id));
   const deletedIds = previousTasks.flatMap((task) => nextIds.has(task.id) ? [] : [task.id]);
   const upserted = nextTasks.filter((task) => previousSignatures.get(task.id) !== taskDeltaSignature(task));
+  const taskIds = hasTaskOrderChanged(previousTasks, nextTasks) ? nextTasks.map((task) => task.id) : undefined;
   return {
     revision,
-    taskIds: nextTasks.map((task) => task.id),
+    ...(taskIds ? { taskIds } : {}),
     upserted,
     deletedIds
   };
@@ -97,15 +97,15 @@ export function nextTaskEventsRevision(): number {
 export function broadcastTasksDelta(previousTasks: GenerationTask[], nextTasks: GenerationTask[], revision: number) {
   if (clients.size === 0) return;
   const delta = createTasksDelta(previousTasks, nextTasks, revision);
-  if (delta.upserted.length === 0 && delta.deletedIds.length === 0) return;
+  if (delta.upserted.length === 0 && delta.deletedIds.length === 0 && delta.taskIds === undefined) return;
   for (const client of clients) sendEvent(client, 'tasks-delta', delta);
 }
 
-export function broadcastTaskUpsert(task: GenerationTask, revision: number, taskIds: string[]) {
+export function broadcastTaskUpsert(task: GenerationTask, revision: number, taskIds?: string[]) {
   if (clients.size === 0) return;
   const delta: GenerationTasksDeltaEvent = {
     revision,
-    taskIds,
+    ...(taskIds ? { taskIds } : {}),
     upserted: [task],
     deletedIds: []
   };
@@ -115,7 +115,7 @@ export function broadcastTaskUpsert(task: GenerationTask, revision: number, task
 export function subscribeGenerationTaskEvents(
   req: express.Request,
   res: express.Response,
-  getSnapshot: () => GenerationTask[]
+  getSnapshot: () => Promise<GenerationTask[]>
 ) {
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream');
@@ -124,7 +124,14 @@ export function subscribeGenerationTaskEvents(
   res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders?.();
   clients.add(res);
-  sendEvent(res, 'tasks', { revision: taskEventsRevision, tasks: getSnapshot() });
+  void getSnapshot()
+    .then((tasks) => {
+      if (!res.writableEnded) sendEvent(res, 'tasks', { revision: taskEventsRevision, tasks });
+    })
+    .catch((error) => {
+      console.error('[generation-task-runtime] failed to create task event snapshot:', error);
+      if (!res.writableEnded) sendEvent(res, 'tasks-error', { message: error instanceof Error ? error.message : String(error) });
+    });
 
   const keepAlive = setInterval(() => {
     if (!res.writableEnded) res.write(': keep-alive\n\n');

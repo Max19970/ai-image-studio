@@ -72,6 +72,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         setStudioSettings: state.setStudioSettings,
         setParametersOpen: state.setParametersOpen,
         setWorkspaceTab: state.setWorkspaceTab,
+        taskHistory: state.taskHistory,
         setBusy: state.setBusy,
         setServerSubmission: state.setServerSubmission,
         setBatchComposerOpen: state.setBatchComposerOpen,

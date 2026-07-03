@@ -1,5 +1,5 @@
 import type express from 'express';
-import { loadGenerationTaskAssetDocument } from '../storage/generationTaskStore';
+import { loadGenerationTaskAssetDocumentAsync } from '../storage/generationTaskStoreAsync';
 import { sendServerError } from '../http/errors';
 import {
   parseImageDataUrlForDownload,
@@ -8,14 +8,14 @@ import {
 } from './generationTaskDownloadHelpers';
 
 export function registerGenerationTaskAssetRoutes(app: express.Express) {
-  app.get('/api/storage/generation-task-asset', (req, res) => {
+  app.get('/api/storage/generation-task-asset', async (req, res) => {
     try {
       const key = String(req.query.key ?? '');
       if (!key) {
         res.status(400).json({ error: { message: 'Missing generation task asset key.' } });
         return;
       }
-      const image = loadGenerationTaskAssetDocument(key);
+      const image = await loadGenerationTaskAssetDocumentAsync(key);
       if (!image) {
         res.status(404).json({ error: { message: 'Generation task asset not found.' } });
         return;
@@ -26,14 +26,14 @@ export function registerGenerationTaskAssetRoutes(app: express.Express) {
     }
   });
 
-  app.get('/api/storage/generation-task-asset/image', (req, res) => {
+  app.get('/api/storage/generation-task-asset/image', async (req, res) => {
     try {
       const key = String(req.query.key ?? '');
       if (!key) {
         res.status(400).json({ error: { message: 'Missing generation task asset key.' } });
         return;
       }
-      const image = loadGenerationTaskAssetDocument(key);
+      const image = await loadGenerationTaskAssetDocumentAsync(key);
       if (!image) {
         res.status(404).json({ error: { message: 'Generation task asset not found.' } });
         return;
@@ -53,14 +53,14 @@ export function registerGenerationTaskAssetRoutes(app: express.Express) {
     }
   });
 
-  app.get('/api/storage/generation-task-asset/download', (req, res) => {
+  app.get('/api/storage/generation-task-asset/download', async (req, res) => {
     try {
       const key = String(req.query.key ?? '');
       if (!key) {
         res.status(400).json({ error: { message: 'Missing generation task asset key.' } });
         return;
       }
-      const image = loadGenerationTaskAssetDocument(key);
+      const image = await loadGenerationTaskAssetDocumentAsync(key);
       if (!image) {
         res.status(404).json({ error: { message: 'Generation task asset not found.' } });
         return;

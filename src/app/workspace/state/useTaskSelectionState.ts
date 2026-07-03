@@ -20,6 +20,7 @@ export function useTaskSelectionState(maxStoredGenerationTasks?: number): TaskSe
     registerAborter,
     releaseAborter,
     updateTask,
+    ingestServerTask,
     deleteTask,
     clearTasks
   } = useGenerationTaskHistory(maxStoredGenerationTasks);
@@ -31,6 +32,7 @@ export function useTaskSelectionState(maxStoredGenerationTasks?: number): TaskSe
     taskHistory: {
       setTasks,
       updateTask,
+      ingestServerTask,
       registerAborter,
       releaseAborter,
       deleteTask,
