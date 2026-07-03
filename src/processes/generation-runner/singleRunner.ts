@@ -1,9 +1,15 @@
 import { enqueueServerGenerationRequest } from '../../infrastructure/api/generationTasks';
+import type { GenerationTask } from '../../domain/generationTask';
 import type { SingleGenerationEventSink } from './events';
 import { captureRequestSnapshot } from './requestSnapshots';
 import type { SingleGenerationRunInput } from './types';
 
-export async function runSingleGeneration(input: SingleGenerationRunInput, onEvent?: SingleGenerationEventSink): Promise<string> {
+export interface SingleGenerationSubmission {
+  taskId: string;
+  task?: GenerationTask;
+}
+
+export async function runSingleGeneration(input: SingleGenerationRunInput, onEvent?: SingleGenerationEventSink): Promise<SingleGenerationSubmission> {
   const {
     mode,
     providerMode,
@@ -36,7 +42,7 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
     fallbackProviderLabel: t('app.localProvider')
   });
 
-  const { taskId } = await enqueueServerGenerationRequest({
+  const submission = await enqueueServerGenerationRequest({
     mode,
     providerMode,
     provider,
@@ -48,6 +54,6 @@ export async function runSingleGeneration(input: SingleGenerationRunInput, onEve
     galleryPath
   });
 
-  onEvent?.({ type: 'queued', taskId, request: snapshot });
-  return taskId;
+  onEvent?.({ type: 'queued', taskId: submission.taskId, request: snapshot });
+  return submission;
 }

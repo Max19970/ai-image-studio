@@ -13,6 +13,7 @@ export type { StateSetter } from '../stateTypes';
 export interface TaskHistoryCommands {
   setTasks: StateSetter<GenerationTask[]>;
   updateTask: (taskId: string, recipe: (task: GenerationTask) => GenerationTask) => void;
+  ingestServerTask: (task: GenerationTask) => void;
   registerAborter: (taskId: string, controller: AbortController) => void;
   releaseAborter: (taskId: string) => void;
   deleteTask: (taskId: string) => void;

@@ -59,6 +59,7 @@ export interface ComposerCommandDeps extends ComposerCompatibilityCommandDeps {
   setStudioSettings: StateSetter<StudioSettings>;
   setParametersOpen: StateSetter<boolean>;
   setWorkspaceTab: StateSetter<'images' | 'info' | 'settings'>;
+  taskHistory: Pick<TaskHistoryCommands, 'ingestServerTask'>;
   setBusy: StateSetter<boolean>;
   setServerSubmission: ServerSubmissionSetter;
   setBatchComposerOpen: StateSetter<boolean>;

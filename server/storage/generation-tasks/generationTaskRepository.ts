@@ -21,7 +21,7 @@ import { loadGenerationTaskAssetDocument, saveGenerationTaskAssetDocuments } fro
 import { clearLegacyGenerationTaskHistory, loadLegacyGenerationTaskHistory } from './generationTaskLegacyFallback';
 import { getGenerationTaskHistoryStats } from './generationTaskStats';
 import { clearGenerationTaskTables, hasV2HistoryRows, insertAssetRows, insertTaskRow, selectAssetRows, selectTaskRows } from './generationTaskRows';
-import type { GenerationTaskHistoryLoadOptions, GenerationTaskHistoryStorageStats, JsonObject } from './types';
+import type { GenerationTaskHistoryLoadOptions, GenerationTaskHistoryStorageStats, JsonObject, StoredImageReference } from './types';
 
 function resolveLoadOptions(options: GenerationTaskHistoryLoadOptions): Required<GenerationTaskHistoryLoadOptions> {
   return {
@@ -95,6 +95,28 @@ function loadV2Tasks(options: Required<GenerationTaskHistoryLoadOptions>): unkno
   });
 }
 
+interface PreparedGenerationTaskDocument {
+  taskId: string;
+  task: JsonObject;
+  imageRefs: StoredImageReference[];
+  fullImageCount: number;
+}
+
+function prepareGenerationTaskDocument(taskLike: unknown): PreparedGenerationTaskDocument | null {
+  if (!isRecord(taskLike)) return null;
+  const taskId = stringOrFallback(taskLike.id, `task-${Date.now()}`);
+  const task = hydrateTaskForPersistence({
+    ...taskLike,
+    id: taskId,
+    galleryPath: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)[0] ?? normalizeGalleryPath(taskLike.galleryPath),
+    galleryPaths: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)
+  });
+  const imageRefs = collectImages(task, taskId);
+  const fullImageCount = imageRefs.filter((ref) => ref.assetKind === 'full').length;
+  if (isEmptyActiveStoredTask(task, fullImageCount)) return null;
+  return { taskId, task, imageRefs, fullImageCount };
+}
+
 export { loadGenerationTaskAssetDocument, getGenerationTaskHistoryStats };
 export type { GenerationTaskAssetMode, GenerationTaskHistoryLoadOptions, GenerationTaskHistoryStorageStats } from './types';
 
@@ -112,28 +134,20 @@ export function loadGenerationTaskHistoryDocuments(options: GenerationTaskHistor
 export function saveGenerationTaskHistoryDocuments(tasks: unknown[]) {
   const db = getStorageDb();
   const stats = { compressedBytes: 0, encryptedBytes: 0, assetCount: 0, thumbnailCount: 0 };
+  const preparedTasks = tasks.flatMap((taskLike) => {
+    const prepared = prepareGenerationTaskDocument(taskLike);
+    return prepared ? [prepared] : [];
+  });
 
   db.exec('BEGIN');
   try {
     clearGenerationTaskTables();
 
-    tasks.forEach((taskLike) => {
-      if (!isRecord(taskLike)) return;
-      const taskId = stringOrFallback(taskLike.id, `task-${Date.now()}`);
-      const task = hydrateTaskForPersistence({
-        ...taskLike,
-        id: taskId,
-        galleryPath: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)[0] ?? normalizeGalleryPath(taskLike.galleryPath),
-        galleryPaths: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)
-      });
-      const imageRefs = collectImages(task, taskId);
-      const fullImageRefs = imageRefs.filter((ref) => ref.assetKind === 'full');
-      if (isEmptyActiveStoredTask(task, fullImageRefs.length)) return;
-
+    preparedTasks.forEach(({ taskId, task, imageRefs, fullImageCount }) => {
       const taskStats = saveEncryptedDocument(generationTaskDocumentBucket, taskId, cloneWithoutImages(task));
       stats.compressedBytes += taskStats.compressedBytes;
       stats.encryptedBytes += taskStats.encryptedBytes;
-      insertTaskRow(task, fullImageRefs.length);
+      insertTaskRow(task, fullImageCount);
 
       const assetStats = saveGenerationTaskAssetDocuments(imageRefs);
       stats.compressedBytes += assetStats.compressedBytes;
@@ -154,7 +168,7 @@ export function saveGenerationTaskHistoryDocuments(tasks: unknown[]) {
     backend: storageBackend,
     schemaVersion: storageSchemaVersion,
     dbPath: storageDbPath,
-    taskCount: tasks.length,
+    taskCount: preparedTasks.length,
     assetCount: stats.assetCount,
     thumbnailCount: stats.thumbnailCount,
     compressedBytes: stats.compressedBytes,

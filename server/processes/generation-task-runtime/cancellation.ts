@@ -93,7 +93,7 @@ export async function cancelServerGenerationTask(taskId: string): Promise<void> 
 }
 
 export async function cancelServerBatchGenerationItem(taskId: string, itemId: string): Promise<void> {
-  const task = ensureRuntimeTasks().find((candidate) => candidate.id === taskId);
+  const task = (await ensureRuntimeTasks()).find((candidate) => candidate.id === taskId);
   const item = task?.batch?.items.find((candidate) => candidate.id === itemId);
   if (!task || !item) throw new Error('Batch item not found.');
   if (item.status === 'succeeded' || item.status === 'failed' || item.status === 'cancelled') return;
