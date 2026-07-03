@@ -14,12 +14,21 @@ export interface TemporaryImageDownload {
   expiresAt: number;
 }
 
+export interface TemporaryBinaryDownload {
+  id: string;
+  buffer: Buffer;
+  filename: string;
+  mediaType: string;
+  expiresAt: number;
+}
+
 export interface ZipDownloadEntry {
   filename: string;
   buffer: Buffer;
 }
 
 const temporaryDownloads = new Map<string, TemporaryImageDownload>();
+const temporaryFileDownloads = new Map<string, TemporaryBinaryDownload>();
 const temporaryDownloadTtlMs = 10 * 60 * 1000;
 const temporaryDownloadLimit = 32;
 
@@ -70,14 +79,17 @@ export function absolutePublicUrl(req: express.Request, pathOrUrl: string): stri
 }
 
 export function sendImageDownloadResponse(res: express.Response, parsed: ParsedImageDownload, filename: string): void {
-  const safeFilename = sanitizeDownloadFilename(filename, parsed.extension);
-  res.setHeader('Content-Type', parsed.mediaType);
-  res.setHeader('Content-Length', String(parsed.buffer.length));
-  res.setHeader('Content-Disposition', contentDispositionAttachment(safeFilename));
+  sendBinaryDownloadResponse(res, parsed.buffer, sanitizeDownloadFilename(filename, parsed.extension), parsed.mediaType);
+}
+
+export function sendBinaryDownloadResponse(res: express.Response, buffer: Buffer, filename: string, mediaType: string): void {
+  res.setHeader('Content-Type', mediaType);
+  res.setHeader('Content-Length', String(buffer.length));
+  res.setHeader('Content-Disposition', contentDispositionAttachment(filename));
   res.setHeader('Access-Control-Allow-Origin', 'https://web.telegram.org');
   res.setHeader('Cache-Control', 'private, max-age=300');
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.end(parsed.buffer);
+  res.end(buffer);
 }
 
 export function createTemporaryImageDownload(src: string, filename: unknown, now = Date.now()): TemporaryImageDownload | null {
@@ -112,13 +124,39 @@ export function getTemporaryImageDownload(id: string, now = Date.now()): Tempora
   return download;
 }
 
+export function createTemporaryBinaryDownload(buffer: Buffer, filename: unknown, mediaType: string, extension: string, now = Date.now()): TemporaryBinaryDownload | null {
+  if (!buffer.length) return null;
+  pruneExpiredTemporaryFileDownloads(now);
+  const id = `${now.toString(36)}-${randomUUID()}`;
+  const download: TemporaryBinaryDownload = { id, buffer, filename: sanitizeDownloadFilename(filename, extension), mediaType, expiresAt: now + temporaryDownloadTtlMs };
+  temporaryFileDownloads.set(id, download);
+  return download;
+}
+
+export function getTemporaryBinaryDownload(id: string, now = Date.now()): TemporaryBinaryDownload | null {
+  pruneExpiredTemporaryFileDownloads(now);
+  const download = temporaryFileDownloads.get(id);
+  if (!download || download.expiresAt <= now) {
+    temporaryFileDownloads.delete(id);
+    return null;
+  }
+  return download;
+}
+
 export function clearTemporaryImageDownloadsForTests(): void {
   temporaryDownloads.clear();
+  temporaryFileDownloads.clear();
 }
 
 function pruneExpiredTemporaryDownloads(now: number): void {
   for (const [id, download] of temporaryDownloads) {
     if (download.expiresAt <= now) temporaryDownloads.delete(id);
+  }
+}
+
+function pruneExpiredTemporaryFileDownloads(now: number): void {
+  for (const [id, download] of temporaryFileDownloads) {
+    if (download.expiresAt <= now) temporaryFileDownloads.delete(id);
   }
 }
 

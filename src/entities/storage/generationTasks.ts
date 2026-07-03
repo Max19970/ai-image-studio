@@ -65,6 +65,7 @@ function sanitizeGeneratedImage(image: Partial<GeneratedImage>, fallbackIndex = 
     storageAssetKey: typeof image.storageAssetKey === 'string' ? image.storageAssetKey : undefined,
     storageThumbnailKey: typeof image.storageThumbnailKey === 'string' ? image.storageThumbnailKey : undefined,
     storageAssetLoaded: typeof image.storageAssetLoaded === 'boolean' ? image.storageAssetLoaded : undefined,
+    filename: typeof image.filename === 'string' && image.filename.trim() ? image.filename.trim() : undefined,
     format: image.format || 'png',
     kind: image.kind === 'partial' ? 'partial' : 'final',
     index: Number.isFinite(Number(image.index)) ? Number(image.index) : fallbackIndex,

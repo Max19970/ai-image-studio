@@ -33,8 +33,8 @@ function scheduleRuntimeTaskPersistence(tasks: GenerationTask[]) {
 
 export function ensureRuntimeTasks(): GenerationTask[] {
   if (!runtimeTasks) {
-    const result = loadGenerationTaskHistoryDocuments({ limit: 120, offset: 0, assetMode: 'full' });
-    runtimeTasks = normalizeGenerationTasks(result.tasks, 120);
+    const result = loadGenerationTaskHistoryDocuments({ limit: 1000, offset: 0, assetMode: 'metadata' });
+    runtimeTasks = normalizeGenerationTasks(result.tasks, 1000);
   }
   return runtimeTasks;
 }
@@ -50,7 +50,7 @@ function serializeClientTasks(tasks: GenerationTask[]): GenerationTask[] {
 
 export function clientSnapshotTasks(): GenerationTask[] {
   if (!runtimeTasks) {
-    const result = loadGenerationTaskHistoryDocuments({ limit: 120, offset: 0, assetMode: 'metadata' });
+    const result = loadGenerationTaskHistoryDocuments({ limit: 1000, offset: 0, assetMode: 'metadata' });
     return serializeGenerationTaskHistoryForClient(result.tasks, 'thumbnail') as GenerationTask[];
   }
 
@@ -64,6 +64,16 @@ export async function mutateTasks(recipe: (tasks: GenerationTask[]) => Generatio
     if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
     const revision = nextTaskEventsRevision();
     if (hasTaskEventClients()) broadcastTasksDelta(previousClientTasks, clientSnapshotTasks(), revision);
+  });
+  await mutationQueue;
+}
+
+export async function prependTask(task: GenerationTask, options: { persist?: boolean } = {}) {
+  mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
+    runtimeTasks = [task, ...ensureRuntimeTasks().filter((item) => item.id !== task.id)];
+    if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
+    const revision = nextTaskEventsRevision();
+    if (hasTaskEventClients()) broadcastTaskUpsert(serializeClientTask(task), revision, currentRuntimeTaskIds());
   });
   await mutationQueue;
 }

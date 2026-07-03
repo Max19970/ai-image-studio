@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { normalizeMaxStoredGenerationTasks } from '../../domain/generationHistorySettings';
 import type { InterfaceTheme, StudioSettings } from '../../domain/studioSettings';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
 import type { SettingsCommands } from '../../interface/context/commands';
@@ -59,6 +60,11 @@ export function SettingsPage({
     setDraft((prev) => ({ ...prev, interfaceTheme: theme }));
   };
 
+  const setMaxStoredGenerationTasks = (value: number) => {
+    setSaved(false);
+    setDraft((prev) => ({ ...prev, maxStoredGenerationTasks: normalizeMaxStoredGenerationTasks(value, prev.maxStoredGenerationTasks) }));
+  };
+
   const save = () => {
     const safeSelected = resolveSafeSelectedModelId(draft, generationApi.selectedModelId);
     const next = { ...draft, selectedModelId: safeSelected };
@@ -85,6 +91,8 @@ export function SettingsPage({
     setActiveInfo,
     activeTheme,
     selectTheme,
+    maxStoredGenerationTasks: draft.maxStoredGenerationTasks,
+    setMaxStoredGenerationTasks,
     draft,
     generationApi,
     probingProviderId,

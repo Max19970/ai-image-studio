@@ -1,4 +1,5 @@
 import defaultsData from '../data/studio.defaults.json';
+import { defaultMaxStoredGenerationTasks } from './generationHistorySettings';
 import type { CapabilityKey, GenerationModel, GenerationProvider, ImageParams, ProviderSettings, StudioSettings } from './types';
 
 type DefaultsFile = {
@@ -29,7 +30,8 @@ export const defaultStudioSettings: StudioSettings = {
   providers: [defaultGenerationProvider, ...(defaultComfyUiGenerationProvider ? [defaultComfyUiGenerationProvider] : [])],
   models: [defaultGenerationModel, ...(defaultComfyUiGenerationModel ? [defaultComfyUiGenerationModel] : [])],
   selectedModelId: data.studioSettings.selectedModelId,
-  interfaceTheme: data.studioSettings.interfaceTheme
+  interfaceTheme: data.studioSettings.interfaceTheme,
+  maxStoredGenerationTasks: defaultMaxStoredGenerationTasks
 };
 
 export const defaultImageParams: ImageParams = data.imageParams;

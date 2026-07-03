@@ -4,7 +4,7 @@ import { normalizeGalleryPath, normalizeGalleryPaths } from '../../../src/domain
 import { finalImages, normalizeError, sortImages, transitionTask, uid, upsertLiveImage } from './imageState';
 import { registerTaskController, unregisterTaskController } from './cancellation';
 import { runGenerationRequestPipeline, type ServerGenerationRunInput } from './providerPipeline';
-import { mutateTasks, patchTask } from './runtimeStore';
+import { patchTask, prependTask } from './runtimeStore';
 import { logGenerationTaskQueued } from './runtimeDiagnostics';
 
 async function runTask(taskId: string, input: ServerGenerationRunInput, controller: AbortController) {
@@ -55,7 +55,7 @@ export async function startServerGenerationRun(input: ServerGenerationRunInput):
 
   registerTaskController(taskId, controller);
   logGenerationTaskQueued(taskId, input);
-  await mutateTasks((tasks) => [task, ...tasks.filter((item) => item.id !== taskId)], { persist: false });
+  await prependTask(task, { persist: false });
   setImmediate(() => {
     void runTask(taskId, input, controller);
   });

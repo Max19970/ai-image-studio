@@ -31,7 +31,7 @@ export const localGenerationTaskCache: GenerationTaskHistoryCache = {
     try {
       const raw = localStorage.getItem(key);
       if (!raw) return [];
-      return normalizeGenerationTasks(JSON.parse(raw), 80);
+      return normalizeGenerationTasks(JSON.parse(raw), 1000);
     } catch {
       return [];
     }
@@ -41,7 +41,7 @@ export const localGenerationTaskCache: GenerationTaskHistoryCache = {
     const key = getNamespacedCacheKey();
     if (!key) return;
     try {
-      localStorage.setItem(key, JSON.stringify(toLightGenerationTaskSnapshot(tasks, 40)));
+      localStorage.setItem(key, JSON.stringify(toLightGenerationTaskSnapshot(tasks, 1000)));
     } catch (error) {
       console.warn('Could not persist even the light generation history cache.', error);
     }

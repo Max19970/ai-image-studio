@@ -27,6 +27,6 @@ export interface GenerationTaskHistoryCache {
 
 export interface GenerationTaskHistoryStore {
   load(options?: GenerationTaskHistoryLoadOptions): Promise<StorageReadResult<GenerationTask[]>>;
-  save(tasks: GenerationTask[]): Promise<StorageOperationResult>;
+  save(tasks: GenerationTask[], limit?: number): Promise<StorageOperationResult>;
   clear(): Promise<StorageOperationResult>;
 }

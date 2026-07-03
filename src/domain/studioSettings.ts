@@ -7,5 +7,6 @@ export interface StudioSettings {
   models: GenerationModel[];
   selectedModelId: string;
   interfaceTheme: InterfaceTheme;
+  maxStoredGenerationTasks: number;
   adapterData?: Record<string, unknown>;
 }

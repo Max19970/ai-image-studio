@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GenerationTask } from '../../domain/generationTask';
+import { defaultMaxStoredGenerationTasks, normalizeMaxStoredGenerationTasks } from '../../domain/generationHistorySettings';
 import { collectGenerationTasksObjectUrls, revokeBrowserObjectUrls } from '../../domain/generationTaskObjectUrls';
 import { createTaskCancellationRegistry } from '../../processes/generation-task-lifecycle';
 import {
@@ -67,7 +68,8 @@ function applyTasksDelta(current: GenerationTask[], delta: GenerationTasksDeltaE
   return [...orderedTasks, ...localOnlyTasks];
 }
 
-export function useGenerationTaskHistory() {
+export function useGenerationTaskHistory(maxStoredGenerationTasks = defaultMaxStoredGenerationTasks) {
+  const historyLimit = normalizeMaxStoredGenerationTasks(maxStoredGenerationTasks);
   const [tasks, setTasks] = useState<GenerationTask[]>(() => loadGenerationTaskHistoryFallback());
   const taskCancellationRegistryRef = useRef(createTaskCancellationRegistry());
   const liveTaskObjectUrlsRef = useRef<Set<string>>(new Set());
@@ -82,7 +84,7 @@ export function useGenerationTaskHistory() {
 
   useEffect(() => {
     let cancelled = false;
-    void loadGenerationTaskHistory().then((persistedTasks) => {
+    void loadGenerationTaskHistory(historyLimit).then((persistedTasks) => {
       if (cancelled) return;
       setTasks((current) => {
         if (serverSnapshotLoadedRef.current) return current;
@@ -92,7 +94,7 @@ export function useGenerationTaskHistory() {
       });
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [historyLimit]);
 
   useEffect(() => {
     if (typeof EventSource === 'undefined') return;
@@ -105,7 +107,7 @@ export function useGenerationTaskHistory() {
       const nextTasks = withoutDeletedTasks(snapshot.tasks, deletedTaskIdsRef.current);
       latestTasksRef.current = nextTasks;
       setTasks(nextTasks);
-      cacheGenerationTaskHistoryFallback(nextTasks);
+      cacheGenerationTaskHistoryFallback(nextTasks, historyLimit);
     });
     source.addEventListener('tasks-delta', (event) => {
       const delta = readTasksDeltaEvent(event as MessageEvent);
@@ -115,7 +117,7 @@ export function useGenerationTaskHistory() {
       const nextTasks = withoutDeletedTasks(applyTasksDelta(latestTasksRef.current, delta), deletedTaskIdsRef.current);
       latestTasksRef.current = nextTasks;
       setTasks(nextTasks);
-      cacheGenerationTaskHistoryFallback(nextTasks);
+      cacheGenerationTaskHistoryFallback(nextTasks, historyLimit);
     });
     source.onerror = () => {
       // Browser will retry automatically. Keep the last known task list visible between reconnect attempts.
@@ -148,7 +150,7 @@ export function useGenerationTaskHistory() {
     const nextTasks = latestTasksRef.current.filter((task) => task.id !== taskId);
     latestTasksRef.current = nextTasks;
     setTasks(nextTasks);
-    cacheGenerationTaskHistoryFallback(nextTasks);
+    cacheGenerationTaskHistoryFallback(nextTasks, historyLimit);
   };
 
   const clearTasks = () => {

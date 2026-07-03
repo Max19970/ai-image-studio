@@ -4,11 +4,14 @@ import { loadGenerationTaskAssetDocument, loadGenerationTaskHistoryDocuments } f
 import { sendServerError } from '../http/errors';
 import {
   absolutePublicUrl,
+  createTemporaryBinaryDownload,
   createTemporaryImageDownload,
   createZipArchive,
+  getTemporaryBinaryDownload,
   getTemporaryImageDownload,
   parseImageDataUrlForDownload,
   sanitizeDownloadFilename,
+  sendBinaryDownloadResponse,
   sendImageDownloadResponse,
   type ZipDownloadEntry
 } from './generationTaskDownloadHelpers';
@@ -34,9 +37,20 @@ function taskImages(task: GenerationTask): GeneratedImage[] {
   return images;
 }
 
+function timestampOf(value: unknown): number {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
 function archiveBaseName(task: GenerationTask, index: number): string {
   const prompt = task.request.prompt.trim().replace(/\s+/g, '-').replace(/[^a-zа-яё0-9._-]+/gi, '').slice(0, 42);
   return prompt || task.request.modelLabel || task.id || `task-${index + 1}`;
+}
+
+function preferredImageFilename(image: GeneratedImage): string {
+  const raw = image.raw as { filename?: unknown; comfyui?: { filename?: unknown } } | undefined;
+  const filename = image.filename ?? raw?.filename ?? raw?.comfyui?.filename;
+  return typeof filename === 'string' && filename.trim() ? filename.trim() : '';
 }
 
 function uniqueArchiveFilename(used: Set<string>, filename: string): string {
@@ -135,10 +149,13 @@ export function registerGenerationTaskDownloadRoutes(app: express.Express) {
       const usedNames = new Set<string>();
       (tasks as GenerationTask[])
         .filter((task) => selectedIds.has(task.id) || imageRefsByTask.has(task.id))
+        .sort((left, right) => timestampOf(left.createdAt) - timestampOf(right.createdAt))
         .forEach((task, taskIndex) => {
           const refs = imageRefsByTask.get(task.id) ?? [];
           const includeAllTaskImages = selectedIds.has(task.id);
-          taskImages(task).forEach((image, imageIndex) => {
+          taskImages(task)
+            .sort((left, right) => timestampOf(left.createdAt) - timestampOf(right.createdAt))
+            .forEach((image, imageIndex) => {
             const matchedRef = includeAllTaskImages ? null : refs.find((ref) => matchesArchiveImageRef(ref, task, image));
             if (!includeAllTaskImages && !matchedRef) return;
             const parsed = parseImageDataUrlForDownload(typeof image.src === 'string' ? image.src : '');
@@ -146,7 +163,7 @@ export function registerGenerationTaskDownloadRoutes(app: express.Express) {
             const base = archiveBaseName(task, taskIndex);
             const filename = uniqueArchiveFilename(
               usedNames,
-              sanitizeDownloadFilename(matchedRef?.filename || `${base}-${imageIndex + 1}.${parsed.extension}`, parsed.extension)
+              sanitizeDownloadFilename(matchedRef?.filename || preferredImageFilename(image) || `${base}-${imageIndex + 1}.${parsed.extension}`, parsed.extension)
             );
             entries.push({ filename, buffer: parsed.buffer });
           });
@@ -159,12 +176,35 @@ export function registerGenerationTaskDownloadRoutes(app: express.Express) {
 
       const archive = createZipArchive(entries);
       const filename = sanitizeDownloadFilename(req.body?.filename || 'image-studio-selection.zip', 'zip');
+      if (req.body?.delivery === 'url') {
+        const prepared = createTemporaryBinaryDownload(archive, filename, 'application/zip', 'zip');
+        if (!prepared) {
+          res.status(422).json({ error: { message: 'Could not prepare archive.' } });
+          return;
+        }
+        const route = '/api/storage/generation-task-downloads/file/' + encodeURIComponent(prepared.id);
+        res.json({ id: prepared.id, url: absolutePublicUrl(req, route), filename: prepared.filename, expiresAt: prepared.expiresAt, mediaType: prepared.mediaType });
+        return;
+      }
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Length', String(archive.length));
       res.setHeader('Content-Disposition', `attachment; filename="${filename.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_')}"`);
       res.setHeader('Cache-Control', 'private, max-age=60, no-transform');
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.end(archive);
+    } catch (error) {
+      sendServerError(res, error);
+    }
+  });
+
+  app.get('/api/storage/generation-task-downloads/file/:id', (req, res) => {
+    try {
+      const file = getTemporaryBinaryDownload(String(req.params.id ?? ''));
+      if (!file) {
+        res.status(404).json({ error: { message: 'Temporary file not found or expired.' } });
+        return;
+      }
+      sendBinaryDownloadResponse(res, file.buffer, file.filename, file.mediaType);
     } catch (error) {
       sendServerError(res, error);
     }

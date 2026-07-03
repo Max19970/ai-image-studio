@@ -13,7 +13,7 @@ export interface TaskSelectionState {
   setSelectedImageId: StateSetter<string | null>;
 }
 
-export function useTaskSelectionState(): TaskSelectionState {
+export function useTaskSelectionState(maxStoredGenerationTasks?: number): TaskSelectionState {
   const {
     tasks,
     setTasks,
@@ -22,7 +22,7 @@ export function useTaskSelectionState(): TaskSelectionState {
     updateTask,
     deleteTask,
     clearTasks
-  } = useGenerationTaskHistory();
+  } = useGenerationTaskHistory(maxStoredGenerationTasks);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 

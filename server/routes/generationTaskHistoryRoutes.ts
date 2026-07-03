@@ -19,7 +19,7 @@ export function registerGenerationTaskHistoryRoutes(app: express.Express) {
 
   app.get('/api/storage/generation-tasks', (req, res) => {
     try {
-      const limit = Number(req.query.limit ?? 120);
+      const limit = Number(req.query.limit ?? 1000);
       const offset = Number(req.query.offset ?? 0);
       const assetMode = req.query.assetMode === 'thumbnail' || req.query.assetMode === 'metadata' ? req.query.assetMode : 'full';
       const loadAssetMode = assetMode === 'thumbnail' ? 'metadata' : assetMode;

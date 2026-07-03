@@ -1,4 +1,5 @@
 import type { GenerationTask } from '../../domain/generationTask';
+import { defaultMaxStoredGenerationTasks, normalizeMaxStoredGenerationTasks } from '../../domain/generationHistorySettings';
 import { isActiveGenerationStatus } from '../../domain/generationStatus';
 import type { GenerationTaskHistoryCache, GenerationTaskHistoryStore } from '../../entities/storage';
 import { normalizeGenerationTasks, toPersistableGenerationTaskSnapshot } from '../../entities/storage';
@@ -29,8 +30,8 @@ function imageSignature(image: GenerationTask['images'][number]): string {
   ].join(':');
 }
 
-export function createPersistableGenerationTaskHistorySnapshot(tasks: GenerationTask[]): GenerationTask[] {
-  return toPersistableGenerationTaskSnapshot(tasks, 120);
+export function createPersistableGenerationTaskHistorySnapshot(tasks: GenerationTask[], limit = defaultMaxStoredGenerationTasks): GenerationTask[] {
+  return toPersistableGenerationTaskSnapshot(tasks, normalizeMaxStoredGenerationTasks(limit));
 }
 
 export function getGenerationTaskHistoryPersistenceSignature(tasks: readonly GenerationTask[]): string {
@@ -61,16 +62,24 @@ export function loadGenerationTaskHistoryFallback(dependencies: GenerationTaskHi
   return getSyncStores(dependencies).fallback.loadSync();
 }
 
-export function cacheGenerationTaskHistoryFallback(tasks: GenerationTask[], dependencies: GenerationTaskHistorySyncDependencies = {}) {
-  getSyncStores(dependencies).fallback.save(createPersistableGenerationTaskHistorySnapshot(tasks));
+export function cacheGenerationTaskHistoryFallback(
+  tasks: GenerationTask[],
+  limit = defaultMaxStoredGenerationTasks,
+  dependencies: GenerationTaskHistorySyncDependencies = {}
+) {
+  getSyncStores(dependencies).fallback.save(createPersistableGenerationTaskHistorySnapshot(tasks, limit));
 }
 
-export async function loadGenerationTaskHistory(dependencies: GenerationTaskHistorySyncDependencies = {}): Promise<GenerationTask[]> {
+export async function loadGenerationTaskHistory(
+  limit = defaultMaxStoredGenerationTasks,
+  dependencies: GenerationTaskHistorySyncDependencies = {}
+): Promise<GenerationTask[]> {
   const { remote, fallback } = getSyncStores(dependencies);
+  const historyLimit = normalizeMaxStoredGenerationTasks(limit);
   try {
-    const result = await remote.load({ limit: 120, offset: 0, assetMode: 'thumbnail' });
-    const normalized = normalizeGenerationTasks(result.value, 120);
-    fallback.save(createPersistableGenerationTaskHistorySnapshot(normalized));
+    const result = await remote.load({ limit: historyLimit, offset: 0, assetMode: 'thumbnail' });
+    const normalized = normalizeGenerationTasks(result.value, historyLimit);
+    fallback.save(createPersistableGenerationTaskHistorySnapshot(normalized, historyLimit));
     return normalized;
   } catch (error) {
     console.warn('Falling back to local generation history cache.', error);
@@ -82,13 +91,17 @@ export function shouldPersistGenerationTaskHistory(tasks: readonly GenerationTas
   return !tasks.some((task) => isActiveGenerationStatus(task.status));
 }
 
-async function saveGenerationTaskHistoryNow(tasks: GenerationTask[], dependencies: GenerationTaskHistorySyncDependencies = {}): Promise<void> {
+async function saveGenerationTaskHistoryNow(
+  tasks: GenerationTask[],
+  limit = defaultMaxStoredGenerationTasks,
+  dependencies: GenerationTaskHistorySyncDependencies = {}
+): Promise<void> {
   const { remote, fallback } = getSyncStores(dependencies);
-  const safeTasks = createPersistableGenerationTaskHistorySnapshot(tasks);
+  const safeTasks = createPersistableGenerationTaskHistorySnapshot(tasks, limit);
   try {
     const tasksWithFullAssets = await withGeneratedImageFullAssets(safeTasks);
     const tasksWithThumbnails = await withGeneratedImageThumbnails(tasksWithFullAssets);
-    await remote.save(tasksWithThumbnails);
+    await remote.save(tasksWithThumbnails, limit);
     fallback.save(tasksWithThumbnails);
   } catch (error) {
     console.warn('Could not persist generation history to the encrypted database. Using local fallback cache.', error);
@@ -96,15 +109,19 @@ async function saveGenerationTaskHistoryNow(tasks: GenerationTask[], dependencie
   }
 }
 
-export function saveGenerationTaskHistory(tasks: GenerationTask[], dependencies: GenerationTaskHistorySyncDependencies = {}): Promise<void> {
+export function saveGenerationTaskHistory(
+  tasks: GenerationTask[],
+  limit = defaultMaxStoredGenerationTasks,
+  dependencies: GenerationTaskHistorySyncDependencies = {}
+): Promise<void> {
   const revision = ++latestHistorySaveRevision;
-  const safeTasks = createPersistableGenerationTaskHistorySnapshot(tasks);
+  const safeTasks = createPersistableGenerationTaskHistorySnapshot(tasks, limit);
 
   historySaveQueue = historySaveQueue
     .catch(() => undefined)
     .then(async () => {
       if (revision !== latestHistorySaveRevision) return;
-      await saveGenerationTaskHistoryNow(safeTasks, dependencies);
+      await saveGenerationTaskHistoryNow(safeTasks, limit, dependencies);
     });
 
   return historySaveQueue;

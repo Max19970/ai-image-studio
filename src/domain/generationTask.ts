@@ -19,6 +19,7 @@ export interface GeneratedImage {
   storageAssetKey?: string;
   storageThumbnailKey?: string;
   storageAssetLoaded?: boolean;
+  filename?: string;
   format: string;
   kind: 'final' | 'partial';
   index: number;

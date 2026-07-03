@@ -14,7 +14,7 @@ export function useWorkspaceState(): WorkspaceState {
   const navigation = useNavigationWorkspaceState();
   const galleryFilesystem = useGalleryFilesystemState();
   const composer = useComposerWorkspaceState();
-  const taskSelection = useTaskSelectionState();
+  const taskSelection = useTaskSelectionState(settings.studioSettings.maxStoredGenerationTasks);
   const execution = useGenerationExecutionState(taskSelection.tasks);
   const providerProbe = useProviderProbeState(settings.studioSettings);
   const requestPresets = useRequestPresetWorkspaceState();

@@ -51,7 +51,7 @@ export function DetailHeroSection({ context }: ElementDefinitionProps<DetailLayo
       taskId: task.id,
       imageId: image.id,
       storageAssetKey: image.storageAssetKey,
-      filename: `image-${image.index + 1}.${(image.format || 'png').replace(/^image\//, '')}`
+      filename: image.filename || `image-${image.index + 1}.${(image.format || 'png').replace(/^image\//, '')}`
     }));
     void downloadGenerationImagesArchive(imageRefs, `${task.id}-images.zip`).catch((error) => {
       window.alert(error instanceof Error ? error.message : String(error));
