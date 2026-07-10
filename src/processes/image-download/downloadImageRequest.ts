@@ -70,6 +70,6 @@ export async function requestHostImageFileFallback(input: {
     console.warn('Host image file action was not completed.', error);
   }
 
-  triggerDownload(input.href, input.filename);
+  triggerDownload(input.sourceHref, input.filename);
   return true;
 }

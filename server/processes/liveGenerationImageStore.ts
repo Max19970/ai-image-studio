@@ -1,4 +1,5 @@
 import type { BatchGenerationItem, GeneratedImage, GenerationTask } from '../../src/domain/generationTask';
+import { generationBatchImageAssetKey, generationTaskImageAssetKey } from '../storage/generation-tasks/generationTaskAssetKeys';
 import {
   createLiveGenerationImageStore,
   type LiveGenerationImageAsset,
@@ -7,22 +8,31 @@ import {
 
 const defaultLiveGenerationImageStore = createLiveGenerationImageStore();
 
-function serializeGeneratedImageForClient(image: GeneratedImage, store: LiveGenerationImageStore): GeneratedImage {
+function serializeGeneratedImageForClient(
+  image: GeneratedImage,
+  store: LiveGenerationImageStore,
+  storageAssetKey?: string
+): GeneratedImage {
   if (typeof image.src !== 'string' || !image.src.startsWith('data:image/')) return image;
   const asset = store.registerSource(image.id, image.src);
   if (!asset) return image;
   return {
     ...image,
+    ...(storageAssetKey && !image.storageAssetKey ? { storageAssetKey } : {}),
     src: store.urlFor(asset),
     thumbnailSrc: typeof image.thumbnailSrc === 'string' && image.thumbnailSrc.startsWith('data:image/') ? store.urlFor(asset) : image.thumbnailSrc
   };
 }
 
-function serializeBatchItemForClient(item: BatchGenerationItem, store: LiveGenerationImageStore): BatchGenerationItem {
+function serializeBatchItemForClient(taskId: string, item: BatchGenerationItem, store: LiveGenerationImageStore): BatchGenerationItem {
   if (!item.images.some((image) => typeof image.src === 'string' && image.src.startsWith('data:image/'))) return item;
   return {
     ...item,
-    images: item.images.map((image) => serializeGeneratedImageForClient(image, store))
+    images: item.images.map((image) => serializeGeneratedImageForClient(
+      image,
+      store,
+      image.kind === 'final' ? generationBatchImageAssetKey(taskId, item.id, image.id) : undefined
+    ))
   };
 }
 
@@ -36,10 +46,14 @@ export function serializeLiveGenerationTaskImagesForClient(
 
   return {
     ...task,
-    images: hasTopLevelLiveImages ? task.images.map((image) => serializeGeneratedImageForClient(image, store)) : task.images,
+    images: hasTopLevelLiveImages ? task.images.map((image) => serializeGeneratedImageForClient(
+      image,
+      store,
+      image.kind === 'final' ? generationTaskImageAssetKey(task.id, image.id) : undefined
+    )) : task.images,
     batch: task.batch ? {
       ...task.batch,
-      items: hasBatchLiveImages ? task.batch.items.map((item) => serializeBatchItemForClient(item, store)) : task.batch.items
+      items: hasBatchLiveImages ? task.batch.items.map((item) => serializeBatchItemForClient(task.id, item, store)) : task.batch.items
     } : task.batch
   };
 }

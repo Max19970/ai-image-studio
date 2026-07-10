@@ -1,5 +1,6 @@
 import {
   deleteEncryptedBucket,
+  deleteEncryptedDocument,
   generationTaskAssetBucket,
   generationTaskDocumentBucket,
   getStorageDb
@@ -40,6 +41,29 @@ export function insertAssetRows(refs: StoredImageReference[]) {
   refs.forEach((ref) => {
     statement.run(ref.documentKey, ref.taskId, ref.batchItemId, ref.documentKey, ref.imageId, ref.imageIndex, ref.assetKind, ref.format, ref.createdAt, ref.bytes);
   });
+}
+
+export function selectAllTaskRows(): TaskRow[] {
+  return getStorageDb()
+    .prepare(`SELECT id, document_key, kind, status, gallery_path, created_at, updated_at, image_count, batch_item_count FROM ${generationTasksTableName} ORDER BY created_at DESC`)
+    .all() as TaskRow[];
+}
+
+export function deleteGenerationTaskRows(taskIds: string[]) {
+  const ids = [...new Set(taskIds.filter(Boolean))];
+  if (!ids.length) return;
+
+  const db = getStorageDb();
+  const assetRows: AssetRow[] = [];
+  for (let offset = 0; offset < ids.length; offset += 400) {
+    const chunk = ids.slice(offset, offset + 400);
+    assetRows.push(...selectAssetRows(chunk));
+    const placeholders = chunk.map(() => '?').join(', ');
+    db.prepare(`DELETE FROM ${generationTasksTableName} WHERE id IN (${placeholders})`).run(...chunk);
+  }
+
+  assetRows.forEach((asset) => deleteEncryptedDocument(generationTaskAssetBucket, asset.document_key));
+  ids.forEach((id) => deleteEncryptedDocument(generationTaskDocumentBucket, id));
 }
 
 export function selectTaskRows(limit: number, offset: number): TaskRow[] {

@@ -1,4 +1,4 @@
-import test, { after } from 'node:test';
+import test, { after, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { once } from 'node:events';
@@ -16,10 +16,17 @@ process.env.IMAGE_STUDIO_STORAGE_KEY = '0123456789abcdef0123456789abcdef01234567
 delete process.env.IMAGE_STUDIO_STORAGE_KEY_FILE;
 
 const { createImageStudioApp } = await import('../server/app');
-const { resetGenerationTaskRuntimeForTests } = await import('../server/processes/generationTaskRuntime');
+const {
+  resetGenerationTaskRuntimeForTests,
+  waitForRuntimeTaskPersistenceForTests
+} = await import('../server/processes/generationTaskRuntime');
 const generationTaskStore = await import('../server/storage/generationTaskStore');
 const { closeGenerationTaskStoreWorkerForTests } = await import('../server/storage/generationTaskStoreAsync');
 const { closeStorageDbForTests } = await import('../server/storage/encryptedStore');
+
+afterEach(async () => {
+  await waitForRuntimeTaskPersistenceForTests();
+});
 
 after(async () => {
   resetGenerationTaskRuntimeForTests();

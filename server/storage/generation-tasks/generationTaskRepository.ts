@@ -2,27 +2,32 @@ import {
   generationTaskDocumentBucket,
   getStorageDb,
   loadEncryptedDocument,
-  saveEncryptedDocument,
-  storageBackend,
-  storageDbPath
+  saveEncryptedDocument
 } from '../encryptedStore';
 import { normalizeGalleryPath, normalizeGalleryPaths } from '../../../src/domain/galleryFilesystem';
-import { storageSchemaVersion } from '../schema';
 import {
   clampLimit,
   clampOffset,
   cloneWithoutImages,
-  collectImages,
   isRecord,
-  restoreTaskImages,
-  stringOrFallback
+  restoreTaskImages
 } from './generationTaskCodecs';
 import { loadGenerationTaskAssetDocument, saveGenerationTaskAssetDocuments } from './generationTaskAssets';
-import { hydrateTaskForPersistence } from './generationTaskHydration';
+import { createGenerationTaskPersistencePlan } from './generationTaskPersistencePlan';
 import { clearLegacyGenerationTaskHistory, loadLegacyGenerationTaskHistory } from './generationTaskLegacyFallback';
 import { getGenerationTaskHistoryStats } from './generationTaskStats';
-import { clearGenerationTaskTables, hasV2HistoryRows, insertAssetRows, insertTaskRow, selectAssetRows, selectTaskRows, selectTaskRowsByIds } from './generationTaskRows';
-import type { GenerationTaskAssetMode, GenerationTaskHistoryLoadOptions, GenerationTaskHistoryStorageStats, JsonObject, StoredImageReference, TaskRow } from './types';
+import {
+  clearGenerationTaskTables,
+  deleteGenerationTaskRows,
+  hasV2HistoryRows,
+  insertAssetRows,
+  insertTaskRow,
+  selectAllTaskRows,
+  selectAssetRows,
+  selectTaskRows,
+  selectTaskRowsByIds
+} from './generationTaskRows';
+import type { GenerationTaskAssetMode, GenerationTaskHistoryLoadOptions, GenerationTaskHistoryStorageStats, JsonObject, TaskRow } from './types';
 
 function resolveLoadOptions(options: GenerationTaskHistoryLoadOptions): Required<GenerationTaskHistoryLoadOptions> {
   return {
@@ -63,28 +68,6 @@ function loadV2Tasks(options: Required<GenerationTaskHistoryLoadOptions>): unkno
   return loadV2TaskRows(selectTaskRows(options.limit, options.offset), options.assetMode);
 }
 
-interface PreparedGenerationTaskDocument {
-  taskId: string;
-  task: JsonObject;
-  imageRefs: StoredImageReference[];
-  fullImageCount: number;
-}
-
-function prepareGenerationTaskDocument(taskLike: unknown): PreparedGenerationTaskDocument | null {
-  if (!isRecord(taskLike)) return null;
-  const taskId = stringOrFallback(taskLike.id, `task-${Date.now()}`);
-  const task = hydrateTaskForPersistence({
-    ...taskLike,
-    id: taskId,
-    galleryPath: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)[0] ?? normalizeGalleryPath(taskLike.galleryPath),
-    galleryPaths: normalizeGalleryPaths(taskLike.galleryPaths, taskLike.galleryPath)
-  });
-  const imageRefs = collectImages(task, taskId);
-  const fullImageCount = imageRefs.filter((ref) => ref.assetKind === 'full').length;
-  if (isEmptyActiveStoredTask(task, fullImageCount)) return null;
-  return { taskId, task, imageRefs, fullImageCount };
-}
-
 export { loadGenerationTaskAssetDocument, getGenerationTaskHistoryStats };
 export type { GenerationTaskAssetMode, GenerationTaskHistoryLoadOptions, GenerationTaskHistoryStorageStats } from './types';
 
@@ -116,27 +99,16 @@ export function loadGenerationTaskHistoryDocumentsByIds(taskIds: string[], optio
 
 export function saveGenerationTaskHistoryDocuments(tasks: unknown[]) {
   const db = getStorageDb();
-  const stats = { compressedBytes: 0, encryptedBytes: 0, assetCount: 0, thumbnailCount: 0 };
-  const preparedTasks = tasks.flatMap((taskLike) => {
-    const prepared = prepareGenerationTaskDocument(taskLike);
-    return prepared ? [prepared] : [];
-  });
+  const { preparedTasks, removedTaskIds, replacedTaskIds } = createGenerationTaskPersistencePlan(tasks, selectAllTaskRows());
 
   db.exec('BEGIN');
   try {
-    clearGenerationTaskTables();
+    deleteGenerationTaskRows([...removedTaskIds, ...replacedTaskIds]);
 
     preparedTasks.forEach(({ taskId, task, imageRefs, fullImageCount }) => {
-      const taskStats = saveEncryptedDocument(generationTaskDocumentBucket, taskId, cloneWithoutImages(task));
-      stats.compressedBytes += taskStats.compressedBytes;
-      stats.encryptedBytes += taskStats.encryptedBytes;
+      saveEncryptedDocument(generationTaskDocumentBucket, taskId, cloneWithoutImages(task));
       insertTaskRow(task, fullImageCount);
-
-      const assetStats = saveGenerationTaskAssetDocuments(imageRefs);
-      stats.compressedBytes += assetStats.compressedBytes;
-      stats.encryptedBytes += assetStats.encryptedBytes;
-      stats.assetCount += assetStats.assetCount;
-      stats.thumbnailCount += assetStats.thumbnailCount;
+      saveGenerationTaskAssetDocuments(imageRefs);
       insertAssetRows(imageRefs);
     });
 
@@ -147,16 +119,7 @@ export function saveGenerationTaskHistoryDocuments(tasks: unknown[]) {
   }
 
   clearLegacyGenerationTaskHistory();
-  return {
-    backend: storageBackend,
-    schemaVersion: storageSchemaVersion,
-    dbPath: storageDbPath,
-    taskCount: preparedTasks.length,
-    assetCount: stats.assetCount,
-    thumbnailCount: stats.thumbnailCount,
-    compressedBytes: stats.compressedBytes,
-    encryptedBytes: stats.encryptedBytes
-  };
+  return getGenerationTaskHistoryStats();
 }
 
 export function clearGenerationTaskHistoryDocuments() {

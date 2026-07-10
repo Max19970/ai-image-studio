@@ -3,7 +3,7 @@ import { normalizeGenerationTasks } from '../../../src/entities/storage';
 import { loadGenerationTaskHistoryDocumentsAsync, saveGenerationTaskHistoryDocumentsAsync } from '../../storage/generationTaskStoreAsync';
 import { serializeGenerationTaskHistoryForClient } from '../generationTaskHistoryClientSerialization';
 import { serializeLiveGenerationTaskImagesForClient } from '../liveGenerationImageStore';
-import { isActiveStatus, taskPersistableFinalImageCount } from './imageState';
+import { createRuntimePersistenceCoordinator } from './runtimePersistenceCoordinator';
 import { broadcastTasksDelta, broadcastTaskUpsert, hasTaskEventClients, nextTaskEventsRevision } from './taskEvents';
 
 export interface RuntimeTaskPersistencePort {
@@ -30,16 +30,8 @@ export interface GenerationTaskRuntimeStore {
   mutateTasks(recipe: (tasks: GenerationTask[]) => GenerationTask[], options?: { persist?: boolean }): Promise<void>;
   prependTask(task: GenerationTask, options?: { persist?: boolean }): Promise<void>;
   patchTask(taskId: string, recipe: (task: GenerationTask) => GenerationTask, options?: { persist?: boolean }): Promise<void>;
+  waitForPersistenceForTests(): Promise<void>;
   resetForTests(): void;
-}
-
-function isEmptyActiveTask(task: GenerationTask): boolean {
-  if (taskPersistableFinalImageCount(task) > 0) return false;
-  return isActiveStatus(task.status);
-}
-
-function runtimePersistableTasks(tasks: GenerationTask[]): GenerationTask[] {
-  return tasks.filter((task) => !isEmptyActiveTask(task));
 }
 
 export const defaultRuntimeTaskPersistence: RuntimeTaskPersistencePort = {
@@ -80,7 +72,7 @@ export function createGenerationTaskRuntimeStore(
 ): GenerationTaskRuntimeStore {
   let runtimeTasks: GenerationTask[] | null = null;
   let mutationQueue: Promise<void> = Promise.resolve();
-  let persistenceQueue: Promise<void> = Promise.resolve();
+  const persistenceCoordinator = createRuntimePersistenceCoordinator((tasks) => persistence.save(tasks));
 
   async function ensureRuntimeTasks(): Promise<GenerationTask[]> {
     if (!runtimeTasks) runtimeTasks = await persistence.load();
@@ -92,18 +84,6 @@ export function createGenerationTaskRuntimeStore(
     return serialization.serializeTasks(runtimeTasks);
   }
 
-  function scheduleRuntimeTaskPersistence(tasks: GenerationTask[]) {
-    const snapshot = runtimePersistableTasks(tasks);
-    if (snapshot.length === 0 && tasks.length > 0) return;
-
-    persistenceQueue = persistenceQueue.catch(() => undefined).then(async () => {
-      await persistence.save(snapshot);
-    });
-    void persistenceQueue.catch((error) => {
-      console.error('[generation-task-runtime] failed to persist task history:', error);
-    });
-  }
-
   return {
     ensureRuntimeTasks,
     clientSnapshotTasks,
@@ -111,7 +91,7 @@ export function createGenerationTaskRuntimeStore(
       mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
         const previousClientTasks = events.hasClients() && runtimeTasks ? await clientSnapshotTasks() : [];
         runtimeTasks = recipe(await ensureRuntimeTasks());
-        if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
+        if (options.persist !== false) persistenceCoordinator.schedule(runtimeTasks);
         const revision = events.nextRevision();
         if (events.hasClients()) events.broadcastTasksDelta(previousClientTasks, await clientSnapshotTasks(), revision);
       });
@@ -120,7 +100,7 @@ export function createGenerationTaskRuntimeStore(
     async prependTask(task, options = {}) {
       mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
         runtimeTasks = [task, ...(await ensureRuntimeTasks()).filter((item) => item.id !== task.id)];
-        if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
+        if (options.persist !== false) persistenceCoordinator.schedule(runtimeTasks);
         const revision = events.nextRevision();
         if (events.hasClients()) events.broadcastTaskUpsert(serialization.serializeTask(task), revision, runtimeTasks.map((item) => item.id));
       });
@@ -135,16 +115,17 @@ export function createGenerationTaskRuntimeStore(
         const changedTask = recipe(tasks[taskIndex]);
         runtimeTasks = [...tasks];
         runtimeTasks[taskIndex] = changedTask;
-        if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
+        if (options.persist !== false) persistenceCoordinator.schedule(runtimeTasks);
         const revision = events.nextRevision();
         events.broadcastTaskUpsert(serialization.serializeTask(changedTask), revision);
       });
       await mutationQueue;
     },
+    waitForPersistenceForTests: () => persistenceCoordinator.waitForIdleForTests(),
     resetForTests() {
       runtimeTasks = null;
       mutationQueue = Promise.resolve();
-      persistenceQueue = Promise.resolve();
+      persistenceCoordinator.resetForTests();
     }
   };
 }
@@ -169,6 +150,10 @@ export async function prependTask(task: GenerationTask, options: { persist?: boo
 
 export async function patchTask(taskId: string, recipe: (task: GenerationTask) => GenerationTask, options: { persist?: boolean } = {}) {
   await defaultRuntimeStore.patchTask(taskId, recipe, options);
+}
+
+export function waitForRuntimeTaskPersistenceForTests() {
+  return defaultRuntimeStore.waitForPersistenceForTests();
 }
 
 export function resetRuntimeStoreForTests() {

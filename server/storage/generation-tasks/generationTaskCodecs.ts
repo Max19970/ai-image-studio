@@ -1,3 +1,9 @@
+import {
+  generationBatchImageAssetKey,
+  generationBatchImageThumbnailKey,
+  generationTaskImageAssetKey,
+  generationTaskImageThumbnailKey
+} from './generationTaskAssetKeys';
 import type { AssetRow, GenerationTaskAssetMode, JsonObject, StoredImageReference } from './types';
 
 export function isRecord(value: unknown): value is JsonObject {
@@ -83,7 +89,7 @@ function collectTopLevelImageRefs(task: JsonObject, taskId: string): StoredImage
     const imageId = stringOrFallback(image.id, `${taskId}-image-${index}`);
     const imageIndex = numberOrFallback(image.index, index);
     const format = stringOrFallback(image.format, 'png');
-    const fullDocumentKey = `${taskId}/image/${imageId}/full`;
+    const fullDocumentKey = generationTaskImageAssetKey(taskId, imageId);
     const refs: StoredImageReference[] = [{
       documentKey: fullDocumentKey,
       taskId,
@@ -100,7 +106,7 @@ function collectTopLevelImageRefs(task: JsonObject, taskId: string): StoredImage
     }];
 
     if (isImageDataUrl(image.thumbnailSrc)) {
-      const thumbnailDocumentKey = `${taskId}/image/${imageId}/thumbnail`;
+      const thumbnailDocumentKey = generationTaskImageThumbnailKey(taskId, imageId);
       const thumbnailDocument = createThumbnailDocument(image, image.thumbnailSrc, fullDocumentKey, thumbnailDocumentKey);
       refs.push({
         documentKey: thumbnailDocumentKey,
@@ -133,7 +139,7 @@ function collectBatchImageRefs(task: JsonObject, taskId: string): StoredImageRef
       const imageId = stringOrFallback(image.id, `${batchItemId}-image-${imageIndex}`);
       const storedIndex = numberOrFallback(image.index, imageIndex);
       const format = stringOrFallback(image.format, 'png');
-      const fullDocumentKey = `${taskId}/batch/${batchItemId}/image/${imageId}/full`;
+      const fullDocumentKey = generationBatchImageAssetKey(taskId, batchItemId, imageId);
       const refs: StoredImageReference[] = [{
         documentKey: fullDocumentKey,
         taskId,
@@ -150,7 +156,7 @@ function collectBatchImageRefs(task: JsonObject, taskId: string): StoredImageRef
       }];
 
       if (isImageDataUrl(image.thumbnailSrc)) {
-        const thumbnailDocumentKey = `${taskId}/batch/${batchItemId}/image/${imageId}/thumbnail`;
+        const thumbnailDocumentKey = generationBatchImageThumbnailKey(taskId, batchItemId, imageId);
         const thumbnailDocument = createThumbnailDocument(image, image.thumbnailSrc, fullDocumentKey, thumbnailDocumentKey);
         refs.push({
           documentKey: thumbnailDocumentKey,
