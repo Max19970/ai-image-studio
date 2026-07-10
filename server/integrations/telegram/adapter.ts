@@ -1,26 +1,42 @@
 import type { IntegrationActionContext, IntegrationActionResult, IntegrationRuntimeAdapter } from '../types';
 import { TelegramBotApiClient } from './client';
+import { telegramMiniAppRouteContribution } from './miniAppRoutes';
 import { TelegramPollingRuntime } from './runtime';
 import { resolveTelegramRuntimeConfig } from './types';
 
-export function createTelegramIntegrationAdapter(runtime = new TelegramPollingRuntime()): IntegrationRuntimeAdapter {
+type TelegramActionHandler = (context: IntegrationActionContext) => Promise<IntegrationActionResult>;
+
+const defaultTelegramActions: Record<string, TelegramActionHandler> = {
+  'validate-token': validateToken,
+  'apply-menu-button': applyMenuButton,
+  'send-test-message': sendTestMessage
+};
+
+export function createTelegramIntegrationAdapter(
+  runtime = new TelegramPollingRuntime(),
+  actions: Record<string, TelegramActionHandler> = defaultTelegramActions
+): IntegrationRuntimeAdapter {
   return {
     id: 'telegram',
     label: 'Телеграм',
     description: 'Telegram bot runtime and Mini App launcher.',
     supportsRuntime: true,
+    routes: [telegramMiniAppRouteContribution],
     getStatus: () => runtime.getStatus(),
     start: (config) => runtime.start(config),
     stop: () => runtime.stop(),
-    runAction: (actionId, context) => runTelegramAction(actionId, context)
+    runAction: (actionId, context) => runTelegramAction(actions, actionId, context)
   };
 }
 
-async function runTelegramAction(actionId: string, context: IntegrationActionContext): Promise<IntegrationActionResult> {
-  if (actionId === 'validate-token') return validateToken(context);
-  if (actionId === 'apply-menu-button') return applyMenuButton(context);
-  if (actionId === 'send-test-message') return sendTestMessage(context);
-  return { ok: false, message: `Unknown Telegram action: ${actionId}` };
+async function runTelegramAction(
+  actions: Record<string, TelegramActionHandler>,
+  actionId: string,
+  context: IntegrationActionContext
+): Promise<IntegrationActionResult> {
+  const handler = actions[actionId];
+  if (!handler) return { ok: false, message: `Unknown Telegram action: ${actionId}` };
+  return handler(context);
 }
 
 async function validateToken(context: IntegrationActionContext): Promise<IntegrationActionResult> {

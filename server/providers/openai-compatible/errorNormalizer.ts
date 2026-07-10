@@ -1,4 +1,5 @@
-import { HttpError, compactCause } from '../types';
+import { compactCause } from '../../http/errorCause';
+import { HttpError } from '../../http/httpError';
 
 export function extractUpstreamMessage(text: string): string {
   try {

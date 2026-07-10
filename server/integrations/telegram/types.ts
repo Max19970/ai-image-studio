@@ -74,8 +74,23 @@ export interface TelegramRuntimeConfigResult {
   message?: string;
 }
 
+export interface TelegramLaunchModeStrategy {
+  mode: TelegramLaunchMode;
+  validate(values: Record<string, unknown>): { ok: boolean; message?: string };
+}
+
 const defaultMenuButtonText = 'Open Image Studio';
 const defaultStartMessage = 'Open Image Studio from the button below.';
+const telegramLaunchModeStrategies = new Map<TelegramLaunchMode, TelegramLaunchModeStrategy>();
+
+registerTelegramLaunchModeStrategy({
+  mode: 'polling',
+  validate: () => ({ ok: true })
+});
+
+export function registerTelegramLaunchModeStrategy(strategy: TelegramLaunchModeStrategy) {
+  telegramLaunchModeStrategies.set(strategy.mode, strategy);
+}
 
 export function resolveTelegramRuntimeConfig(config: IntegrationRuntimeConfig): TelegramRuntimeConfigResult {
   const botToken = asString(config.secrets.botToken).trim();
@@ -85,7 +100,12 @@ export function resolveTelegramRuntimeConfig(config: IntegrationRuntimeConfig): 
 
   if (!config.enabled) return { ok: false, message: 'Telegram integration is disabled.' };
   if (!botToken) return { ok: false, message: 'Telegram bot token is not configured.' };
-  if (launchMode !== 'polling') return { ok: false, message: 'Only polling mode is supported in this build.' };
+
+  const launchModeStrategy = telegramLaunchModeStrategies.get(launchMode);
+  if (!launchModeStrategy) return { ok: false, message: `Telegram launch mode "${launchMode}" is not registered in this build.` };
+  const launchModeValidation = launchModeStrategy.validate(values);
+  if (!launchModeValidation.ok) return { ok: false, message: launchModeValidation.message ?? `Telegram launch mode "${launchMode}" is not available.` };
+
   if (!isHttpsUrl(miniAppUrl)) return { ok: false, message: 'Mini App URL must be a valid HTTPS URL.' };
 
   return {

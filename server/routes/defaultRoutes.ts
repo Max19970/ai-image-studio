@@ -1,5 +1,5 @@
 import type express from 'express';
-import { env } from '../providers/types';
+import { env } from '../config/env';
 
 export function registerDefaultRoutes(app: express.Express) {
   app.get('/api/defaults', (_req, res) => {

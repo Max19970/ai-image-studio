@@ -2,7 +2,8 @@ import type express from 'express';
 import type multer from 'multer';
 import { proxyResponse, sendServerError } from '../../http/errors';
 import { getProviderAdapter, parseProviderSettings } from '../../providers/registry';
-import { normalizePayload, type ProviderSubmitTransportDefinition, type UploadedFile } from '../../providers/types';
+import { normalizePayload } from '../../providers/requestValidation';
+import type { ProviderSubmitTransportDefinition, UploadedFile } from '../../providers/types';
 import {
   createRequestAbortSignal,
   parseJsonField,

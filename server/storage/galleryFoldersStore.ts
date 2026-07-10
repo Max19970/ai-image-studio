@@ -1,3 +1,4 @@
+import { galleryItemCanContainChildren, type GalleryItemKind, type GalleryPasteOperation } from '../gallery/descriptors';
 import {
   deleteEncryptedDocument,
   generationGalleryFolderBucket,
@@ -19,16 +20,16 @@ import {
 
 const galleryFoldersKey = 'folders';
 
-export type GalleryPasteOperation = 'move' | 'link-copy' | 'deep-copy';
+export type { GalleryPasteOperation } from '../gallery/descriptors';
 
 export interface GalleryPasteItem {
-  itemKind: 'task' | 'folder';
+  itemKind: GalleryItemKind;
   itemId: string;
   sourcePath: string;
 }
 
 export interface GalleryFolderPasteMapping {
-  itemKind: 'folder';
+  itemKind: Extract<GalleryItemKind, 'folder'>;
   itemId: string;
   sourcePath: string;
   nextPath: string;
@@ -70,7 +71,7 @@ export function deleteGalleryFolder(path: string): GalleryFolder[] {
   return saveGalleryFolders(folders.filter((folder) => folder.path !== normalizedPath && !isGalleryPathInside(folder.path, normalizedPath)));
 }
 
-export function moveGalleryItemPath(args: { itemKind: 'task' | 'folder'; itemId: string; targetPath: string }): { folders: GalleryFolder[]; sourcePath?: string; nextPath?: string } {
+export function moveGalleryItemPath(args: { itemKind: GalleryItemKind; itemId: string; targetPath: string }): { folders: GalleryFolder[]; sourcePath?: string; nextPath?: string } {
   const result = pasteGalleryFolderItems({
     operation: 'move',
     targetPath: args.targetPath,
@@ -93,7 +94,7 @@ export function pasteGalleryFolderItems(args: {
   const now = Date.now();
 
   for (const item of args.items) {
-    if (item.itemKind !== 'folder') continue;
+    if (!galleryItemCanContainChildren(item.itemKind)) continue;
     const sourcePath = normalizeGalleryPath(item.itemId || item.sourcePath);
     if (sourcePath === '/') throw new Error('Root folder cannot be pasted.');
     if (args.operation === 'move' && (targetPath === sourcePath || isGalleryPathInside(targetPath, sourcePath))) throw new Error('A folder cannot be moved into itself.');

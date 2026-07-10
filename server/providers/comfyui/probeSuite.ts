@@ -1,4 +1,5 @@
-import { compactCause, type ProbeEntry, type ProbeReport, type ProviderQuickCheckResult, type ProviderSettings } from '../types';
+import { compactCause } from '../../http/errorCause';
+import type { ProbeEntry, ProbeReport, ProviderQuickCheckResult, ProviderSettings } from '../types';
 import { comfyUiProviderFingerprint, resolveComfyUiBaseUrl, resolveComfyUiUrl } from './endpoints';
 import { fetchComfyUiJson } from './http';
 import { fetchComfyUiResources } from './resources';

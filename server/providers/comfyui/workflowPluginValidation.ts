@@ -1,4 +1,4 @@
-import { HttpError } from '../types';
+import { HttpError } from '../../http/httpError';
 import type { ComfyUiResolvedWorkflowPlugins } from './workflowTypes';
 
 export function assertWorkflowPluginCompatibility(plugins: ComfyUiResolvedWorkflowPlugins) {

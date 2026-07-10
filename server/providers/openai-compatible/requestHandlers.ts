@@ -1,10 +1,10 @@
-import {
-  validatePromptPayload,
-  type ProviderFetchContext,
-  type ProviderModeSubmitInput,
-  type ProviderSettings,
-  type UploadedFile,
-  type UpstreamRequestResult
+import { validatePromptPayload } from '../requestValidation';
+import type {
+  ProviderFetchContext,
+  ProviderModeSubmitInput,
+  ProviderSettings,
+  UploadedFile,
+  UpstreamRequestResult
 } from '../types';
 import { buildOpenAiCompatibleHeaders } from './auth';
 import { resolveOpenAiCompatibleEndpoint } from './endpoints';

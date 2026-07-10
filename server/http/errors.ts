@@ -1,5 +1,6 @@
 import type express from 'express';
-import { HttpError, compactCause } from '../providers/types';
+import { compactCause } from './errorCause';
+import { HttpError } from './httpError';
 
 export async function proxyResponse(upstream: Response, res: express.Response) {
   const contentType = upstream.headers.get('content-type') || '';

@@ -1,4 +1,4 @@
-import { HttpError } from '../types';
+import { HttpError } from '../../http/httpError';
 import {
   addModelConditioningNodes,
   addVaeDecodeAndSave,

@@ -1,4 +1,5 @@
-import { HttpError, type ProviderSettings } from '../types';
+import { HttpError } from '../../http/httpError';
+import type { ProviderSettings } from '../types';
 import { assertWorkflowPluginCompatibility } from './workflowPluginValidation';
 import type {
   ComfyUiGenerationPayload,

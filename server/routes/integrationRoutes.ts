@@ -6,9 +6,10 @@ import {
   type IntegrationDefinition
 } from '../../src/entities/integrations';
 import { sendServerError } from '../http/errors';
-import { getIntegrationAdapter } from '../integrations/registry';
+import { HttpError } from '../http/httpError';
+import { runIntegrationRuntimeAction } from '../integrations/actionDispatcher';
+import { defaultIntegrationRegistry, type IntegrationRegistryPort } from '../integrations/registry';
 import type { IntegrationActionResult, IntegrationRuntimeStatus } from '../integrations/types';
-import { HttpError } from '../providers/types';
 import {
   loadIntegrationRuntimeConfig,
   loadIntegrationSettings,
@@ -16,7 +17,7 @@ import {
   sanitizeIntegrationSettingsForClient
 } from '../storage/integrationSettingsStore';
 
-export function registerIntegrationRoutes(app: express.Express) {
+export function registerIntegrationRoutes(app: express.Express, registry: IntegrationRegistryPort = defaultIntegrationRegistry) {
   app.get('/api/integrations', (_req, res) => {
     try {
       res.json({ integrations: listIntegrationDefinitions() });
@@ -27,7 +28,7 @@ export function registerIntegrationRoutes(app: express.Express) {
 
   app.get('/api/integrations/:id/config', (req, res) => {
     try {
-      res.json(loadIntegrationConfigSnapshot(req.params.id));
+      res.json(loadIntegrationConfigSnapshot(req.params.id, registry));
     } catch (error) {
       sendServerError(res, error);
     }
@@ -37,7 +38,7 @@ export function registerIntegrationRoutes(app: express.Express) {
     try {
       const definition = requireKnownIntegrationDefinition(req.params.id);
       patchIntegrationSettings(definition.id, req.body ?? {}, secretIdsForDefinition(definition));
-      res.json(loadIntegrationConfigSnapshot(definition.id));
+      res.json(loadIntegrationConfigSnapshot(definition.id, registry));
     } catch (error) {
       sendServerError(res, error);
     }
@@ -46,7 +47,7 @@ export function registerIntegrationRoutes(app: express.Express) {
   app.get('/api/integrations/:id/status', (req, res) => {
     try {
       const definition = requireKnownIntegrationDefinition(req.params.id);
-      res.json(loadIntegrationStatus(definition.id));
+      res.json(loadIntegrationStatus(definition.id, registry));
     } catch (error) {
       sendServerError(res, error);
     }
@@ -55,7 +56,7 @@ export function registerIntegrationRoutes(app: express.Express) {
   app.post('/api/integrations/:id/start', async (req, res) => {
     try {
       const definition = requireKnownIntegrationDefinition(req.params.id);
-      const result = await runRuntimeAction(definition.id, 'start-runtime', req.body?.payload ?? {});
+      const result = await runRuntimeAction(registry, definition.id, 'start-runtime', req.body?.payload ?? {});
       res.json(result);
     } catch (error) {
       sendServerError(res, error);
@@ -65,7 +66,7 @@ export function registerIntegrationRoutes(app: express.Express) {
   app.post('/api/integrations/:id/stop', async (req, res) => {
     try {
       const definition = requireKnownIntegrationDefinition(req.params.id);
-      const result = await runRuntimeAction(definition.id, 'stop-runtime', req.body?.payload ?? {});
+      const result = await runRuntimeAction(registry, definition.id, 'stop-runtime', req.body?.payload ?? {});
       res.json(result);
     } catch (error) {
       sendServerError(res, error);
@@ -75,7 +76,7 @@ export function registerIntegrationRoutes(app: express.Express) {
   app.post('/api/integrations/:id/actions/:action', async (req, res) => {
     try {
       const definition = requireKnownIntegrationDefinition(req.params.id);
-      const result = await runRuntimeAction(definition.id, req.params.action, req.body?.payload ?? {});
+      const result = await runRuntimeAction(registry, definition.id, req.params.action, req.body?.payload ?? {});
       res.json(result);
     } catch (error) {
       sendServerError(res, error);
@@ -83,19 +84,25 @@ export function registerIntegrationRoutes(app: express.Express) {
   });
 }
 
-export function loadIntegrationConfigSnapshot(id: string) {
+export function loadIntegrationConfigSnapshot(
+  id: string,
+  registry: IntegrationRegistryPort = defaultIntegrationRegistry
+) {
   const definition = requireKnownIntegrationDefinition(id);
   const loaded = loadIntegrationSettings();
   return {
     definition,
     config: sanitizeIntegrationSettingsForClient(definition.id, loaded.value, secretIdsForDefinition(definition)),
-    status: loadIntegrationStatus(definition.id)
+    status: loadIntegrationStatus(definition.id, registry)
   };
 }
 
-export function loadIntegrationStatus(id: string): IntegrationRuntimeStatus {
+export function loadIntegrationStatus(
+  id: string,
+  registry: IntegrationRegistryPort = defaultIntegrationRegistry
+): IntegrationRuntimeStatus {
   const definition = requireKnownIntegrationDefinition(id);
-  const adapter = getIntegrationAdapter(definition.id);
+  const adapter = registry.get(definition.id);
   if (adapter) return adapter.getStatus();
   return {
     id: definition.id,
@@ -117,21 +124,18 @@ function secretIdsForDefinition(definition: IntegrationDefinition): readonly str
 }
 
 async function runRuntimeAction(
+  registry: IntegrationRegistryPort,
   id: string,
   actionId: string,
   payload: Record<string, unknown>
 ): Promise<IntegrationActionResult> {
-  const adapter = getIntegrationAdapter(id);
+  const adapter = registry.get(id);
   if (!adapter) {
     throw new HttpError(`Integration runtime adapter is not registered: ${id}`, 501);
   }
 
   const config = loadIntegrationRuntimeConfig(id);
-  const result = actionId === 'start-runtime'
-    ? await adapter.start(config)
-    : actionId === 'stop-runtime'
-      ? await adapter.stop()
-      : await adapter.runAction(actionId, { config, payload });
+  const result = await runIntegrationRuntimeAction({ adapter, actionId, config, payload });
   return redactIntegrationActionResult(result, Object.values(config.secrets).filter(isNonEmptyString));
 }
 

@@ -1,3 +1,5 @@
+import type express from 'express';
+
 export type IntegrationId = string;
 export type IntegrationRuntimeState = 'stopped' | 'starting' | 'running' | 'stopping' | 'error';
 
@@ -47,7 +49,13 @@ export interface IntegrationAdapterMetadata {
   supportsRuntime: boolean;
 }
 
+export interface IntegrationRouteContribution {
+  id: string;
+  register(app: express.Express): void;
+}
+
 export interface IntegrationRuntimeAdapter extends IntegrationAdapterMetadata {
+  routes?: readonly IntegrationRouteContribution[];
   getStatus(): IntegrationRuntimeStatus;
   start(config: IntegrationRuntimeConfig): Promise<IntegrationActionResult>;
   stop(): Promise<IntegrationActionResult>;

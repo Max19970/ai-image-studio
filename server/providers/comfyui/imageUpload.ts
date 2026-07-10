@@ -1,4 +1,5 @@
-import { HttpError, type ProviderFetchContext, type ProviderSettings, type UploadedFile } from '../types';
+import { HttpError } from '../../http/httpError';
+import type { ProviderFetchContext, ProviderSettings, UploadedFile } from '../types';
 import { resolveComfyUiUrl } from './endpoints';
 import { fetchComfyUiJson } from './http';
 

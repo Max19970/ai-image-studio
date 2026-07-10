@@ -1,5 +1,6 @@
 import type express from 'express';
 import { normalizeGalleryPath } from '../../src/domain/galleryFilesystem';
+import { galleryItemCanContainChildren, isGalleryItemKind, isGalleryPasteOperation, type GalleryItemKind } from '../gallery/descriptors';
 import { sendServerError } from '../http/errors';
 import {
   createGalleryFolder,
@@ -28,9 +29,12 @@ function booleanField(value: unknown): boolean {
   return value === true || value === 'true' || value === 1 || value === '1';
 }
 
+function parseGalleryItemKind(value: unknown): GalleryItemKind {
+  return isGalleryItemKind(value) ? value : 'task';
+}
+
 function parsePasteOperation(value: unknown): GalleryPasteOperation {
-  if (value === 'link-copy' || value === 'deep-copy') return value;
-  return 'move';
+  return isGalleryPasteOperation(value) ? value : 'move';
 }
 
 function parsePasteItems(value: unknown): GalleryPasteItem[] {
@@ -38,7 +42,7 @@ function parsePasteItems(value: unknown): GalleryPasteItem[] {
   return value.flatMap((item) => {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
     const source = item as { itemKind?: unknown; itemId?: unknown; sourcePath?: unknown };
-    const itemKind = source.itemKind === 'folder' ? 'folder' : 'task';
+    const itemKind = parseGalleryItemKind(source.itemKind);
     const itemId = typeof source.itemId === 'string' ? source.itemId : '';
     const sourcePath = normalizeGalleryPath(source.sourcePath);
     return itemId ? [{ itemKind, itemId, sourcePath }] : [];
@@ -99,11 +103,11 @@ export function registerGalleryFolderRoutes(app: express.Express) {
 
   app.post('/api/storage/gallery-items/move', async (req, res) => {
     try {
-      const itemKind = req.body?.itemKind === 'folder' ? 'folder' : 'task';
+      const itemKind = parseGalleryItemKind(req.body?.itemKind);
       const itemId = typeof req.body?.itemId === 'string' ? req.body.itemId : '';
       const targetPath = normalizeGalleryPath(req.body?.targetPath);
       const result = moveGalleryItemPath({ itemKind, itemId, targetPath });
-      if (itemKind === 'task') {
+      if (!galleryItemCanContainChildren(itemKind)) {
         await moveServerGalleryTask(itemId, targetPath);
       } else if (result.sourcePath && result.nextPath) {
         await moveServerGalleryFolderTasks(result.sourcePath, result.nextPath);
@@ -121,7 +125,7 @@ export function registerGalleryFolderRoutes(app: express.Express) {
       const items = parsePasteItems(req.body?.items);
       const folderResult = pasteGalleryFolderItems({ operation, targetPath, items });
       const runtimeItems = [
-        ...items.filter((item) => item.itemKind === 'task'),
+        ...items.filter((item) => !galleryItemCanContainChildren(item.itemKind)),
         ...folderResult.mappings
       ];
       await pasteServerGalleryItems({ operation, targetPath, items: runtimeItems });
@@ -133,7 +137,7 @@ export function registerGalleryFolderRoutes(app: express.Express) {
 
   app.post('/api/storage/gallery-items/pin', (req, res) => {
     try {
-      const itemKind = req.body?.itemKind === 'folder' ? 'folder' : 'task';
+      const itemKind = parseGalleryItemKind(req.body?.itemKind);
       const itemId = typeof req.body?.itemId === 'string' ? req.body.itemId : '';
       const pinned = booleanField(req.body?.pinned);
       const pins = setGalleryItemPinned({ itemKind, itemId, pinned });
@@ -145,7 +149,7 @@ export function registerGalleryFolderRoutes(app: express.Express) {
 
   app.post('/api/storage/gallery-items/tags', (req, res) => {
     try {
-      const itemKind = req.body?.itemKind === 'folder' ? 'folder' : 'task';
+      const itemKind = parseGalleryItemKind(req.body?.itemKind);
       const itemId = typeof req.body?.itemId === 'string' ? req.body.itemId : '';
       const tags = setGalleryItemTags({ itemKind, itemId, tags: parseTags(req.body?.tags) });
       res.json({ ok: true, tags });

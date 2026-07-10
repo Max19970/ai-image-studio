@@ -1,5 +1,5 @@
 import cors from 'cors';
-import { env } from '../providers/types';
+import { env } from '../config/env';
 import { defaultLocalOrigins, originsFromHosts, splitOrigins } from './corsOrigins';
 
 export function allowedCorsOrigins(): Set<string> {

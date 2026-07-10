@@ -1,9 +1,5 @@
-import {
-  HttpError,
-  type ProviderFetchContext,
-  type ProviderSettings,
-  type UpstreamRequestResult
-} from '../types';
+import { HttpError } from '../../http/httpError';
+import type { ProviderFetchContext, ProviderSettings, UpstreamRequestResult } from '../types';
 import { resolveComfyUiEndpoint } from './endpoints';
 import { fetchComfyUiJson } from './http';
 import { describeComfyUiError } from './errorNormalizer';

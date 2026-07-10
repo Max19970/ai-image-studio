@@ -1,3 +1,4 @@
+import { isGalleryItemKind } from '../gallery/descriptors';
 import { generationGalleryPinBucket, generationGalleryTagBucket, loadEncryptedDocument, saveEncryptedDocument } from './encryptedStore';
 import {
   galleryMetadataId,
@@ -23,8 +24,12 @@ function saveGalleryPins(items: GalleryPinItem[]): GalleryPinItem[] {
   return normalized;
 }
 
+function normalizeGalleryMetadataKind(value: unknown): GalleryMetadataKind {
+  return isGalleryItemKind(value) ? value : 'task';
+}
+
 export function setGalleryItemPinned(args: { itemKind: GalleryMetadataKind; itemId: string; pinned: boolean }): GalleryPinItem[] {
-  const itemKind: GalleryMetadataKind = args.itemKind === 'folder' ? 'folder' : 'task';
+  const itemKind = normalizeGalleryMetadataKind(args.itemKind);
   const itemId = galleryMetadataId(itemKind, args.itemId);
   if (!itemId || itemId === '/') throw new Error('Pinned item id is required.');
   const current = loadGalleryPins();
@@ -44,7 +49,7 @@ function saveGalleryTagRecords(items: GalleryTagRecord[]): GalleryTagRecord[] {
 }
 
 export function setGalleryItemTags(args: { itemKind: GalleryMetadataKind; itemId: string; tags: string[] }): GalleryTagRecord[] {
-  const itemKind: GalleryMetadataKind = args.itemKind === 'folder' ? 'folder' : 'task';
+  const itemKind = normalizeGalleryMetadataKind(args.itemKind);
   const itemId = galleryMetadataId(itemKind, args.itemId);
   if (!itemId || itemId === '/') throw new Error('Tagged item id is required.');
   const tags = [...new Set(args.tags.map(normalizeGalleryTag).filter(Boolean))].sort((a, b) => a.localeCompare(b));

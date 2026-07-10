@@ -1,4 +1,5 @@
-import { env, type ProviderOperationKind, type ProviderSettings } from '../types';
+import { env } from '../../config/env';
+import type { ProviderOperationKind, ProviderSettings } from '../types';
 
 export function resolveOpenAiCompatibleEndpoint(provider: ProviderSettings, kind: ProviderOperationKind): string {
   const fromProvider = kind === 'generate' ? provider.generationEndpoint : provider.editEndpoint;

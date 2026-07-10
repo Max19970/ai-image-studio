@@ -1,34 +1,42 @@
 import type express from 'express';
 import {
-  currentDocumentKey,
   deleteAppDocument,
-  imageParamsBucket,
   loadAppDocument,
-  providerProbeCacheBucket,
-  requestPresetsBucket,
   saveAppDocument,
-  studioSettingsBucket
+  type AppDocumentStorageStats
 } from '../storage/appDocumentStore';
+import { listAppDocumentRouteDescriptors, type AppDocumentRouteDescriptor } from '../storage/appDocumentDescriptors';
 import { sendServerError } from '../http/errors';
 
-function registerAppDocumentRoute<T>(
-  app: express.Express,
-  route: string,
-  bucket: string,
-  requestKey: string,
-  fallback: T
-) {
-  app.get(route, (_req, res) => {
+function registerAppDocumentRoute<T>(app: express.Express, descriptor: AppDocumentRouteDescriptor<T>) {
+  app.get(descriptor.route, (_req, res) => {
     try {
-      res.json(loadAppDocument(bucket, currentDocumentKey, fallback));
+      res.json(loadAppDocument(descriptor.bucket, descriptor.documentKey, descriptor.fallback));
     } catch (error) {
       sendServerError(res, error);
     }
   });
 
-  app.put(route, (req, res) => {
+  app.put(descriptor.route, (req, res) => {
     try {
-      const storage = saveAppDocument(bucket, currentDocumentKey, req.body?.[requestKey] ?? fallback);
+      const storage = saveAppDocument(descriptor.bucket, descriptor.documentKey, req.body?.[descriptor.requestKey] ?? descriptor.fallback);
+      res.json({ ok: true, storage });
+    } catch (error) {
+      sendServerError(res, error);
+    }
+  });
+
+  if (descriptor.allowDelete) registerAppDocumentDeleteRoute(app, descriptor.route, () => deleteAppDocument(descriptor.bucket, descriptor.documentKey));
+}
+
+function registerAppDocumentDeleteRoute(
+  app: express.Express,
+  route: string,
+  deleteDocument: () => AppDocumentStorageStats
+) {
+  app.delete(route, (_req, res) => {
+    try {
+      const storage = deleteDocument();
       res.json({ ok: true, storage });
     } catch (error) {
       sendServerError(res, error);
@@ -37,17 +45,7 @@ function registerAppDocumentRoute<T>(
 }
 
 export function registerAppDocumentStorageRoutes(app: express.Express) {
-  registerAppDocumentRoute(app, '/api/storage/studio-settings', studioSettingsBucket, 'settings', null);
-  registerAppDocumentRoute(app, '/api/storage/image-params', imageParamsBucket, 'params', null);
-  registerAppDocumentRoute(app, '/api/storage/request-presets', requestPresetsBucket, 'presets', []);
-  registerAppDocumentRoute(app, '/api/storage/provider-probe-cache', providerProbeCacheBucket, 'cache', {});
-
-  app.delete('/api/storage/provider-probe-cache', (_req, res) => {
-    try {
-      const storage = deleteAppDocument(providerProbeCacheBucket, currentDocumentKey);
-      res.json({ ok: true, storage });
-    } catch (error) {
-      sendServerError(res, error);
-    }
-  });
+  for (const descriptor of listAppDocumentRouteDescriptors()) {
+    registerAppDocumentRoute(app, descriptor);
+  }
 }

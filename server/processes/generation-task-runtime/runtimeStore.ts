@@ -6,9 +6,32 @@ import { serializeLiveGenerationTaskImagesForClient } from '../liveGenerationIma
 import { isActiveStatus, taskPersistableFinalImageCount } from './imageState';
 import { broadcastTasksDelta, broadcastTaskUpsert, hasTaskEventClients, nextTaskEventsRevision } from './taskEvents';
 
-let runtimeTasks: GenerationTask[] | null = null;
-let mutationQueue: Promise<void> = Promise.resolve();
-let persistenceQueue: Promise<void> = Promise.resolve();
+export interface RuntimeTaskPersistencePort {
+  load(): Promise<GenerationTask[]>;
+  save(tasks: GenerationTask[]): Promise<void>;
+}
+
+export interface RuntimeTaskSerializationPort {
+  serializeTask(task: GenerationTask): GenerationTask;
+  serializeTasks(tasks: GenerationTask[]): GenerationTask[];
+  loadClientSnapshot(): Promise<GenerationTask[]>;
+}
+
+export interface RuntimeTaskEventPublisherPort {
+  hasClients(): boolean;
+  nextRevision(): number;
+  broadcastTasksDelta(previousTasks: GenerationTask[], nextTasks: GenerationTask[], revision: number): void;
+  broadcastTaskUpsert(task: GenerationTask, revision: number, taskIds?: string[]): void;
+}
+
+export interface GenerationTaskRuntimeStore {
+  ensureRuntimeTasks(): Promise<GenerationTask[]>;
+  clientSnapshotTasks(): Promise<GenerationTask[]>;
+  mutateTasks(recipe: (tasks: GenerationTask[]) => GenerationTask[], options?: { persist?: boolean }): Promise<void>;
+  prependTask(task: GenerationTask, options?: { persist?: boolean }): Promise<void>;
+  patchTask(taskId: string, recipe: (task: GenerationTask) => GenerationTask, options?: { persist?: boolean }): Promise<void>;
+  resetForTests(): void;
+}
 
 function isEmptyActiveTask(task: GenerationTask): boolean {
   if (taskPersistableFinalImageCount(task) > 0) return false;
@@ -19,83 +42,135 @@ function runtimePersistableTasks(tasks: GenerationTask[]): GenerationTask[] {
   return tasks.filter((task) => !isEmptyActiveTask(task));
 }
 
-function scheduleRuntimeTaskPersistence(tasks: GenerationTask[]) {
-  const snapshot = runtimePersistableTasks(tasks);
-  if (snapshot.length === 0 && tasks.length > 0) return;
-
-  persistenceQueue = persistenceQueue.catch(() => undefined).then(async () => {
-    await saveGenerationTaskHistoryDocumentsAsync(snapshot);
-  });
-  void persistenceQueue.catch((error) => {
-    console.error('[generation-task-runtime] failed to persist task history:', error);
-  });
-}
-
-export async function ensureRuntimeTasks(): Promise<GenerationTask[]> {
-  if (!runtimeTasks) {
+export const defaultRuntimeTaskPersistence: RuntimeTaskPersistencePort = {
+  async load() {
     const result = await loadGenerationTaskHistoryDocumentsAsync({ limit: 1000, offset: 0, assetMode: 'metadata' });
-    runtimeTasks = normalizeGenerationTasks(result.tasks, 1000);
+    return normalizeGenerationTasks(result.tasks, 1000);
+  },
+  async save(tasks) {
+    await saveGenerationTaskHistoryDocumentsAsync(tasks);
   }
-  return runtimeTasks;
-}
+};
 
-function serializeClientTask(task: GenerationTask): GenerationTask {
-  const serialized = serializeGenerationTaskHistoryForClient([task], 'thumbnail') as GenerationTask[];
-  return serializeLiveGenerationTaskImagesForClient(serialized[0] ?? task);
-}
-
-function serializeClientTasks(tasks: GenerationTask[]): GenerationTask[] {
-  return tasks.map(serializeClientTask);
-}
-
-export async function clientSnapshotTasks(): Promise<GenerationTask[]> {
-  if (!runtimeTasks) {
+export const defaultRuntimeTaskSerialization: RuntimeTaskSerializationPort = {
+  serializeTask(task) {
+    const serialized = serializeGenerationTaskHistoryForClient([task], 'thumbnail') as GenerationTask[];
+    return serializeLiveGenerationTaskImagesForClient(serialized[0] ?? task);
+  },
+  serializeTasks(tasks) {
+    return tasks.map((task) => defaultRuntimeTaskSerialization.serializeTask(task));
+  },
+  async loadClientSnapshot() {
     const result = await loadGenerationTaskHistoryDocumentsAsync({ limit: 1000, offset: 0, assetMode: 'metadata' });
     return serializeGenerationTaskHistoryForClient(result.tasks, 'thumbnail') as GenerationTask[];
   }
+};
 
-  return serializeClientTasks(runtimeTasks);
+export const defaultRuntimeTaskEventPublisher: RuntimeTaskEventPublisherPort = {
+  hasClients: hasTaskEventClients,
+  nextRevision: nextTaskEventsRevision,
+  broadcastTasksDelta,
+  broadcastTaskUpsert
+};
+
+export function createGenerationTaskRuntimeStore(
+  persistence: RuntimeTaskPersistencePort = defaultRuntimeTaskPersistence,
+  serialization: RuntimeTaskSerializationPort = defaultRuntimeTaskSerialization,
+  events: RuntimeTaskEventPublisherPort = defaultRuntimeTaskEventPublisher
+): GenerationTaskRuntimeStore {
+  let runtimeTasks: GenerationTask[] | null = null;
+  let mutationQueue: Promise<void> = Promise.resolve();
+  let persistenceQueue: Promise<void> = Promise.resolve();
+
+  async function ensureRuntimeTasks(): Promise<GenerationTask[]> {
+    if (!runtimeTasks) runtimeTasks = await persistence.load();
+    return runtimeTasks;
+  }
+
+  async function clientSnapshotTasks(): Promise<GenerationTask[]> {
+    if (!runtimeTasks) return serialization.loadClientSnapshot();
+    return serialization.serializeTasks(runtimeTasks);
+  }
+
+  function scheduleRuntimeTaskPersistence(tasks: GenerationTask[]) {
+    const snapshot = runtimePersistableTasks(tasks);
+    if (snapshot.length === 0 && tasks.length > 0) return;
+
+    persistenceQueue = persistenceQueue.catch(() => undefined).then(async () => {
+      await persistence.save(snapshot);
+    });
+    void persistenceQueue.catch((error) => {
+      console.error('[generation-task-runtime] failed to persist task history:', error);
+    });
+  }
+
+  return {
+    ensureRuntimeTasks,
+    clientSnapshotTasks,
+    async mutateTasks(recipe, options = {}) {
+      mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
+        const previousClientTasks = events.hasClients() && runtimeTasks ? await clientSnapshotTasks() : [];
+        runtimeTasks = recipe(await ensureRuntimeTasks());
+        if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
+        const revision = events.nextRevision();
+        if (events.hasClients()) events.broadcastTasksDelta(previousClientTasks, await clientSnapshotTasks(), revision);
+      });
+      await mutationQueue;
+    },
+    async prependTask(task, options = {}) {
+      mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
+        runtimeTasks = [task, ...(await ensureRuntimeTasks()).filter((item) => item.id !== task.id)];
+        if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
+        const revision = events.nextRevision();
+        if (events.hasClients()) events.broadcastTaskUpsert(serialization.serializeTask(task), revision, runtimeTasks.map((item) => item.id));
+      });
+      await mutationQueue;
+    },
+    async patchTask(taskId, recipe, options = {}) {
+      mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
+        const tasks = await ensureRuntimeTasks();
+        const taskIndex = tasks.findIndex((task) => task.id === taskId);
+        if (taskIndex < 0) return;
+
+        const changedTask = recipe(tasks[taskIndex]);
+        runtimeTasks = [...tasks];
+        runtimeTasks[taskIndex] = changedTask;
+        if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
+        const revision = events.nextRevision();
+        events.broadcastTaskUpsert(serialization.serializeTask(changedTask), revision);
+      });
+      await mutationQueue;
+    },
+    resetForTests() {
+      runtimeTasks = null;
+      mutationQueue = Promise.resolve();
+      persistenceQueue = Promise.resolve();
+    }
+  };
+}
+
+const defaultRuntimeStore = createGenerationTaskRuntimeStore();
+
+export function ensureRuntimeTasks(): Promise<GenerationTask[]> {
+  return defaultRuntimeStore.ensureRuntimeTasks();
+}
+
+export function clientSnapshotTasks(): Promise<GenerationTask[]> {
+  return defaultRuntimeStore.clientSnapshotTasks();
 }
 
 export async function mutateTasks(recipe: (tasks: GenerationTask[]) => GenerationTask[], options: { persist?: boolean } = {}) {
-  mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
-    const previousClientTasks = hasTaskEventClients() && runtimeTasks ? await clientSnapshotTasks() : [];
-    runtimeTasks = recipe(await ensureRuntimeTasks());
-    if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
-    const revision = nextTaskEventsRevision();
-    if (hasTaskEventClients()) broadcastTasksDelta(previousClientTasks, await clientSnapshotTasks(), revision);
-  });
-  await mutationQueue;
+  await defaultRuntimeStore.mutateTasks(recipe, options);
 }
 
 export async function prependTask(task: GenerationTask, options: { persist?: boolean } = {}) {
-  mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
-    runtimeTasks = [task, ...(await ensureRuntimeTasks()).filter((item) => item.id !== task.id)];
-    if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
-    const revision = nextTaskEventsRevision();
-    if (hasTaskEventClients()) broadcastTaskUpsert(serializeClientTask(task), revision, runtimeTasks.map((item) => item.id));
-  });
-  await mutationQueue;
+  await defaultRuntimeStore.prependTask(task, options);
 }
 
 export async function patchTask(taskId: string, recipe: (task: GenerationTask) => GenerationTask, options: { persist?: boolean } = {}) {
-  mutationQueue = mutationQueue.catch(() => undefined).then(async () => {
-    const tasks = await ensureRuntimeTasks();
-    const taskIndex = tasks.findIndex((task) => task.id === taskId);
-    if (taskIndex < 0) return;
-
-    const changedTask = recipe(tasks[taskIndex]);
-    runtimeTasks = [...tasks];
-    runtimeTasks[taskIndex] = changedTask;
-    if (options.persist !== false) scheduleRuntimeTaskPersistence(runtimeTasks);
-    const revision = nextTaskEventsRevision();
-    broadcastTaskUpsert(serializeClientTask(changedTask), revision);
-  });
-  await mutationQueue;
+  await defaultRuntimeStore.patchTask(taskId, recipe, options);
 }
 
 export function resetRuntimeStoreForTests() {
-  runtimeTasks = null;
-  mutationQueue = Promise.resolve();
-  persistenceQueue = Promise.resolve();
+  defaultRuntimeStore.resetForTests();
 }
