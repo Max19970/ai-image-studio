@@ -2,11 +2,13 @@ import { workflowPluginGeneratedModules } from './index.generated';
 import type { WorkflowPluginDefinition } from '../workflowPluginTypes';
 
 type WorkflowPluginModule = Record<string, unknown>;
-type ImportMetaWithGlob = ImportMeta & {
-  glob?: (pattern: string, options: { eager: true }) => Record<string, WorkflowPluginModule>;
-};
 
-const discoveredWorkflowPluginModules = (import.meta as ImportMetaWithGlob).glob?.('./*Plugin.tsx', { eager: true }) ?? {};
+let discoveredWorkflowPluginModules: Record<string, WorkflowPluginModule> = {};
+try {
+  discoveredWorkflowPluginModules = import.meta.glob('./*Plugin.tsx', { eager: true }) as Record<string, WorkflowPluginModule>;
+} catch {
+  discoveredWorkflowPluginModules = {};
+}
 const workflowPluginModules = {
   ...workflowPluginGeneratedModules,
   ...discoveredWorkflowPluginModules

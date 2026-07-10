@@ -1,11 +1,11 @@
 import type express from 'express';
-import { auditGenerationTaskStorageDocuments } from '../storage/generationTaskStore';
+import { auditGenerationTaskStorageDocumentsAsync } from '../storage/generationTaskStoreAsync';
 import { sendServerError } from '../http/errors';
 
 export function registerGenerationTaskDiagnosticsRoutes(app: express.Express) {
-  app.get('/api/storage/generation-tasks/audit', (_req, res) => {
+  app.get('/api/storage/generation-tasks/audit', async (_req, res) => {
     try {
-      res.json(auditGenerationTaskStorageDocuments());
+      res.json(await auditGenerationTaskStorageDocumentsAsync());
     } catch (error) {
       sendServerError(res, error);
     }

@@ -13,7 +13,7 @@ import {
 } from './cancellation';
 import { isActiveStatus, normalizeError, sortImages, uid } from './imageState';
 import { runGenerationRequestPipeline, type ServerGenerationRunInput } from './providerPipeline';
-import { mutateTasks, patchTask } from './runtimeStore';
+import { patchTask, prependTask } from './runtimeStore';
 import { logGenerationTaskQueued } from './runtimeDiagnostics';
 
 export interface ServerBatchGenerationRunInput {
@@ -214,7 +214,7 @@ export async function startServerBatchGenerationRun(input: ServerBatchGeneration
   const controller = new AbortController();
   registerTaskController(task.id, controller);
   input.items.forEach((item, index) => logGenerationTaskQueued(`${task.id}:item-${index}`, item));
-  await mutateTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)], { persist: false });
+  await prependTask(task, { persist: false });
   setImmediate(() => {
     void runBatchTask(task, input, controller);
   });

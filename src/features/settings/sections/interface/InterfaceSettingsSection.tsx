@@ -55,6 +55,22 @@ function ThemeButton({ theme, active, onSelect, showMeta }: { theme: InterfaceTh
   );
 }
 
+function StorageLimitInput({ id, value, onChange, ariaLabel }: { id: string; value: number; onChange: (value: number) => void; ariaLabel: string }) {
+  return (
+    <input
+      id={id}
+      className={styles.numberInput}
+      type="number"
+      min={1}
+      max={10000}
+      step={1}
+      value={value}
+      aria-label={ariaLabel}
+      onChange={(event) => onChange(Number(event.target.value))}
+    />
+  );
+}
+
 export function InterfaceSettingsSection({ context, props }: ElementDefinitionProps<SettingsSectionContext, InterfaceSettingsSectionProps>) {
   const { t } = useI18n();
   const {
@@ -63,7 +79,9 @@ export function InterfaceSettingsSection({ context, props }: ElementDefinitionPr
     activeInfo,
     setActiveInfo,
     activeTheme,
-    selectTheme
+    selectTheme,
+    maxStoredGenerationTasks,
+    setMaxStoredGenerationTasks
   } = context;
 
   if (props.variant === 'mobile') {
@@ -88,6 +106,18 @@ export function InterfaceSettingsSection({ context, props }: ElementDefinitionPr
             panelClassName={selectStyles.panel}
             showSelectedDescription
           />
+        </article>
+
+        <article className="mobile-card glass-panel">
+          <div className="mobile-card-head">
+            <div>
+              <span className="section-kicker">{t('settings.storageTitle')}</span>
+              <h3>{t('settings.storageLimitLabel')}</h3>
+              <p>{t('settings.storageLimitHint')}</p>
+            </div>
+            <InfoTip id="mobileStorageLimit" text={t('settings.info.storageLimit')} activeId={activeInfo} onToggle={setActiveInfo} />
+          </div>
+          <StorageLimitInput id="mobile-storage-limit" value={maxStoredGenerationTasks} onChange={setMaxStoredGenerationTasks} ariaLabel={t('settings.storageLimitLabel')} />
         </article>
 
         <article className="mobile-card mobile-theme-card glass-panel">
@@ -133,6 +163,16 @@ export function InterfaceSettingsSection({ context, props }: ElementDefinitionPr
             panelClassName={selectStyles.panel}
             showSelectedDescription
           />
+        </FieldShell>
+      </div>
+
+      <div className={styles.storageCard}>
+        <div>
+          <p className="section-kicker">{t('settings.storageTitle')}</p>
+          <p>{t('settings.storageLimitHint')}</p>
+        </div>
+        <FieldShell id="storageLimit" label={t('settings.storageLimitLabel')} info={t('settings.info.storageLimit')} activeInfo={activeInfo} setActiveInfo={setActiveInfo}>
+          <StorageLimitInput id="storage-limit" value={maxStoredGenerationTasks} onChange={setMaxStoredGenerationTasks} ariaLabel={t('settings.storageLimitLabel')} />
         </FieldShell>
       </div>
 

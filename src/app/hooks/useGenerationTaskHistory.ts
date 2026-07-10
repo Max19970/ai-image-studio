@@ -1,74 +1,38 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GenerationTask } from '../../domain/generationTask';
+import { defaultMaxStoredGenerationTasks, normalizeMaxStoredGenerationTasks } from '../../domain/generationHistorySettings';
 import { collectGenerationTasksObjectUrls, revokeBrowserObjectUrls } from '../../domain/generationTaskObjectUrls';
+import { applyGenerationTasksDelta, parseGenerationTasksDeltaEventData, parseGenerationTasksEventData } from '../../domain/generationTaskEvents';
 import { createTaskCancellationRegistry } from '../../processes/generation-task-lifecycle';
 import {
   cacheGenerationTaskHistoryFallback,
   clearGenerationTaskHistory,
+  getGenerationTaskHistoryPersistenceSignature,
   loadGenerationTaskHistory,
   loadGenerationTaskHistoryFallback
 } from '../../processes/storage-sync/generationTaskHistory';
 
-interface GenerationTasksEvent {
-  revision: number;
-  tasks: GenerationTask[];
+function readTasksEvent(event: MessageEvent) {
+  return parseGenerationTasksEventData(event.data);
 }
 
-interface GenerationTasksDeltaEvent {
-  revision: number;
-  taskIds: string[];
-  upserted: GenerationTask[];
-  deletedIds: string[];
-}
-
-function readTasksEvent(event: MessageEvent): GenerationTasksEvent | null {
-  try {
-    const data = JSON.parse(event.data) as { revision?: unknown; tasks?: unknown };
-    if (!Array.isArray(data.tasks)) return null;
-    return {
-      revision: typeof data.revision === 'number' ? data.revision : 0,
-      tasks: data.tasks as GenerationTask[]
-    };
-  } catch {
-    return null;
-  }
-}
-
-function readTasksDeltaEvent(event: MessageEvent): GenerationTasksDeltaEvent | null {
-  try {
-    const data = JSON.parse(event.data) as { revision?: unknown; taskIds?: unknown; upserted?: unknown; deletedIds?: unknown };
-    if (typeof data.revision !== 'number' || !Array.isArray(data.taskIds) || !Array.isArray(data.upserted) || !Array.isArray(data.deletedIds)) return null;
-    return {
-      revision: data.revision,
-      taskIds: data.taskIds.filter((id): id is string => typeof id === 'string'),
-      upserted: data.upserted as GenerationTask[],
-      deletedIds: data.deletedIds.filter((id): id is string => typeof id === 'string')
-    };
-  } catch {
-    return null;
-  }
+function readTasksDeltaEvent(event: MessageEvent) {
+  return parseGenerationTasksDeltaEventData(event.data);
 }
 
 function withoutDeletedTasks(tasks: GenerationTask[], deletedTaskIds: Set<string>): GenerationTask[] {
   return deletedTaskIds.size > 0 ? tasks.filter((task) => !deletedTaskIds.has(task.id)) : tasks;
 }
 
-function applyTasksDelta(current: GenerationTask[], delta: GenerationTasksDeltaEvent): GenerationTask[] {
-  const tasksById = new Map(current.map((task) => [task.id, task]));
-  for (const deletedId of delta.deletedIds) tasksById.delete(deletedId);
-  for (const task of delta.upserted) tasksById.set(task.id, task);
-
-  const orderedTasks = delta.taskIds.flatMap((taskId) => {
-    const task = tasksById.get(taskId);
-    return task ? [task] : [];
+export function useGenerationTaskHistory(maxStoredGenerationTasks = defaultMaxStoredGenerationTasks) {
+  const historyLimit = normalizeMaxStoredGenerationTasks(maxStoredGenerationTasks);
+  const historyLimitRef = useRef(historyLimit);
+  const fallbackCacheSignatureRef = useRef('');
+  const [tasks, setTasks] = useState<GenerationTask[]>(() => {
+    const cachedTasks = loadGenerationTaskHistoryFallback();
+    fallbackCacheSignatureRef.current = getGenerationTaskHistoryPersistenceSignature(cachedTasks);
+    return cachedTasks;
   });
-  const orderedIds = new Set(delta.taskIds);
-  const localOnlyTasks = current.filter((task) => !orderedIds.has(task.id) && tasksById.has(task.id));
-  return [...orderedTasks, ...localOnlyTasks];
-}
-
-export function useGenerationTaskHistory() {
-  const [tasks, setTasks] = useState<GenerationTask[]>(() => loadGenerationTaskHistoryFallback());
   const taskCancellationRegistryRef = useRef(createTaskCancellationRegistry());
   const liveTaskObjectUrlsRef = useRef<Set<string>>(new Set());
   const latestTasksRef = useRef<GenerationTask[]>(tasks);
@@ -76,13 +40,24 @@ export function useGenerationTaskHistory() {
   const serverRevisionRef = useRef(0);
   const serverSnapshotLoadedRef = useRef(false);
 
+  const cacheFallbackIfChanged = (nextTasks: GenerationTask[]) => {
+    const signature = getGenerationTaskHistoryPersistenceSignature(nextTasks);
+    if (signature === fallbackCacheSignatureRef.current) return;
+    fallbackCacheSignatureRef.current = signature;
+    cacheGenerationTaskHistoryFallback(nextTasks, historyLimitRef.current);
+  };
+
   useEffect(() => {
     latestTasksRef.current = tasks;
   }, [tasks]);
 
   useEffect(() => {
+    historyLimitRef.current = historyLimit;
+  }, [historyLimit]);
+
+  useEffect(() => {
     let cancelled = false;
-    void loadGenerationTaskHistory().then((persistedTasks) => {
+    void loadGenerationTaskHistory(historyLimit).then((persistedTasks) => {
       if (cancelled) return;
       setTasks((current) => {
         if (serverSnapshotLoadedRef.current) return current;
@@ -92,7 +67,7 @@ export function useGenerationTaskHistory() {
       });
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [historyLimit]);
 
   useEffect(() => {
     if (typeof EventSource === 'undefined') return;
@@ -105,17 +80,17 @@ export function useGenerationTaskHistory() {
       const nextTasks = withoutDeletedTasks(snapshot.tasks, deletedTaskIdsRef.current);
       latestTasksRef.current = nextTasks;
       setTasks(nextTasks);
-      cacheGenerationTaskHistoryFallback(nextTasks);
+      cacheFallbackIfChanged(nextTasks);
     });
     source.addEventListener('tasks-delta', (event) => {
       const delta = readTasksDeltaEvent(event as MessageEvent);
       if (!delta || delta.revision <= serverRevisionRef.current) return;
       serverSnapshotLoadedRef.current = true;
       serverRevisionRef.current = delta.revision;
-      const nextTasks = withoutDeletedTasks(applyTasksDelta(latestTasksRef.current, delta), deletedTaskIdsRef.current);
+      const nextTasks = withoutDeletedTasks(applyGenerationTasksDelta(latestTasksRef.current, delta), deletedTaskIdsRef.current);
       latestTasksRef.current = nextTasks;
       setTasks(nextTasks);
-      cacheGenerationTaskHistoryFallback(nextTasks);
+      cacheFallbackIfChanged(nextTasks);
     });
     source.onerror = () => {
       // Browser will retry automatically. Keep the last known task list visible between reconnect attempts.
@@ -142,13 +117,25 @@ export function useGenerationTaskHistory() {
     setTasks((prev) => prev.map((task) => task.id === taskId ? recipe(task) : task));
   };
 
+  const ingestServerTask = (task: GenerationTask) => {
+    const current = latestTasksRef.current;
+    const exists = current.some((item) => item.id === task.id);
+    const nextTasks = withoutDeletedTasks(
+      exists ? current.map((item) => item.id === task.id ? task : item) : [task, ...current],
+      deletedTaskIdsRef.current
+    );
+    latestTasksRef.current = nextTasks;
+    setTasks(nextTasks);
+    cacheFallbackIfChanged(nextTasks);
+  };
+
   const deleteTask = (taskId: string) => {
     taskCancellationRegistryRef.current.cancel(taskId);
     deletedTaskIdsRef.current.add(taskId);
     const nextTasks = latestTasksRef.current.filter((task) => task.id !== taskId);
     latestTasksRef.current = nextTasks;
     setTasks(nextTasks);
-    cacheGenerationTaskHistoryFallback(nextTasks);
+    cacheFallbackIfChanged(nextTasks);
   };
 
   const clearTasks = () => {
@@ -165,6 +152,7 @@ export function useGenerationTaskHistory() {
     registerAborter,
     releaseAborter,
     updateTask,
+    ingestServerTask,
     deleteTask,
     clearTasks
   };

@@ -9,7 +9,7 @@ import { enqueueServerBatchGenerationRequest } from '../../processes/server-gene
 import { createAggregateSnapshot, prepareBatchItems } from '../../processes/batch-runner/requestBuilder';
 import { normalizeBatchIntervalSeconds } from '../../processes/batch-runner/schedule';
 import { runSingleGeneration } from '../../processes/generation-runner/singleRunner';
-import type { ServerSubmissionSetter, StateSetter, TranslateFn } from './types';
+import type { ServerSubmissionSetter, StateSetter, TaskHistoryCommands, TranslateFn } from './types';
 
 interface SingleGenerationCommandArgs {
   canSubmit: boolean;
@@ -24,6 +24,7 @@ interface SingleGenerationCommandArgs {
   targetImage: File | null;
   referenceImages: File[];
   mask: File | null;
+  taskHistory: Pick<TaskHistoryCommands, 'ingestServerTask'>;
   setBusy: StateSetter<boolean>;
   setServerSubmission: ServerSubmissionSetter;
   t: TranslateFn;
@@ -57,6 +58,7 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
     targetImage,
     referenceImages,
     mask,
+    taskHistory,
     setBusy,
     setServerSubmission,
     t,
@@ -67,7 +69,7 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
   setBusy(true);
   setServerSubmission({ phase: 'submitting' });
   try {
-    const taskId = await runSingleGeneration({
+    const submission = await runSingleGeneration({
       mode,
       providerMode,
       params,
@@ -82,7 +84,12 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
       t,
       galleryPath
     });
-    setServerSubmission({ phase: 'waiting-for-event', taskId });
+    if (submission.task) {
+      taskHistory.ingestServerTask(submission.task);
+      setServerSubmission({ phase: 'idle' });
+    } else {
+      setServerSubmission({ phase: 'waiting-for-event', taskId: submission.taskId });
+    }
   } catch (error) {
     setServerSubmission({ phase: 'failed', error: error instanceof Error ? error.message : String(error) });
     throw error;

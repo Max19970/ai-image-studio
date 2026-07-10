@@ -1,4 +1,5 @@
 import { defaultGenerationModel, defaultGenerationProvider, defaultImageParams, defaultProviderSettings, defaultStudioSettings } from '../../domain/defaults';
+import { normalizeMaxStoredGenerationTasks } from '../../domain/generationHistorySettings';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { InterfaceTheme, StudioSettings } from '../../domain/studioSettings';
 
@@ -77,6 +78,7 @@ export function normalizeStudioSettings(value: Partial<StudioSettings> | null | 
     models: safeModels,
     selectedModelId,
     interfaceTheme: normalizeInterfaceTheme(value.interfaceTheme),
+    maxStoredGenerationTasks: normalizeMaxStoredGenerationTasks(value.maxStoredGenerationTasks),
     ...(adapterData ? { adapterData } : {})
   };
 }
@@ -105,7 +107,7 @@ export function createStudioSettingsFromLegacyProvider(legacyProvider: ProviderS
     notes: 'Migrated from the single-provider GPT Image 2 Studio settings.'
   }, provider.id);
 
-  return { providers: [provider], models: [model], selectedModelId: model.id, interfaceTheme: 'glass' };
+  return { ...defaultStudioSettings, providers: [provider], models: [model], selectedModelId: model.id, interfaceTheme: 'glass' };
 }
 
 export function getActiveModel(settings: StudioSettings): GenerationModel | null {

@@ -7,8 +7,8 @@ export interface GenerationTaskEventBus {
   hasClients(): boolean;
   nextRevision(): number;
   broadcastTasksDelta(previousTasks: GenerationTask[], nextTasks: GenerationTask[], revision: number): void;
-  broadcastTaskUpsert(task: GenerationTask, revision: number, taskIds: string[]): void;
-  subscribe(req: express.Request, res: express.Response, getSnapshot: () => GenerationTask[]): void;
+  broadcastTaskUpsert(task: GenerationTask, revision: number, taskIds?: string[]): void;
+  subscribe(req: express.Request, res: express.Response, getSnapshot: () => Promise<GenerationTask[]>): void;
   resetForTests(): void;
 }
 
@@ -38,7 +38,16 @@ export function createGenerationTaskEventBus(transport: TaskEventTransport = sse
     subscribe(req, res, getSnapshot) {
       transport.prepare(res);
       clients.add(res);
-      transport.send(res, 'tasks', { revision, tasks: getSnapshot() });
+      void getSnapshot()
+        .then((tasks) => {
+          if (!res.writableEnded) transport.send(res, 'tasks', { revision, tasks });
+        })
+        .catch((error) => {
+          console.error('[generation-task-runtime] failed to create task event snapshot:', error);
+          if (!res.writableEnded) {
+            transport.send(res, 'tasks-error', { message: error instanceof Error ? error.message : String(error) });
+          }
+        });
 
       const keepAlive = setInterval(() => {
         if (!res.writableEnded) transport.sendKeepAlive(res);

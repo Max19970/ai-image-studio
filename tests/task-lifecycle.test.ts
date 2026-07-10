@@ -14,7 +14,7 @@ import {
   getGenerationTaskHistoryPersistenceSignature,
   shouldPersistGenerationTaskHistory
 } from '../src/processes/storage-sync/generationTaskHistory';
-import { normalizeGenerationTasks } from '../src/entities/storage';
+import { normalizeGenerationTasks, taskHasPersistableGenerationImage } from '../src/entities/storage';
 
 test('generation lifecycle normalizes old statuses and classifies active work', () => {
   assert.equal(normalizeGenerationStatus('streaming'), 'running');
@@ -59,6 +59,25 @@ test('generation history persistence keeps terminal reload failures but drops ac
   assert.deepEqual(snapshot.map((task) => task.id), ['failed-reload']);
   assert.equal(snapshot[0].status, 'failed');
   assert.equal(snapshot[0].error, 'Interrupted by page reload.');
+});
+
+test('generation history normalization preserves metadata-only stored images', () => {
+  const request = { prompt: 'stored', createdAt: 1, mode: 'generate', endpoint: '', providerLabel: '', model: '', modelLabel: '', payload: {}, warnings: [], attachments: [], params: {} };
+  const normalized = normalizeGenerationTasks([{
+    id: 'stored-task',
+    kind: 'single',
+    status: 'succeeded',
+    createdAt: 1,
+    updatedAt: 2,
+    request,
+    images: [{ id: 'stored-img', src: '', format: 'png', kind: 'final', index: 0, createdAt: 3, storageAssetKey: 'stored-task/image/stored-img/full', storageAssetLoaded: false }]
+  }]);
+
+  assert.equal(normalized.length, 1);
+  assert.equal(normalized[0].images.length, 1);
+  assert.equal(normalized[0].images[0].storageAssetKey, 'stored-task/image/stored-img/full');
+  assert.equal(normalized[0].images[0].src, '');
+  assert.equal(taskHasPersistableGenerationImage(normalized[0]), true);
 });
 
 test('generation history normalization deduplicates tasks by id', () => {

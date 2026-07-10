@@ -2,7 +2,7 @@ import type { GenerationTask } from '../../../src/domain/generationTask';
 import { ensureRuntimeTasks, mutateTasks, patchTask } from './runtimeStore';
 
 export interface GenerationCancellationTaskStorePort {
-  ensureTasks(): GenerationTask[];
+  ensureTasks(): Promise<GenerationTask[]>;
   mutateTasks(recipe: (tasks: GenerationTask[]) => GenerationTask[]): Promise<void>;
   patchTask(taskId: string, recipe: (task: GenerationTask) => GenerationTask, options?: { persist?: boolean }): Promise<void>;
 }

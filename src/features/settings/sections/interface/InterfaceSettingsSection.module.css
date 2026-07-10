@@ -278,7 +278,8 @@
   line-height: 1.5;
 }
 
-.languageCard {
+.languageCard,
+.storageCard {
   display: grid;
   grid-template-columns: minmax(0, .75fr) minmax(240px, .35fr);
   align-items: center;
@@ -290,19 +291,37 @@
   background: var(--surface-workspace);
 }
 
-.languageCard p {
+.languageCard p,
+.storageCard p {
   margin: 0;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
 }
 
-.languageCard :global(.section-kicker) {
+.languageCard :global(.section-kicker),
+.storageCard :global(.section-kicker) {
   margin-bottom: 6px;
 }
 
+.numberInput {
+  width: 100%;
+  border: 1px solid var(--surface-border-soft);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  background: rgba(0,0,0,.18);
+  color: var(--text);
+  font: inherit;
+}
+
+.numberInput:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 54%, transparent);
+  outline-offset: 2px;
+}
+
 @media (max-width: 860px) {
-  .languageCard {
+  .languageCard,
+  .storageCard {
     grid-template-columns: 1fr;
   }
 }

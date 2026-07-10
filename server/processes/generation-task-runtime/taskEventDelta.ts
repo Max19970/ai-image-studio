@@ -2,7 +2,7 @@ import type { GeneratedImage, GenerationProgress, GenerationTask } from '../../.
 
 export interface GenerationTasksDeltaEvent {
   revision: number;
-  taskIds: string[];
+  taskIds?: string[];
   upserted: GenerationTask[];
   deletedIds: string[];
 }
@@ -62,28 +62,34 @@ function taskDeltaSignature(task: GenerationTask): string {
   });
 }
 
+function hasTaskOrderChanged(previousTasks: GenerationTask[], nextTasks: GenerationTask[]): boolean {
+  if (previousTasks.length !== nextTasks.length) return true;
+  return nextTasks.some((task, index) => previousTasks[index]?.id !== task.id);
+}
+
 export function createTasksDelta(previousTasks: GenerationTask[], nextTasks: GenerationTask[], revision: number): GenerationTasksDeltaEvent {
   const previousSignatures = new Map(previousTasks.map((task) => [task.id, taskDeltaSignature(task)]));
   const nextIds = new Set(nextTasks.map((task) => task.id));
   const deletedIds = previousTasks.flatMap((task) => nextIds.has(task.id) ? [] : [task.id]);
   const upserted = nextTasks.filter((task) => previousSignatures.get(task.id) !== taskDeltaSignature(task));
+  const taskIds = hasTaskOrderChanged(previousTasks, nextTasks) ? nextTasks.map((task) => task.id) : undefined;
   return {
     revision,
-    taskIds: nextTasks.map((task) => task.id),
+    ...(taskIds ? { taskIds } : {}),
     upserted,
     deletedIds
   };
 }
 
-export function createTaskUpsertDelta(task: GenerationTask, revision: number, taskIds: string[]): GenerationTasksDeltaEvent {
+export function createTaskUpsertDelta(task: GenerationTask, revision: number, taskIds?: string[]): GenerationTasksDeltaEvent {
   return {
     revision,
-    taskIds,
+    ...(taskIds ? { taskIds } : {}),
     upserted: [task],
     deletedIds: []
   };
 }
 
 export function isEmptyTasksDelta(delta: GenerationTasksDeltaEvent): boolean {
-  return delta.upserted.length === 0 && delta.deletedIds.length === 0;
+  return delta.upserted.length === 0 && delta.deletedIds.length === 0 && delta.taskIds === undefined;
 }

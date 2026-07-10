@@ -6,16 +6,15 @@ import {
 } from '../processes/generation-task-downloads/downloadUseCases';
 import {
   absolutePublicUrl,
+  createTemporaryBinaryDownload,
+  getTemporaryBinaryDownload,
   getTemporaryImageDownload,
+  sendBinaryDownloadResponse,
   sendImageDownloadResponse
 } from './generationTaskDownloadHelpers';
 
 function sendDownloadUseCaseError(res: express.Response, result: { status: number; message: string }) {
   res.status(result.status).json({ error: { message: result.message } });
-}
-
-function archiveContentDisposition(filename: string): string {
-  return `attachment; filename="${filename.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_')}"`;
 }
 
 export function registerGenerationTaskDownloadRoutes(app: express.Express) {
@@ -40,12 +39,37 @@ export function registerGenerationTaskDownloadRoutes(app: express.Express) {
         return;
       }
 
-      res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Length', String(result.archive.length));
-      res.setHeader('Content-Disposition', archiveContentDisposition(result.filename));
-      res.setHeader('Cache-Control', 'private, max-age=60, no-transform');
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.end(result.archive);
+      if (req.body?.delivery === 'url') {
+        const prepared = createTemporaryBinaryDownload(result.archive, result.filename, 'application/zip', 'zip');
+        if (!prepared) {
+          res.status(422).json({ error: { message: 'Could not prepare archive.' } });
+          return;
+        }
+        const route = '/api/storage/generation-task-downloads/file/' + encodeURIComponent(prepared.id);
+        res.json({
+          id: prepared.id,
+          url: absolutePublicUrl(req, route),
+          filename: prepared.filename,
+          expiresAt: prepared.expiresAt,
+          mediaType: prepared.mediaType
+        });
+        return;
+      }
+
+      sendBinaryDownloadResponse(res, result.archive, result.filename, 'application/zip');
+    } catch (error) {
+      sendServerError(res, error);
+    }
+  });
+
+  app.get('/api/storage/generation-task-downloads/file/:id', (req, res) => {
+    try {
+      const file = getTemporaryBinaryDownload(String(req.params.id ?? ''));
+      if (!file) {
+        res.status(404).json({ error: { message: 'Temporary file not found or expired.' } });
+        return;
+      }
+      sendBinaryDownloadResponse(res, file.buffer, file.filename, file.mediaType);
     } catch (error) {
       sendServerError(res, error);
     }

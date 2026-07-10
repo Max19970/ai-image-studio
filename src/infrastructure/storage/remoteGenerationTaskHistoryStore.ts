@@ -46,7 +46,7 @@ export async function loadGenerationTaskAsset(key: string): Promise<GeneratedIma
 export const remoteGenerationTaskHistoryStore: GenerationTaskHistoryStore = {
   async load(options: GenerationTaskHistoryLoadOptions = {}): Promise<StorageReadResult<GenerationTask[]>> {
     const params = new URLSearchParams({
-      limit: String(options.limit ?? 120),
+      limit: String(options.limit ?? 1000),
       offset: String(options.offset ?? 0),
       assetMode: options.assetMode ?? 'thumbnail'
     });
@@ -57,12 +57,12 @@ export const remoteGenerationTaskHistoryStore: GenerationTaskHistoryStore = {
     return {
       backend: 'remote-encrypted',
       ok: true,
-      value: normalizeGenerationTasks(data.tasks, options.limit ?? 120)
+      value: normalizeGenerationTasks(data.tasks, options.limit ?? 1000)
     };
   },
 
   async save(tasks: GenerationTask[]): Promise<StorageOperationResult> {
-    const safeTasks = normalizeGenerationTasks(tasks, 120);
+    const safeTasks = normalizeGenerationTasks(tasks, tasks.length || 1);
     const response = await fetchStorage(generationTasksStorageEndpoint, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

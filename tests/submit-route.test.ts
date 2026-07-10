@@ -18,10 +18,12 @@ delete process.env.IMAGE_STUDIO_STORAGE_KEY_FILE;
 const { createImageStudioApp } = await import('../server/app');
 const { resetGenerationTaskRuntimeForTests } = await import('../server/processes/generationTaskRuntime');
 const generationTaskStore = await import('../server/storage/generationTaskStore');
+const { closeGenerationTaskStoreWorkerForTests } = await import('../server/storage/generationTaskStoreAsync');
 const { closeStorageDbForTests } = await import('../server/storage/encryptedStore');
 
-after(() => {
+after(async () => {
   resetGenerationTaskRuntimeForTests();
+  await closeGenerationTaskStoreWorkerForTests();
   closeStorageDbForTests();
   rmSync(storageTempDir, { recursive: true, force: true });
   if (originalDbPath === undefined) delete process.env.IMAGE_STUDIO_DB_PATH;
@@ -366,6 +368,158 @@ test('server-owned generation route does not wipe stored history while only empt
       const stored = generationTaskStore.loadGenerationTaskHistoryDocuments({ assetMode: 'metadata' }).tasks as any[];
       assert.equal(stored.length, 1);
       assert.equal(stored[0].id, 'stored-task');
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    resetGenerationTaskRuntimeForTests();
+    generationTaskStore.clearGenerationTaskHistoryDocuments();
+  }
+});
+
+test('server-owned runtime preserves stored image metadata in bootstrap snapshots while new work is active', async () => {
+  resetGenerationTaskRuntimeForTests();
+  generationTaskStore.saveGenerationTaskHistoryDocuments([{
+    id: 'stored-task',
+    kind: 'single',
+    status: 'succeeded',
+    createdAt: 100,
+    updatedAt: 200,
+    request: {
+      createdAt: 100,
+      mode: 'generate',
+      prompt: 'stored fox with image',
+      endpoint: '/api/generate',
+      providerLabel: 'Stored provider',
+      model: 'image-model',
+      modelLabel: 'image-model',
+      payload: { prompt: 'stored fox with image' },
+      warnings: [],
+      attachments: [],
+      params: {}
+    },
+    images: [{ id: 'stored-img', src: 'data:image/png;base64,QUJDRA==', thumbnailSrc: 'data:image/webp;base64,VFhY', format: 'png', kind: 'final', index: 0, createdAt: 120 }]
+  }]);
+  resetGenerationTaskRuntimeForTests();
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('http://127.0.0.1:')) return originalFetch(input, init);
+    return new Promise<Response>(() => undefined);
+  };
+
+  try {
+    await withServer(async (baseUrl) => {
+      const runResponse = await fetch(`${baseUrl}/api/generation-tasks/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          payload: { prompt: 'active fox', model: 'image-model' },
+          providerModeId: 'openai-compatible.image-generate',
+          transport: { kind: 'json', operation: 'generate', path: '/api/provider/submit' },
+          snapshot: {
+            createdAt: Date.now(),
+            mode: 'generate',
+            prompt: 'active fox',
+            endpoint: provider.generationEndpoint,
+            providerLabel: 'Test provider',
+            providerAdapterId: 'openai-compatible',
+            model: 'image-model',
+            modelLabel: 'image-model',
+            payload: { prompt: 'active fox', model: 'image-model' },
+            warnings: [],
+            attachments: [],
+            params: {}
+          }
+        })
+      });
+      const body = await runResponse.json() as { taskId: string; task?: any };
+      assert.equal(runResponse.status, 202);
+      assert.equal(body.task?.id, body.taskId);
+
+      const controller = new AbortController();
+      const eventsResponse = await fetch(`${baseUrl}/api/generation-tasks/events`, { signal: controller.signal });
+      const event = await readNextTasksEvent(eventsResponse);
+      controller.abort();
+      const stored = event.tasks.find((item: any) => item.id === 'stored-task');
+      assert.ok(stored);
+      assert.equal(stored.images.length, 1);
+      assert.match(stored.images[0].src, /^\/api\/storage\/generation-task-asset\/image\?key=/);
+      assert.equal(stored.images[0].storageAssetLoaded, false);
+      assert.ok(event.tasks.some((item: any) => item.id === body.taskId));
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    resetGenerationTaskRuntimeForTests();
+    generationTaskStore.clearGenerationTaskHistoryDocuments();
+  }
+});
+
+test('server-owned runtime does not wipe stored images when a new task completes', async () => {
+  resetGenerationTaskRuntimeForTests();
+  generationTaskStore.saveGenerationTaskHistoryDocuments([{
+    id: 'stored-task',
+    kind: 'single',
+    status: 'succeeded',
+    createdAt: 100,
+    updatedAt: 200,
+    request: {
+      createdAt: 100,
+      mode: 'generate',
+      prompt: 'stored fox with image',
+      endpoint: '/api/generate',
+      providerLabel: 'Stored provider',
+      model: 'image-model',
+      modelLabel: 'image-model',
+      payload: { prompt: 'stored fox with image' },
+      warnings: [],
+      attachments: [],
+      params: {}
+    },
+    images: [{ id: 'stored-img', src: 'data:image/png;base64,QUJDRA==', thumbnailSrc: 'data:image/webp;base64,VFhY', format: 'png', kind: 'final', index: 0, createdAt: 120 }]
+  }]);
+  resetGenerationTaskRuntimeForTests();
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.startsWith('http://127.0.0.1:')) return originalFetch(input, init);
+    return new Response('{"data":[{"b64_json":"QUJDRA=="}]}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+
+  try {
+    await withServer(async (baseUrl) => {
+      const runResponse = await fetch(`${baseUrl}/api/generation-tasks/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          payload: { prompt: 'complete fox', model: 'image-model' },
+          providerModeId: 'openai-compatible.image-generate',
+          transport: { kind: 'json', operation: 'generate', path: '/api/provider/submit' },
+          snapshot: {
+            createdAt: Date.now(),
+            mode: 'generate',
+            prompt: 'complete fox',
+            endpoint: provider.generationEndpoint,
+            providerLabel: 'Test provider',
+            providerAdapterId: 'openai-compatible',
+            model: 'image-model',
+            modelLabel: 'image-model',
+            payload: { prompt: 'complete fox', model: 'image-model' },
+            warnings: [],
+            attachments: [],
+            params: {}
+          }
+        })
+      });
+      assert.equal(runResponse.status, 202);
+      await waitForCondition(() => {
+        const stored = generationTaskStore.loadGenerationTaskHistoryDocuments({ assetMode: 'metadata' }).tasks as any[];
+        return stored.some((task) => task.id === 'stored-task' && task.images?.length === 1)
+          && stored.some((task) => task.request?.prompt === 'complete fox' && task.images?.length === 1);
+      }, 1000);
     });
   } finally {
     globalThis.fetch = originalFetch;

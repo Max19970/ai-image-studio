@@ -13,10 +13,10 @@ export function numberOrFallback(value: unknown, fallback = 0): number {
   return Number.isFinite(numeric) ? numeric : fallback;
 }
 
-export function clampLimit(value: unknown, fallback = 120): number {
+export function clampLimit(value: unknown, fallback = 1000): number {
   const numeric = Math.floor(Number(value));
   if (!Number.isFinite(numeric)) return fallback;
-  return Math.min(500, Math.max(1, numeric));
+  return Math.min(10000, Math.max(1, numeric));
 }
 
 export function clampOffset(value: unknown): number {

@@ -17,14 +17,14 @@ export function broadcastTasksDelta(previousTasks: GenerationTask[], nextTasks: 
   defaultTaskEventBus.broadcastTasksDelta(previousTasks, nextTasks, revision);
 }
 
-export function broadcastTaskUpsert(task: GenerationTask, revision: number, taskIds: string[]) {
+export function broadcastTaskUpsert(task: GenerationTask, revision: number, taskIds?: string[]) {
   defaultTaskEventBus.broadcastTaskUpsert(task, revision, taskIds);
 }
 
 export function subscribeGenerationTaskEvents(
   req: express.Request,
   res: express.Response,
-  getSnapshot: () => GenerationTask[]
+  getSnapshot: () => Promise<GenerationTask[]>
 ) {
   defaultTaskEventBus.subscribe(req, res, getSnapshot);
 }

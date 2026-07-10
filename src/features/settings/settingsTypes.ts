@@ -34,6 +34,8 @@ export interface SettingsInfoContextSlice {
 export interface SettingsAppearanceContextSlice {
   activeTheme: InterfaceTheme;
   selectTheme: (theme: InterfaceTheme) => void;
+  maxStoredGenerationTasks: number;
+  setMaxStoredGenerationTasks: (value: number) => void;
   draft: StudioSettings;
 }
 
