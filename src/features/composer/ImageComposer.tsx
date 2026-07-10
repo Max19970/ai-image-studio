@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
@@ -11,6 +11,7 @@ import { SlotHost } from '../../interface/SlotHost';
 import { useEventCallback } from '../../shared/hooks/useEventCallback';
 import type { ComposerActionContext, ComposerLayoutContext, ComposerModelOption, ComposerPopoverId } from './composerTypes';
 import { useComposerAttachments } from './useComposerAttachments';
+import { useComposerOccupiedBlockSize } from './useComposerOccupiedBlockSize';
 import { getProviderModeAttachmentStatusText } from '../../entities/provider/attachmentCompatibility';
 import { getProviderModelOptions, getSelectedModel } from '../../entities/provider/modelOptions';
 import { resolveProviderControlSurface } from '../../entities/provider/controlSurface';
@@ -63,7 +64,7 @@ export function ImageComposer({
   const { t } = useI18n();
   const [openPopover, setOpenPopover] = useState<ComposerPopoverId>(null);
   const [expanded, setExpanded] = useState(false);
-  const dockRef = useRef<HTMLElement | null>(null);
+  const dockRef = useComposerOccupiedBlockSize();
   const attachmentsRef = useRef<HTMLInputElement | null>(null);
   const maskRef = useRef<HTMLInputElement | null>(null);
   const selectedModel = useMemo(() => getSelectedModel(models, selectedModelId), [models, selectedModelId]);
@@ -111,26 +112,6 @@ export function ImageComposer({
   }, [canSubmit, mask, prompt, providerMode, referenceImages, selectedModel, t, targetImage]);
   const hasStatusContent = Boolean(statusText || (blockedReason && prompt.trim()));
   const revealSecondary = expanded || hasStatusContent;
-
-  useLayoutEffect(() => {
-    const dock = dockRef.current;
-    if (!dock || typeof ResizeObserver === 'undefined') return;
-    const app = dock.closest<HTMLElement>('.studio-app');
-    if (!app) return;
-
-    const updateOccupiedSize = () => {
-      app.style.setProperty('--composer-occupied-block-size', `${Math.ceil(dock.getBoundingClientRect().height)}px`);
-    };
-    const observer = new ResizeObserver(updateOccupiedSize);
-    observer.observe(dock);
-    updateOccupiedSize();
-    window.addEventListener('resize', updateOccupiedSize);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', updateOccupiedSize);
-      app.style.removeProperty('--composer-occupied-block-size');
-    };
-  }, []);
 
   const modelOptions = useMemo<ComposerModelOption[]>(() => getProviderModelOptions(models, providers), [models, providers]);
 

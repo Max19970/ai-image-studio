@@ -33,6 +33,23 @@ const selectedScenarioNames = (flag('scenarios') || process.env.SCREENSHOT_SCENA
   .filter(Boolean);
 const fullPage = flag('full-page') === '1' || process.env.FULL_PAGE === '1';
 
+function resolveBrowserExecutable() {
+  const configured = process.env.CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (configured) return configured;
+
+  const candidates = process.platform === 'win32'
+    ? [
+        path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Google', 'Chrome', 'Application', 'chrome.exe'),
+        path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Google', 'Chrome', 'Application', 'chrome.exe'),
+        path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
+        path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Microsoft', 'Edge', 'Application', 'msedge.exe')
+      ]
+    : ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'];
+  return candidates.find((candidate) => candidate && existsSync(candidate)) || candidates[0];
+}
+
+const browserExecutable = resolveBrowserExecutable();
+
 if (!existsSync(dist)) {
   console.error('dist/ is missing. Run npm run build before capture:screenshots.');
   process.exit(1);
@@ -325,7 +342,7 @@ function isRecoverableCaptureError(error) {
 
 async function launchBrowser() {
   return puppeteer.launch({
-    executablePath: process.env.CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+    executablePath: browserExecutable,
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--font-render-hinting=none', '--proxy-server=direct://', '--proxy-bypass-list=*', '--disable-features=BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessSendPreflights']
   });
