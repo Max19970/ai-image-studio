@@ -9,6 +9,7 @@ import { hasProviderModeRequiredAttachments } from '../../entities/provider/atta
 import { resolveProviderGenerationMode } from '../../entities/provider/modeResolution';
 import { SlotHost } from '../../interface/SlotHost';
 import { useEventCallback } from '../../shared/hooks/useEventCallback';
+import { ConfirmationDialog } from '../../shared/ui';
 import type { BatchComposerLayoutContext } from './batchComposerTypes';
 import styles from './MultiImageComposer.module.css';
 
@@ -37,6 +38,7 @@ export function MultiImageComposer({
 }: Props) {
   const { t } = useI18n();
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(() => drafts[0]?.id ?? null);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   useEffect(() => {
     if (drafts.length === 0) {
@@ -63,8 +65,7 @@ export function MultiImageComposer({
     [drafts]
   );
 
-  const validDrafts = useMemo(() => drafts.filter((draft) => {
-    const hasPrompt = Boolean(draft.params.prompt.trim());
+  const draftReadiness = useMemo(() => drafts.map((draft, index) => {
     const model = models.find((item) => item.id === draft.selectedModelId) ?? null;
     const providerMode = resolveProviderGenerationMode({
       settings: studioSettings,
@@ -73,19 +74,33 @@ export function MultiImageComposer({
       models,
       providers
     }).activeMode;
-    return Boolean(model) && hasPrompt && hasProviderModeRequiredAttachments({
-      targetImage: draft.targetImage,
-      referenceImages: draft.referenceImages,
-      mask: draft.mask
-    }, providerMode);
-  }).length, [drafts, models, providers, studioSettings]);
+    const reason = !model
+      ? t('batch.reviewMissingModel')
+      : !draft.params.prompt.trim()
+        ? t('batch.reviewMissingPrompt')
+        : !hasProviderModeRequiredAttachments({
+            targetImage: draft.targetImage,
+            referenceImages: draft.referenceImages,
+            mask: draft.mask
+          }, providerMode)
+          ? t('batch.reviewMissingAttachments')
+          : null;
+    return { draft, index, ready: reason === null, reason };
+  }), [drafts, models, providers, studioSettings, t]);
+  const validDrafts = draftReadiness.filter((item) => item.ready).length;
+  const invalidDrafts = draftReadiness.filter((item) => !item.ready);
+  const blockedReason = canSubmit
+    ? null
+    : drafts.length === 0
+      ? t('batch.blockedEmpty')
+      : t('batch.blockedNoReady');
 
   const selectedDraftIndex = useMemo(() => drafts.findIndex((draft) => draft.id === selectedDraftId), [drafts, selectedDraftId]);
 
   const submitWithPreflight = useEventCallback(() => {
     if (validDrafts < drafts.length) {
-      const ok = window.confirm(t('batch.partialSubmitConfirm', { valid: validDrafts, total: drafts.length }));
-      if (!ok) return;
+      setReviewOpen(true);
+      return;
     }
     submit();
   });
@@ -125,6 +140,7 @@ export function MultiImageComposer({
     studioSettings,
     totalImages,
     validDrafts,
+    blockedReason,
     selectedDraftId,
     selectedDraftIndex,
     requestPresets,
@@ -139,6 +155,7 @@ export function MultiImageComposer({
     studioSettings,
     totalImages,
     validDrafts,
+    blockedReason,
     selectedDraftId,
     selectedDraftIndex,
     requestPresets,
@@ -146,13 +163,36 @@ export function MultiImageComposer({
   ]);
 
   return (
-    <section className={styles.stage} data-testid="batch-composer-stage" aria-label={t('batch.aria')}>
-      <div className={`${styles.shell} glass-panel`}>
-        <SlotHost<BatchComposerLayoutContext> slot="batch-composer/header" context={context} as={null} />
-        <SlotHost<BatchComposerLayoutContext> slot="batch-composer/controls" context={context} as={null} />
-        <SlotHost<BatchComposerLayoutContext> slot="batch-composer/drafts" context={context} as={null} />
-        <SlotHost<BatchComposerLayoutContext> slot="batch-composer/footer" context={context} as={null} />
-      </div>
-    </section>
+    <>
+      <section className={styles.stage} data-testid="batch-composer-stage" aria-label={t('batch.aria')}>
+        <div className={`${styles.shell} glass-panel`}>
+          <SlotHost<BatchComposerLayoutContext> slot="batch-composer/header" context={context} as={null} />
+          <SlotHost<BatchComposerLayoutContext> slot="batch-composer/controls" context={context} as={null} />
+          <SlotHost<BatchComposerLayoutContext> slot="batch-composer/drafts" context={context} as={null} />
+          <SlotHost<BatchComposerLayoutContext> slot="batch-composer/footer" context={context} as={null} />
+        </div>
+      </section>
+      <ConfirmationDialog
+        open={reviewOpen}
+        title={t('batch.partialReviewTitle')}
+        description={t('batch.partialReviewDescription', { valid: validDrafts, total: drafts.length })}
+        confirmLabel={t('batch.partialReviewConfirm', { count: validDrafts })}
+        cancelLabel={t('batch.partialReviewCancel')}
+        closeLabel={t('attachment.close')}
+        testId="batch-partial-review-dialog"
+        onClose={() => setReviewOpen(false)}
+        onConfirm={() => {
+          setReviewOpen(false);
+          submit();
+        }}
+      >
+        <p>{t('batch.partialReviewSkipped')}</p>
+        <ul>
+          {invalidDrafts.map((item) => (
+            <li key={item.draft.id}>{t('batch.requestLabel', { index: item.index + 1 })}: {item.reason}</li>
+          ))}
+        </ul>
+      </ConfirmationDialog>
+    </>
   );
 }

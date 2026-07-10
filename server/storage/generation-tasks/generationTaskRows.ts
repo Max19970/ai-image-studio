@@ -48,6 +48,14 @@ export function selectTaskRows(limit: number, offset: number): TaskRow[] {
     .all(limit, offset) as TaskRow[];
 }
 
+export function selectTaskRowsByIds(taskIds: string[]): TaskRow[] {
+  if (!taskIds.length) return [];
+  const placeholders = taskIds.map(() => '?').join(', ');
+  return getStorageDb()
+    .prepare(`SELECT id, document_key, kind, status, gallery_path, created_at, updated_at, image_count, batch_item_count FROM ${generationTasksTableName} WHERE id IN (${placeholders}) ORDER BY created_at DESC`)
+    .all(...taskIds) as TaskRow[];
+}
+
 export function selectAssetRows(taskIds: string[]): AssetRow[] {
   if (!taskIds.length) return [];
   const placeholders = taskIds.map(() => '?').join(', ');

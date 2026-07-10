@@ -36,15 +36,15 @@
 
 .primary:disabled,
 .primary[aria-disabled="true"] {
-  border-color: rgba(255,255,255,.09);
-  background: rgba(255,255,255,.045);
-  color: var(--faint);
+  border-color: var(--action-primary-disabled-border);
+  background: var(--action-primary-disabled-bg);
+  color: var(--action-primary-disabled-fg);
 }
 
 .primary {
   border-color: rgba(255,255,255,.38);
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--action-primary-enabled);
+  color: var(--action-primary-enabled-fg);
 }
 
 .primary:hover:not(:disabled) {

@@ -38,6 +38,8 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
           disabled={!context.canSubmit}
           onClick={context.actions.submit}
           aria-label={t(getProviderModeSubmitActionLabelKey(context.providerMode))}
+          aria-describedby={!context.canSubmit && context.blockedReason && context.prompt.trim() ? 'composer-submit-blocked-reason' : undefined}
+          title={!context.canSubmit && context.blockedReason ? context.blockedReason : undefined}
         >
           {t('composer.send')}
         </button>

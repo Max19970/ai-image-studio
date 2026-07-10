@@ -3,6 +3,7 @@ export {
   getGenerationTaskHistoryStats,
   loadGenerationTaskAssetDocument,
   loadGenerationTaskHistoryDocuments,
+  loadGenerationTaskHistoryDocumentsByIds,
   saveGenerationTaskHistoryDocuments
 } from './generation-tasks/generationTaskRepository';
 export {

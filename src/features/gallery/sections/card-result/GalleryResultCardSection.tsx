@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { GalleryCardActionContext, GalleryTaskCardContext } from '../../../../interface/context/workspace/gallery';
 import { SlotHost } from '../../../../interface/SlotHost';
 import { useOptimizedImageSrc } from '../../../../shared/image';
-import { useGalleryAutoAdvance } from '../../model/useGalleryAutoAdvance';
 import { useI18n } from '../../../../i18n';
 import { isTerminalGenerationStatus } from '../../../../domain/generationStatus';
 import styles from '../shared/GalleryTileSection.module.css';
@@ -14,7 +13,6 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
   const { task, index } = context;
   const [activeIndex, setActiveIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState<'next' | 'prev'>('next');
-  const tileRef = useRef<HTMLElement | null>(null);
   const label = useGalleryStatusLabel(task.status);
   const isActiveTask = !isTerminalGenerationStatus(task.status);
   const progressPercent = typeof task.progress?.percent === 'number' ? Math.round(task.progress.percent) : null;
@@ -22,12 +20,10 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
   const hasStoredThumbnail = Boolean(activeImage?.thumbnailSrc);
   const shouldSkipLiveOptimization = isActiveTask || activeImage?.kind === 'partial';
   const thumbnailSrc = useOptimizedImageSrc(activeImage?.thumbnailSrc ?? activeImage?.src ?? '', 620, { skipOptimization: hasStoredThumbnail || shouldSkipLiveOptimization });
-  const isBatch = task.kind === 'batch';
-  const hasMultiple = isBatch || task.images.length > 1;
+  const hasMultiple = task.images.length > 1;
   const shouldShowStatusPill = activeImage?.kind === 'partial' || isActiveTask;
   const statusLabel = activeImage?.kind === 'partial' ? t('gallery.kind.partial') : label;
   const progressLabel = progressPercent !== null && isActiveTask ? `${progressPercent}% · ${statusLabel}` : statusLabel;
-  const canAutoAdvance = useGalleryAutoAdvance(tileRef, !isActiveTask && task.images.length > 1);
   const actionContext: GalleryCardActionContext = {
     task,
     activeImage,
@@ -44,17 +40,18 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
   };
 
   useEffect(() => {
-    if (isActiveTask && task.images.length > 0) {
-      setActiveIndex(task.images.length - 1);
-      return;
-    }
-    if (task.images.length <= 1 || !canAutoAdvance) return;
-    const id = window.setInterval(() => {
-      setSlideDirection('next');
-      setActiveIndex((value) => (value + 1) % task.images.length);
-    }, 1700);
-    return () => window.clearInterval(id);
-  }, [canAutoAdvance, isActiveTask, task.images.length]);
+    if (isActiveTask && task.images.length > 0) setActiveIndex(task.images.length - 1);
+  }, [isActiveTask, task.images.length]);
+
+  const showPrevious = () => {
+    setSlideDirection('prev');
+    setActiveIndex((value) => (value - 1 + task.images.length) % task.images.length);
+  };
+
+  const showNext = () => {
+    setSlideDirection('next');
+    setActiveIndex((value) => (value + 1) % task.images.length);
+  };
 
   useEffect(() => {
     if (activeIndex >= task.images.length) setActiveIndex(Math.max(0, task.images.length - 1));
@@ -62,7 +59,6 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
 
   return (
     <article
-      ref={tileRef}
       className={cx(styles.tile, styles.resultTile, hasMultiple && styles.sequenceTile, task.status === 'failed' && styles.statusFailed)}
       data-gallery-slot="tile"
     >
@@ -100,6 +96,15 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
           </span>
         )}
       </button>
+      {hasMultiple && (
+        <div className={styles.sequenceControls} aria-label={t('gallery.sequenceControls')}>
+          <button type="button" className={styles.sequenceControlButton} onClick={showPrevious} aria-label={t('gallery.sequencePrevious')}>‹</button>
+          <span className={styles.sequencePosition} aria-live="polite">
+            {t('gallery.sequencePosition', { current: activeIndex + 1, count: task.images.length })}
+          </span>
+          <button type="button" className={styles.sequenceControlButton} onClick={showNext} aria-label={t('gallery.sequenceNext')}>›</button>
+        </div>
+      )}
       <div className={styles.tileOverlay} aria-hidden="false">
         <div className={styles.tileActionGroup}>
           <SlotHost<GalleryCardActionContext> slot="gallery/card-quick-actions" context={actionContext} as={null} />

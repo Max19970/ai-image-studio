@@ -73,3 +73,46 @@ test('Storage v2 saves tasks, full assets, thumbnails, lazy modes and app docume
   encryptedStore.closeStorageDbForTests();
   rmSync(tempDir, { recursive: true, force: true });
 });
+
+test('Storage v2 loads selected task ids only', async () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'image-studio-storage-selected-test-'));
+  process.env.IMAGE_STUDIO_DB_PATH = path.join(tempDir, 'storage.sqlite');
+  process.env.IMAGE_STUDIO_STORAGE_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+  const encryptedStore = await import('../server/storage/encryptedStore.ts');
+  const taskStore = await import(`../server/storage/generationTaskStore.ts?case=selected-${Date.now()}`);
+  const createTask = (id: string, createdAt: number) => ({
+    id,
+    kind: 'single',
+    status: 'succeeded',
+    createdAt,
+    updatedAt: createdAt,
+    request: {
+      createdAt,
+      mode: 'generate',
+      prompt: id,
+      endpoint: '/api/generate',
+      providerLabel: 'Provider',
+      model: 'model',
+      modelLabel: 'Model',
+      payload: { prompt: id },
+      warnings: [],
+      attachments: [],
+      params: {}
+    },
+    images: [{ id: `${id}-image`, src: `data:image/png;base64,${Buffer.from(id).toString('base64')}`, format: 'png', kind: 'final', index: 0, createdAt }]
+  });
+
+  taskStore.saveGenerationTaskHistoryDocuments([createTask('task-1', 100), createTask('task-2', 200), createTask('task-3', 300)]);
+
+  const selected = taskStore.loadGenerationTaskHistoryDocumentsByIds(['task-1', 'task-3'], { assetMode: 'metadata' }).tasks as any[];
+  assert.deepEqual(selected.map((task) => task.id), ['task-3', 'task-1']);
+  assert.deepEqual(selected.map((task) => task.images[0].storageAssetLoaded), [false, false]);
+  assert.deepEqual(selected.map((task) => task.images[0].src), ['', '']);
+
+  const empty = taskStore.loadGenerationTaskHistoryDocumentsByIds([], { assetMode: 'full' }).tasks as any[];
+  assert.equal(empty.length, 0);
+
+  encryptedStore.closeStorageDbForTests();
+  rmSync(tempDir, { recursive: true, force: true });
+});

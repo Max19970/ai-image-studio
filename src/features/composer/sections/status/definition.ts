@@ -6,5 +6,5 @@ export default {
   id: 'composer.sections.status',
   label: 'Composer status notes section',
   Component: ComposerStatusSection,
-  enabled: (context) => Boolean(context.statusText) 
+  enabled: (context) => Boolean(context.statusText || context.blockedReason)
 } satisfies ElementDefinition<ComposerLayoutContext>;

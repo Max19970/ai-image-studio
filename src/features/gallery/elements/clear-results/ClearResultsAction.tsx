@@ -1,28 +1,45 @@
+import { useState } from 'react';
 import { useI18n } from '../../../../i18n';
-import { Button } from '../../../../shared/ui';
+import { Button, ConfirmationDialog } from '../../../../shared/ui';
 import type { GalleryHeaderActionContext } from '../../../../interface/context/workspace/gallery';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import styles from '../../sections/header/GalleryHeaderSection.module.css';
 
 export function ClearResultsAction({ context }: ElementDefinitionProps<GalleryHeaderActionContext>) {
   const { t } = useI18n();
-  const clearResults = () => {
-    const count = context.tasks.length;
-    if (count > 0 && !window.confirm(t('gallery.clearResultsConfirm', { count }))) return;
-    context.commands.clearResults();
-  };
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const count = context.tasks.length;
 
   return (
+    <>
     <Button
       variant="ghost"
       tone="danger"
       size="compact"
       className={styles.clearResultsButton}
-      onClick={clearResults}
+      onClick={() => setConfirmOpen(true)}
       aria-label={t('gallery.clearResultsAccessible')}
       title={t('gallery.clearResultsAccessible')}
     >
       {t('gallery.clearResults')}
     </Button>
+    <ConfirmationDialog
+      open={confirmOpen}
+      title={t('gallery.clearResultsTitle')}
+      description={t('gallery.clearResultsConfirm', { count })}
+      confirmLabel={t('gallery.confirmDeleteAction')}
+      cancelLabel={t('gallery.confirmDeleteCancel')}
+      closeLabel={t('attachment.close')}
+      tone="danger"
+      testId="gallery-clear-results-dialog"
+      onClose={() => setConfirmOpen(false)}
+      onConfirm={() => {
+        setConfirmOpen(false);
+        context.commands.clearResults();
+      }}
+    >
+      <p>{t('gallery.deletePermanentHint')}</p>
+    </ConfirmationDialog>
+    </>
   );
 }

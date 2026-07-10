@@ -91,6 +91,7 @@ export function BatchDraftToolbarSection({ context }: ElementDefinitionProps<Bat
           open={open}
           title={t('composer.controls')}
           description={t('composer.controlsDescription')}
+          closeLabel={t('attachment.close')}
           size="content"
           onClose={close}
         >

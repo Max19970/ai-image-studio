@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { ComposerLayoutContext } from '../../composerTypes';
 import { useI18n } from '../../../../i18n';
@@ -10,6 +10,8 @@ import styles from '../../ComposerLayout.module.css';
 export function ComposerPromptSection({ context }: ElementDefinitionProps<ComposerLayoutContext>) {
   const { t } = useI18n();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const promptId = useId();
+  const promptHelpId = useId();
   const [isPromptFocused, setIsPromptFocused] = useState(false);
   const isMobileCompact = useMediaQuery('(max-width: 620px)');
   const promptExpanded = isPromptFocused;
@@ -26,7 +28,9 @@ export function ComposerPromptSection({ context }: ElementDefinitionProps<Compos
 
   return (
     <div className={styles.promptWrap} data-composer-slot="input">
+      <label htmlFor={promptId} className={styles.srOnly}>{t('composer.promptLabel')}</label>
       <textarea
+        id={promptId}
         ref={textareaRef}
         data-testid="composer-prompt"
         data-prompt-state={promptExpanded ? 'focused' : 'collapsed'}
@@ -37,8 +41,10 @@ export function ComposerPromptSection({ context }: ElementDefinitionProps<Compos
         onBlur={() => setIsPromptFocused(false)}
         onKeyDown={context.actions.handlePromptKeyDown}
         placeholder={placeholder}
+        aria-describedby={promptHelpId}
         wrap="soft"
       />
+      <span id={promptHelpId} className={styles.srOnly}>{t('composer.promptHelp')}</span>
       {context.prompt.length > 0 && (
         <button
           type="button"

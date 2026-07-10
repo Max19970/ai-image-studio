@@ -55,7 +55,7 @@ function MenuContent({ context, onOpenPresets }: { context: ComposerActionContex
   };
 
   return (
-    <div className={styles.menu} data-control-surface={context.controlSurface.id}>
+    <div className={styles.menu} data-testid="composer-controls-panel" data-control-surface={context.controlSurface.id}>
       {context.providerModes.length > 1 && (
         <div className={styles.group}>
           <span className={styles.groupTitle}>{t('composer.mode')}</span>
@@ -221,6 +221,7 @@ export function ComposerControlMenuAction({ context }: ElementDefinitionProps<Co
           open={open}
           title={t('composer.controls')}
           description={t('composer.controlsDescription')}
+          closeLabel={t('attachment.close')}
           size="content"
           compactHeader
           scrollHint

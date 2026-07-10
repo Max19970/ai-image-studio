@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import type { GalleryKindFilter, GallerySortMode, GalleryStatusFilter } from '../../../../entities/gallery/archiveTypes';
-import { BottomSheet, Button, CommandBar, PopoverSelect, type PopoverSelectOption } from '../../../../shared/ui';
+import { BottomSheet, Button, CommandBar, ConfirmationDialog, PopoverSelect, type PopoverSelectOption } from '../../../../shared/ui';
 import { useI18n } from '../../../../i18n';
 import styles from './GalleryArchiveControls.module.css';
 
@@ -118,12 +118,10 @@ export function GalleryArchiveControls({ context }: { context: GalleryLayoutCont
   const { t } = useI18n();
   const { archive } = context;
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [deleteFilteredOpen, setDeleteFilteredOpen] = useState(false);
   if (archive.totalCount === 0) return null;
 
-  const deleteFiltered = () => {
-    if (!window.confirm(t('gallery.deleteFilteredConfirm', { count: archive.filteredTaskCount }))) return;
-    archive.deleteFiltered();
-  };
+  const deleteFiltered = () => setDeleteFilteredOpen(true);
 
   return (
     <>
@@ -136,9 +134,26 @@ export function GalleryArchiveControls({ context }: { context: GalleryLayoutCont
         <Button variant="ghost" size="compact" className={styles.mobileFiltersButton} onClick={() => setFiltersOpen(true)}>{t('gallery.filters')}</Button>
       </CommandBar>
       <GalleryFilterTokens context={context} onDeleteFiltered={deleteFiltered} />
-      <BottomSheet open={filtersOpen} title={t('gallery.filters')} description={t('gallery.filtersDescription')} size="content" onClose={() => setFiltersOpen(false)} footer={<><Button variant="ghost" size="compact" onClick={archive.reset} disabled={!archive.hasFilters}>{t('gallery.resetFilters')}</Button><Button variant="primary" size="compact" onClick={() => setFiltersOpen(false)}>{t('gallery.applyFilters')}</Button></>}>
+      <BottomSheet open={filtersOpen} title={t('gallery.filters')} description={t('gallery.filtersDescription')} closeLabel={t('attachment.close')} size="content" onClose={() => setFiltersOpen(false)} footer={<><Button variant="ghost" size="compact" onClick={archive.reset} disabled={!archive.hasFilters}>{t('gallery.resetFilters')}</Button><Button variant="primary" size="compact" onClick={() => setFiltersOpen(false)}>{t('gallery.applyFilters')}</Button></>}>
         <div className={styles.mobileFilterSheet}><GalleryFilterSelects context={context} /></div>
       </BottomSheet>
+      <ConfirmationDialog
+        open={deleteFilteredOpen}
+        title={t('gallery.deleteFilteredTitle')}
+        description={t('gallery.deleteFilteredConfirm', { count: archive.filteredTaskCount })}
+        confirmLabel={t('gallery.confirmDeleteAction')}
+        cancelLabel={t('gallery.confirmDeleteCancel')}
+        closeLabel={t('attachment.close')}
+        tone="danger"
+        testId="gallery-delete-filtered-dialog"
+        onClose={() => setDeleteFilteredOpen(false)}
+        onConfirm={() => {
+          setDeleteFilteredOpen(false);
+          archive.deleteFiltered();
+        }}
+      >
+        <p>{t('gallery.deletePermanentHint')}</p>
+      </ConfirmationDialog>
     </>
   );
 }

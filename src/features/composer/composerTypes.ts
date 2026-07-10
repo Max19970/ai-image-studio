@@ -66,6 +66,7 @@ export interface ComposerLayoutContext {
   selectedModel: GenerationModel | null;
   modelOptions: ComposerModelOption[];
   statusText?: string | null;
+  blockedReason?: string | null;
   expanded: boolean;
   attachmentsCount: number;
   actionContext: ComposerActionContext;

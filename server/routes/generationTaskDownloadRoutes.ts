@@ -1,6 +1,6 @@
 import type express from 'express';
 import type { GeneratedImage, GenerationTask } from '../../src/domain/generationTask';
-import { loadGenerationTaskAssetDocument, loadGenerationTaskHistoryDocuments } from '../storage/generationTaskStore';
+import { loadGenerationTaskAssetDocument, loadGenerationTaskHistoryDocumentsByIds } from '../storage/generationTaskStore';
 import { sendServerError } from '../http/errors';
 import {
   absolutePublicUrl,
@@ -127,11 +127,11 @@ export function registerGenerationTaskDownloadRoutes(app: express.Express) {
 
   app.post('/api/storage/generation-task-downloads/archive', (req, res) => {
     try {
-      const requestedIds = Array.isArray(req.body?.taskIds)
+      const requestedIds: string[] = Array.isArray(req.body?.taskIds)
         ? req.body.taskIds.filter((id: unknown): id is string => typeof id === 'string')
         : [];
       const imageRefs = parseArchiveImageRefs(req.body?.imageRefs);
-      const uniqueIds = [...new Set(requestedIds)].slice(0, 200);
+      const uniqueIds = [...new Set<string>(requestedIds)].slice(0, 200);
       if (uniqueIds.length === 0 && imageRefs.length === 0) {
         res.status(400).json({ error: { message: 'No generation tasks or images were selected for archive download.' } });
         return;
@@ -144,7 +144,8 @@ export function registerGenerationTaskDownloadRoutes(app: express.Express) {
         list.push(ref);
         imageRefsByTask.set(ref.taskId, list);
       });
-      const { tasks } = loadGenerationTaskHistoryDocuments({ assetMode: 'full' });
+      const taskIdsToLoad = [...new Set([...uniqueIds, ...imageRefs.map((ref) => ref.taskId)])].slice(0, 400);
+      const { tasks } = loadGenerationTaskHistoryDocumentsByIds(taskIdsToLoad, { assetMode: 'full' });
       const entries: ZipDownloadEntry[] = [];
       const usedNames = new Set<string>();
       (tasks as GenerationTask[])

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ProviderGenerationModeDefinition, ProviderGenerationModeId } from '../../domain/providerMode';
@@ -11,6 +11,7 @@ import { SlotHost } from '../../interface/SlotHost';
 import { useEventCallback } from '../../shared/hooks/useEventCallback';
 import type { ComposerActionContext, ComposerLayoutContext, ComposerModelOption, ComposerPopoverId } from './composerTypes';
 import { useComposerAttachments } from './useComposerAttachments';
+import { getProviderModeAttachmentStatusText } from '../../entities/provider/attachmentCompatibility';
 import { getProviderModelOptions, getSelectedModel } from '../../entities/provider/modelOptions';
 import { resolveProviderControlSurface } from '../../entities/provider/controlSurface';
 import styles from './ComposerLayout.module.css';
@@ -62,6 +63,7 @@ export function ImageComposer({
   const { t } = useI18n();
   const [openPopover, setOpenPopover] = useState<ComposerPopoverId>(null);
   const [expanded, setExpanded] = useState(false);
+  const dockRef = useRef<HTMLElement | null>(null);
   const attachmentsRef = useRef<HTMLInputElement | null>(null);
   const maskRef = useRef<HTMLInputElement | null>(null);
   const selectedModel = useMemo(() => getSelectedModel(models, selectedModelId), [models, selectedModelId]);
@@ -97,8 +99,38 @@ export function ImageComposer({
     }
   });
   const { attachments, hasImageAttachments, removeAttachment, clearAttachments, addAttachments } = composerAttachments;
-  const hasStatusContent = Boolean(statusText);
+  const blockedReason = useMemo(() => {
+    if (canSubmit) return null;
+    if (!selectedModel) return t('composer.blockedModel');
+    if (!prompt.trim()) return t('composer.blockedPrompt');
+    return getProviderModeAttachmentStatusText({
+      draft: { targetImage, referenceImages, mask },
+      providerMode,
+      t
+    }) ?? t('composer.blockedRequest');
+  }, [canSubmit, mask, prompt, providerMode, referenceImages, selectedModel, t, targetImage]);
+  const hasStatusContent = Boolean(statusText || (blockedReason && prompt.trim()));
   const revealSecondary = expanded || hasStatusContent;
+
+  useLayoutEffect(() => {
+    const dock = dockRef.current;
+    if (!dock || typeof ResizeObserver === 'undefined') return;
+    const app = dock.closest<HTMLElement>('.studio-app');
+    if (!app) return;
+
+    const updateOccupiedSize = () => {
+      app.style.setProperty('--composer-occupied-block-size', `${Math.ceil(dock.getBoundingClientRect().height)}px`);
+    };
+    const observer = new ResizeObserver(updateOccupiedSize);
+    observer.observe(dock);
+    updateOccupiedSize();
+    window.addEventListener('resize', updateOccupiedSize);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateOccupiedSize);
+      app.style.removeProperty('--composer-occupied-block-size');
+    };
+  }, []);
 
   const modelOptions = useMemo<ComposerModelOption[]>(() => getProviderModelOptions(models, providers), [models, providers]);
 
@@ -199,6 +231,7 @@ export function ImageComposer({
     selectedModel,
     modelOptions,
     statusText,
+    blockedReason,
     expanded,
     attachmentsCount: attachments.length,
     actionContext: composerActionContext,
@@ -230,6 +263,7 @@ export function ImageComposer({
     selectedModel,
     modelOptions,
     statusText,
+    blockedReason,
     expanded,
     composerActionContext,
     setPrompt,
@@ -244,6 +278,7 @@ export function ImageComposer({
 
   return (
     <section
+      ref={dockRef}
       className={cx(styles.dock, (revealSecondary || hasImageAttachments) && styles.expanded)}
       aria-label={t('composer.aria')}
       data-testid="composer-dock"

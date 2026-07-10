@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '../../../../shared/ui';
+import { Button, ConfirmationDialog } from '../../../../shared/ui';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { GalleryFolderCardContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
@@ -11,13 +11,12 @@ import styles from './GalleryFolderCardSection.module.css';
 
 const cx = (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' ');
 
-function FolderActionMenu({ context, close, openTags }: { context: GalleryFolderCardContext; close: () => void; openTags: () => void }) {
+function FolderActionMenu({ context, close, openTags, requestDelete }: { context: GalleryFolderCardContext; close: () => void; openTags: () => void; requestDelete: () => void }) {
   const { t } = useI18n();
 
   const deleteFolder = () => {
     close();
-    if (!window.confirm(t('gallery.folderDeleteConfirm', { name: context.folder.name }))) return;
-    void context.onDeleteFolder();
+    requestDelete();
   };
 
   const run = (action: () => void) => {
@@ -46,6 +45,7 @@ function FolderActionMenu({ context, close, openTags }: { context: GalleryFolder
 export function GalleryFolderCardSection({ context }: ElementDefinitionProps<GalleryFolderCardContext>) {
   const { t } = useI18n();
   const [tagEditorOpen, setTagEditorOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const childCount = context.folder.childFolderCount + context.folder.childTaskCount;
 
   return (
@@ -73,6 +73,7 @@ export function GalleryFolderCardSection({ context }: ElementDefinitionProps<Gal
                   close();
                   window.setTimeout(() => setTagEditorOpen(true), 0);
                 }}
+                requestDelete={() => window.setTimeout(() => setDeleteOpen(true), 0)}
               />
             )}
           </GalleryQuickActionMenu>
@@ -86,6 +87,23 @@ export function GalleryFolderCardSection({ context }: ElementDefinitionProps<Gal
         onClose={() => setTagEditorOpen(false)}
         onSave={context.onSetTags}
       />
+      <ConfirmationDialog
+        open={deleteOpen}
+        title={t('gallery.folderDeleteTitle')}
+        description={t('gallery.folderDeleteConfirm', { name: context.folder.name })}
+        confirmLabel={t('gallery.confirmDeleteAction')}
+        cancelLabel={t('gallery.confirmDeleteCancel')}
+        closeLabel={t('attachment.close')}
+        tone="danger"
+        testId="gallery-delete-folder-dialog"
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={() => {
+          setDeleteOpen(false);
+          void context.onDeleteFolder();
+        }}
+      >
+        <p>{t('gallery.deletePermanentHint')}</p>
+      </ConfirmationDialog>
     </>
   );
 }

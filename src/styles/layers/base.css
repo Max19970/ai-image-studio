@@ -56,6 +56,14 @@
     --density-touch-padding: 14px;
     --control-height-compact: 32px;
     --control-height-touch: 44px;
+
+    --action-primary-enabled: var(--accent);
+    --action-primary-enabled-fg: var(--accent-ink);
+    --action-primary-disabled-bg: rgba(255, 255, 255, .045);
+    --action-primary-disabled-fg: var(--faint);
+    --action-primary-disabled-border: rgba(255, 255, 255, .09);
+    --action-blocked-reason: var(--muted);
+    --composer-occupied-block-size: 126px;
   }
 
   :root[data-studio-theme="midnight"] {

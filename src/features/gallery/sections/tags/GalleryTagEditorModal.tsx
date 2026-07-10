@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '../../../../shared/ui';
 import { normalizeGalleryTag } from '../../../../entities/gallery/galleryMetadata';
 import { useI18n } from '../../../../i18n';
+import { useModalDialog } from '../../../../shared/hooks/useModalDialog';
 import styles from './GalleryTagEditorModal.module.css';
 
 interface GalleryTagEditorModalProps {
@@ -21,23 +22,15 @@ export function GalleryTagEditorModal({ open, title, tags, onClose, onSave }: Ga
   const { t } = useI18n();
   const [draftTags, setDraftTags] = useState<string[]>(() => uniqueTags(tags));
   const [input, setInput] = useState('');
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useModalDialog({ open, rootRef, dialogRef, onClose });
 
   useEffect(() => {
     if (!open) return;
     setDraftTags(uniqueTags(tags));
     setInput('');
   }, [open, tags]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
 
   const normalizedInput = useMemo(() => normalizeGalleryTag(input), [input]);
 
@@ -60,9 +53,9 @@ export function GalleryTagEditorModal({ open, title, tags, onClose, onSave }: Ga
   if (!open || typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className={styles.root} role="presentation">
-      <button type="button" className={styles.backdrop} aria-label="Close tag editor" onClick={onClose} />
-      <section className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="gallery-tag-editor-title" onMouseDown={(event) => event.stopPropagation()}>
+    <div ref={rootRef} className={styles.root} role="presentation">
+      <button type="button" className={styles.backdrop} aria-hidden="true" tabIndex={-1} onClick={onClose} />
+      <section ref={dialogRef} className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="gallery-tag-editor-title" tabIndex={-1} onMouseDown={(event) => event.stopPropagation()}>
         <span className={styles.handle} aria-hidden="true" />
         <header className={styles.header}>
           <h2 id="gallery-tag-editor-title">{title}</h2>

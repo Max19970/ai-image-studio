@@ -8,6 +8,7 @@ import { PinIcon } from '../shared/PinIcon';
 import styles from '../../../gallery/ResultsGallery.module.css';
 
 function SelectableGalleryItem({ item, context, children }: { item: GalleryItem; context: GalleryLayoutContext; children: ReactNode }) {
+  const { t } = useI18n();
   const selected = context.selection.isSelected(item);
   return (
     <div className={`${styles.selectableItem} ${selected ? styles.selectableItemSelected : ''}`}>
@@ -18,7 +19,8 @@ function SelectableGalleryItem({ item, context, children }: { item: GalleryItem;
           className={styles.selectButton}
           data-selected={selected}
           onClick={() => context.selection.toggleItem(item)}
-          aria-label={selected ? 'Unselect gallery item' : 'Select gallery item'}
+          aria-label={selected ? t('gallery.selectionUnselectItem') : t('gallery.selectionSelectItem')}
+          aria-pressed={selected}
         >
           {selected ? '✓' : ''}
         </button>

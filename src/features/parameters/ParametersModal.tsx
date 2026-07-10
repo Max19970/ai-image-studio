@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ParameterPanel } from './ParameterPanel';
 import type { ImageParams } from '../../domain/imageParams';
@@ -9,6 +9,7 @@ import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import { useI18n } from '../../i18n';
 import { Button, IconButton } from '../../shared/ui';
+import { useModalDialog } from '../../shared/hooks/useModalDialog';
 import styles from './ParametersModal.module.css';
 
 interface Props {
@@ -26,19 +27,9 @@ interface Props {
 
 export function ParametersModal({ open, mode, providerMode, params, provider, capabilityReport, studioSettings, warnings, onClose, onChange }: Props) {
   const { t } = useI18n();
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      onClose();
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose]);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useModalDialog({ open, rootRef, dialogRef, onClose });
 
   if (!open || typeof document === 'undefined') return null;
 
@@ -49,8 +40,8 @@ export function ParametersModal({ open, mode, providerMode, params, provider, ca
       : 'auto';
 
   return createPortal(
-    <div className={styles.backdrop} role="presentation" onMouseDown={onClose}>
-      <section className={styles.shell} data-testid="parameters-modal" role="dialog" aria-modal="true" aria-labelledby="parameters-modal-title" onMouseDown={(event) => event.stopPropagation()}>
+    <div ref={rootRef} className={styles.backdrop} role="presentation" onMouseDown={onClose}>
+      <section ref={dialogRef} className={styles.shell} data-testid="parameters-modal" role="dialog" aria-modal="true" aria-labelledby="parameters-modal-title" tabIndex={-1} onMouseDown={(event) => event.stopPropagation()}>
         <header className={styles.topbar}>
           <div>
             <p className="section-kicker">{t('params.kicker')}</p>

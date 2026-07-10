@@ -213,7 +213,26 @@ async function clickComposerEditMode(page) {
   if (!clicked) throw new Error('No visible composer edit mode button by text.');
 }
 
-async function runStep(page, step, viewportName, scenarioName) {
+async function assertScenarioDestination(page, scenario, stepIndex, viewportName) {
+  const configuredSelector = scenario.assertSelectorByViewport?.[viewportName] || scenario.assertSelector;
+  const previousWait = scenario.steps.slice(0, stepIndex).reverse().find((item) => item.type === 'waitForSelector');
+  const selector = configuredSelector || previousWait?.selector;
+  if (!selector) throw new Error(`Scenario ${scenario.name} has no destination assertion before screenshot.`);
+
+  await page.waitForSelector(selector, { timeout: 12000 });
+  const visible = await page.evaluate((targetSelector) => {
+    return Array.from(document.querySelectorAll(targetSelector)).some((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+    });
+  }, selector);
+  if (!visible) throw new Error(`Scenario ${scenario.name} destination is not visible: ${selector}`);
+}
+
+async function runStep(page, step, viewportName, scenario, stepIndex) {
+  if (Array.isArray(step.viewports) && !step.viewports.includes(viewportName)) return;
+  const scenarioName = scenario.name;
   if (scenarioName === 'composer-comfy-controls' && step.type === 'waitForSelector' && step.selector === '[data-testid="composer-parameters"]') {
     await page.waitForSelector(step.selector, { timeout: step.timeout ?? 12000 });
     await clickFirstVisible(page, step.selector);
@@ -265,7 +284,10 @@ async function runStep(page, step, viewportName, scenarioName) {
     const files = Array.isArray(step.files) ? step.files : [step.file];
     await input.uploadFile(...files.map((file) => path.resolve(root, file)));
   }
-  if (step.type === 'screenshot') await screenshot(page, viewportName, scenarioName);
+  if (step.type === 'screenshot') {
+    await assertScenarioDestination(page, scenario, stepIndex, viewportName);
+    await screenshot(page, viewportName, scenarioName);
+  }
 }
 
 async function bootPage(browser, viewportName, scenario) {
@@ -317,7 +339,7 @@ async function captureScenario(viewportName, scenario) {
     try {
       browser = await launchBrowser();
       page = await bootPage(browser, viewportName, scenario);
-      for (const step of scenario.steps) await runStep(page, step, viewportName, scenario.name);
+      for (const [stepIndex, step] of scenario.steps.entries()) await runStep(page, step, viewportName, scenario, stepIndex);
       return;
     } catch (error) {
       await page?.close().catch(() => {});

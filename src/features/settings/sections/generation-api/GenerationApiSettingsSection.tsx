@@ -30,9 +30,9 @@ function GenerationApiDesktop({ context }: { context: SettingsSectionContext }) 
       </div>
 
       <div className={styles.focusSwitch} data-testid="settings-api-focus" role="tablist" aria-label={t('settings.apiTitle')}>
-        <button type="button" className={apiFocus === 'providers' ? styles.active : ''} onClick={() => setApiFocus('providers')}>{t('settings.providers')}</button>
-        <button type="button" className={apiFocus === 'models' ? styles.active : ''} onClick={() => setApiFocus('models')}>{t('settings.models')}</button>
-        <button type="button" className={apiFocus === 'comfyui' ? styles.active : ''} onClick={() => setApiFocus('comfyui')}>{t('settings.comfy.shortTab')}</button>
+        <button type="button" role="tab" aria-selected={apiFocus === 'providers'} className={apiFocus === 'providers' ? styles.active : ''} onClick={() => setApiFocus('providers')}>{t('settings.providers')}</button>
+        <button type="button" role="tab" aria-selected={apiFocus === 'models'} className={apiFocus === 'models' ? styles.active : ''} onClick={() => setApiFocus('models')}>{t('settings.models')}</button>
+        <button type="button" role="tab" aria-selected={apiFocus === 'comfyui'} className={apiFocus === 'comfyui' ? styles.active : ''} onClick={() => setApiFocus('comfyui')}>{t('settings.comfy.shortTab')}</button>
       </div>
 
       {apiFocus === 'providers' ? <ProvidersDesktop context={context} /> : apiFocus === 'models' ? <ModelsDesktop context={context} /> : <ComfyUiSettingsPanel context={context} />}
@@ -52,9 +52,9 @@ function GenerationApiMobile({ context }: { context: SettingsSectionContext }) {
           <h3>{apiFocus === 'providers' ? t('settings.providers') : apiFocus === 'models' ? t('settings.models') : t('settings.comfy.shortTab')}</h3>
         </div>
         <div className={styles.mobileApiSwitch} data-testid="settings-api-focus" role="tablist" aria-label={t('settings.apiTitle')}>
-          <button type="button" className={apiFocus === 'providers' ? styles.active : ''} onClick={() => setApiFocus('providers')}>{t('settings.providers')}</button>
-          <button type="button" className={apiFocus === 'models' ? styles.active : ''} onClick={() => setApiFocus('models')}>{t('settings.models')}</button>
-          <button type="button" className={apiFocus === 'comfyui' ? styles.active : ''} onClick={() => setApiFocus('comfyui')}>{t('settings.comfy.shortTab')}</button>
+          <button type="button" role="tab" aria-selected={apiFocus === 'providers'} className={apiFocus === 'providers' ? styles.active : ''} onClick={() => setApiFocus('providers')}>{t('settings.providers')}</button>
+          <button type="button" role="tab" aria-selected={apiFocus === 'models'} className={apiFocus === 'models' ? styles.active : ''} onClick={() => setApiFocus('models')}>{t('settings.models')}</button>
+          <button type="button" role="tab" aria-selected={apiFocus === 'comfyui'} className={apiFocus === 'comfyui' ? styles.active : ''} onClick={() => setApiFocus('comfyui')}>{t('settings.comfy.shortTab')}</button>
         </div>
       </header>
 

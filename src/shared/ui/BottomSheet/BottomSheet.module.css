@@ -66,8 +66,16 @@
 
 .header {
   flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
   padding: 14px var(--density-comfortable-padding) 10px;
   border-bottom: 1px solid var(--surface-border-soft);
+}
+
+.headerCopy {
+  min-width: 0;
 }
 
 .header h2 {
@@ -83,6 +91,25 @@
   color: var(--muted);
   font-size: 13px;
   line-height: 1.45;
+}
+
+.closeButton {
+  flex: 0 0 auto;
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.closeButton:hover {
+  border-color: var(--line-strong);
+  background: rgba(255,255,255,.10);
 }
 
 .body {

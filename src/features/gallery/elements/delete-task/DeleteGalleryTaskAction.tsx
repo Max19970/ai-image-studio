@@ -1,6 +1,6 @@
-import type { MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useI18n } from '../../../../i18n';
-import { Button } from '../../../../shared/ui';
+import { Button, ConfirmationDialog } from '../../../../shared/ui';
 import { GalleryDeleteButton } from '../shared/GallerySlotElements';
 import type { GalleryCardActionContext } from '../../../../interface/context/workspace/gallery';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
@@ -13,24 +13,41 @@ type DeleteGalleryTaskActionProps = {
 
 export function DeleteGalleryTaskAction({ context, props }: ElementDefinitionProps<GalleryCardActionContext, DeleteGalleryTaskActionProps>) {
   const { t } = useI18n();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const label = t(props.labelKey ?? 'gallery.deleteRequest');
   const handleDelete = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
-    context.onDeleteTask();
+    setConfirmOpen(true);
   };
 
-  if (props.presentation === 'menuItem') {
-    return (
-      <Button variant="ghost" size="compact" tone="danger" fullWidth={Boolean(props.fullWidth)} data-gallery-action="delete" onClick={handleDelete}>
-        {label}
-      </Button>
-    );
-  }
+  const trigger = props.presentation === 'menuItem' ? (
+    <Button variant="ghost" size="compact" tone="danger" fullWidth={Boolean(props.fullWidth)} data-gallery-action="delete" onClick={handleDelete}>
+      {label}
+    </Button>
+  ) : (
+    <GalleryDeleteButton onClick={handleDelete} ariaLabel={label} />
+  );
 
   return (
-    <GalleryDeleteButton
-      onClick={handleDelete}
-      ariaLabel={label}
-    />
+    <>
+      {trigger}
+      <ConfirmationDialog
+        open={confirmOpen}
+        title={t('gallery.taskDeleteTitle')}
+        description={t('gallery.taskDeleteConfirm')}
+        confirmLabel={t('gallery.confirmDeleteAction')}
+        cancelLabel={t('gallery.confirmDeleteCancel')}
+        closeLabel={t('attachment.close')}
+        tone="danger"
+        testId="gallery-delete-task-dialog"
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          context.onDeleteTask();
+        }}
+      >
+        <p>{t('gallery.deletePermanentHint')}</p>
+      </ConfirmationDialog>
+    </>
   );
 }

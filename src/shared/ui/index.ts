@@ -10,6 +10,8 @@ export { SideInspector } from './SideInspector';
 export type { SideInspectorDensity, SideInspectorProps } from './SideInspector';
 export { BottomSheet } from './BottomSheet';
 export type { BottomSheetProps, BottomSheetSize } from './BottomSheet';
+export { Dialog, ConfirmationDialog } from './Dialog';
+export type { DialogProps, DialogSize, DialogTone, ConfirmationDialogProps } from './Dialog';
 export { EntityList, EntityListItem } from './EntityList';
 export type { EntityListDensity, EntityListItemProps, EntityListProps } from './EntityList';
 

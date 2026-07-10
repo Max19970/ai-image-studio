@@ -62,6 +62,7 @@ export function RequestPresetMenuAction({ context }: ElementDefinitionProps<Comp
           open={open}
           title={t('requestPresets.title')}
           description={t('requestPresets.description')}
+          closeLabel={t('requestPresets.close')}
           size="content"
           compactHeader
           scrollHint

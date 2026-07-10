@@ -140,6 +140,49 @@
   border-top-color: rgba(255,154,169,.95);
 }
 
+.sequenceControls {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  padding: 4px;
+  background: rgba(0,0,0,.58);
+  box-shadow: 0 8px 24px rgba(0,0,0,.24);
+  backdrop-filter: blur(12px) saturate(125%);
+}
+
+.sequenceControlButton {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.sequenceControlButton:hover,
+.sequenceControlButton:focus-visible {
+  background: rgba(255,255,255,.16);
+}
+
+.sequencePosition {
+  min-width: 42px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-align: center;
+}
+
 .sequenceBadge {
   position: absolute;
   left: 10px;
@@ -267,6 +310,22 @@
 
   .tileActionGroup {
     display: inline-flex;
+  }
+
+  .sequenceControls {
+    bottom: 6px;
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .sequenceControlButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sequencePosition {
+    min-width: 36px;
+    font-size: 9px;
   }
 
   .sequenceBadge {

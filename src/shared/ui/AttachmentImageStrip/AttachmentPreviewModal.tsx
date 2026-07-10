@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../../../i18n';
 import { IconButton } from '../IconButton';
 import styles from './AttachmentPreviewModal.module.css';
 import type { AttachmentPreviewItem } from '../../image/attachmentPreviewTypes';
+import { useModalDialog } from '../../hooks/useModalDialog';
 
 interface Props {
   open: boolean;
@@ -31,17 +32,9 @@ export function AttachmentPreviewModal({ open, attachment, onClose }: Props) {
   const { t } = useI18n();
   const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
   const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose]);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useModalDialog({ open, rootRef, dialogRef, onClose });
 
   useEffect(() => {
     if (!open) return;
@@ -77,12 +70,12 @@ export function AttachmentPreviewModal({ open, attachment, onClose }: Props) {
   const roleHint = t(`attachment.hint.${attachment.role === 'reference' ? 'reference' : attachment.role}`);
 
   const modal = (
-    <div className={styles.backdrop} role="dialog" aria-modal="true" onMouseDown={onClose}>
-      <section className={styles.modal} onMouseDown={(event) => event.stopPropagation()}>
+    <div ref={rootRef} className={styles.backdrop} role="presentation" onMouseDown={onClose}>
+      <section ref={dialogRef} className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="attachment-preview-title" tabIndex={-1} data-testid="attachment-preview-modal" onMouseDown={(event) => event.stopPropagation()}>
         <header className={styles.header}>
           <div>
             <p className="section-kicker">{t('attachment.preview')}</p>
-            <h2 className="section-title">{roleTitle}</h2>
+            <h2 id="attachment-preview-title" className="section-title">{roleTitle}</h2>
             <p className={styles.subcopy}>{roleHint}</p>
           </div>
           <IconButton className={styles.closeButton} onClick={onClose} aria-label={t('attachment.close')}>×</IconButton>

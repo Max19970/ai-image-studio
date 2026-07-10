@@ -50,6 +50,16 @@
   min-width: 0;
 }
 
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .promptWrap textarea {
   display: block;
   width: 100%;
@@ -143,8 +153,8 @@
   padding: 0;
   transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
   border-radius: 999px;
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--action-primary-enabled);
+  color: var(--action-primary-enabled-fg);
   font-size: 16px;
   font-weight: 700;
   line-height: 1;
@@ -156,8 +166,11 @@
 }
 
 .sendButton:disabled {
+  border-color: var(--action-primary-disabled-border);
+  background: var(--action-primary-disabled-bg);
+  color: var(--action-primary-disabled-fg);
   cursor: not-allowed;
-  opacity: .48;
+  opacity: 1;
 }
 
 .secondarySurface {
@@ -203,6 +216,17 @@
 
 .noteStrong {
   color: var(--text);
+}
+
+.blockedReason {
+  margin: 0;
+  border: 1px solid var(--action-primary-disabled-border);
+  border-radius: 12px;
+  padding: 6px 9px;
+  background: var(--action-primary-disabled-bg);
+  color: var(--action-blocked-reason);
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 @media (max-width: 860px) {

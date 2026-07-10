@@ -71,6 +71,7 @@ export function GalleryQuickActionMenu({ children, triggerClassName, panelClassN
           open={open}
           onClose={close}
           title={t('gallery.quickActions')}
+          closeLabel={t('attachment.close')}
           size="compact"
           compactHeader
           ariaLabel={t('gallery.quickActions')}

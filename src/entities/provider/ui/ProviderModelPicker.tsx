@@ -221,6 +221,7 @@ export function ProviderModelPicker({
           open={open}
           title={t('composer.modelPickerTitle')}
           description={t('composer.modelPickerDescription')}
+          closeLabel={t('attachment.close')}
           size="content"
           compactHeader
           scrollHint

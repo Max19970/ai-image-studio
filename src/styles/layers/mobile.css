@@ -3,7 +3,7 @@
     --mobile-page-gutter: 10px;
     --mobile-bottom-nav-height: 62px;
     --mobile-bottom-nav-space: calc(var(--mobile-bottom-nav-height) + 10px);
-    --mobile-composer-space: 126px;
+    --mobile-composer-space: var(--composer-occupied-block-size, 126px);
   }
 
   html,

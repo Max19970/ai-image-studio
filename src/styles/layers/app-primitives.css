@@ -280,11 +280,19 @@
 
   .btn-primary{
     border-color: rgba(255,255,255,.38);
-    background: var(--accent);
-    color: var(--accent-ink);
+    background: var(--action-primary-enabled);
+    color: var(--action-primary-enabled-fg);
   }
 
-  .btn-primary:hover{ background: #ffffff; transform: translateY(-1px); }
+  .btn-primary:disabled,
+  .btn-primary[aria-disabled="true"] {
+    border-color: var(--action-primary-disabled-border);
+    background: var(--action-primary-disabled-bg);
+    color: var(--action-primary-disabled-fg);
+    opacity: 1;
+  }
+
+  .btn-primary:hover:not(:disabled){ background: #ffffff; transform: translateY(-1px); }
 
   .glass-panel { box-shadow: 0 24px 80px rgba(0,0,0,.32); }
 
@@ -328,7 +336,7 @@
   @media (max-width: 860px) {
     .studio-app { display: block; }
 
-    .studio-main { padding-bottom: 190px; }
+    .studio-main { padding-bottom: calc(var(--composer-occupied-block-size, 126px) + var(--mobile-bottom-nav-space, 72px) + 10px); }
 
   }
 }
@@ -414,7 +422,7 @@
     transition: transform .16s ease, background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, opacity .16s ease;
   }
 
-  .btn-secondary:hover, .btn-primary:hover, .tool-button:hover, .icon-button:hover{
+  .btn-secondary:hover:not(:disabled), .btn-primary:hover:not(:disabled), .tool-button:hover:not(:disabled), .icon-button:hover:not(:disabled){
     transform: translateY(-1px);
   }
 

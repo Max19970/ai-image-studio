@@ -20,6 +20,7 @@ export interface BatchComposerLayoutContext {
   studioSettings: StudioSettings;
   totalImages: number;
   validDrafts: number;
+  blockedReason?: string | null;
   selectedDraftId: string | null;
   selectedDraftIndex: number;
   requestPresets: RequestPreset[];

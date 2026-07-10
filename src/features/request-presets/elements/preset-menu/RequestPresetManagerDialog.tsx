@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { BottomSheet } from '../../../../shared/ui';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import { useI18n } from '../../../../i18n';
+import { useModalDialog } from '../../../../shared/hooks/useModalDialog';
 import styles from './RequestPresetMenuAction.module.css';
 import { PresetPanel } from './RequestPresetPanel';
 import type { RequestPresetManagerController } from './requestPresetMenuController';
@@ -17,19 +18,9 @@ interface RequestPresetManagerDialogProps {
 export function RequestPresetManagerDialog({ open, controller, onClose, testId = 'request-presets-dialog' }: RequestPresetManagerDialogProps) {
   const { t } = useI18n();
   const isMobile = useMediaQuery('(max-width: 860px)');
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open || isMobile) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    requestAnimationFrame(() => dialogRef.current?.focus({ preventScroll: true }));
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMobile, onClose, open]);
+  useModalDialog({ open: open && !isMobile, rootRef, dialogRef, onClose });
 
   if (!open) return null;
 
@@ -39,6 +30,7 @@ export function RequestPresetManagerDialog({ open, controller, onClose, testId =
         open={open}
         title={t('requestPresets.title')}
         description={t('requestPresets.description')}
+        closeLabel={t('requestPresets.close')}
         size="content"
         compactHeader
         scrollHint
@@ -52,7 +44,7 @@ export function RequestPresetManagerDialog({ open, controller, onClose, testId =
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className={styles.dialogBackdrop} data-testid={testId} onPointerDown={onClose}>
+    <div ref={rootRef} className={styles.dialogBackdrop} data-testid={testId} onPointerDown={onClose}>
       <div
         ref={dialogRef}
         className={styles.dialogShell}

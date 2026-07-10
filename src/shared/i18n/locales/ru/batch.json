@@ -38,5 +38,15 @@
   "batch.emptyQueueTitle": "В очереди нет запросов",
   "batch.emptyQueueText": "Добавь запрос, чтобы начать собирать очередь мульти-генерации.",
   "batch.addCurrent": "Добавить текущий в очередь",
-  "batch.partialSubmitConfirm": "Готово к отправке только {valid} из {total}. Запустить готовые?"
+  "batch.partialSubmitConfirm": "Готово к отправке только {valid} из {total}. Запустить готовые?",
+  "batch.blockedEmpty": "Добавь хотя бы один запрос в очередь.",
+  "batch.blockedNoReady": "Заполни промпт, выбери модель и добавь обязательные вложения.",
+  "batch.partialReviewTitle": "Проверить частичный запуск",
+  "batch.partialReviewDescription": "Готово {valid} из {total} запросов. Будут отправлены только готовые.",
+  "batch.partialReviewSkipped": "Эти запросы останутся в очереди и не будут отправлены:",
+  "batch.partialReviewConfirm": "Запустить готовые: {count}",
+  "batch.partialReviewCancel": "Вернуться к очереди",
+  "batch.reviewMissingModel": "не выбрана модель",
+  "batch.reviewMissingPrompt": "нет промпта",
+  "batch.reviewMissingAttachments": "не хватает обязательных вложений"
 }

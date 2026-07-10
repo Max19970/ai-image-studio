@@ -65,6 +65,7 @@ export function DetailCopyMenuAction({ context }: ElementDefinitionProps<DetailA
         onClose={close}
         title={t('detail.copyMenu')}
         description={t('detail.copyMenuDescription')}
+        closeLabel={t('attachment.close')}
         size="compact"
         compactHeader
         ariaLabel={t('detail.copyMenu')}

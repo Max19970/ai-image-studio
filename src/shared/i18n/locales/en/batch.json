@@ -38,5 +38,15 @@
   "batch.emptyQueueTitle": "No requests in queue",
   "batch.emptyQueueText": "Add a request to start building a batch generation queue.",
   "batch.addCurrent": "Add current to queue",
-  "batch.partialSubmitConfirm": "Only {valid} of {total} requests are ready. Start the ready ones?"
+  "batch.partialSubmitConfirm": "Only {valid} of {total} requests are ready. Start the ready ones?",
+  "batch.blockedEmpty": "Add at least one request to the queue.",
+  "batch.blockedNoReady": "Add a prompt, choose a model, and attach required files.",
+  "batch.partialReviewTitle": "Review partial run",
+  "batch.partialReviewDescription": "{valid} of {total} requests are ready. Only ready requests will be sent.",
+  "batch.partialReviewSkipped": "These requests will remain in the queue and will not be sent:",
+  "batch.partialReviewConfirm": "Run ready requests: {count}",
+  "batch.partialReviewCancel": "Return to queue",
+  "batch.reviewMissingModel": "model is not selected",
+  "batch.reviewMissingPrompt": "prompt is missing",
+  "batch.reviewMissingAttachments": "required attachments are missing"
 }

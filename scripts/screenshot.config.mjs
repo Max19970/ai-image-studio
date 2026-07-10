@@ -281,7 +281,7 @@ const comfyDetailTasks = [{
 }];
 
 export const scenarios = [
-  { name: 'gallery', steps: [{ type: 'screenshot' }] },
+  { name: 'gallery', assertSelector: '[data-gallery-slot="image-wall"]', steps: [{ type: 'waitForSelector', selector: '[data-gallery-slot="image-wall"]' }, { type: 'screenshot' }] },
   {
     name: 'gallery-empty',
     seedTasks: [],
@@ -293,6 +293,7 @@ export const scenarios = [
   },
   {
     name: 'composer-compact',
+    seedParams: { prompt: 'cinematic portrait, soft window light' },
     steps: [
       { type: 'waitForSelector', selector: '[data-testid="composer-dock"][data-composer-expanded="false"]' },
       { type: 'wait', ms: 180 },
@@ -302,6 +303,7 @@ export const scenarios = [
 
   {
     name: 'composer-long-prompt',
+    assertSelector: '[data-testid="composer-dock"][data-composer-expanded="false"] [data-prompt-state]',
     seedParams: {
       prompt: 'Длинный тестовый prompt для проверки compact composer на узком телефоне. Он должен оставаться в одну компактную строку и не раздувать нижний dock до четверти экрана до явного раскрытия панели запроса.'
     },
@@ -313,7 +315,14 @@ export const scenarios = [
   },
   {
     name: 'composer-attachments',
+    assertSelector: '[data-testid="composer-dock"][data-composer-attachments="1"]',
     steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-mode-openai-compatible.image-edit"]' },
+      { type: 'click', selector: '[data-testid="composer-mode-openai-compatible.image-edit"]' },
+      { type: 'keyboard', key: 'Escape' },
+      { type: 'wait', ms: 160 },
       { type: 'waitForSelector', selector: '[data-testid="composer-attachments-input"]' },
       { type: 'upload', selector: '[data-testid="composer-attachments-input"]', files: ['scripts/fixtures/sample-upload.png'] },
       { type: 'wait', ms: 260 },
@@ -331,6 +340,7 @@ export const scenarios = [
   },
   {
     name: 'composer-controls',
+    assertSelector: '[data-testid="composer-controls-panel"]',
     steps: [
       { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
       { type: 'click', selector: '[data-testid="composer-controls"]' },
@@ -408,6 +418,7 @@ export const scenarios = [
   },
   {
     name: 'gallery-quick-actions',
+    assertSelector: '[role="menu"], [role="dialog"]',
     steps: [
       { type: 'waitForSelector', selector: '[data-testid="gallery-quick-actions"]' },
       { type: 'click', selector: '[data-testid="gallery-quick-actions"]' },
@@ -416,9 +427,17 @@ export const scenarios = [
     ]
   },
   {
-    name: 'sidebar-collapsed',
+    name: 'navigation-responsive',
+    assertSelectorByViewport: {
+      desktop: '[data-testid="sidebar-rail"] [data-testid="sidebar-expand"]',
+      mobile: '[data-settings-section="interface"][data-settings-variant="mobile"]'
+    },
     steps: [
-      { type: 'click', selector: '[data-testid="sidebar-collapse"], [data-testid="mobile-drawer-trigger"]', optional: true },
+      { type: 'click', selector: '[data-testid="sidebar-collapse"]', viewports: ['desktop'] },
+      { type: 'openTab', tab: 'settings', viewports: ['mobile'] },
+      { type: 'waitForSelector', selector: '[data-testid="settings-page"], .workspace-settings-page', viewports: ['mobile'] },
+      { type: 'click', selector: '[data-testid="settings-mobile-tabs"] button:nth-child(1)', viewports: ['mobile'], optional: true },
+      { type: 'waitForSelector', selector: '[data-settings-section="interface"][data-settings-variant="mobile"]', viewports: ['mobile'] },
       { type: 'wait', ms: 220 },
       { type: 'screenshot' }
     ]
@@ -643,6 +662,7 @@ export const scenarios = [
 
   {
     name: 'settings-models',
+    assertSelector: '[data-testid="settings-api-focus"] button:nth-child(2)[aria-selected="true"]',
     steps: [
       { type: 'openTab', tab: 'settings' },
       { type: 'click', selector: '[data-testid="mobile-drawer-backdrop"]', optional: true },
@@ -693,6 +713,7 @@ export const scenarios = [
 
   {
     name: 'attachment-preview-modal',
+    assertSelector: '[data-testid="attachment-preview-modal"]',
     steps: [
       { type: 'openTab', tab: 'images' },
       { type: 'waitForSelector', selector: '[data-testid="gallery-card-open"]' },

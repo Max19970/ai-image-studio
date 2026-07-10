@@ -4,6 +4,7 @@ import { getGalleryBreadcrumbs, getGalleryParentPath, galleryRootPath, normalize
 import { galleryMetadataKey, galleryPinSet } from '../../../../entities/gallery/galleryMetadata';
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
+import { ConfirmationDialog } from '../../../../shared/ui';
 import { PinIcon } from '../shared/PinIcon';
 import styles from './GalleryExplorerBar.module.css';
 
@@ -15,6 +16,7 @@ export function GalleryExplorerBar({ context }: { context: GalleryLayoutContext 
   const [explorerOpen, setExplorerOpen] = useState(true);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [pinsOpen, setPinsOpen] = useState(false);
+  const [deleteSelectedOpen, setDeleteSelectedOpen] = useState(false);
   const breadcrumbs = getGalleryBreadcrumbs(context.activePath);
   const canGoUp = context.activePath !== galleryRootPath;
   const pinKeys = useMemo(() => galleryPinSet(context.commands.galleryPins), [context.commands.galleryPins]);
@@ -43,9 +45,7 @@ export function GalleryExplorerBar({ context }: { context: GalleryLayoutContext 
   };
 
   const deleteSelected = () => {
-    if (selectedCount === 0) return;
-    if (!window.confirm(t('gallery.selectionDeleteConfirm', { count: selectedCount }))) return;
-    context.selection.deleteSelected();
+    if (selectedCount > 0) setDeleteSelectedOpen(true);
   };
 
   const downloadSelected = () => {
@@ -55,6 +55,7 @@ export function GalleryExplorerBar({ context }: { context: GalleryLayoutContext 
   };
 
   return (
+    <>
     <div className={cx(styles.explorer, !explorerOpen && styles.collapsed)} data-gallery-slot="filesystem">
       <div className={styles.heroBar}>
         <div className={styles.currentPathBlock}>
@@ -125,7 +126,7 @@ export function GalleryExplorerBar({ context }: { context: GalleryLayoutContext 
             )}
             {context.selection.mode && (
               <>
-                <span className={styles.selectedCount}>{t('gallery.selectionCount', { count: selectedCount })}</span>
+                <span className={styles.selectedCount} aria-live="polite">{t('gallery.selectionCount', { count: selectedCount })}</span>
                 <button type="button" className={styles.selectionButton} onClick={context.selection.selectVisible}>{t('gallery.selectionSelectVisible')}</button>
                 <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={context.selection.clearSelection}>{t('gallery.selectionClear')}</button>
                 <button type="button" className={styles.selectionButton} disabled={selectedTaskCount === 0} onClick={downloadSelected}>{t('gallery.selectionDownload', { count: selectedTaskCount })}</button>
@@ -163,5 +164,23 @@ export function GalleryExplorerBar({ context }: { context: GalleryLayoutContext 
         </>
       )}
     </div>
+    <ConfirmationDialog
+      open={deleteSelectedOpen}
+      title={t('gallery.selectionDeleteTitle')}
+      description={t('gallery.selectionDeleteConfirm', { count: selectedCount })}
+      confirmLabel={t('gallery.confirmDeleteAction')}
+      cancelLabel={t('gallery.confirmDeleteCancel')}
+      closeLabel={t('attachment.close')}
+      tone="danger"
+      testId="gallery-delete-selected-dialog"
+      onClose={() => setDeleteSelectedOpen(false)}
+      onConfirm={() => {
+        setDeleteSelectedOpen(false);
+        context.selection.deleteSelected();
+      }}
+    >
+      <p>{t('gallery.deletePermanentHint')}</p>
+    </ConfirmationDialog>
+    </>
   );
 }
