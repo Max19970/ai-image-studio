@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react';
+import { createModalIsolationManager } from './modalIsolation';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -14,12 +15,36 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])'
 ].join(',');
 
+interface ActiveModal {
+  dialog: HTMLElement;
+}
+
+const modalIsolation = createModalIsolationManager<Element>();
+const activeModals: ActiveModal[] = [];
+
 function getFocusableElements(container: HTMLElement) {
   return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((element) => {
     if (element.hidden || element.getAttribute('aria-hidden') === 'true') return false;
     const style = window.getComputedStyle(element);
     return style.display !== 'none' && style.visibility !== 'hidden' && element.getClientRects().length > 0;
   });
+}
+
+function focusDialog(dialog: HTMLElement, initialFocusRef?: RefObject<HTMLElement | null>) {
+  const requested = initialFocusRef?.current;
+  if (requested && dialog.contains(requested)) {
+    requested.focus({ preventScroll: true });
+    return;
+  }
+
+  const marked = dialog.querySelector<HTMLElement>('[data-dialog-initial-focus="true"]');
+  const firstFocusable = getFocusableElements(dialog)[0];
+  (marked ?? firstFocusable ?? dialog).focus({ preventScroll: true });
+}
+
+function removeActiveModal(entry: ActiveModal) {
+  const index = activeModals.lastIndexOf(entry);
+  if (index >= 0) activeModals.splice(index, 1);
 }
 
 interface UseModalDialogOptions {
@@ -52,35 +77,18 @@ export function useModalDialog({
     if (!root || !dialog) return;
 
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousBodyOverflow = document.body.style.overflow;
-    const siblingStates = Array.from(document.body.children)
-      .filter((element): element is HTMLElement => element instanceof HTMLElement && element !== root)
-      .map((element) => ({
-        element,
-        inert: element.inert,
-        ariaHidden: element.getAttribute('aria-hidden')
-      }));
+    const entry: ActiveModal = { dialog };
+    const releaseIsolation = modalIsolation.acquire(document.body, root);
+    activeModals.push(entry);
 
-    siblingStates.forEach(({ element }) => {
-      element.inert = true;
-      element.setAttribute('aria-hidden', 'true');
+    const isTopMost = () => activeModals[activeModals.length - 1] === entry;
+    const animationFrame = window.requestAnimationFrame(() => {
+      if (isTopMost()) focusDialog(dialog, initialFocusRef);
     });
-    document.body.style.overflow = 'hidden';
-
-    const focusInitial = () => {
-      const requested = initialFocusRef?.current;
-      if (requested && dialog.contains(requested)) {
-        requested.focus({ preventScroll: true });
-        return;
-      }
-      const marked = dialog.querySelector<HTMLElement>('[data-dialog-initial-focus="true"]');
-      const firstFocusable = getFocusableElements(dialog)[0];
-      (marked ?? firstFocusable ?? dialog).focus({ preventScroll: true });
-    };
-
-    const animationFrame = window.requestAnimationFrame(focusInitial);
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isTopMost()) return;
+
       if (event.key === 'Escape' && closeOnEscape) {
         event.preventDefault();
         event.stopPropagation();
@@ -109,9 +117,8 @@ export function useModalDialog({
     };
 
     const handleFocusIn = (event: FocusEvent) => {
-      if (dialog.contains(event.target as Node)) return;
-      const firstFocusable = getFocusableElements(dialog)[0];
-      (firstFocusable ?? dialog).focus({ preventScroll: true });
+      if (!isTopMost() || dialog.contains(event.target as Node)) return;
+      focusDialog(dialog);
     };
 
     document.addEventListener('keydown', handleKeyDown, true);
@@ -121,14 +128,17 @@ export function useModalDialog({
       window.cancelAnimationFrame(animationFrame);
       document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('focusin', handleFocusIn, true);
-      document.body.style.overflow = previousBodyOverflow;
-      siblingStates.forEach(({ element, inert, ariaHidden }) => {
-        element.inert = inert;
-        if (ariaHidden === null) element.removeAttribute('aria-hidden');
-        else element.setAttribute('aria-hidden', ariaHidden);
-      });
+      removeActiveModal(entry);
+      releaseIsolation();
+
       window.requestAnimationFrame(() => {
-        if (previouslyFocused?.isConnected) previouslyFocused.focus({ preventScroll: true });
+        if (previouslyFocused?.isConnected && !previouslyFocused.closest('[inert]')) {
+          previouslyFocused.focus({ preventScroll: true });
+          return;
+        }
+
+        const activeDialog = activeModals[activeModals.length - 1]?.dialog;
+        if (activeDialog?.isConnected) focusDialog(activeDialog);
       });
     };
   }, [closeOnEscape, dialogRef, initialFocusRef, open, rootRef]);

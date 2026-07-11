@@ -427,6 +427,22 @@ export const scenarios = [
     ]
   },
   {
+    name: 'gallery-delete-dialog-recovery',
+    assertSelector: '[data-testid="composer-controls-panel"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="gallery-quick-actions"]' },
+      { type: 'click', selector: '[data-testid="gallery-quick-actions"]' },
+      { type: 'waitForSelector', selector: '[role="menu"] [data-gallery-action="delete"]' },
+      { type: 'click', selector: '[role="menu"] [data-gallery-action="delete"]' },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-delete-task-dialog"]' },
+      { type: 'click', selector: '[data-testid="gallery-delete-task-dialog"] footer button:last-child' },
+      { type: 'wait', ms: 220 },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls-panel"]' },
+      { type: 'screenshot' }
+    ]
+  },
+  {
     name: 'navigation-responsive',
     assertSelectorByViewport: {
       desktop: '[data-testid="sidebar-rail"] [data-testid="sidebar-expand"]',

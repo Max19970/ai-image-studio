@@ -38,7 +38,7 @@ function readPngSize(filePath) {
 
 const outDir = path.resolve(root, flag('dir', 'artifacts/verify-visual'));
 const viewports = listFlag('viewports', 'desktop,mobile');
-const scenarios = listFlag('scenarios', 'gallery,composer-compact,composer-long-prompt,composer-attachments,composer-controls,gallery-quick-actions,navigation-responsive,settings-api,settings-models,settings-integrations,detail,attachment-preview-modal,batch-composer,info,parameters');
+const scenarios = listFlag('scenarios', 'gallery,composer-compact,composer-long-prompt,composer-attachments,composer-controls,gallery-quick-actions,gallery-delete-dialog-recovery,navigation-responsive,settings-api,settings-models,settings-integrations,detail,attachment-preview-modal,batch-composer,info,parameters');
 const minBytes = Number(flag('min-bytes', '2048'));
 const failures = [];
 const rows = [];
