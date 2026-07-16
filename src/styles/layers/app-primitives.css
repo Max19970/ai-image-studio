@@ -328,11 +328,6 @@
     text-transform: uppercase;
   }
 
-  @media (max-width: 1100px) {
-    .studio-app { --sidebar-width: 300px; }
-
-  }
-
   @media (max-width: 860px) {
     .studio-app { display: block; }
 

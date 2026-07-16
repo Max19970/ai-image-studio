@@ -142,7 +142,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 860px) {
+@container workspace-main (max-width: 860px) {
   .queueRail {
     max-height: none;
     border-radius: 22px;

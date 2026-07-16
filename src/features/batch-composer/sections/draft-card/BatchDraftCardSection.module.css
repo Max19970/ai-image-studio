@@ -26,7 +26,7 @@
   min-width: 0;
 }
 
-@media (max-width: 860px) {
+@container workspace-main (max-width: 860px) {
   .draftCard {
     overflow: visible;
     min-width: 0;
@@ -40,7 +40,7 @@
   }
 }
 
-@media (max-width: 620px) {
+@container workspace-main (max-width: 620px) {
   .promptRail {
     grid-template-columns: 44px minmax(0, 1fr);
     grid-template-areas: 'controls prompt';

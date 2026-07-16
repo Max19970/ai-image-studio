@@ -127,6 +127,76 @@
 
 .mobileFilterSheet {}
 
+@container workspace-main (max-width: 900px) {
+  .desktopFilters {
+    grid-template-columns: repeat(3, minmax(96px, auto));
+  }
+}
+
+@container workspace-main (max-width: 760px) {
+  .commandBar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+    border-radius: 16px;
+  }
+
+  .desktopFilters {
+    display: none;
+  }
+
+  .mobileFiltersButton {
+    display: inline-flex;
+    min-height: 32px;
+    padding-inline: 11px;
+    font-size: 11px;
+  }
+
+  .searchField span,
+  .controlField span {
+    display: none;
+  }
+
+  .searchField input {
+    min-height: 34px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .filterTokens {
+    padding: 0;
+  }
+
+  .filterToken,
+  .filterTokenButton {
+    min-height: 24px;
+    padding-inline: 8px;
+    font-size: 10px;
+  }
+
+  .mobileFilterSheet {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobileFilterSheet .controlField {
+    gap: 6px;
+  }
+
+  .mobileFilterSheet .controlField span {
+    display: block;
+  }
+
+  .controlSelectTrigger {
+    min-height: 34px;
+    border-radius: 12px;
+    padding-inline: 10px;
+  }
+
+  .controlSelectTrigger :global(.popover-select-copy) strong {
+    font-size: 12px;
+  }
+}
+
 @media (max-width: 1120px) {
   .desktopFilters {
     grid-template-columns: repeat(3, minmax(96px, auto));

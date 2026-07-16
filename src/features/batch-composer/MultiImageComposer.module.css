@@ -1,6 +1,6 @@
 .stage {
   display: flex;
-  width: min(1120px, calc(100vw - 180px));
+  width: min(1120px, 100%);
   max-width: 100%;
   min-height: 100vh;
   margin: 0 auto;
@@ -22,13 +22,13 @@
   display: none;
 }
 
-@media (max-width: 1180px) {
+@container workspace-main (max-width: 960px) {
   .stage {
     width: min(100%, calc(100vw - 52px));
   }
 }
 
-@media (max-width: 860px) {
+@container workspace-main (max-width: 860px) {
   .stage {
     display: block;
     width: 100%;

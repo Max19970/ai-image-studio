@@ -1,10 +1,7 @@
 .dock {
-  position: fixed;
-  left: calc(var(--sidebar-width) + max(20px, (100vw - var(--sidebar-width) - 860px) / 2));
-  bottom: 18px;
-  z-index: 30;
-  width: min(860px, calc(100vw - var(--sidebar-width) - 40px));
-  max-width: calc(100vw - var(--sidebar-width) - 40px);
+  position: relative;
+  width: min(860px, 100%);
+  max-width: 100%;
   border: 1px solid color-mix(in srgb, var(--line-strong) 88%, transparent);
   border-radius: 22px;
   padding: 7px;
@@ -231,9 +228,11 @@
 
 @media (max-width: 860px) {
   .dock {
+    position: fixed;
     left: 12px;
     right: 12px;
     bottom: calc(var(--mobile-bottom-nav-space, 72px) + 4px);
+    z-index: 30;
     width: auto;
     max-width: none;
   }

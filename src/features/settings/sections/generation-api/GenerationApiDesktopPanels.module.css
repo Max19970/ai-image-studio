@@ -69,13 +69,13 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
-@media (max-width: 1180px) {
+@container workspace-main (max-width: 960px) {
   .focusLayout {
     grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
   }
 }
 
-@media (max-width: 980px) {
+@container workspace-main (max-width: 760px) {
   .focusLayout {
     grid-template-columns: 1fr;
     min-height: 0;

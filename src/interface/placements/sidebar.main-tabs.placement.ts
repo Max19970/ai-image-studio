@@ -7,14 +7,14 @@ export default [
     slot: 'sidebar/main-tabs',
     use: 'navigation.workspaceTab',
     order: 10,
-    props: { tab: 'images', icon: '▧', labelKey: 'nav.images' }
+    props: { tab: 'images', labelKey: 'nav.images' }
   },
   {
     id: 'sidebar.main.info-tab',
     slot: 'sidebar/main-tabs',
     use: 'navigation.workspaceTab',
     order: 20,
-    props: { tab: 'info', icon: 'i', labelKey: 'nav.info' },
+    props: { tab: 'info', labelKey: 'nav.info' },
     requiresFeature: 'studioInfo'
   }
 ] satisfies ElementPlacement<SidebarTabContext>[];

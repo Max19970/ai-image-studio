@@ -4,7 +4,6 @@ import { WorkspaceTabElement } from './WorkspaceTabElement';
 
 type WorkspaceTabElementProps = {
   tab: WorkspaceTab;
-  icon: string;
   labelKey: string;
 };
 

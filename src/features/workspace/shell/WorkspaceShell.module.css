@@ -1,0 +1,148 @@
+.shell {
+  --workspace-sidebar-collapsed-size: 72px;
+  --workspace-sidebar-expanded-size: clamp(252px, 18vw, 272px);
+  --workspace-sidebar-size: var(--workspace-sidebar-expanded-size);
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--workspace-sidebar-size) minmax(0, 1fr);
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  transition: grid-template-columns var(--motion-duration-medium) var(--motion-ease-standard);
+}
+
+.shell[data-sidebar-collapsed='true'] {
+  --workspace-sidebar-size: var(--workspace-sidebar-collapsed-size);
+}
+
+.sidebarFrame,
+.mainFrame {
+  min-width: 0;
+  min-height: 0;
+}
+
+.sidebarFrame {
+  position: relative;
+  z-index: 20;
+  overflow: visible;
+}
+
+.mainFrame {
+  position: relative;
+  z-index: 1;
+  container-name: workspace-main;
+  container-type: inline-size;
+}
+
+.shell[data-sidebar-resizing='true'] {
+  --ambient-animation-play-state: paused;
+  cursor: col-resize;
+  user-select: none;
+  transition: none;
+}
+
+.resizeHandle {
+  position: absolute;
+  inset-block: 0;
+  right: -5px;
+  z-index: 50;
+  width: 10px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.resizeHandle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 56px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 70%, var(--line-strong));
+  opacity: 0;
+  transform: translate(-50%, -50%) scaleY(.72);
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-soft),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.resizeHandle:focus-visible::before,
+.shell[data-sidebar-resizing='true'] .resizeHandle::before {
+  opacity: .9;
+  transform: translate(-50%, -50%) scaleY(1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .resizeHandle:hover::before {
+    opacity: .72;
+    transform: translate(-50%, -50%) scaleY(1);
+  }
+}
+
+.mainScrollRegion {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dockLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 20px 18px;
+  pointer-events: none;
+}
+
+.dockLayer > * {
+  pointer-events: auto;
+}
+
+@media (min-width: 861px) and (max-width: 1180px) {
+  .shell {
+    --workspace-sidebar-expanded-size: 248px;
+  }
+}
+
+@media (max-width: 860px) {
+  .shell,
+  .shell[data-sidebar-collapsed='true'] {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    transition: none;
+  }
+
+  .sidebarFrame,
+  .dockLayer {
+    display: contents;
+  }
+
+  .resizeHandle {
+    display: none;
+  }
+
+  .mainFrame {
+    position: static;
+    min-height: 100dvh;
+  }
+
+  .mainScrollRegion {
+    width: auto;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    overscroll-behavior: auto;
+  }
+}

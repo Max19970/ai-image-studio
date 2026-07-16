@@ -252,7 +252,7 @@
   left: 9px;
 }
 
-@media (max-width: 1260px) {
+@container workspace-main (max-width: 1020px) {
   .wallWorkspace {
     padding-inline: 18px;
   }

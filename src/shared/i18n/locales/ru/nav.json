@@ -1,6 +1,7 @@
 {
   "nav.expand": "Развернуть панель",
   "nav.collapse": "Свернуть панель",
+  "nav.resizeSidebar": "Изменить ширину панели",
   "nav.ariaCollapsed": "Свернутая навигация",
   "nav.aria": "Навигация студии",
   "nav.brand": "Image Studio",

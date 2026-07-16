@@ -7,7 +7,7 @@ export default [
     slot: 'sidebar/footer-tabs',
     use: 'navigation.workspaceTab',
     order: 10,
-    props: { tab: 'settings', icon: '⚙', labelKey: 'nav.settings' },
+    props: { tab: 'settings', labelKey: 'nav.settings' },
     requiresFeature: 'settings'
   }
 ] satisfies ElementPlacement<SidebarTabContext>[];

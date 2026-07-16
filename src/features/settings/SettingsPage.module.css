@@ -145,6 +145,38 @@
   box-shadow: var(--surface-shadow-soft);
 }
 
+@container workspace-main (max-width: 960px) {
+  .tabbedShell {
+    grid-template-columns: 188px minmax(0, 1fr);
+  }
+}
+
+@container workspace-main (max-width: 760px) {
+  .workbench {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 12px 10px 22px;
+  }
+
+  .desktopView {
+    display: none;
+  }
+
+  .mobileView {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobileHero h2 {
+    font-size: clamp(22px, 6cqw, 29px);
+  }
+
+  .mobileTabs button {
+    flex-basis: min(188px, 72cqw);
+  }
+}
+
 @media (max-width: 1180px) {
   .tabbedShell {
     grid-template-columns: 188px minmax(0, 1fr);
@@ -247,6 +279,24 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+
+@container workspace-main (max-width: 520px) {
+  .mobileHero p:not(:global(.section-kicker)) {
+    display: none;
+  }
+
+  .mobileSaveStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .mobileSaveActions {
+    justify-content: stretch;
+  }
+
+  .mobileSaveActions > * {
+    flex: 1 1 0;
+  }
+}
 
 @media (max-width: 520px) {
   .mobileHero p:not(:global(.section-kicker)) {

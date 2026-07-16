@@ -43,7 +43,7 @@
   text-align: right;
 }
 
-@media (max-width: 860px) {
+@container workspace-main (max-width: 860px) {
   .footer {
     position: relative;
     bottom: auto;

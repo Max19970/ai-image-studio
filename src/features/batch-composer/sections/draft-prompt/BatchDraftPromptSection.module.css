@@ -61,7 +61,7 @@
   transform: scale(1.03);
 }
 
-@media (max-width: 620px) {
+@container workspace-main (max-width: 620px) {
   .promptWrap {
     grid-area: prompt;
   }
@@ -85,7 +85,7 @@
   }
 }
 
-@media (max-width: 460px) {
+@container workspace-main (max-width: 460px) {
   .promptWrap textarea {
     padding: 10px 37px 10px 14px;
     font-size: 14px;

@@ -4,10 +4,9 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 
 type WorkspaceTabElementProps = {
   tab: WorkspaceTab;
-  icon: string;
   labelKey: string;
 };
 
 export function WorkspaceTabElement({ context, props }: ElementDefinitionProps<SidebarTabContext, WorkspaceTabElementProps>) {
-  return <WorkspaceTabButton context={context} tab={props.tab} icon={props.icon} labelKey={props.labelKey} />;
+  return <WorkspaceTabButton context={context} tab={props.tab} labelKey={props.labelKey} />;
 }

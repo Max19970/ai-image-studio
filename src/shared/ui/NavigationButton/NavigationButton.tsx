@@ -21,10 +21,11 @@ export function NavigationButton({
     <button
       type={props.type ?? 'button'}
       className={cx(styles.button, styles[variant], active && styles.active, className)}
+      data-active={active ? 'true' : 'false'}
       {...props}
     >
       {icon !== undefined && <span className={styles.icon} aria-hidden="true">{icon}</span>}
-      {variant === 'rail' ? null : <span className={styles.label}>{children}</span>}
+      {children !== undefined && children !== null && <span className={styles.label}>{children}</span>}
     </button>
   );
 }

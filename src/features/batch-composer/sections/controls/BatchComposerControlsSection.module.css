@@ -79,7 +79,7 @@
   letter-spacing: -.02em;
 }
 
-@media (max-width: 860px) {
+@container workspace-main (max-width: 860px) {
   .controls {
     display: grid;
     grid-template-columns: 118px minmax(0, 1fr);
@@ -134,7 +134,7 @@
   }
 }
 
-@media (max-width: 380px) {
+@container workspace-main (max-width: 380px) {
   .controls {
     grid-template-columns: 106px minmax(0, 1fr);
   }

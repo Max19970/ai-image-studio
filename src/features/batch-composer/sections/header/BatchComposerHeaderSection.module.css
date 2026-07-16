@@ -16,7 +16,7 @@
   color: rgba(236, 238, 255, 0.68);
 }
 
-@media (max-width: 860px) {
+@container workspace-main (max-width: 860px) {
   .topbar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -59,7 +59,7 @@
   }
 }
 
-@media (max-width: 380px) {
+@container workspace-main (max-width: 380px) {
   .topbar h2 {
     font-size: clamp(20px, 6.6vw, 25px);
   }

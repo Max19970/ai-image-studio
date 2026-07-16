@@ -1,65 +1,78 @@
 .rail {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 20;
-  grid-column: 1;
   display: flex;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   min-height: 0;
   flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
+  overflow: hidden;
   border-right: 1px solid var(--line);
   background: var(--sidebar);
-  padding: 12px;
-  backdrop-filter: blur(24px) saturate(135%);
-  box-shadow: 18px 0 52px rgba(0,0,0,.20);
+  padding: 14px 12px 12px;
+  backdrop-filter: blur(18px) saturate(125%);
+  box-shadow: 4px 0 8px rgba(0, 0, 0, .08);
   contain: layout paint style;
-  transition: background var(--motion-duration-fast) var(--motion-ease-soft), border-color var(--motion-duration-fast) var(--motion-ease-soft), box-shadow var(--motion-duration-medium) var(--motion-ease-soft);
-}
-
-.collapsed {
-  align-items: center;
-  justify-content: flex-start;
-  overflow: hidden;
-  padding: 12px 8px;
+  container-name: workspace-sidebar;
+  container-type: inline-size;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    border-color var(--motion-duration-fast) var(--motion-ease-soft),
+    box-shadow var(--motion-duration-medium) var(--motion-ease-soft);
 }
 
 .head {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  position: relative;
+  display: flex;
+  min-height: 48px;
   align-items: center;
   gap: 10px;
-  min-height: 46px;
-  padding: 4px 2px 8px;
+  padding: 2px 44px 12px 2px;
 }
 
-.projectDot {
+.projectMark {
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
   place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(255,255,255,.07);
-  color: var(--text);
-  font-size: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 13%, rgba(255, 255, 255, .045));
+  color: color-mix(in srgb, var(--accent) 72%, var(--text));
+  transform-origin: left center;
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-medium) var(--motion-ease-standard);
+}
+
+.projectMark svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .projectCopy {
   display: flex;
   min-width: 0;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 2px;
-  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft), transform var(--motion-duration-fast) var(--motion-ease-soft);
+  transform-origin: left center;
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-medium) var(--motion-ease-standard);
 }
 
 .projectCopy strong {
   overflow: hidden;
   color: var(--text);
   font-size: 14px;
-  font-weight: 650;
-  letter-spacing: -.01em;
+  font-weight: 680;
+  letter-spacing: -.015em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -67,131 +80,138 @@
 .projectCopy span {
   overflow: hidden;
   color: var(--faint);
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 520;
+  letter-spacing: .01em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.railMark {
+.railToggle {
+  position: absolute;
+  top: 2px;
+  right: 2px;
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   place-items: center;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
-  color: var(--muted);
-  transition: background .16s ease, border-color .16s ease, color .16s ease;
+  color: var(--faint);
+  transition:
+    transform var(--motion-duration-medium) var(--motion-ease-standard),
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    border-color var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft);
 }
 
-.railMark:hover {
-  border-color: var(--line);
-  background: rgba(255,255,255,.07);
+.railToggle svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--motion-duration-medium) var(--motion-ease-standard);
+}
+
+.toggleIconCollapsed {
+  transform: rotate(180deg);
+}
+
+.railToggle:focus-visible {
+  outline: 0;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent);
   color: var(--text);
 }
 
 .tabs {
   display: flex;
+  min-height: 0;
+  flex: 0 1 auto;
   flex-direction: column;
-  gap: 10px;
-  border-bottom: 1px solid var(--line);
-  padding: 8px 0 10px;
-  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft), transform var(--motion-duration-fast) var(--motion-ease-soft);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 0;
+  scrollbar-width: none;
+  transition: transform var(--motion-duration-medium) var(--motion-ease-standard);
 }
 
-.collapsed .tabs {
-  display: grid;
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs :global([data-ui-slot="sidebar/main-tabs"]),
+.footer :global([data-ui-slot="sidebar/footer-tabs"]) {
+  display: flex;
   width: 100%;
-  justify-items: center;
-  border-bottom: 0;
-  padding: 6px 0;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
 }
-
 
 .spacer {
   flex: 1 1 auto;
-  min-height: 8px;
+  min-height: 12px;
 }
 
 .footer {
-  margin-top: auto;
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
-  gap: 10px;
   border-top: 1px solid var(--line);
-  padding-top: 8px;
-  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft), transform var(--motion-duration-fast) var(--motion-ease-soft);
+  padding-top: 10px;
+  transition: transform var(--motion-duration-medium) var(--motion-ease-standard);
 }
 
-.collapsedFooter {
-  display: grid;
-  width: 100%;
-  justify-items: center;
-  margin-top: 0;
-  place-items: center;
-  gap: 12px;
-  border-top: 0;
-  padding: 0;
+.collapsed .projectMark,
+.collapsed .projectCopy {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-8px) scale(.94);
 }
 
-.railWord {
-  margin-top: auto;
-  margin-bottom: 10px;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  color: var(--faint);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: .32em;
-  text-transform: uppercase;
-}
+@container workspace-sidebar (max-width: 120px) {
+  .head {
+    justify-content: center;
+    padding: 2px 0 12px;
+  }
 
-.collapsed > .railMark {
-  align-self: center;
-  justify-self: center;
-}
+  .projectMark,
+  .projectCopy {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-8px) scale(.94);
+  }
 
-.collapsed :global([data-workspace-tab]) {
-  margin-inline: auto;
+  .railToggle {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .tabs,
+  .footer {
+    transform: none;
+  }
+
+  .tabs :global([data-ui-slot="sidebar/main-tabs"]),
+  .footer :global([data-ui-slot="sidebar/footer-tabs"]) {
+    align-items: center;
+  }
 }
 
 .mobileBottomNav {
   display: none;
 }
 
-.mobileCard {
-  margin-top: auto;
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 18px;
-  padding: 14px;
-  background: rgba(255,255,255,.04);
-}
-
-.mobileCard p {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-@media (min-width: 861px) {
-  .rail {
-    position: fixed;
-    inset: 0 auto 0 0;
-    width: var(--sidebar-width);
-    height: 100vh;
-    max-height: 100vh;
-  }
-
-  .collapsed {
-    width: var(--sidebar-width);
-  }
-
-  :global(.studio-app.sidebar-is-collapsed) .rail .projectCopy,
-  :global(.studio-app.sidebar-is-collapsed) .rail .tabs,
-  :global(.studio-app.sidebar-is-collapsed) .rail .footer:not(.collapsedFooter) {
-    opacity: 0;
-    transform: translateX(-8px);
+@media (hover: hover) and (pointer: fine) {
+  .railToggle:hover {
+    border-color: var(--line);
+    background: rgba(255, 255, 255, .065);
+    color: var(--text);
   }
 }
 
@@ -220,7 +240,7 @@
     background:
       radial-gradient(circle at 72% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 52%),
       var(--surface-floating);
-    box-shadow: 0 18px 52px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.10);
+    box-shadow: 0 18px 52px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .10);
     backdrop-filter: var(--surface-blur-strong);
     contain: layout paint;
   }
@@ -256,20 +276,11 @@
     flex: 0 0 clamp(82px, 26vw, 116px);
     max-width: none;
   }
-
-
-  .mobileTabs {
-    display: grid;
-    gap: 8px;
-    border: 0;
-    padding: 0;
-  }
 }
 
 @media (max-width: 370px) {
   .mobileBottomNav {
-    border-radius: 21px;
-    padding: 5px;
+    border-radius: 18px;
   }
 
   .mobileBottomTabs {
@@ -283,12 +294,4 @@
   .mobileBottomTabs:has(> :nth-child(5)) > * {
     flex-basis: clamp(76px, 28vw, 104px);
   }
-}
-
-.collapsed :global([data-ui-slot="sidebar/main-tabs"]),
-.collapsedFooter :global([data-ui-slot="sidebar/footer-tabs"]) {
-  display: grid;
-  width: 100%;
-  justify-items: center;
-  gap: 10px;
 }

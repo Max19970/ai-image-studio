@@ -20,15 +20,12 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .studio-app,
-  .studio-app.sidebar-is-collapsed {
-    --sidebar-width: 0px;
+  .studio-app {
     display: block;
     min-height: 100dvh;
   }
 
   .studio-app,
-  .studio-app.sidebar-is-collapsed,
   .studio-main,
   .batch-composer-is-open .studio-main {
     height: auto;
@@ -188,8 +185,7 @@
   }
 
   @media (max-width: 860px) {
-    .studio-app.telegram-mini-app,
-    .studio-app.telegram-mini-app.sidebar-is-collapsed {
+    .studio-app.telegram-mini-app {
       min-height: var(--telegram-viewport-stable-height, 100dvh);
     }
 

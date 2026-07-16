@@ -49,7 +49,7 @@
   background: color-mix(in srgb, var(--warning) 13%, transparent);
 }
 
-@media (max-width: 860px) {
+@container workspace-main (max-width: 860px) {
   .selectedEditor {
     max-height: none;
     overflow: visible;
