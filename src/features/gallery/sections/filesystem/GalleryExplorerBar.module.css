@@ -1,327 +1,590 @@
+.modeSwitch {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  min-width: 0;
+  background: rgba(17,17,18,.96);
+}
+
+.modeLayer {
+  grid-area: 1 / 1;
+  min-width: 0;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-medium) cubic-bezier(.22, 1, .36, 1),
+    visibility 0s linear 0s;
+}
+
+.pathMode {
+  z-index: 1;
+}
+
+.selectionMode {
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transform: translateY(7px);
+  transition-delay: 0s, 0s, var(--motion-duration-medium);
+}
+
+.modeSwitch[data-selection-mode="true"] .pathMode {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transform: translateY(-7px);
+  transition-delay: 0s, 0s, var(--motion-duration-medium);
+}
+
+.modeSwitch[data-selection-mode="true"] .selectionMode {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
 .explorer {
   display: grid;
-  gap: 9px;
-  margin-top: 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 20px;
-  padding: 10px;
-  background:
-    radial-gradient(circle at 8% 0%, rgba(255,255,255,.08), transparent 36%),
-    rgba(0,0,0,.18);
+  padding: 5px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: rgba(17,17,18,.96);
+  backdrop-filter: blur(14px) saturate(115%);
 }
 
-.collapsed {
-  gap: 0;
-  padding: 8px;
-}
-
-.heroBar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-}
-
-.currentPathBlock {
-  display: grid;
+.pathBar {
+  display: flex;
   min-width: 0;
-  gap: 3px;
-}
-
-.pathKicker {
-  overflow: hidden;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.currentPathButton {
-  display: inline-flex;
-  min-width: 0;
-  width: fit-content;
-  max-width: 100%;
+  min-height: 42px;
   align-items: center;
   gap: 8px;
+}
+
+.treeToggle,
+.backButton,
+.archiveControlsToggle,
+.selectionTrigger,
+.createTrigger,
+.folderMenuTrigger,
+.closeSelection,
+.moreTrigger {
+  display: grid;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  place-items: center;
   border: 0;
-  border-radius: 999px;
+  border-radius: 9px;
   padding: 0;
   background: transparent;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: -.025em;
+  color: var(--muted);
   cursor: pointer;
 }
 
-.currentPathButton span:first-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.treeToggle:hover,
+.backButton:hover,
+.archiveControlsToggle:hover,
+.selectionTrigger:hover,
+.createTrigger:hover,
+.folderMenuTrigger:hover,
+.closeSelection:hover,
+.moreTrigger:hover {
+  background: rgba(255,255,255,.07);
+  color: var(--text);
 }
 
-.collapseGlyph {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  place-items: center;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 999px;
-  background: rgba(255,255,255,.06);
-  color: var(--muted);
-  font-size: 13px;
+.treeToggle:focus-visible,
+.backButton:focus-visible,
+.archiveControlsToggle:focus-visible,
+.selectionTrigger:focus-visible,
+.createTrigger:focus-visible,
+.folderMenuTrigger:focus-visible,
+.closeSelection:focus-visible,
+.moreTrigger:focus-visible,
+.crumb:focus-visible,
+.mobileTitle:focus-visible,
+.secondaryAction:focus-visible,
+.primaryAction:focus-visible,
+.dangerAction:focus-visible {
+  outline: 2px solid rgba(255,255,255,.35);
+  outline-offset: 1px;
 }
 
-.primaryTools {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+.treeToggle svg,
+.backButton svg,
+.archiveControlsToggle svg,
+.selectionTrigger svg,
+.createTrigger svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.treeToggle svg path:first-child {
+  fill: rgba(255,255,255,.06);
 }
 
 .breadcrumbs {
   display: flex;
   min-width: 0;
+  flex: 1 1 auto;
   align-items: center;
-  gap: 6px;
-  overflow-x: auto;
-  border-top: 1px solid rgba(255,255,255,.07);
-  padding-top: 9px;
-  scrollbar-width: thin;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.crumbWrap {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 3px;
+}
+
+.separator,
+.ellipsis {
+  flex: 0 0 auto;
+  color: var(--faint);
+  font-size: 12px;
 }
 
 .crumb {
-  flex: 0 0 auto;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 999px;
-  padding: 8px 11px;
-  background: rgba(255,255,255,.055);
-  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 7px;
+  padding: 7px 8px;
+  background: transparent;
+  color: var(--muted);
   font-size: 12px;
-  font-weight: 720;
-  letter-spacing: -.02em;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.crumbActive {
-  background: rgba(255,255,255,.14);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.13);
+.crumb:hover {
+  background: rgba(255,255,255,.05);
+  color: var(--text);
 }
 
-.separatorWrap {
+.crumb[data-active="true"] {
+  color: var(--text);
+  font-weight: 740;
+}
+
+.pathUtilities {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.archiveControlsToggle {
+  position: relative;
+}
+
+.archiveControlsToggle[data-active="true"]::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 5px;
+  height: 5px;
+  border: 1px solid rgba(17,17,18,.9);
+  border-radius: 999px;
+  background: var(--text);
+}
+
+.creatorForm {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) auto;
+  align-items: end;
+  gap: 8px 12px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding-top: 10px;
+}
+
+.creatorFormCompact {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.creatorFormCompact .creatorActions {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
+.creatorFormCompact .creatorActions > * {
+  width: 100%;
+}
+
+.creatorField {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.creatorField span {
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.creatorField input {
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 9px;
+  padding: 0 11px;
+  background: rgba(0,0,0,.22);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.creatorField input:focus-visible {
+  outline: 2px solid rgba(255,255,255,.28);
+  outline-offset: 1px;
+}
+
+.creatorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.formError {
+  grid-column: 1 / -1;
+  margin: -2px 0 0;
+  color: #ffb7c1;
+  font-size: 11px;
+}
+
+.transferBar,
+.selectionToolbar {
+  display: flex;
+  min-width: 0;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 11px;
+  padding: 6px 8px 6px 12px;
+  background: rgba(255,255,255,.045);
+}
+
+.transferBar span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transferBar > div,
+.selectionActions,
+.selectionSummary,
+.selectionControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.selectionControls {
+  min-width: 0;
+  margin-left: auto;
+}
+
+.selectionModeDivider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 24px;
+  margin-inline: 3px 1px;
+  background: rgba(255,255,255,.13);
+}
+
+.closeSelection {
+  background: rgba(255,255,255,.035);
+}
+
+.selectionToolbar {
+  margin: 0;
+  border-radius: 0;
+  border-inline: 0;
+  background: color-mix(in srgb, var(--background, #111) 94%, transparent);
+  backdrop-filter: blur(18px) saturate(120%);
+}
+
+.selectionSummary {
+  min-width: 0;
+}
+
+.selectionSummary strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.secondaryAction,
+.primaryAction,
+.dangerAction {
+  min-height: 34px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 11px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondaryAction {
+  background: rgba(255,255,255,.07);
+}
+
+.downloadAction {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.separator {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.iconAction,
-.primaryAction,
-.createButton,
-.cancelCreateButton,
-.selectionButton {
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: 999px;
-  background: rgba(255,255,255,.075);
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 760;
-  cursor: pointer;
-}
-
-.iconAction {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  padding: 0;
-}
-
-.toolIcon {
-  width: 15px;
-  height: 15px;
+.downloadAction svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
 }
 
 .primaryAction {
-  padding: 9px 12px;
   background: rgba(255,255,255,.15);
 }
 
-.iconActionActive {
-  background: rgba(255,255,255,.16);
+.dangerAction {
+  background: rgba(112,42,52,.52);
+  color: #ffd6dc;
 }
 
-.iconAction:disabled,
-.selectionButton:disabled,
-.createButton:disabled {
+.secondaryAction:hover,
+.primaryAction:hover {
+  background: rgba(255,255,255,.18);
+}
+
+.dangerAction:hover {
+  background: rgba(136,48,61,.64);
+}
+
+.secondaryAction:disabled,
+.primaryAction:disabled,
+.dangerAction:disabled {
   cursor: not-allowed;
   opacity: .42;
 }
 
-.creatorDock {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto;
-  gap: 8px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 16px;
-  padding: 8px;
-  background: rgba(255,255,255,.04);
-}
-
-.createInput {
-  min-width: 0;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 999px;
-  padding: 9px 12px;
-  background: rgba(0,0,0,.22);
-  color: var(--text);
-  outline: none;
-}
-
-.createInput:focus {
-  border-color: rgba(255,255,255,.32);
-}
-
-.createButton,
-.cancelCreateButton {
-  padding: 9px 12px;
-}
-
-.cancelCreateButton {
-  background: rgba(255,255,255,.045);
-  color: var(--muted);
-}
-
-.actionDeck {
+.mobileTitle {
   display: flex;
   min-width: 0;
-  align-items: center;
+  flex: 1 1 auto;
+  align-items: baseline;
   gap: 8px;
-  overflow-x: auto;
-  border: 1px solid rgba(255,255,255,.075);
-  border-radius: 16px;
-  padding: 7px;
-  color: var(--muted);
-  font-size: 11px;
-  scrollbar-width: thin;
-}
-
-.actionDeckActive {
-  background: rgba(255,255,255,.045);
-}
-
-.selectionButton {
-  flex: 0 0 auto;
-  padding: 8px 10px;
-}
-
-.selectedCount {
-  flex: 0 0 auto;
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 780;
-}
-
-.actionHint {
-  min-width: 0;
   overflow: hidden;
-  color: var(--muted);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pinnedShelf {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 7px;
-  overflow-x: auto;
-  border: 1px solid rgba(255,255,255,.075);
-  border-radius: 16px;
-  padding: 8px;
-  scrollbar-width: thin;
-}
-
-.pinnedChip {
-  display: inline-flex;
-  flex: 0 0 auto;
-  max-width: 220px;
-  align-items: center;
-  gap: 7px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,.13);
-  border-radius: 999px;
-  padding: 8px 10px;
-  background: rgba(255,255,255,.065);
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 8px;
+  background: transparent;
   color: var(--text);
-  font-size: 11px;
-  font-weight: 720;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: left;
   cursor: pointer;
 }
 
-.chipIcon {
-  flex: 0 0 auto;
-  width: 13px;
-  height: 13px;
-  color: var(--muted);
+.mobileTitle span {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileTitle small {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.navigatorSheet {
+  padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right));
 }
 
 @media (max-width: 860px) {
-  .explorer {
-    gap: 8px;
-    margin-top: 10px;
-    border-radius: 18px;
-    padding: 8px;
+  .modeSwitch {
+    top: 72px;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows var(--motion-duration-medium) cubic-bezier(.22, 1, .36, 1);
   }
 
-  .heroBar {
-    grid-template-columns: 1fr;
-    gap: 8px;
+  .modeSwitch[data-selection-mode="true"] {
+    grid-template-rows: 0fr;
   }
 
-  .primaryTools {
-    justify-content: space-between;
-    gap: 6px;
+  .modeLayer {
+    min-height: 0;
   }
 
-  .primaryAction {
-    flex: 1 1 auto;
-    min-width: 0;
+  .pathMode {
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
-  .pathKicker {
+  .selectionMode,
+  .modeSwitch[data-selection-mode="true"] .selectionMode {
+    transform: none;
+  }
+
+  .explorer {
+    padding: 5px 8px;
+  }
+
+  .pathBar {
+    min-height: 44px;
+    gap: 2px;
+  }
+
+  .treeToggle,
+  .backButton,
+  .archiveControlsToggle,
+  .selectionTrigger,
+  .createTrigger,
+  .folderMenuTrigger,
+  .closeSelection,
+  .moreTrigger {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+  }
+
+  .creatorForm {
+    grid-template-columns: 1fr;
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .creatorActions {
+    width: 100%;
+  }
+
+  .creatorActions > * {
+    flex: 1 1 0;
+  }
+
+  .selectionToolbar {
+    position: fixed;
+    top: auto;
+    right: max(10px, env(safe-area-inset-right));
+    bottom: calc(var(--mobile-bottom-nav-space, 72px) + max(8px, env(safe-area-inset-bottom)));
+    left: max(10px, env(safe-area-inset-left));
+    z-index: 82;
+    min-height: 60px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 16px;
+    padding: 7px;
+    background: rgba(20,20,22,.94);
+    box-shadow: 0 12px 34px rgba(0,0,0,.38);
+  }
+
+  .selectionSummary,
+  .selectVisibleAction {
     display: none;
   }
 
-  .currentPathButton {
+  .selectionControls {
     width: 100%;
-    justify-content: space-between;
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: 14px;
-    padding: 9px 10px;
-    background: rgba(255,255,255,.045);
+    gap: 7px;
+    margin-left: 0;
   }
 
-  .breadcrumbs {
-    padding-top: 7px;
+  .selectionActions {
+    min-width: 0;
+    flex: 1 1 auto;
+    justify-content: flex-end;
   }
 
-  .creatorDock {
-    grid-template-columns: minmax(0, 1fr) auto;
+  .selectionActions .secondaryAction,
+  .selectionActions .primaryAction,
+  .selectionActions .dangerAction {
+    min-height: 44px;
+    flex: 1 1 0;
+    padding-inline: 8px;
   }
 
-  .createInput {
-    grid-column: 1 / -1;
+  .selectionActions .downloadAction {
+    display: grid;
+    flex: 0 0 44px;
+    place-items: center;
+    padding: 0;
+  }
+
+  .selectionModeDivider {
+    height: 30px;
+    margin-inline: 1px 0;
+  }
+
+  .closeSelection {
+    flex: 0 0 44px;
+  }
+
+  .downloadAction svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.6;
+  }
+
+  .downloadAction span {
+    display: none;
+  }
+
+  .transferBar {
+    align-items: stretch;
+    padding: 8px;
+  }
+
+  .transferBar > div {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .selectionActions .primaryAction,
+  .selectionActions .dangerAction {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .explorer,
+  .selectionToolbar {
+    backdrop-filter: none;
   }
 }

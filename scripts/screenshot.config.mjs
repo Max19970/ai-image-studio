@@ -328,6 +328,89 @@ const comfyDetailTasks = [{
 export const scenarios = [
   { name: 'gallery', assertSelector: '[data-gallery-slot="image-wall"]', steps: [{ type: 'waitForSelector', selector: '[data-gallery-slot="image-wall"]' }, { type: 'screenshot' }] },
   {
+    name: 'gallery-filesystem',
+    seedFolders: [
+      { id: '/Characters', path: '/Characters', name: 'Characters', createdAt: now - 4000, updatedAt: now - 4000 },
+      { id: '/Characters/Alice', path: '/Characters/Alice', name: 'Alice', createdAt: now - 3000, updatedAt: now - 3000 },
+      { id: '/Characters/Bosses', path: '/Characters/Bosses', name: 'Bosses', createdAt: now - 2000, updatedAt: now - 2000 },
+      { id: '/References', path: '/References', name: 'References', createdAt: now - 1000, updatedAt: now - 1000 }
+    ],
+    seedPins: [{ itemKind: 'folder', itemId: '/Characters', createdAt: now - 500 }],
+    assertSelector: '[data-gallery-slot="image-wall"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-gallery-slot="image-wall"]' },
+      { type: 'wait', ms: 180 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'gallery-folder-navigation-toggle',
+    seedFolders: [
+      { id: '/Characters', path: '/Characters', name: 'Characters', createdAt: now - 4000, updatedAt: now - 4000 },
+      { id: '/Characters/Alice', path: '/Characters/Alice', name: 'Alice', createdAt: now - 3000, updatedAt: now - 3000 },
+      { id: '/References', path: '/References', name: 'References', createdAt: now - 1000, updatedAt: now - 1000 }
+    ],
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="gallery-folder-navigator-toggle"]' },
+      { type: 'click', selector: '[data-testid="gallery-folder-navigator-toggle"]' },
+      { type: 'wait', ms: 300 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'gallery-folder-create',
+    seedFolders: [
+      { id: '/Characters', path: '/Characters', name: 'Characters', createdAt: now - 4000, updatedAt: now - 4000 },
+      { id: '/Characters/Alice', path: '/Characters/Alice', name: 'Alice', createdAt: now - 3000, updatedAt: now - 3000 }
+    ],
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="gallery-folder-tree-create"]', viewports: ['desktop'] },
+      { type: 'click', selector: '[data-testid="gallery-folder-tree-create"]', viewports: ['desktop'] },
+      { type: 'click', selector: '[data-testid="gallery-folder-navigator-toggle"]', viewports: ['mobile'] },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-folder-tree-create"]', viewports: ['mobile'] },
+      { type: 'click', selector: '[data-testid="gallery-folder-tree-create"]', viewports: ['mobile'] },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-folder-creator"]' },
+      { type: 'wait', ms: 300 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'gallery-controls-collapsed',
+    assertSelector: '[data-gallery-slot="image-wall"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="gallery-archive-controls-toggle"]' },
+      { type: 'click', selector: '[data-testid="gallery-archive-controls-toggle"]' },
+      { type: 'wait', ms: 300 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'gallery-filters',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="gallery-filters-toggle"]' },
+      { type: 'click', selector: '[data-testid="gallery-filters-toggle"]' },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-filter-panel"]' },
+      { type: 'wait', ms: 300 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'gallery-filesystem-scrolled',
+    seedFolders: [
+      { id: '/Characters', path: '/Characters', name: 'Characters', createdAt: now - 4000, updatedAt: now - 4000 },
+      { id: '/Characters/Alice', path: '/Characters/Alice', name: 'Alice', createdAt: now - 3000, updatedAt: now - 3000 },
+      { id: '/Characters/Bosses', path: '/Characters/Bosses', name: 'Bosses', createdAt: now - 2000, updatedAt: now - 2000 },
+      { id: '/References', path: '/References', name: 'References', createdAt: now - 1000, updatedAt: now - 1000 }
+    ],
+    assertSelector: '[data-gallery-slot="image-wall"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-gallery-slot="image-wall"]' },
+      { type: 'scrollToSelector', selector: '[data-testid="gallery-item"]:last-child' },
+      { type: 'wait', ms: 180 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
     name: 'gallery-empty',
     seedTasks: [],
     steps: [
@@ -532,6 +615,32 @@ export const scenarios = [
     steps: [
       { type: 'waitForSelector', selector: '[data-testid="gallery-quick-actions"]' },
       { type: 'click', selector: '[data-testid="gallery-quick-actions"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'gallery-selection',
+    assertSelector: '[data-testid="gallery-selection-toolbar"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="gallery-selection-start"]' },
+      { type: 'click', selector: '[data-testid="gallery-selection-start"]' },
+      { type: 'click', selector: '[data-testid="gallery-item"]' },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-selection-toolbar"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'gallery-destination-picker',
+    assertSelector: '[data-testid="gallery-destination-picker-body"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="gallery-selection-start"]' },
+      { type: 'click', selector: '[data-testid="gallery-selection-start"]' },
+      { type: 'click', selector: '[data-testid="gallery-item"]' },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-selection-move"]' },
+      { type: 'click', selector: '[data-testid="gallery-selection-move"]' },
+      { type: 'waitForSelector', selector: '[data-testid="gallery-destination-picker-body"]' },
       { type: 'wait', ms: 220 },
       { type: 'screenshot' }
     ]

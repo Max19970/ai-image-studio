@@ -1,5 +1,6 @@
 import { isGalleryItemKind } from '../gallery/descriptors';
 import { generationGalleryPinBucket, generationGalleryTagBucket, loadEncryptedDocument, saveEncryptedDocument } from './encryptedStore';
+import { isGalleryPathInside, mapGallerySubPath, normalizeGalleryPath } from '../../src/domain/galleryFilesystem';
 import {
   galleryMetadataId,
   galleryMetadataKey,
@@ -57,4 +58,17 @@ export function setGalleryItemTags(args: { itemKind: GalleryMetadataKind; itemId
   const records = loadGalleryTagRecords().filter((item) => galleryMetadataKey(item.itemKind, item.itemId) !== key);
   if (tags.length === 0) return saveGalleryTagRecords(records);
   return saveGalleryTagRecords([...records, { itemKind, itemId, tags, updatedAt: Date.now() }]);
+}
+
+export function remapGalleryFolderMetadata(sourcePath: string, nextPath: string): void {
+  const source = normalizeGalleryPath(sourcePath);
+  const target = normalizeGalleryPath(nextPath);
+  if (source === target) return;
+  const mapFolderId = (itemId: string) => (
+    itemId === source || isGalleryPathInside(itemId, source) ? mapGallerySubPath(itemId, source, target) : itemId
+  );
+  saveGalleryPins(loadGalleryPins().map((item) => item.itemKind === 'folder' ? { ...item, itemId: mapFolderId(item.itemId) } : item));
+  saveGalleryTagRecords(loadGalleryTagRecords().map((item) => item.itemKind === 'folder'
+    ? { ...item, itemId: mapFolderId(item.itemId), updatedAt: Date.now() }
+    : item));
 }

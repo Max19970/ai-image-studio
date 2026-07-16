@@ -55,6 +55,8 @@ export interface GalleryCommands {
   startHiresFix: (task: GenerationTask, image?: GeneratedImage | null) => Promise<void>;
   setActivePath: (path: string) => void;
   createFolder: (name: string) => Promise<void>;
+  createFolderAt: (parentPath: string, name: string) => Promise<void>;
+  renameFolder: (path: string, name: string) => Promise<void>;
   deleteFolder: (path: string) => Promise<void>;
   moveItem: (itemKind: 'task' | 'folder', itemId: string, targetPath: string) => Promise<void>;
   pasteItems: (operation: GalleryClipboardOperation, items: GalleryClipboardItemPayload[], targetPath: string) => Promise<void>;

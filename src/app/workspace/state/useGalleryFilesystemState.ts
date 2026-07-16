@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { GalleryFolder } from '../../../domain/galleryFilesystem';
-import { galleryRootPath, normalizeGalleryPath } from '../../../domain/galleryFilesystem';
+import { galleryRootPath, mapGallerySubPath, normalizeGalleryPath } from '../../../domain/galleryFilesystem';
 import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../../entities/gallery/galleryClipboard';
 import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../../entities/gallery/galleryMetadata';
 import {
@@ -9,6 +9,7 @@ import {
   loadRemoteGalleryFolders,
   moveRemoteGalleryItem,
   pasteRemoteGalleryItems,
+  renameRemoteGalleryFolder,
 } from '../../../infrastructure/storage/remoteGalleryFolderStore';
 import {
   loadRemoteGalleryPins,
@@ -30,6 +31,8 @@ export interface GalleryFilesystemState {
   refreshGalleryFolders: () => Promise<void>;
   refreshGalleryMetadata: () => Promise<void>;
   createGalleryFolder: (name: string) => Promise<void>;
+  createGalleryFolderAt: (parentPath: string, name: string) => Promise<void>;
+  renameGalleryFolder: (path: string, name: string) => Promise<void>;
   deleteGalleryFolder: (path: string) => Promise<void>;
   moveGalleryItem: (itemKind: 'task' | 'folder', itemId: string, targetPath: string) => Promise<void>;
   pasteGalleryItems: (operation: GalleryClipboardOperation, items: GalleryClipboardItemPayload[], targetPath: string) => Promise<void>;
@@ -97,6 +100,17 @@ export function useGalleryFilesystemState(): GalleryFilesystemState {
     refreshGalleryMetadata,
     createGalleryFolder: async (name) => {
       setGalleryFolders(await createRemoteGalleryFolder(activeGalleryPath, name));
+    },
+    createGalleryFolderAt: async (parentPath, name) => {
+      setGalleryFolders(await createRemoteGalleryFolder(parentPath, name));
+    },
+    renameGalleryFolder: async (path, name) => {
+      const result = await renameRemoteGalleryFolder(path, name);
+      setGalleryFolders(result.folders);
+      await refreshGalleryMetadata();
+      setActiveGalleryPath((current) => current === result.sourcePath || current.startsWith(`${result.sourcePath}/`)
+        ? mapGallerySubPath(current, result.sourcePath, result.nextPath)
+        : current);
     },
     deleteGalleryFolder: async (path) => {
       const normalized = normalizeGalleryPath(path);

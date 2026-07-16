@@ -71,6 +71,32 @@ export function deleteGalleryFolder(path: string): GalleryFolder[] {
   return saveGalleryFolders(folders.filter((folder) => folder.path !== normalizedPath && !isGalleryPathInside(folder.path, normalizedPath)));
 }
 
+export function renameGalleryFolder(path: string, name: string): { folders: GalleryFolder[]; sourcePath: string; nextPath: string } {
+  const sourcePath = normalizeGalleryPath(path);
+  if (sourcePath === '/') throw new Error('Root folder cannot be renamed.');
+  const parentPath = getGalleryParentPath(sourcePath);
+  const draft = createGalleryFolderDraft(parentPath, name);
+  if (!draft) throw new Error('Folder name is required.');
+  const nextPath = draft.path;
+  const folders = loadGalleryFolders();
+  if (!folders.some((folder) => folder.path === sourcePath)) throw new Error('Folder was not found.');
+  if (nextPath !== sourcePath && folders.some((folder) => folder.path === nextPath)) throw new Error('A folder with this name already exists here.');
+  if (nextPath === sourcePath) return { folders, sourcePath, nextPath };
+  const now = Date.now();
+  const renamed = folders.map((folder) => {
+    if (folder.path !== sourcePath && !isGalleryPathInside(folder.path, sourcePath)) return folder;
+    const nextFolderPath = mapGallerySubPath(folder.path, sourcePath, nextPath);
+    return normalizeGalleryFolder({
+      ...folder,
+      id: nextFolderPath,
+      path: nextFolderPath,
+      name: getGalleryPathName(nextFolderPath),
+      updatedAt: now
+    }) ?? folder;
+  });
+  return { folders: saveGalleryFolders(renamed), sourcePath, nextPath };
+}
+
 export function moveGalleryItemPath(args: { itemKind: GalleryItemKind; itemId: string; targetPath: string }): { folders: GalleryFolder[]; sourcePath?: string; nextPath?: string } {
   const result = pasteGalleryFolderItems({
     operation: 'move',
