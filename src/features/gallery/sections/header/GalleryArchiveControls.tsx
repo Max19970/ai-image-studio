@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import type { GalleryKindFilter, GallerySortMode, GalleryStatusFilter } from '../../../../entities/gallery/archiveTypes';
-import { BottomSheet, Button, CommandBar, ConfirmationDialog, PopoverSelect, type PopoverSelectOption } from '../../../../shared/ui';
+import { BottomSheet, Button, ConfirmationDialog, PopoverSelect, type PopoverSelectOption } from '../../../../shared/ui';
+import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import { useI18n } from '../../../../i18n';
 import styles from './GalleryArchiveControls.module.css';
 
@@ -9,15 +10,17 @@ function GalleryControlSelect({
   label,
   value,
   options,
+  compact = false,
   onChange
 }: {
   label: string;
   value: string;
   options: PopoverSelectOption[];
+  compact?: boolean;
   onChange: (value: string) => void;
 }) {
   return (
-    <label className={styles.controlField}>
+    <label className={`${styles.controlField} ${compact ? styles.compactControlField : ''}`}>
       <span>{label}</span>
       <PopoverSelect
         value={value}
@@ -26,13 +29,13 @@ function GalleryControlSelect({
         ariaLabel={label}
         triggerClassName={styles.controlSelectTrigger}
         panelClassName={styles.controlSelectPanel}
-        minWidth={180}
+        minWidth={compact ? 160 : 180}
       />
     </label>
   );
 }
 
-function GalleryFilterSelects({ context }: { context: GalleryLayoutContext }) {
+function useGalleryFilterOptions(context: GalleryLayoutContext) {
   const { t } = useI18n();
   const { archive } = context;
 
@@ -63,6 +66,14 @@ function GalleryFilterSelects({ context }: { context: GalleryLayoutContext }) {
     ...archive.availableTags.map((tag) => ({ value: tag, label: `#${tag}` }))
   ], [archive.availableTags, t]);
 
+  return { statusOptions, kindOptions, sortOptions, tagOptions };
+}
+
+function GalleryFilterSelects({ context, includeSort = false }: { context: GalleryLayoutContext; includeSort?: boolean }) {
+  const { t } = useI18n();
+  const { archive } = context;
+  const { statusOptions, kindOptions, sortOptions, tagOptions } = useGalleryFilterOptions(context);
+
   return (
     <>
       <GalleryControlSelect
@@ -81,15 +92,32 @@ function GalleryFilterSelects({ context }: { context: GalleryLayoutContext }) {
         label={t('gallery.tagFilter')}
         value={archive.tagFilter}
         options={tagOptions}
-        onChange={(value) => archive.setTagFilter(value)}
+        onChange={archive.setTagFilter}
       />
-      <GalleryControlSelect
-        label={t('gallery.sort')}
-        value={archive.sort}
-        options={sortOptions}
-        onChange={(value) => archive.setSort(value as GallerySortMode)}
-      />
+      {includeSort && (
+        <GalleryControlSelect
+          label={t('gallery.sort')}
+          value={archive.sort}
+          options={sortOptions}
+          onChange={(value) => archive.setSort(value as GallerySortMode)}
+        />
+      )}
     </>
+  );
+}
+
+function GallerySortControl({ context }: { context: GalleryLayoutContext }) {
+  const { t } = useI18n();
+  const { archive } = context;
+  const { sortOptions } = useGalleryFilterOptions(context);
+  return (
+    <GalleryControlSelect
+      compact
+      label={t('gallery.sort')}
+      value={archive.sort}
+      options={sortOptions}
+      onChange={(value) => archive.setSort(value as GallerySortMode)}
+    />
   );
 }
 
@@ -114,29 +142,97 @@ function GalleryFilterTokens({ context, onDeleteFiltered }: { context: GalleryLa
   );
 }
 
-export function GalleryArchiveControls({ context }: { context: GalleryLayoutContext }) {
+export function GalleryArchiveControls({ context, open }: { context: GalleryLayoutContext; open: boolean }) {
   const { t } = useI18n();
+  const isMobile = useMediaQuery('(max-width: 860px)');
   const { archive } = context;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [deleteFilteredOpen, setDeleteFilteredOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) setFiltersOpen(false);
+  }, [open]);
+
   if (archive.totalCount === 0) return null;
 
-  const deleteFiltered = () => setDeleteFilteredOpen(true);
+  const activeFilterCount = [archive.statusFilter !== 'all', archive.kindFilter !== 'all', Boolean(archive.tagFilter)].filter(Boolean).length;
 
   return (
     <>
-      <CommandBar as="div" density="compact" align="between" className={styles.commandBar} data-gallery-slot="archive-controls">
-        <label className={styles.searchField}>
-          <span>{t('gallery.search')}</span>
-          <input value={archive.query} onChange={(event) => archive.setQuery(event.target.value)} placeholder={t('gallery.searchPlaceholder')} aria-label={t('gallery.search')} />
-        </label>
-        <div className={styles.desktopFilters}><GalleryFilterSelects context={context} /></div>
-        <Button variant="ghost" size="compact" className={styles.mobileFiltersButton} onClick={() => setFiltersOpen(true)}>{t('gallery.filters')}</Button>
-      </CommandBar>
-      <GalleryFilterTokens context={context} onDeleteFiltered={deleteFiltered} />
-      <BottomSheet open={filtersOpen} title={t('gallery.filters')} description={t('gallery.filtersDescription')} closeLabel={t('attachment.close')} size="content" onClose={() => setFiltersOpen(false)} footer={<><Button variant="ghost" size="compact" onClick={archive.reset} disabled={!archive.hasFilters}>{t('gallery.resetFilters')}</Button><Button variant="primary" size="compact" onClick={() => setFiltersOpen(false)}>{t('gallery.applyFilters')}</Button></>}>
-        <div className={styles.mobileFilterSheet}><GalleryFilterSelects context={context} /></div>
+      <section
+        className={styles.controlsDisclosure}
+        data-open={open}
+        aria-hidden={!open}
+        inert={!open}
+      >
+        <div className={styles.controlsClip}>
+          <div className={styles.controls} data-gallery-slot="archive-controls">
+            <div className={styles.toolbar}>
+              <label className={styles.searchField}>
+                <span className={styles.visuallyHidden}>{t('gallery.search')}</span>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.75" cy="8.75" r="5.25" /><path d="m12.75 12.75 3.5 3.5" /></svg>
+                <input
+                  data-testid="gallery-search-input"
+                  value={archive.query}
+                  onChange={(event) => archive.setQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Escape' || !archive.query) return;
+                    event.preventDefault();
+                    archive.setQuery('');
+                  }}
+                  placeholder={t('gallery.searchPlaceholder')}
+                  aria-label={t('gallery.search')}
+                />
+              </label>
+              <div className={styles.toolbarActions}>
+                {!isMobile && <GallerySortControl context={context} />}
+                <Button
+                  variant="ghost"
+                  size="compact"
+                  className={styles.filtersButton}
+                  data-testid="gallery-filters-toggle"
+                  aria-expanded={filtersOpen}
+                  onClick={() => setFiltersOpen((current) => !current)}
+                >
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.25h13M6 10h8M8.25 14.75h3.5" /></svg>
+                  <span>{t('gallery.filters')}</span>
+                  {activeFilterCount > 0 && <strong>{activeFilterCount}</strong>}
+                </Button>
+              </div>
+            </div>
+
+            {!isMobile && (
+              <div
+                className={styles.desktopFilterDisclosure}
+                data-open={filtersOpen}
+                aria-hidden={!filtersOpen}
+                inert={!filtersOpen}
+              >
+                <div className={styles.desktopFilterClip}>
+                  <div className={styles.desktopFilterPanel} data-testid="gallery-filter-panel">
+                    <GalleryFilterSelects context={context} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <GalleryFilterTokens context={context} onDeleteFiltered={() => setDeleteFilteredOpen(true)} />
+          </div>
+        </div>
+      </section>
+
+      <BottomSheet
+        open={isMobile && open && filtersOpen}
+        title={t('gallery.filters')}
+        description={t('gallery.filtersDescription')}
+        closeLabel={t('attachment.close')}
+        size="content"
+        onClose={() => setFiltersOpen(false)}
+        footer={<><Button variant="ghost" size="compact" onClick={archive.reset} disabled={!archive.hasFilters}>{t('gallery.resetFilters')}</Button><Button variant="primary" size="compact" onClick={() => setFiltersOpen(false)}>{t('gallery.applyFilters')}</Button></>}
+      >
+        <div className={styles.mobileFilterSheet} data-testid="gallery-filter-panel"><GalleryFilterSelects context={context} includeSort /></div>
       </BottomSheet>
+
       <ConfirmationDialog
         open={deleteFilteredOpen}
         title={t('gallery.deleteFilteredTitle')}

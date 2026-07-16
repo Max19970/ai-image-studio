@@ -9,6 +9,7 @@ import {
   loadGalleryFolders,
   moveGalleryItemPath,
   pasteGalleryFolderItems,
+  renameGalleryFolder,
   type GalleryPasteItem,
   type GalleryPasteOperation
 } from '../storage/galleryFoldersStore';
@@ -21,6 +22,7 @@ import {
 import {
   loadGalleryPins,
   loadGalleryTagRecords,
+  remapGalleryFolderMetadata,
   setGalleryItemPinned,
   setGalleryItemTags
 } from '../storage/galleryMetadataStore';
@@ -90,6 +92,19 @@ export function registerGalleryFolderRoutes(app: express.Express) {
     }
   });
 
+  app.patch('/api/storage/gallery-folders', async (req, res) => {
+    try {
+      const path = normalizeGalleryPath(req.body?.path);
+      const name = typeof req.body?.name === 'string' ? req.body.name : '';
+      const result = renameGalleryFolder(path, name);
+      await moveServerGalleryFolderTasks(result.sourcePath, result.nextPath);
+      remapGalleryFolderMetadata(result.sourcePath, result.nextPath);
+      res.json({ ok: true, ...result });
+    } catch (error) {
+      sendServerError(res, error);
+    }
+  });
+
   app.delete('/api/storage/gallery-folders', async (req, res) => {
     try {
       const path = normalizeGalleryPath(req.query.path);
@@ -111,6 +126,7 @@ export function registerGalleryFolderRoutes(app: express.Express) {
         await moveServerGalleryTask(itemId, targetPath);
       } else if (result.sourcePath && result.nextPath) {
         await moveServerGalleryFolderTasks(result.sourcePath, result.nextPath);
+        remapGalleryFolderMetadata(result.sourcePath, result.nextPath);
       }
       res.json({ ok: true, ...result });
     } catch (error) {
@@ -129,6 +145,9 @@ export function registerGalleryFolderRoutes(app: express.Express) {
         ...folderResult.mappings
       ];
       await pasteServerGalleryItems({ operation, targetPath, items: runtimeItems });
+      if (operation === 'move') {
+        for (const mapping of folderResult.mappings) remapGalleryFolderMetadata(mapping.sourcePath, mapping.nextPath);
+      }
       res.json({ ok: true, folders: folderResult.folders, mappings: folderResult.mappings });
     } catch (error) {
       sendServerError(res, error);

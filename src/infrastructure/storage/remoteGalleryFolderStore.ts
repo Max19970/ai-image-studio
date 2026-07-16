@@ -42,6 +42,20 @@ export async function createRemoteGalleryFolder(parentPath: string, name: string
   return readFolders(data);
 }
 
+export async function renameRemoteGalleryFolder(path: string, name: string): Promise<{ folders: GalleryFolder[]; sourcePath: string; nextPath: string }> {
+  const data = await readJsonOrThrow(await fetch(galleryFoldersEndpoint, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: normalizeGalleryPath(path), name })
+  }));
+  const object = data && typeof data === 'object' && !Array.isArray(data) ? data as { sourcePath?: unknown; nextPath?: unknown } : {};
+  return {
+    folders: readFolders(data),
+    sourcePath: normalizeGalleryPath(object.sourcePath),
+    nextPath: normalizeGalleryPath(object.nextPath)
+  };
+}
+
 export async function deleteRemoteGalleryFolder(path: string): Promise<GalleryFolder[]> {
   const params = new URLSearchParams({ path: normalizeGalleryPath(path) });
   const data = await readJsonOrThrow(await fetch(`${galleryFoldersEndpoint}?${params}`, { method: 'DELETE' }));

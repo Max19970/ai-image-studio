@@ -11,9 +11,10 @@ export interface GallerySelectionContext {
   cancel: () => void;
   selectVisible: () => void;
   clearSelection: () => void;
-  toggleItem: (item: GalleryItem) => void;
+  toggleItem: (item: GalleryItem, options?: { range?: boolean }) => void;
   isSelected: (item: GalleryItem) => boolean;
   copyToClipboard: (operation: GalleryClipboardOperation) => void;
+  clearClipboard: () => void;
   pasteToActivePath: () => Promise<void>;
   downloadSelected: () => Promise<void>;
   deleteSelected: () => void;

@@ -27,6 +27,8 @@ export function createGalleryCommands(args: GalleryCommandDeps): GalleryCommands
     startHiresFix: (task, image) => startGalleryHiresFixCommand(args.hiresFix, task, image),
     setActivePath: args.setActiveGalleryPath,
     createFolder: args.createGalleryFolder,
+    createFolderAt: args.createGalleryFolderAt,
+    renameFolder: args.renameGalleryFolder,
     deleteFolder: args.deleteGalleryFolder,
     moveItem: args.moveGalleryItem,
     pasteItems: args.pasteGalleryItems,

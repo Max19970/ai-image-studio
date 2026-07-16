@@ -7,11 +7,12 @@ import tileStyles from '../shared/GalleryTileSection.module.css';
 import { PinIcon } from '../shared/PinIcon';
 import { GalleryQuickActionMenu } from '../shared/GalleryQuickActionMenu';
 import { GalleryTagEditorModal } from '../tags/GalleryTagEditorModal';
+import { GalleryFolderRenameDialog } from '../filesystem/GalleryFolderRenameDialog';
 import styles from './GalleryFolderCardSection.module.css';
 
 const cx = (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' ');
 
-function FolderActionMenu({ context, close, openTags, requestDelete }: { context: GalleryFolderCardContext; close: () => void; openTags: () => void; requestDelete: () => void }) {
+function FolderActionMenu({ context, close, openRename, openTags, requestDelete }: { context: GalleryFolderCardContext; close: () => void; openRename: () => void; openTags: () => void; requestDelete: () => void }) {
   const { t } = useI18n();
 
   const deleteFolder = () => {
@@ -29,6 +30,9 @@ function FolderActionMenu({ context, close, openTags, requestDelete }: { context
       <Button variant="ghost" size="compact" fullWidth className={styles.actionItem} role="menuitem" onClick={() => run(context.onOpenFolder)}>
         {t('gallery.folderOpen', { name: context.folder.name })}
       </Button>
+      <Button variant="ghost" size="compact" fullWidth className={styles.actionItem} role="menuitem" onClick={openRename}>
+        {t('gallery.folderRenameAction')}
+      </Button>
       <Button variant="ghost" size="compact" fullWidth className={styles.actionItem} role="menuitem" onClick={() => run(context.onSetPinned)}>
         {context.folder.pinned ? t('gallery.actionUnpin') : t('gallery.actionPin')}
       </Button>
@@ -45,6 +49,7 @@ function FolderActionMenu({ context, close, openTags, requestDelete }: { context
 export function GalleryFolderCardSection({ context }: ElementDefinitionProps<GalleryFolderCardContext>) {
   const { t } = useI18n();
   const [tagEditorOpen, setTagEditorOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const childCount = context.folder.childFolderCount + context.folder.childTaskCount;
 
@@ -69,6 +74,10 @@ export function GalleryFolderCardSection({ context }: ElementDefinitionProps<Gal
               <FolderActionMenu
                 context={context}
                 close={close}
+                openRename={() => {
+                  close();
+                  window.setTimeout(() => setRenameOpen(true), 0);
+                }}
                 openTags={() => {
                   close();
                   window.setTimeout(() => setTagEditorOpen(true), 0);
@@ -80,6 +89,12 @@ export function GalleryFolderCardSection({ context }: ElementDefinitionProps<Gal
         </div>
         {context.folder.pinned && <span className={styles.pinMark} aria-hidden="true"><PinIcon className={styles.pinIcon} /></span>}
       </article>
+      <GalleryFolderRenameDialog
+        open={renameOpen}
+        currentName={context.folder.name}
+        onClose={() => setRenameOpen(false)}
+        onRename={context.onRenameFolder}
+      />
       <GalleryTagEditorModal
         open={tagEditorOpen}
         title={t('gallery.tagsModalTitle')}

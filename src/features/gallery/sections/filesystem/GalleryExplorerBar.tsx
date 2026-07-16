@@ -1,186 +1,165 @@
-import { useMemo, useState } from 'react';
-import type { FormEvent } from 'react';
-import { getGalleryBreadcrumbs, getGalleryParentPath, galleryRootPath, normalizeGalleryPath } from '../../../../domain/galleryFilesystem';
-import { galleryMetadataKey, galleryPinSet } from '../../../../entities/gallery/galleryMetadata';
+import { useState } from 'react';
+import { getGalleryBreadcrumbs, getGalleryParentPath, galleryRootPath } from '../../../../domain/galleryFilesystem';
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
-import { ConfirmationDialog } from '../../../../shared/ui';
-import { PinIcon } from '../shared/PinIcon';
+import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
+import { BottomSheet, ConfirmationDialog } from '../../../../shared/ui';
+import { GalleryDestinationPicker } from './GalleryDestinationPicker';
+import { GalleryFolderTree } from './GalleryFolderTree';
+import { GallerySelectionToolbar } from './GallerySelectionToolbar';
 import styles from './GalleryExplorerBar.module.css';
 
-const cx = (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' ');
+interface GalleryExplorerBarProps {
+  context: GalleryLayoutContext;
+  treeVisible: boolean;
+  archiveControlsOpen: boolean;
+  onToggleTree: () => void;
+  onToggleArchiveControls: () => void;
+}
 
-export function GalleryExplorerBar({ context }: { context: GalleryLayoutContext }) {
+export function GalleryExplorerBar({
+  context,
+  treeVisible,
+  archiveControlsOpen,
+  onToggleTree,
+  onToggleArchiveControls
+}: GalleryExplorerBarProps) {
   const { t } = useI18n();
-  const [name, setName] = useState('');
-  const [explorerOpen, setExplorerOpen] = useState(true);
-  const [creatorOpen, setCreatorOpen] = useState(false);
-  const [pinsOpen, setPinsOpen] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 860px)');
+  const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [deleteSelectedOpen, setDeleteSelectedOpen] = useState(false);
   const breadcrumbs = getGalleryBreadcrumbs(context.activePath);
-  const canGoUp = context.activePath !== galleryRootPath;
-  const pinKeys = useMemo(() => galleryPinSet(context.commands.galleryPins), [context.commands.galleryPins]);
-  const pinnedFolders = context.folders.filter((folder) => pinKeys.has(galleryMetadataKey('folder', folder.path))).slice(0, 8);
-  const pinnedTasks = context.allTasks.filter((task) => pinKeys.has(galleryMetadataKey('task', task.id))).slice(0, 8);
-  const hasPinned = pinnedFolders.length > 0 || pinnedTasks.length > 0;
-  const selectedCount = context.selection.selectedItems.length;
-  const selectedTaskCount = context.selection.selectedTaskIds.length;
-  const clipboardCount = context.selection.clipboard?.items.length ?? 0;
-  const activeLabel = breadcrumbs.at(-1)?.label ?? t('gallery.rootFolder');
+  const activeCrumb = breadcrumbs.at(-1) ?? breadcrumbs[0];
+  const canSelect = context.items.length > 0;
+  const canSearch = context.archive.totalCount > 0;
+  const selectionMode = context.selection.mode;
+  const visibleBreadcrumbs = breadcrumbs.length <= 4
+    ? breadcrumbs
+    : [breadcrumbs[0], null, ...breadcrumbs.slice(-2)];
 
-  const closeCreator = () => {
-    setName('');
-    setCreatorOpen(false);
-  };
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    const nextName = name.trim();
-    if (!nextName) return;
-    void context.commands.createFolder(nextName).then(() => {
-      setName('');
-      setCreatorOpen(false);
-      setExplorerOpen(true);
-    });
-  };
-
-  const deleteSelected = () => {
-    if (selectedCount > 0) setDeleteSelectedOpen(true);
-  };
-
-  const downloadSelected = () => {
-    void context.selection.downloadSelected().catch((error) => {
-      window.alert(error instanceof Error ? error.message : String(error));
-    });
+  const openNavigator = () => {
+    if (isMobile) setNavigatorOpen(true);
+    else onToggleTree();
   };
 
   return (
     <>
-    <div className={cx(styles.explorer, !explorerOpen && styles.collapsed)} data-gallery-slot="filesystem">
-      <div className={styles.heroBar}>
-        <div className={styles.currentPathBlock}>
-          <span className={styles.pathKicker}>{t('gallery.currentPath', { path: context.activePath })}</span>
-          <button type="button" className={styles.currentPathButton} onClick={() => setExplorerOpen((value) => !value)} aria-expanded={explorerOpen}>
-            <span>{activeLabel}</span>
-            <span className={styles.collapseGlyph}>{explorerOpen ? '−' : '+'}</span>
-          </button>
+      <div className={styles.modeSwitch} data-selection-mode={selectionMode}>
+        <div className={`${styles.modeLayer} ${styles.pathMode}`} aria-hidden={selectionMode} inert={selectionMode}>
+          <div className={styles.explorer} data-gallery-slot="filesystem">
+            <div className={styles.pathBar}>
+              <button
+                type="button"
+                className={styles.treeToggle}
+                data-testid="gallery-folder-navigator-toggle"
+                onClick={openNavigator}
+                aria-label={isMobile ? t('gallery.folderNavigatorOpen') : treeVisible ? t('gallery.folderTreeHide') : t('gallery.folderTreeShow')}
+                aria-expanded={isMobile ? navigatorOpen : treeVisible}
+              >
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M3.25 4.25h5l1.35 1.5h7.15v10H3.25v-11.5Z" />
+                  <path d="M6.5 8.75h6.75M6.5 11.25h5.25" />
+                </svg>
+              </button>
+
+              {isMobile && context.activePath !== galleryRootPath && (
+                <button
+                  type="button"
+                  className={styles.backButton}
+                  onClick={() => context.commands.setActivePath(getGalleryParentPath(context.activePath))}
+                  aria-label={t('gallery.folderUp')}
+                >
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.25 4.75-5.25 5.25 5.25 5.25" /></svg>
+                </button>
+              )}
+
+              <nav className={styles.breadcrumbs} aria-label={t('gallery.pathBreadcrumbs')}>
+                {isMobile ? (
+                  <button type="button" className={styles.mobileTitle} onClick={() => setNavigatorOpen(true)}>
+                    <span>{activeCrumb.label === 'Gallery' ? t('gallery.rootFolder') : activeCrumb.label}</span>
+                    <small>{context.archive.filteredCount}</small>
+                  </button>
+                ) : visibleBreadcrumbs.map((crumb, index) => crumb ? (
+                  <span key={crumb.path} className={styles.crumbWrap}>
+                    {index > 0 && <span className={styles.separator}>/</span>}
+                    <button
+                      type="button"
+                      className={styles.crumb}
+                      data-active={crumb.path === context.activePath}
+                      aria-current={crumb.path === context.activePath ? 'page' : undefined}
+                      onClick={() => context.commands.setActivePath(crumb.path)}
+                    >
+                      {crumb.path === galleryRootPath ? t('gallery.rootFolder') : crumb.label}
+                    </button>
+                  </span>
+                ) : (
+                  <span key="ellipsis" className={styles.ellipsis} aria-hidden="true">…</span>
+                ))}
+              </nav>
+
+              <div className={styles.pathUtilities}>
+                {canSearch && (
+                  <button
+                    type="button"
+                    className={styles.archiveControlsToggle}
+                    data-testid="gallery-archive-controls-toggle"
+                    data-active={context.archive.hasFilters}
+                    onClick={onToggleArchiveControls}
+                    aria-label={archiveControlsOpen ? t('gallery.archiveControlsHide') : t('gallery.archiveControlsShow')}
+                    aria-expanded={archiveControlsOpen}
+                  >
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle cx="7.5" cy="7.5" r="4.25" />
+                      <path d="m10.75 10.75 3 3M12.5 5.25h4M13.75 8h2.75M14.75 10.75h1.75" />
+                    </svg>
+                  </button>
+                )}
+                {canSelect && (
+                  <button type="button" className={styles.selectionTrigger} data-testid="gallery-selection-start" onClick={context.selection.begin} aria-label={t('gallery.selectionStart')}>
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5" /><path d="m7 10 2 2 4-4" /></svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className={styles.primaryTools}>
-          <button
-            type="button"
-            className={styles.iconAction}
-            onClick={() => context.commands.setActivePath(getGalleryParentPath(context.activePath))}
-            disabled={!canGoUp}
-            aria-label={t('gallery.folderUp')}
-          >
-            ↑
-          </button>
-          {context.selection.clipboard && (
-            <button type="button" className={styles.primaryAction} onClick={() => void context.selection.pasteToActivePath()}>
-              {t('gallery.selectionPaste', { count: clipboardCount })}
-            </button>
-          )}
-          <button type="button" className={styles.iconAction} onClick={() => { setExplorerOpen(true); setCreatorOpen((value) => !value); }} aria-expanded={creatorOpen} aria-label={t('gallery.folderCreate')}>+</button>
-          <button type="button" className={cx(styles.iconAction, pinsOpen && styles.iconActionActive)} onClick={() => { setExplorerOpen(true); setPinsOpen((value) => !value); }} disabled={!hasPinned} aria-expanded={pinsOpen} aria-label={t('gallery.pinnedItems')}><PinIcon className={styles.toolIcon} /></button>
+
+        <div className={`${styles.modeLayer} ${styles.selectionMode}`} aria-hidden={!selectionMode} inert={!selectionMode}>
+          <GallerySelectionToolbar context={context} onDelete={() => setDeleteSelectedOpen(true)} />
         </div>
       </div>
 
-      {explorerOpen && (
-        <>
-          <nav className={styles.breadcrumbs} aria-label={t('gallery.pathBreadcrumbs')}>
-            {breadcrumbs.map((crumb, index) => (
-              <span key={crumb.path} className={styles.separatorWrap}>
-                {index > 0 && <span className={styles.separator}>/</span>}
-                <button
-                  type="button"
-                  className={`${styles.crumb} ${crumb.path === context.activePath ? styles.crumbActive : ''}`}
-                  onClick={() => context.commands.setActivePath(crumb.path)}
-                >
-                  {index === 0 ? t('gallery.rootFolder') : crumb.label}
-                </button>
-              </span>
-            ))}
-          </nav>
+      <ConfirmationDialog
+        open={deleteSelectedOpen}
+        title={t('gallery.selectionDeleteTitle')}
+        description={t('gallery.selectionDeleteConfirm', { count: context.selection.selectedItems.length })}
+        confirmLabel={t('gallery.confirmDeleteAction')}
+        cancelLabel={t('gallery.confirmDeleteCancel')}
+        closeLabel={t('attachment.close')}
+        tone="danger"
+        testId="gallery-delete-selected-dialog"
+        onClose={() => setDeleteSelectedOpen(false)}
+        onConfirm={() => {
+          setDeleteSelectedOpen(false);
+          context.selection.deleteSelected();
+        }}
+      >
+        <p>{t('gallery.deletePermanentHint')}</p>
+      </ConfirmationDialog>
 
-          {creatorOpen && (
-            <form className={styles.creatorDock} onSubmit={submit}>
-              <input
-                className={styles.createInput}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder={t('gallery.folderNamePlaceholder')}
-                aria-label={t('gallery.folderName')}
-                autoFocus
-              />
-              <button type="submit" className={styles.createButton} disabled={!name.trim()}>{t('gallery.folderCreate')}</button>
-              <button type="button" className={styles.cancelCreateButton} onClick={closeCreator}>{t('gallery.folderCreateCancel')}</button>
-            </form>
-          )}
+      <GalleryDestinationPicker context={context} />
 
-          <div className={cx(styles.actionDeck, context.selection.mode && styles.actionDeckActive)}>
-            {!context.selection.mode && (
-              <>
-                <button type="button" className={styles.selectionButton} onClick={context.selection.begin}>{t('gallery.selectionStart')}</button>
-                <span className={styles.actionHint}>{context.selection.clipboard ? t('gallery.selectionPaste', { count: clipboardCount }) : t('gallery.selectionMove')}</span>
-              </>
-            )}
-            {context.selection.mode && (
-              <>
-                <span className={styles.selectedCount} aria-live="polite">{t('gallery.selectionCount', { count: selectedCount })}</span>
-                <button type="button" className={styles.selectionButton} onClick={context.selection.selectVisible}>{t('gallery.selectionSelectVisible')}</button>
-                <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={context.selection.clearSelection}>{t('gallery.selectionClear')}</button>
-                <button type="button" className={styles.selectionButton} disabled={selectedTaskCount === 0} onClick={downloadSelected}>{t('gallery.selectionDownload', { count: selectedTaskCount })}</button>
-                <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={() => context.selection.copyToClipboard('move')}>{t('gallery.selectionMove')}</button>
-                <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={() => context.selection.copyToClipboard('link-copy')}>{t('gallery.selectionLinkCopy')}</button>
-                <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={() => context.selection.copyToClipboard('deep-copy')}>{t('gallery.selectionDeepCopy')}</button>
-                <button type="button" className={styles.selectionButton} disabled={selectedCount === 0} onClick={deleteSelected}>{t('gallery.selectionDelete')}</button>
-                <button type="button" className={styles.selectionButton} onClick={context.selection.cancel}>{t('gallery.selectionCancel')}</button>
-              </>
-            )}
-          </div>
-
-          {pinsOpen && hasPinned && (
-            <div className={styles.pinnedShelf} aria-label={t('gallery.pinnedItems')}>
-              {pinnedFolders.map((folder) => (
-                <button key={folder.path} type="button" className={styles.pinnedChip} onClick={() => context.commands.setActivePath(folder.path)}>
-                  <PinIcon className={styles.chipIcon} />{folder.name}
-                </button>
-              ))}
-              {pinnedTasks.map((task) => (
-                <button
-                  key={task.id}
-                  type="button"
-                  className={styles.pinnedChip}
-                  onClick={() => {
-                    context.commands.setActivePath(normalizeGalleryPath(task.galleryPaths?.[0] ?? task.galleryPath));
-                    context.commands.openTaskDetail(task);
-                  }}
-                >
-                  <PinIcon className={styles.chipIcon} />{task.request.prompt || task.request.modelLabel || task.id}
-                </button>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-    <ConfirmationDialog
-      open={deleteSelectedOpen}
-      title={t('gallery.selectionDeleteTitle')}
-      description={t('gallery.selectionDeleteConfirm', { count: selectedCount })}
-      confirmLabel={t('gallery.confirmDeleteAction')}
-      cancelLabel={t('gallery.confirmDeleteCancel')}
-      closeLabel={t('attachment.close')}
-      tone="danger"
-      testId="gallery-delete-selected-dialog"
-      onClose={() => setDeleteSelectedOpen(false)}
-      onConfirm={() => {
-        setDeleteSelectedOpen(false);
-        context.selection.deleteSelected();
-      }}
-    >
-      <p>{t('gallery.deletePermanentHint')}</p>
-    </ConfirmationDialog>
+      <BottomSheet
+        open={navigatorOpen}
+        onClose={() => setNavigatorOpen(false)}
+        title={t('gallery.folderNavigatorTitle')}
+        closeLabel={t('attachment.close')}
+        size="full"
+        ariaLabel={t('gallery.folderNavigatorTitle')}
+        className={styles.navigatorSheet}
+      >
+        <GalleryFolderTree context={context} compact showToolbarTitle={false} onNavigate={() => setNavigatorOpen(false)} />
+      </BottomSheet>
     </>
   );
 }
