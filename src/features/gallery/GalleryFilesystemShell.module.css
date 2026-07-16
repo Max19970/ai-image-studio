@@ -1,0 +1,189 @@
+:global(.studio-main:has([data-gallery-workspace-root])) {
+  min-height: 0;
+  padding-bottom: 0;
+}
+
+.stage {
+  --gallery-header-height: 72px;
+  display: grid;
+  grid-template-rows: var(--gallery-header-height) minmax(0, 1fr);
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.filesystemShell {
+  --folder-tree-column: var(--folder-tree-width, 250px);
+  display: grid;
+  grid-template-columns: minmax(0, var(--folder-tree-column)) minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  align-items: stretch;
+  overflow: hidden;
+  border-top: 1px solid rgba(255,255,255,.07);
+  transition: grid-template-columns var(--motion-duration-medium) cubic-bezier(.22, 1, .36, 1);
+}
+
+.filesystemShell[data-tree-visible="false"] {
+  --folder-tree-column: 0px;
+}
+
+.filesystemShell[data-tree-resizing="true"] {
+  transition: none;
+}
+
+.folderRail {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.018);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-soft),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    visibility 0s linear 0s;
+}
+
+.folderRailSurface {
+  display: flex;
+  width: var(--folder-tree-width, 250px);
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  transform: translateX(0);
+  transition: transform var(--motion-duration-medium) cubic-bezier(.22, 1, .36, 1);
+}
+
+.folderRailSurface > :first-child {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.filesystemShell[data-tree-visible="false"] .folderRail {
+  border-right-color: transparent;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-soft),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    visibility 0s linear var(--motion-duration-medium);
+}
+
+.filesystemShell[data-tree-visible="false"] .folderRailSurface {
+  transform: translateX(-14px);
+}
+
+.filesystemShell[data-tree-resizing="true"] .folderRailSurface {
+  transition: none;
+}
+
+.folderRailResizeHandle {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  z-index: 3;
+  width: 8px;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.folderRailResizeHandle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 3px;
+  width: 1px;
+  height: 100%;
+  background: transparent;
+  transition: background var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.folderRailResizeHandle:hover::after,
+.folderRailResizeHandle:focus-visible::after,
+.folderRailResizeHandle:active::after {
+  background: rgba(255,255,255,.28);
+}
+
+.folderRailResizeHandle:focus-visible {
+  outline: 2px solid rgba(255,255,255,.32);
+  outline-offset: -2px;
+}
+
+.contentColumn {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+@container workspace-main (max-width: 720px) {
+  .filesystemShell {
+    display: block;
+  }
+
+  .folderRail {
+    display: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .filesystemShell {
+    display: block;
+  }
+
+  .folderRail {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  :global(.studio-main:has([data-gallery-workspace-root])) {
+    min-height: 100%;
+    padding-bottom: calc(var(--composer-occupied-block-size, 126px) + var(--mobile-bottom-nav-space, 72px) + 10px);
+  }
+
+  .stage {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  :global(html[data-gallery-selection-mode="true"] [data-testid="composer-dock"]) {
+    display: none;
+  }
+
+  .filesystemShell {
+    display: block;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    border-top: 0;
+  }
+
+  .folderRail {
+    display: none;
+  }
+
+  .contentColumn {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    overscroll-behavior: auto;
+  }
+}

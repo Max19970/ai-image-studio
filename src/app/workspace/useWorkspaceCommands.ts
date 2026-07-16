@@ -108,6 +108,8 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         setSelectedImageId: state.setSelectedImageId,
         setActiveGalleryPath: state.setActiveGalleryPath,
         createGalleryFolder: state.createGalleryFolder,
+        createGalleryFolderAt: state.createGalleryFolderAt,
+        renameGalleryFolder: state.renameGalleryFolder,
         deleteGalleryFolder: state.deleteGalleryFolder,
         moveGalleryItem: state.moveGalleryItem,
         pasteGalleryItems: state.pasteGalleryItems,

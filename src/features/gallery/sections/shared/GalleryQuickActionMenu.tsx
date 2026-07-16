@@ -9,6 +9,9 @@ interface GalleryQuickActionMenuProps {
   triggerClassName?: string;
   panelClassName?: string;
   sheetClassName?: string;
+  triggerLabel?: string;
+  menuLabel?: string;
+  testId?: string;
 }
 
 const cx = (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' ');
@@ -18,11 +21,21 @@ function stopTileClick(event: MouseEvent<HTMLElement>) {
   event.stopPropagation();
 }
 
-export function GalleryQuickActionMenu({ children, triggerClassName, panelClassName, sheetClassName }: GalleryQuickActionMenuProps) {
+export function GalleryQuickActionMenu({
+  children,
+  triggerClassName,
+  panelClassName,
+  sheetClassName,
+  triggerLabel,
+  menuLabel,
+  testId = 'gallery-quick-actions'
+}: GalleryQuickActionMenuProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const isMobile = useMediaQuery('(max-width: 860px)');
+  const resolvedTriggerLabel = triggerLabel ?? t('gallery.quickActionsOpen');
+  const resolvedMenuLabel = menuLabel ?? t('gallery.quickActions');
 
   const close = () => setOpen(false);
   const toggle = (event: MouseEvent<HTMLButtonElement>) => {
@@ -36,8 +49,8 @@ export function GalleryQuickActionMenu({ children, triggerClassName, panelClassN
         ref={triggerRef}
         type="button"
         className={cx(styles.trigger, triggerClassName)}
-        data-testid="gallery-quick-actions"
-        aria-label={t('gallery.quickActionsOpen')}
+        data-testid={testId}
+        aria-label={resolvedTriggerLabel}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={toggle}
@@ -57,11 +70,11 @@ export function GalleryQuickActionMenu({ children, triggerClassName, panelClassN
           offset={8}
           minWidth={188}
           role="menu"
-          ariaLabel={t('gallery.quickActions')}
+          ariaLabel={resolvedMenuLabel}
           returnFocusOnEscape={false}
           onDismiss={close}
         >
-          <div className={styles.actionList} role="menu" aria-label={t('gallery.quickActions')}>
+          <div className={styles.actionList} role="menu" aria-label={resolvedMenuLabel}>
             {children({ close })}
           </div>
         </FloatingPopover>
@@ -70,14 +83,14 @@ export function GalleryQuickActionMenu({ children, triggerClassName, panelClassN
         <BottomSheet
           open={open}
           onClose={close}
-          title={t('gallery.quickActions')}
+          title={resolvedMenuLabel}
           closeLabel={t('attachment.close')}
           size="compact"
           compactHeader
-          ariaLabel={t('gallery.quickActions')}
+          ariaLabel={resolvedMenuLabel}
           className={cx(styles.mobileSheet, sheetClassName)}
         >
-          <div className={styles.actionList} role="menu" aria-label={t('gallery.quickActions')}>
+          <div className={styles.actionList} role="menu" aria-label={resolvedMenuLabel}>
             {children({ close })}
           </div>
         </BottomSheet>

@@ -45,6 +45,8 @@ export interface WorkspaceState {
   refreshGalleryFolders: () => Promise<void>;
   refreshGalleryMetadata: () => Promise<void>;
   createGalleryFolder: (name: string) => Promise<void>;
+  createGalleryFolderAt: (parentPath: string, name: string) => Promise<void>;
+  renameGalleryFolder: (path: string, name: string) => Promise<void>;
   deleteGalleryFolder: (path: string) => Promise<void>;
   moveGalleryItem: (itemKind: 'task' | 'folder', itemId: string, targetPath: string) => Promise<void>;
   pasteGalleryItems: (operation: GalleryClipboardOperation, items: GalleryClipboardItemPayload[], targetPath: string) => Promise<void>;

@@ -1,0 +1,385 @@
+.tree {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--text);
+}
+
+.toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 8px 9px 8px 14px;
+  background: rgba(255,255,255,.018);
+}
+
+.toolbarActionsOnly {
+  justify-content: flex-end;
+}
+
+.toolbarCopy {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.toolbarCopy strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 730;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbarCopy span {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.toolbarActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.toolbarButton {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.toolbarButton:hover {
+  background: rgba(255,255,255,.07);
+  color: var(--text);
+}
+
+.toolbarButton:focus-visible {
+  outline: 2px solid rgba(255,255,255,.34);
+  outline-offset: -2px;
+}
+
+.toolbarButton svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.creatorDisclosure {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows var(--motion-duration-medium) cubic-bezier(.22, 1, .36, 1),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    visibility 0s linear var(--motion-duration-medium);
+}
+
+.creatorDisclosure[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.creatorWrap {
+  min-height: 0;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 10px;
+  background: rgba(255,255,255,.025);
+  transform: translateY(-6px);
+  transition: transform var(--motion-duration-medium) cubic-bezier(.22, 1, .36, 1);
+}
+
+.creatorDisclosure[data-open="true"] .creatorWrap {
+  transform: translateY(0);
+}
+
+.scrollArea {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 12px 10px 18px;
+  scrollbar-width: thin;
+}
+
+.section {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.section h3 {
+  margin: 0;
+  padding: 0 10px 5px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.pinnedList {
+  display: grid;
+  gap: 2px;
+}
+
+.pinnedItem,
+.rootButton,
+.folderButton,
+.disclosure {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pinnedItem,
+.rootButton {
+  display: flex;
+  min-width: 0;
+  min-height: 36px;
+  align-items: center;
+  gap: 9px;
+  border-radius: 8px;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.pinnedItem:hover,
+.rootButton:hover,
+.folderButton:hover {
+  background: rgba(255,255,255,.06);
+}
+
+.pinnedItem:focus-visible,
+.rootButton:focus-visible,
+.folderButton:focus-visible,
+.disclosure:focus-visible {
+  outline: 2px solid rgba(255,255,255,.34);
+  outline-offset: -2px;
+}
+
+.pinnedItem span,
+.rootButton span,
+.folderButton span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pinIcon,
+.rootButton svg,
+.folderIcon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+
+.rootButton svg,
+.folderIcon {
+  fill: rgba(255,255,255,.10);
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.25;
+}
+
+.rootButton {
+  width: 100%;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.rootButton[data-active="true"],
+.folderButton[data-active="true"] {
+  background: rgba(255,255,255,.11);
+  color: var(--text);
+}
+
+.rootButton[data-drop-active="true"],
+.folderButton[data-drop-active="true"] {
+  background: rgba(170,205,255,.14);
+  box-shadow: inset 0 0 0 1px rgba(190,220,255,.42);
+  color: var(--text);
+}
+
+.rootButton[data-active="true"] svg,
+.folderButton[data-active="true"] .folderIcon {
+  color: var(--text);
+  fill: rgba(255,255,255,.18);
+}
+
+.rootList,
+.children {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.childrenDisclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows var(--motion-duration-medium) cubic-bezier(.22, 1, .36, 1),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    visibility 0s linear var(--motion-duration-medium);
+}
+
+.childrenDisclosure[data-expanded="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.childrenDisclosure .children {
+  min-height: 0;
+  overflow: hidden;
+  transform: translateY(-4px);
+  transition: transform var(--motion-duration-medium) cubic-bezier(.22, 1, .36, 1);
+}
+
+.childrenDisclosure[data-expanded="true"] .children {
+  transform: translateY(0);
+}
+
+.branch {
+  min-width: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  padding-left: calc(var(--folder-depth, 0) * 14px);
+}
+
+.disclosure {
+  display: grid;
+  width: 24px;
+  height: 34px;
+  place-items: center;
+  border-radius: 7px;
+  padding: 0;
+  color: var(--faint);
+}
+
+.disclosure:disabled {
+  cursor: default;
+}
+
+.disclosure svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+  transition: transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.disclosure[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+
+.folderButton {
+  display: flex;
+  min-width: 0;
+  min-height: 34px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.empty {
+  margin: 3px 10px 0;
+  color: var(--faint);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.compact .toolbar {
+  min-height: 58px;
+  padding-inline: 8px 4px;
+}
+
+.compact .toolbarCopy strong {
+  font-size: 14px;
+}
+
+.compact .toolbarButton {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+
+.compact .scrollArea {
+  gap: 20px;
+  padding: 4px 0 18px;
+}
+
+.compact .pinnedItem,
+.compact .rootButton,
+.compact .folderButton {
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.compact .disclosure {
+  width: 34px;
+  height: 44px;
+}
+
+.compact .row {
+  grid-template-columns: 34px minmax(0, 1fr);
+  padding-left: calc(var(--folder-depth, 0) * 16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure svg {
+    transition: none;
+  }
+}

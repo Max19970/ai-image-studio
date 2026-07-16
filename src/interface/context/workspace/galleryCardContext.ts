@@ -6,6 +6,7 @@ export interface GalleryFolderCardContext {
   index: number;
   onOpenFolder: () => void;
   onDeleteFolder: () => void;
+  onRenameFolder: (name: string) => Promise<void>;
   onMoveFolder: (targetPath: string) => void;
   onSetPinned: () => void;
   onSetTags: (tags: string[]) => void;

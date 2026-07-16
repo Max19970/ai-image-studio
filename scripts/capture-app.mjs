@@ -115,6 +115,22 @@ function createScreenshotApiMockResponse(request, scenario) {
     return json({ image: null });
   }
 
+  if (url.pathname === '/api/storage/gallery-folders') {
+    return json({ folders: scenario.seedFolders ?? [] });
+  }
+
+  if (url.pathname === '/api/storage/gallery-pins') {
+    return json({ pins: scenario.seedPins ?? [] });
+  }
+
+  if (url.pathname === '/api/storage/gallery-tags') {
+    return json({ tags: scenario.seedTags ?? [] });
+  }
+
+  if (url.pathname.startsWith('/api/storage/gallery-items/')) {
+    return json({ ok: true, folders: scenario.seedFolders ?? [], pins: scenario.seedPins ?? [], tags: scenario.seedTags ?? [] });
+  }
+
   if (url.pathname === '/api/generation-tasks/events') {
     return { status: 204, contentType: 'text/plain; charset=utf-8', body: '' };
   }

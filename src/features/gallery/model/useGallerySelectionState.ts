@@ -18,6 +18,7 @@ export function useGallerySelectionState(
 ): GallerySelectionContext {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [selectionAnchorId, setSelectionAnchorId] = useState<string | null>(null);
   const [clipboard, setClipboard] = useState<GalleryClipboardState | null>(null);
 
   const selectedItems = useMemo(
@@ -29,7 +30,10 @@ export function useGallerySelectionState(
     [archiveResult.items, selectedIds]
   );
 
-  const clearSelection = () => setSelectedIds(new Set());
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setSelectionAnchorId(null);
+  };
 
   return useMemo(() => ({
     mode: selectionMode,
@@ -45,16 +49,28 @@ export function useGallerySelectionState(
     selectVisible: () => {
       setSelectionMode(true);
       setSelectedIds(new Set(archiveResult.items.map((item) => item.id)));
+      setSelectionAnchorId(archiveResult.items[0]?.id ?? null);
     },
     clearSelection,
-    toggleItem: (item: GalleryItem) => {
+    toggleItem: (item: GalleryItem, options?: { range?: boolean }) => {
       setSelectionMode(true);
       setSelectedIds((current) => {
         const next = new Set(current);
+        if (options?.range && selectionAnchorId) {
+          const anchorIndex = archiveResult.items.findIndex((candidate) => candidate.id === selectionAnchorId);
+          const itemIndex = archiveResult.items.findIndex((candidate) => candidate.id === item.id);
+          if (anchorIndex >= 0 && itemIndex >= 0) {
+            const start = Math.min(anchorIndex, itemIndex);
+            const end = Math.max(anchorIndex, itemIndex);
+            for (const candidate of archiveResult.items.slice(start, end + 1)) next.add(candidate.id);
+            return next;
+          }
+        }
         if (next.has(item.id)) next.delete(item.id);
         else next.add(item.id);
         return next;
       });
+      setSelectionAnchorId(item.id);
     },
     isSelected: (item: GalleryItem) => selectedIds.has(item.id),
     copyToClipboard: (operation: GalleryClipboardOperation) => {
@@ -63,6 +79,7 @@ export function useGallerySelectionState(
       setSelectionMode(false);
       clearSelection();
     },
+    clearClipboard: () => setClipboard(null),
     pasteToActivePath: async () => {
       if (!clipboard) return;
       await commands.pasteItems(clipboard.operation, clipboard.items, commands.activePath);
@@ -82,5 +99,5 @@ export function useGallerySelectionState(
       clearSelection();
       setSelectionMode(false);
     }
-  }), [selectionMode, selectedIds, selectedItems, selectedTaskIds, clipboard, commands, archiveResult.items]);
+  }), [selectionMode, selectedIds, selectedItems, selectedTaskIds, selectionAnchorId, clipboard, commands, archiveResult.items]);
 }
