@@ -165,8 +165,4 @@
     min-height: 100%;
     padding: 0 0 180px;
   }
-
-  .batch-composer-is-open .studio-main {
-    padding-bottom: 0;
-  }
 }

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { AttachmentSummary, GeneratedImage, GenerationRequestSnapshot, GenerationTask } from '../../../../domain/generationTask';
 import { useI18n } from '../../../../i18n';
-import { AttachmentImageStrip } from '../../../../shared/ui';
+import { AttachmentImageStrip, DisclosureChevron } from '../../../../shared/ui';
 import type { AttachmentPreviewItem } from '../../../../shared/ui';
 import { cx, expectedImageCount } from '../../model/detailHelpers';
 import { createDetailDescriptorContext, getProviderDetailDescriptor, type DetailDataRow } from '../../model/detailDescriptors';
@@ -36,7 +36,10 @@ export function TechnicalDetails({ title, value, defaultOpen = false }: { title:
   if (value === undefined || value === null) return null;
   return (
     <details className={styles.technicalDetails} open={defaultOpen}>
-      <summary>{title}</summary>
+      <summary>
+        <span>{title}</span>
+        <DisclosureChevron className={styles.disclosureChevron} />
+      </summary>
       <pre className="code-panel">{JSON.stringify(value, null, 2)}</pre>
     </details>
   );

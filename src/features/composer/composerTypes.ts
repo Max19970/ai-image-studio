@@ -8,6 +8,8 @@ import type { StudioSettings } from '../../domain/studioSettings';
 import type { ProviderControlSurfaceDefinition } from '../../entities/provider/types';
 import type { RequestPreset } from '../../entities/request-presets';
 import type { RequestPresetCommands } from '../../interface/context/commands';
+import type { ComposerRequestDraft } from '../../domain/generationTask';
+import type { ComposerDraftReadiness, ComposerQueueSummary } from './model/composerDraftReadiness';
 
 export type ComposerPopoverId = string | null;
 
@@ -25,6 +27,8 @@ export interface ComposerActionContext {
   selectedModel: GenerationModel | null;
   modelOptions: ComposerModelOption[];
   requestPresets: RequestPreset[];
+  activeDraftId: string;
+  draftsCount: number;
   openPopover: ComposerPopoverId;
   setOpenPopover: Dispatch<SetStateAction<ComposerPopoverId>>;
   fileInputs: {
@@ -35,8 +39,9 @@ export interface ComposerActionContext {
     setProviderMode: (providerModeId: ProviderGenerationModeId) => void;
     changeModel: (modelId: string) => void;
     changeParams: (params: ImageParams) => void;
-    openBatchComposer: () => void;
-    addCurrentToBatchComposer: () => void;
+    addDraft: () => void;
+    duplicateActiveDraft: () => void;
+    removeActiveDraft: () => void;
     openParameters: () => void;
     clearAttachments: () => void;
     setMask: (file: File | null) => void;
@@ -67,6 +72,11 @@ export interface ComposerLayoutContext {
   modelOptions: ComposerModelOption[];
   statusText?: string | null;
   blockedReason?: string | null;
+  drafts: ComposerRequestDraft[];
+  activeDraftId: string;
+  draftReadiness: ComposerDraftReadiness[];
+  queueSummary: ComposerQueueSummary;
+  intervalSeconds: number;
   expanded: boolean;
   attachmentsCount: number;
   actionContext: ComposerActionContext;
@@ -80,5 +90,10 @@ export interface ComposerLayoutContext {
     handlePromptKeyDown: KeyboardEventHandler<HTMLTextAreaElement>;
     removeAttachment: (item: AttachmentPreviewItem) => void;
     addAttachments: (files: File[]) => void;
+    selectDraft: (id: string) => void;
+    addDraft: () => void;
+    duplicateDraft: (id: string) => void;
+    removeDraft: (id: string) => void;
+    setIntervalSeconds: (seconds: number) => void;
   };
 }

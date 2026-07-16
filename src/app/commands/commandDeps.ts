@@ -2,7 +2,7 @@ import type { GalleryFolder } from '../../domain/galleryFilesystem';
 import type { RequestPreset } from '../../entities/request-presets';
 import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
 import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
-import type { BatchComposerDraft } from '../../domain/generationTask';
+import type { BatchComposerDraft, ComposerRequestDraft } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
@@ -55,15 +55,24 @@ export interface ComposerCommandDeps extends ComposerCompatibilityCommandDeps {
   warnings: string[];
   canSubmit: boolean;
   activeGalleryPath: string;
+  composerDrafts: ComposerRequestDraft[];
+  activeComposerDraftId: string;
+  composerIntervalSeconds: number;
+  capabilityReport: ProviderProbeReport | null;
+  setComposerDrafts: StateSetter<ComposerRequestDraft[]>;
+  selectComposerDraft: (id: string) => void;
+  addComposerDraft: () => void;
+  duplicateComposerDraft: (id: string) => void;
+  removeComposerDraft: (id: string) => void;
+  patchComposerDraft: (id: string, patch: Partial<ComposerRequestDraft>) => void;
+  patchComposerDraftParams: (id: string, patch: Partial<ImageParams>) => void;
+  setComposerIntervalSeconds: StateSetter<number>;
+  setComposerParametersDraftId: StateSetter<string | null>;
   setParams: StateSetter<ImageParams>;
   setStudioSettings: StateSetter<StudioSettings>;
-  setParametersOpen: StateSetter<boolean>;
-  setWorkspaceTab: StateSetter<'images' | 'info' | 'settings'>;
   taskHistory: Pick<TaskHistoryCommands, 'ingestServerTask'>;
   setBusy: StateSetter<boolean>;
   setServerSubmission: ServerSubmissionSetter;
-  setBatchComposerOpen: StateSetter<boolean>;
-  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
   normalizeSettings: (settings: StudioSettings) => StudioSettings;
 }
 
@@ -94,7 +103,6 @@ export interface GalleryHiresFixCommandDeps {
   setTargetImage: StateSetter<File | null>;
   setReferenceImages: StateSetter<File[]>;
   setMask: StateSetter<File | null>;
-  setBatchComposerOpen: StateSetter<boolean>;
   setWorkspaceTab: StateSetter<'images' | 'info' | 'settings'>;
   setSelectedTaskId: StateSetter<string | null>;
   setSelectedImageId: StateSetter<string | null>;
@@ -138,7 +146,6 @@ export interface DetailCommandDeps {
   hiresFix: GalleryHiresFixCommandDeps;
   setProviderModeId: StateSetter<ProviderGenerationModeId>;
   setCompatibilityNotice: StateSetter<string | null>;
-  setBatchComposerOpen: StateSetter<boolean>;
   setParams: StateSetter<ImageParams>;
   setStudioSettings: StateSetter<StudioSettings>;
   setSelectedTaskId: StateSetter<string | null>;
@@ -146,11 +153,9 @@ export interface DetailCommandDeps {
 }
 
 export interface ParameterCommandDeps {
-  activeBatchDraft: BatchComposerDraft | null;
-  setParametersOpen: StateSetter<boolean>;
-  setParams: StateSetter<ImageParams>;
-  setBatchParametersDraftId: StateSetter<string | null>;
-  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
+  activeComposerDraft: ComposerRequestDraft | null;
+  setComposerParametersDraftId: StateSetter<string | null>;
+  patchComposerDraft: (id: string, patch: Partial<ComposerRequestDraft>) => void;
 }
 
 export interface RequestPresetCommandDeps {
@@ -178,7 +183,6 @@ export interface RequestPresetCommandDeps {
 export interface CreateAppCommandsArgs {
   workspace: WorkspaceCommandDeps;
   composer: ComposerCommandDeps;
-  batchComposer: BatchComposerCommandDeps;
   gallery: GalleryCommandDeps;
   settings: SettingsCommandDeps;
   detail: DetailCommandDeps;

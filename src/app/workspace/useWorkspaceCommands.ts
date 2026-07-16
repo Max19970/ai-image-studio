@@ -22,8 +22,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
 
     const galleryNavigation = {
       setSelectedTaskId: state.setSelectedTaskId,
-      setSelectedImageId: state.setSelectedImageId,
-      setBatchComposerOpen: state.setBatchComposerOpen
+      setSelectedImageId: state.setSelectedImageId
     };
 
     const hiresFix = {
@@ -36,7 +35,6 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
       setTargetImage: state.setTargetImage,
       setReferenceImages: state.setReferenceImages,
       setMask: state.setMask,
-      setBatchComposerOpen: state.setBatchComposerOpen,
       setWorkspaceTab: state.setWorkspaceTab,
       setSelectedTaskId: state.setSelectedTaskId,
       setSelectedImageId: state.setSelectedImageId,
@@ -68,32 +66,25 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         warnings: derived.warnings,
         canSubmit: derived.canSubmit,
         activeGalleryPath: state.activeGalleryPath,
+        composerDrafts: state.composerDrafts,
+        activeComposerDraftId: state.activeComposerDraftId,
+        composerIntervalSeconds: state.composerIntervalSeconds,
+        capabilityReport: state.capabilityReport,
+        setComposerDrafts: state.setComposerDrafts,
+        selectComposerDraft: state.selectComposerDraft,
+        addComposerDraft: state.addComposerDraft,
+        duplicateComposerDraft: state.duplicateComposerDraft,
+        removeComposerDraft: state.removeComposerDraft,
+        patchComposerDraft: state.patchComposerDraft,
+        patchComposerDraftParams: state.patchComposerDraftParams,
+        setComposerIntervalSeconds: state.setComposerIntervalSeconds,
+        setComposerParametersDraftId: state.setComposerParametersDraftId,
         setParams: state.setParams,
         setStudioSettings: state.setStudioSettings,
-        setParametersOpen: state.setParametersOpen,
-        setWorkspaceTab: state.setWorkspaceTab,
         taskHistory: state.taskHistory,
         setBusy: state.setBusy,
         setServerSubmission: state.setServerSubmission,
-        setBatchComposerOpen: state.setBatchComposerOpen,
-        setBatchDrafts: state.setBatchDrafts,
         normalizeSettings: normalizeSelectedModel
-      },
-      batchComposer: {
-        t,
-        providerModeId: state.providerModeId,
-        params: state.params,
-        studioSettings: state.studioSettings,
-        capabilityReport: state.capabilityReport,
-        activeGalleryPath: state.activeGalleryPath,
-        batchCanSubmit: derived.batchCanSubmit,
-        batchDrafts: state.batchDrafts,
-        batchIntervalSeconds: state.batchIntervalSeconds,
-        setBusy: state.setBusy,
-        setBatchComposerOpen: state.setBatchComposerOpen,
-        setBatchDrafts: state.setBatchDrafts,
-        setBatchIntervalSeconds: state.setBatchIntervalSeconds,
-        setBatchParametersDraftId: state.setBatchParametersDraftId
       },
       gallery: {
         activeGalleryPath: state.activeGalleryPath,
@@ -122,7 +113,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         normalizeSettings: normalizeSelectedModel,
         composerCompatibility,
         batchCompatibility: {
-          setBatchDrafts: state.setBatchDrafts
+          setBatchDrafts: state.setComposerDrafts
         },
         providerProbe
       },
@@ -132,18 +123,17 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         hiresFix,
         setProviderModeId: state.setProviderModeId,
         setCompatibilityNotice: state.setCompatibilityNotice,
-        setBatchComposerOpen: state.setBatchComposerOpen,
         setParams: state.setParams,
         setStudioSettings: state.setStudioSettings,
         setSelectedTaskId: state.setSelectedTaskId,
         setSelectedImageId: state.setSelectedImageId
       },
       parameters: {
-        activeBatchDraft: derived.activeBatchDraft,
-        setParametersOpen: state.setParametersOpen,
-        setParams: state.setParams,
-        setBatchParametersDraftId: state.setBatchParametersDraftId,
-        setBatchDrafts: state.setBatchDrafts
+        activeComposerDraft: state.composerParametersDraftId
+          ? state.composerDrafts.find((draft) => draft.id === state.composerParametersDraftId) ?? null
+          : null,
+        setComposerParametersDraftId: state.setComposerParametersDraftId,
+        patchComposerDraft: state.patchComposerDraft
       },
       requestPresets: {
         t,
@@ -153,7 +143,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         activeProvider: derived.activeProvider,
         activeModel: derived.activeModel,
         studioSettings: state.studioSettings,
-        batchDrafts: state.batchDrafts,
+        batchDrafts: state.composerDrafts,
         requestPresets: state.requestPresets,
         setProviderModeId: state.setProviderModeId,
         setCompatibilityNotice: state.setCompatibilityNotice,
@@ -162,7 +152,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         setTargetImage: state.setTargetImage,
         setReferenceImages: state.setReferenceImages,
         setMask: state.setMask,
-        setBatchDrafts: state.setBatchDrafts,
+        setBatchDrafts: state.setComposerDrafts,
         setRequestPresets: state.setRequestPresets,
         normalizeSettings: normalizeSelectedModel
       }

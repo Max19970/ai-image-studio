@@ -4,6 +4,7 @@ export type {
   AttachmentSummary,
   BatchAggregateRequestSnapshot,
   BatchComposerDraft,
+  ComposerRequestDraft,
   GenerationRequestSnapshot,
   ProviderRequestParameterSummary,
   ProviderRequestParameterSummaryEntry

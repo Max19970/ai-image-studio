@@ -15,15 +15,7 @@ export default [
     slot: 'workspace/main',
     use: 'workspace.galleryPage',
     order: 10,
-    enabled: (context) => context.activeTab === 'images' && !context.batchComposerOpen
-  } satisfies ElementPlacement<WorkspaceMainContext>,
-  {
-    id: 'workspace.main.batch-composer',
-    slot: 'workspace/main',
-    use: 'workspace.batchComposerPage',
-    order: 20,
-    enabled: (context) => context.activeTab === 'images' && context.batchComposerOpen,
-    requiresFeature: 'batchComposer'
+    enabled: (context) => context.activeTab === 'images'
   } satisfies ElementPlacement<WorkspaceMainContext>,
   {
     id: 'workspace.main.info',
@@ -46,20 +38,13 @@ export default [
     slot: 'workspace/dock',
     use: 'workspace.composerDock',
     order: 10,
-    enabled: (context) => context.activeTab === 'images' && !context.batchComposerOpen
+    enabled: (context) => context.activeTab === 'images'
   } satisfies ElementPlacement<WorkspaceComposerDockContext>,
   {
-    id: 'workspace.modals.single-parameters',
+    id: 'workspace.modals.composer-parameters',
     slot: 'workspace/modals',
-    use: 'workspace.singleParametersModal',
-    order: 10
-  } satisfies ElementPlacement<WorkspaceModalsContext>,
-  {
-    id: 'workspace.modals.batch-parameters',
-    slot: 'workspace/modals',
-    use: 'workspace.batchParametersModal',
-    order: 20,
-    enabled: (context) => Boolean(context.batchParameters.draft),
-    requiresFeature: 'batchComposer'
+    use: 'workspace.composerParametersModal',
+    order: 10,
+    enabled: (context) => Boolean(context.composerParameters.draft)
   } satisfies ElementPlacement<WorkspaceModalsContext>
 ];

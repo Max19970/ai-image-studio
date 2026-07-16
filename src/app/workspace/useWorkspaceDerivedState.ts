@@ -1,38 +1,36 @@
 import { useMemo } from 'react';
 import { getStatusText } from '../../domain/generationSnapshots';
 import { buildImagePayload, explainPayloadWarnings, validateCustomSize } from '../../entities/provider/request';
-import {
-  getActiveModel,
-  getEffectiveProviderSettings,
-  getProviderForModel,
-  providerContextForModel
-} from '../../entities/studio-settings';
+import { providerContextForModel } from '../../entities/studio-settings';
 import {
   getLegacyWorkModeForProviderMode,
-  resolveProviderGenerationMode,
   resolveProviderGenerationModeForModelContext
 } from '../../entities/provider/modeResolution';
+import { getProviderModeAttachmentStatusText } from '../../entities/provider/attachmentCompatibility';
 import {
-  getProviderModeAttachmentStatusText,
-  hasProviderModeRequiredAttachments
-} from '../../entities/provider/attachmentCompatibility';
+  evaluateComposerDraftReadiness,
+  summarizeComposerQueue
+} from '../../features/composer/model/composerDraftReadiness';
 import type { TranslateFn } from '../commands/types';
 import type { WorkspaceDerivedState, WorkspaceState } from './types';
 
 export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn): WorkspaceDerivedState {
-  const activeModel = useMemo(() => getActiveModel(state.studioSettings), [state.studioSettings]);
-  const activeProvider = useMemo(
-    () => getProviderForModel(state.studioSettings, activeModel),
-    [state.studioSettings, activeModel]
+  const activeComposerDraft = state.composerDrafts.find((draft) => draft.id === state.activeComposerDraftId)
+    ?? state.composerDrafts[0];
+  const activeContext = useMemo(
+    () => providerContextForModel(state.studioSettings, activeComposerDraft.selectedModelId),
+    [activeComposerDraft.selectedModelId, state.studioSettings]
   );
-  const provider = useMemo(() => getEffectiveProviderSettings(state.studioSettings), [state.studioSettings]);
+  const activeModel = activeContext.model;
+  const activeProvider = activeContext.generationProvider;
+  const provider = activeContext.provider;
   const providerModeResolution = useMemo(
-    () => resolveProviderGenerationMode({
-      settings: state.studioSettings,
-      modelId: state.studioSettings.selectedModelId,
-      providerModeId: state.providerModeId
-    }),
-    [state.providerModeId, state.studioSettings]
+    () => resolveProviderGenerationModeForModelContext(
+      state.studioSettings,
+      activeModel,
+      activeComposerDraft.providerModeId
+    ),
+    [activeComposerDraft.providerModeId, activeModel, state.studioSettings]
   );
   const providerMode = providerModeResolution.activeMode;
   const providerModes = providerModeResolution.modes;
@@ -41,59 +39,64 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
   const { payload, rawJsonError } = useMemo(() => {
     try {
       return {
-        payload: buildImagePayload(state.params, provider, mode, providerMode),
+        payload: buildImagePayload(activeComposerDraft.params, provider, mode, providerMode),
         rawJsonError: null as string | null
       };
-    } catch (e) {
+    } catch (error) {
       return {
-        payload: { prompt: state.params.prompt },
-        rawJsonError: e instanceof Error ? e.message : String(e)
+        payload: { prompt: activeComposerDraft.params.prompt },
+        rawJsonError: error instanceof Error ? error.message : String(error)
       };
     }
-  }, [state.params, provider, mode, providerMode]);
+  }, [activeComposerDraft.params, mode, provider, providerMode]);
 
   const attachmentStatusText = useMemo(() => getProviderModeAttachmentStatusText({
     draft: {
-      targetImage: state.targetImage,
-      referenceImages: state.referenceImages,
-      mask: state.mask
+      targetImage: activeComposerDraft.targetImage,
+      referenceImages: activeComposerDraft.referenceImages,
+      mask: activeComposerDraft.mask
     },
     providerMode,
     t
-  }), [state.targetImage, state.referenceImages, state.mask, providerMode, t]);
+  }), [activeComposerDraft.mask, activeComposerDraft.referenceImages, activeComposerDraft.targetImage, providerMode, t]);
 
   const warnings = useMemo(() => {
     const payloadWarnings = explainPayloadWarnings(payload, provider, mode, state.capabilityReport, providerMode);
-    if (state.params.sizeMode === 'custom') {
-      payloadWarnings.push(...validateCustomSize(state.params.width, state.params.height, provider, providerMode));
+    if (activeComposerDraft.params.sizeMode === 'custom') {
+      payloadWarnings.push(...validateCustomSize(
+        activeComposerDraft.params.width,
+        activeComposerDraft.params.height,
+        provider,
+        providerMode
+      ));
     }
     if (attachmentStatusText) payloadWarnings.push(attachmentStatusText);
-    if (!activeModel) {
-      payloadWarnings.push(t('app.warningNoModel'));
-    }
+    if (!activeModel) payloadWarnings.push(t('app.warningNoModel'));
     return payloadWarnings;
   }, [
+    activeComposerDraft.params.height,
+    activeComposerDraft.params.sizeMode,
+    activeComposerDraft.params.width,
+    activeModel,
+    attachmentStatusText,
+    mode,
     payload,
     provider,
-    mode,
-    state.capabilityReport,
     providerMode,
-    state.params.sizeMode,
-    state.params.width,
-    state.params.height,
-    attachmentStatusText,
-    activeModel,
+    state.capabilityReport,
     t
   ]);
 
-  const canSubmit = Boolean(activeModel) &&
-    !rawJsonError &&
-    state.params.prompt.trim().length > 0 &&
-    hasProviderModeRequiredAttachments({
-      targetImage: state.targetImage,
-      referenceImages: state.referenceImages,
-      mask: state.mask
-    }, providerMode);
+  const composerDraftReadiness = useMemo(
+    () => state.composerDrafts.map((draft) => evaluateComposerDraftReadiness(draft, state.studioSettings)),
+    [state.composerDrafts, state.studioSettings]
+  );
+  const composerQueueSummary = useMemo(
+    () => summarizeComposerQueue(composerDraftReadiness),
+    [composerDraftReadiness]
+  );
+  const activeReadiness = composerDraftReadiness.find((item) => item.draftId === activeComposerDraft.id);
+  const canSubmit = Boolean(activeReadiness?.ready);
 
   const selectedTask = state.selectedTaskId
     ? state.tasks.find((task) => task.id === state.selectedTaskId) ?? null
@@ -102,82 +105,56 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     ? selectedTask.images.find((image) => image.id === state.selectedImageId) ?? null
     : null;
   const currentTask = state.tasks[0] ?? null;
-  const activeBatchDraft = state.batchParametersDraftId
-    ? state.batchDrafts.find((draft) => draft.id === state.batchParametersDraftId) ?? null
+  const activeBatchDraft = state.composerParametersDraftId
+    ? state.composerDrafts.find((draft) => draft.id === state.composerParametersDraftId) ?? null
     : null;
-
-  const batchCanSubmit = useMemo(() => {
-    if (state.batchDrafts.length === 0) return false;
-    return state.batchDrafts.some((draft) => {
-      const { model, provider: draftProvider } = providerContextForModel(state.studioSettings, draft.selectedModelId);
-      if (!model) return false;
-      if (!draft.params.prompt.trim()) return false;
-      const draftModeResolution = resolveProviderGenerationModeForModelContext(
-        state.studioSettings,
-        model,
-        draft.providerModeId
-      );
-      const draftProviderMode = draftModeResolution.activeMode;
-      const draftMode = getLegacyWorkModeForProviderMode(draftProviderMode);
-      if (!hasProviderModeRequiredAttachments({
-        targetImage: draft.targetImage,
-        referenceImages: draft.referenceImages,
-        mask: draft.mask
-      }, draftProviderMode)) return false;
-      try {
-        buildImagePayload(draft.params, draftProvider, draftMode, draftProviderMode);
-        return true;
-      } catch {
-        return false;
-      }
-    });
-  }, [state.batchDrafts, state.studioSettings]);
 
   const batchWarnings = useMemo(() => {
     if (!activeBatchDraft) return [];
-    const { model: draftModel, provider: draftProvider } = providerContextForModel(state.studioSettings, activeBatchDraft.selectedModelId);
+    const draftContext = providerContextForModel(state.studioSettings, activeBatchDraft.selectedModelId);
     const draftModeResolution = resolveProviderGenerationModeForModelContext(
       state.studioSettings,
-      draftModel,
+      draftContext.model,
       activeBatchDraft.providerModeId
     );
     const draftProviderMode = draftModeResolution.activeMode;
     const draftMode = getLegacyWorkModeForProviderMode(draftProviderMode);
     try {
-      const draftPayload = buildImagePayload(activeBatchDraft.params, draftProvider, draftMode, draftProviderMode);
+      const draftPayload = buildImagePayload(activeBatchDraft.params, draftContext.provider, draftMode, draftProviderMode);
       const draftWarnings = explainPayloadWarnings(
         draftPayload,
-        draftProvider,
+        draftContext.provider,
         draftMode,
-        activeBatchDraft.selectedModelId === state.studioSettings.selectedModelId ? state.capabilityReport : null,
+        activeBatchDraft.selectedModelId === activeComposerDraft.selectedModelId ? state.capabilityReport : null,
         draftProviderMode
       );
       if (activeBatchDraft.params.sizeMode === 'custom') {
-        draftWarnings.push(...validateCustomSize(activeBatchDraft.params.width, activeBatchDraft.params.height, draftProvider, draftProviderMode));
+        draftWarnings.push(...validateCustomSize(
+          activeBatchDraft.params.width,
+          activeBatchDraft.params.height,
+          draftContext.provider,
+          draftProviderMode
+        ));
       }
-      const attachmentStatusText = getProviderModeAttachmentStatusText({
-        draft: {
-          targetImage: activeBatchDraft.targetImage,
-          referenceImages: activeBatchDraft.referenceImages,
-          mask: activeBatchDraft.mask
-        },
+      const draftAttachmentStatus = getProviderModeAttachmentStatusText({
+        draft: activeBatchDraft,
         providerMode: draftProviderMode,
         t
       });
-      if (attachmentStatusText) draftWarnings.push(attachmentStatusText);
+      if (draftAttachmentStatus) draftWarnings.push(draftAttachmentStatus);
       return draftWarnings;
-    } catch (e) {
-      return [e instanceof Error ? e.message : String(e)];
+    } catch (error) {
+      return [error instanceof Error ? error.message : String(error)];
     }
-  }, [activeBatchDraft, state.studioSettings, state.capabilityReport, t]);
+  }, [activeBatchDraft, activeComposerDraft.selectedModelId, state.capabilityReport, state.studioSettings, t]);
 
   const taskStatusText = currentTask?.status === 'succeeded' ? null : getStatusText(currentTask, t);
   const serverSubmissionText = state.serverSubmission.phase === 'submitting'
-    ? 'Отправляю запрос на сервер…'
+    ? t('composer.submitting')
     : state.serverSubmission.phase === 'waiting-for-event'
-      ? 'Запрос принят сервером. Жду событие генерации…'
+      ? t('composer.waitingForGeneration')
       : state.serverSubmission.phase === 'failed'
-        ? `Не удалось поставить запрос на сервер: ${state.serverSubmission.error ?? 'неизвестная ошибка'}`
+        ? t('composer.submitFailed', { error: state.serverSubmission.error ?? t('composer.unknownError') })
         : null;
   const composerStatusText = rawJsonError || serverSubmissionText || taskStatusText || state.compatibilityNotice || attachmentStatusText;
 
@@ -195,8 +172,11 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     selectedTask,
     selectedImage,
     currentTask,
+    activeComposerDraft,
+    composerDraftReadiness,
+    composerQueueSummary,
     activeBatchDraft,
-    batchCanSubmit,
+    batchCanSubmit: composerQueueSummary.readyCount > 0,
     batchWarnings,
     statusText: composerStatusText
   };

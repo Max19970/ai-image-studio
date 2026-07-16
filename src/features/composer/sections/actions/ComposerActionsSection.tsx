@@ -4,12 +4,17 @@ import { SlotHost } from '../../../../interface/SlotHost';
 import type { ComposerActionContext, ComposerLayoutContext } from '../../composerTypes';
 import { useI18n } from '../../../../i18n';
 import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/attachmentCompatibility';
-import { getProviderModeSubmitActionLabelKey } from '../../../../entities/provider/modeIntent';
 import styles from '../../ComposerLayout.module.css';
+
+const queuePopoverId = 'composer.queue';
 
 export function ComposerActionsSection({ context }: ElementDefinitionProps<ComposerLayoutContext>) {
   const { t } = useI18n();
   const { fileInputs } = context.actionContext;
+  const queueOpen = context.actionContext.openPopover === queuePopoverId;
+  const queueCount = context.queueSummary.totalCount;
+  const queueHasIssues = queueCount > 1 && context.queueSummary.invalidCount > 0;
+  const canSubmitAny = context.queueSummary.readyCount > 0;
 
   const addAttachmentsFromInput = (event: ChangeEvent<HTMLInputElement>) => {
     if (providerModeAllowsImageAttachments(context.providerMode)) context.actions.addAttachments(Array.from(event.target.files ?? []));
@@ -21,6 +26,14 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
     event.currentTarget.value = '';
   };
 
+  const submitLabel = queueCount > 1
+    ? t('composer.submitQueueLabel', {
+        ready: context.queueSummary.readyCount,
+        total: queueCount,
+        invalid: context.queueSummary.invalidCount
+      })
+    : t('composer.submitCurrentLabel');
+
   return (
     <div className={styles.actions} data-composer-slot="actions">
       <input ref={fileInputs.attachments} data-testid="composer-attachments-input" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={addAttachmentsFromInput} />
@@ -30,18 +43,37 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
         <SlotHost<ComposerActionContext> slot="composer/tools" context={context.actionContext} className={styles.toolCluster} />
       </div>
 
+      <button
+        type="button"
+        className={styles.queueButton}
+        data-testid="composer-queue-toggle"
+        data-open={queueOpen ? 'true' : 'false'}
+        onClick={() => context.actionContext.setOpenPopover((value) => value === queuePopoverId ? null : queuePopoverId)}
+        aria-label={queueOpen ? t('composer.hideQueue') : t('composer.showQueue')}
+        aria-expanded={queueOpen}
+      >
+        <span className={styles.queueIcon} aria-hidden="true">☷</span>
+        {queueCount > 1 && <span className={styles.queueCount}>{queueCount}</span>}
+      </button>
+
       <div className={styles.actionsRight}>
         <button
           type="button"
           className={styles.sendButton}
           data-testid="composer-submit"
-          disabled={!context.canSubmit}
+          disabled={!canSubmitAny}
           onClick={context.actions.submit}
-          aria-label={t(getProviderModeSubmitActionLabelKey(context.providerMode))}
-          aria-describedby={!context.canSubmit && context.blockedReason && context.prompt.trim() ? 'composer-submit-blocked-reason' : undefined}
-          title={!context.canSubmit && context.blockedReason ? context.blockedReason : undefined}
+          aria-label={submitLabel}
+          aria-describedby={!canSubmitAny && context.blockedReason && context.prompt.trim() ? 'composer-submit-blocked-reason' : undefined}
+          title={!canSubmitAny && context.blockedReason ? context.blockedReason : submitLabel}
         >
-          {t('composer.send')}
+          <span className={styles.sendArrow} aria-hidden="true">↑</span>
+          {queueCount > 1 && (
+            <span className={styles.sendCount} data-warning={queueHasIssues ? 'true' : 'false'}>
+              {queueCount}
+              {queueHasIssues && <sup aria-hidden="true">!</sup>}
+            </span>
+          )}
         </button>
       </div>
     </div>

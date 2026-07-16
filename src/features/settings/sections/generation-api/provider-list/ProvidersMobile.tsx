@@ -1,5 +1,5 @@
 import { useI18n } from '../../../../../i18n';
-import { Button } from '../../../../../shared/ui';
+import { Button, DisclosureChevron } from '../../../../../shared/ui';
 import { EmptyState } from '../../../components/SettingsControls';
 import type { SettingsSectionContext } from '../../../settingsTypes';
 import { ProviderCustomHeadersField } from '../custom-headers-editor/ProviderCustomHeadersField';
@@ -66,27 +66,27 @@ export function ProvidersMobile({ context }: { context: SettingsSectionContext }
           </div>
 
           <details className={styles.mobileAccordion} open>
-            <summary>{t('settings.providerEditor')}</summary>
+            <summary><span>{t('settings.providerEditor')}</span><DisclosureChevron className={styles.disclosureChevron} /></summary>
             <ProviderCoreFields context={context} idPrefix="mobile" mobile />
           </details>
 
           <details className={styles.mobileAccordion}>
-            <summary>{t('settings.endpoints')}</summary>
+            <summary><span>{t('settings.endpoints')}</span><DisclosureChevron className={styles.disclosureChevron} /></summary>
             <ProviderEndpointFields context={context} idPrefix="mobile" mobile />
           </details>
 
           <details className={styles.mobileAccordion}>
-            <summary>{t('settings.auth')}</summary>
+            <summary><span>{t('settings.auth')}</span><DisclosureChevron className={styles.disclosureChevron} /></summary>
             <ProviderAuthFields context={context} idPrefix="mobile" mobile />
           </details>
 
           <details className={styles.mobileAccordion}>
-            <summary>{t('settings.customHeaders')}</summary>
+            <summary><span>{t('settings.customHeaders')}</span><DisclosureChevron className={styles.disclosureChevron} /></summary>
             <ProviderCustomHeadersField context={context} idPrefix="mobile" />
           </details>
 
           <details className={styles.mobileAccordion}>
-            <summary>{t('settings.providerChecks')}</summary>
+            <summary><span>{t('settings.providerChecks')}</span><DisclosureChevron className={styles.disclosureChevron} /></summary>
             <ProviderCheckCard context={context} mobile />
           </details>
         </article>

@@ -4,7 +4,6 @@ import type { WorkspaceContextFactoryArgs } from './types';
 export function createDockContext({ state, derived, commands }: WorkspaceContextFactoryArgs): WorkspaceComposerDockContext {
   return {
     activeTab: state.workspaceTab,
-    batchComposerOpen: state.batchComposerOpen,
     providerModeId: state.providerModeId,
     providerMode: derived.providerMode,
     providerModes: derived.providerModes,
@@ -22,6 +21,11 @@ export function createDockContext({ state, derived, commands }: WorkspaceContext
     selectedModelId: state.studioSettings.selectedModelId,
     statusText: derived.statusText,
     requestPresets: state.requestPresets,
+    drafts: state.composerDrafts,
+    activeDraftId: state.activeComposerDraftId,
+    draftReadiness: derived.composerDraftReadiness,
+    queueSummary: derived.composerQueueSummary,
+    intervalSeconds: state.composerIntervalSeconds,
     commands: commands.composer
   };
 }

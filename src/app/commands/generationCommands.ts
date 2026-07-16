@@ -5,7 +5,7 @@ import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
-import { enqueueServerBatchGenerationRequest } from '../../processes/server-generation-actions';
+import { enqueueServerBatchGenerationRequest, enqueueServerGenerationRequest } from '../../processes/server-generation-actions';
 import { createAggregateSnapshot, prepareBatchItems } from '../../processes/batch-runner/requestBuilder';
 import { normalizeBatchIntervalSeconds } from '../../processes/batch-runner/schedule';
 import { runSingleGeneration } from '../../processes/generation-runner/singleRunner';
@@ -27,6 +27,19 @@ interface SingleGenerationCommandArgs {
   taskHistory: Pick<TaskHistoryCommands, 'ingestServerTask'>;
   setBusy: StateSetter<boolean>;
   setServerSubmission: ServerSubmissionSetter;
+  t: TranslateFn;
+  galleryPath: string;
+}
+
+interface ComposerDraftSubmissionCommandArgs {
+  drafts: BatchComposerDraft[];
+  intervalSeconds: number;
+  settings: StudioSettings;
+  selectedModelId: string;
+  capabilityReport: ProviderProbeReport | null;
+  setBusy: StateSetter<boolean>;
+  setServerSubmission: ServerSubmissionSetter;
+  taskHistory: Pick<TaskHistoryCommands, 'ingestServerTask'>;
   t: TranslateFn;
   galleryPath: string;
 }
@@ -90,6 +103,82 @@ export async function submitSingleGenerationCommand(args: SingleGenerationComman
     } else {
       setServerSubmission({ phase: 'waiting-for-event', taskId: submission.taskId });
     }
+  } catch (error) {
+    setServerSubmission({ phase: 'failed', error: error instanceof Error ? error.message : String(error) });
+    throw error;
+  } finally {
+    setBusy(false);
+  }
+}
+
+export async function submitComposerDraftsCommand(args: ComposerDraftSubmissionCommandArgs): Promise<string[]> {
+  const {
+    drafts,
+    intervalSeconds,
+    settings,
+    selectedModelId,
+    capabilityReport,
+    setBusy,
+    setServerSubmission,
+    taskHistory,
+    t,
+    galleryPath
+  } = args;
+
+  const prepared = prepareBatchItems({
+    drafts,
+    intervalSeconds,
+    settings,
+    selectedModelId,
+    capabilityReport,
+    t
+  });
+  if (prepared.length === 0) return [];
+
+  setBusy(true);
+  setServerSubmission({ phase: 'submitting' });
+  try {
+    if (prepared.length === 1) {
+      const item = prepared[0];
+      const submission = await enqueueServerGenerationRequest({
+        mode: item.snapshot.mode,
+        providerMode: item.providerMode,
+        provider: item.provider,
+        payload: item.payload,
+        targetImage: item.draft.targetImage,
+        referenceImages: item.draft.referenceImages,
+        mask: item.draft.mask,
+        snapshot: item.snapshot,
+        galleryPath
+      });
+      if (submission.task) {
+        taskHistory.ingestServerTask(submission.task);
+        setServerSubmission({ phase: 'idle' });
+      } else {
+        setServerSubmission({ phase: 'waiting-for-event', taskId: submission.taskId });
+      }
+      return [item.draft.id];
+    }
+
+    const intervalMs = normalizeBatchIntervalSeconds(intervalSeconds);
+    await enqueueServerBatchGenerationRequest({
+      intervalMs,
+      galleryPath,
+      aggregateSnapshot: createAggregateSnapshot({ prepared, intervalMs, createdAt: Date.now(), t }),
+      items: prepared.map((item) => ({
+        provider: item.provider,
+        payload: item.payload,
+        providerMode: item.providerMode,
+        snapshot: item.snapshot,
+        targetImage: item.draft.targetImage,
+        referenceImages: item.draft.referenceImages,
+        mask: item.draft.mask,
+        retryAttempts: item.draft.params.retryAttempts,
+        retryDelaySeconds: item.draft.params.retryDelaySeconds
+      }))
+    });
+    setServerSubmission({ phase: 'idle' });
+    return prepared.map((item) => item.draft.id);
   } catch (error) {
     setServerSubmission({ phase: 'failed', error: error instanceof Error ? error.message : String(error) });
     throw error;

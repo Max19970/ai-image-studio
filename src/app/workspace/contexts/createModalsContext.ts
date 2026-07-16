@@ -4,38 +4,30 @@ import type { WorkspaceModalsContext } from '../../../interface/context/workspac
 import type { WorkspaceContextFactoryArgs } from './types';
 
 export function createModalsContext({ state, derived, commands }: WorkspaceContextFactoryArgs): WorkspaceModalsContext {
-  const batchProvider = derived.activeBatchDraft
-    ? providerContextForModel(state.studioSettings, derived.activeBatchDraft.selectedModelId).provider
+  const draft = state.composerParametersDraftId
+    ? state.composerDrafts.find((item) => item.id === state.composerParametersDraftId) ?? null
+    : null;
+  const provider = draft
+    ? providerContextForModel(state.studioSettings, draft.selectedModelId).provider
     : derived.provider;
-  const batchProviderMode = derived.activeBatchDraft
+  const providerMode = draft
     ? resolveProviderGenerationMode({
-      settings: state.studioSettings,
-      modelId: derived.activeBatchDraft.selectedModelId,
-      providerModeId: derived.activeBatchDraft.providerModeId
-    }).activeMode
+        settings: state.studioSettings,
+        modelId: draft.selectedModelId,
+        providerModeId: draft.providerModeId
+      }).activeMode
     : derived.providerMode;
 
   return {
-    singleParameters: {
-      open: state.parametersOpen,
-      mode: derived.mode,
-      providerMode: derived.providerMode,
-      params: state.params,
-      provider: derived.provider,
-      capabilityReport: state.capabilityReport,
-      studioSettings: state.studioSettings,
-      warnings: derived.warnings,
-      commands: commands.parameters
-    },
-    batchParameters: {
-      draft: derived.activeBatchDraft,
-      provider: batchProvider,
-      providerMode: batchProviderMode,
-      capabilityReport: derived.activeBatchDraft?.selectedModelId === state.studioSettings.selectedModelId
+    composerParameters: {
+      draft,
+      provider,
+      providerMode,
+      capabilityReport: draft?.selectedModelId === derived.activeComposerDraft.selectedModelId
         ? state.capabilityReport
         : null,
       studioSettings: state.studioSettings,
-      warnings: derived.batchWarnings,
+      warnings: draft?.id === derived.activeComposerDraft.id ? derived.warnings : derived.batchWarnings,
       commands: commands.parameters
     }
   };

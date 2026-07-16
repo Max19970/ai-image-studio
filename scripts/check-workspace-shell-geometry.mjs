@@ -336,16 +336,39 @@ async function verifyNarrowMainWorkflows(browser) {
       if (!(button instanceof HTMLButtonElement)) throw new Error('Composer controls button is missing.');
       button.click();
     });
-    await page.waitForSelector('[data-testid="composer-batch"]');
+    await page.waitForSelector('[data-testid="composer-add-request"]');
     await page.evaluate(() => {
-      const button = document.querySelector('[data-testid="composer-batch"]');
-      if (!(button instanceof HTMLButtonElement)) throw new Error('Batch composer button is missing.');
+      const button = document.querySelector('[data-testid="composer-add-request"]');
+      if (!(button instanceof HTMLButtonElement)) throw new Error('Add request button is missing.');
       button.click();
     });
-    await page.waitForSelector('[data-testid="batch-composer-stage"]');
+    await page.waitForSelector('[data-testid="composer-queue-toggle"]');
+    await page.evaluate(() => {
+      const button = document.querySelector('[data-testid="composer-queue-toggle"]');
+      if (!(button instanceof HTMLButtonElement)) throw new Error('Composer queue button is missing.');
+      button.click();
+    });
+    await page.waitForSelector('[data-testid="composer-queue-panel"]');
     await new Promise((resolve) => setTimeout(resolve, 250));
-    await assertNoElementOverflow('.studio-main', 'batch composer main');
-    await assertNoElementOverflow('[data-testid="batch-composer-stage"]', 'batch composer stage');
+    const queueGeometry = await page.evaluate(() => {
+      const panel = document.querySelector('[data-testid="composer-queue-panel"]');
+      if (!(panel instanceof HTMLElement)) throw new Error('Composer queue panel is missing.');
+      const rect = panel.getBoundingClientRect();
+      return {
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        documentScrollWidth: document.documentElement.scrollWidth
+      };
+    });
+    assert.ok(queueGeometry.left >= -1, `composer queue escaped left viewport edge (${queueGeometry.left}).`);
+    assert.ok(queueGeometry.right <= queueGeometry.viewportWidth + 1, `composer queue escaped right viewport edge (${queueGeometry.right} > ${queueGeometry.viewportWidth}).`);
+    assert.ok(queueGeometry.top >= -1, `composer queue escaped top viewport edge (${queueGeometry.top}).`);
+    assert.ok(queueGeometry.bottom <= queueGeometry.viewportHeight + 1, `composer queue escaped bottom viewport edge (${queueGeometry.bottom} > ${queueGeometry.viewportHeight}).`);
+    assert.ok(queueGeometry.documentScrollWidth <= queueGeometry.viewportWidth + epsilon, 'composer queue introduced document overflow.');
   } finally {
     await page.close();
   }

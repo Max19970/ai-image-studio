@@ -12,10 +12,19 @@ export { BottomSheet } from './BottomSheet';
 export type { BottomSheetProps, BottomSheetSize } from './BottomSheet';
 export { Dialog, ConfirmationDialog } from './Dialog';
 export type { DialogProps, DialogSize, DialogTone, ConfirmationDialogProps } from './Dialog';
+export { DisclosureChevron } from './DisclosureChevron';
+export type { DisclosureChevronDirection } from './DisclosureChevron';
 export { EntityList, EntityListItem } from './EntityList';
 export type { EntityListDensity, EntityListItemProps, EntityListProps } from './EntityList';
 
 export { FloatingPopover } from './FloatingPopover';
+export { GroupedPicker } from './GroupedPicker';
+export type {
+  GroupedPickerProps,
+  GroupedPickerDensity,
+  GroupedPickerGroup,
+  GroupedPickerItem
+} from './GroupedPicker';
 export { PopoverSelect } from './PopoverSelect';
 export type { PopoverSelectOption } from './PopoverSelect';
 export { AttachmentImageStrip } from './AttachmentImageStrip';

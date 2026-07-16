@@ -3,7 +3,8 @@ import type { WorkspaceComposerDockContext, WorkspaceModalsContext } from '../..
 import type { WorkspaceMainContext } from '../../interface/context/workspace/main';
 import type { WorkspaceSidebarContext } from '../../interface/context/workspace/sidebar';
 import type { WorkspaceTab } from '../../interface/context/workspace/tabs';
-import type { BatchComposerDraft, GeneratedImage, GenerationTask } from '../../domain/generationTask';
+import type { BatchComposerDraft, ComposerRequestDraft, GeneratedImage, GenerationTask } from '../../domain/generationTask';
+import type { ComposerDraftReadiness, ComposerQueueSummary } from '../../features/composer/model/composerDraftReadiness';
 import type { GalleryFolder } from '../../domain/galleryFilesystem';
 import type { RequestPreset } from '../../entities/request-presets';
 import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
@@ -78,14 +79,19 @@ export interface WorkspaceState {
   setCapabilityReport: StateSetter<ProviderProbeReport | null>;
   requestPresets: RequestPreset[];
   setRequestPresets: StateSetter<RequestPreset[]>;
-  batchComposerOpen: boolean;
-  setBatchComposerOpen: StateSetter<boolean>;
-  batchDrafts: BatchComposerDraft[];
-  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
-  batchIntervalSeconds: number;
-  setBatchIntervalSeconds: StateSetter<number>;
-  batchParametersDraftId: string | null;
-  setBatchParametersDraftId: StateSetter<string | null>;
+  composerDrafts: ComposerRequestDraft[];
+  setComposerDrafts: StateSetter<ComposerRequestDraft[]>;
+  activeComposerDraftId: string;
+  selectComposerDraft: (id: string) => void;
+  addComposerDraft: () => void;
+  duplicateComposerDraft: (id: string) => void;
+  removeComposerDraft: (id: string) => void;
+  patchComposerDraft: (id: string, patch: Partial<ComposerRequestDraft>) => void;
+  patchComposerDraftParams: (id: string, patch: Partial<ImageParams>) => void;
+  composerIntervalSeconds: number;
+  setComposerIntervalSeconds: StateSetter<number>;
+  composerParametersDraftId: string | null;
+  setComposerParametersDraftId: StateSetter<string | null>;
 }
 
 export interface WorkspaceDerivedState {
@@ -102,6 +108,9 @@ export interface WorkspaceDerivedState {
   selectedTask: GenerationTask | null;
   selectedImage: GeneratedImage | null;
   currentTask: GenerationTask | null;
+  activeComposerDraft: ComposerRequestDraft;
+  composerDraftReadiness: ComposerDraftReadiness[];
+  composerQueueSummary: ComposerQueueSummary;
   activeBatchDraft: BatchComposerDraft | null;
   batchCanSubmit: boolean;
   batchWarnings: string[];

@@ -6,8 +6,7 @@ import type { WorkspaceNavigationCommands } from './types';
 export function createWorkspaceNavigationBinding(args: GalleryCommandDeps): WorkspaceNavigationCommands {
   return {
     setSelectedTaskId: args.setSelectedTaskId,
-    setSelectedImageId: args.setSelectedImageId,
-    setBatchComposerOpen: args.hiresFix.setBatchComposerOpen
+    setSelectedImageId: args.setSelectedImageId
   };
 }
 

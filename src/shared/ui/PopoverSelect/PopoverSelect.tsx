@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { DisclosureChevron } from '../DisclosureChevron';
 import { FloatingPopover } from '../FloatingPopover';
 import styles from './PopoverSelect.module.css';
 
@@ -178,7 +179,10 @@ export function PopoverSelect({
           <strong>{selected?.label || placeholder || ''}</strong>
           {showSelectedDescription && (selected?.description || emptyText) && <small>{selected?.description || emptyText}</small>}
         </span>
-        <span className={cx(styles.chevron, 'popover-select-chevron')} aria-hidden="true">⌄</span>
+        <DisclosureChevron
+          direction={open ? 'up' : 'down'}
+          className={cx(styles.chevron, 'popover-select-chevron')}
+        />
       </button>
 
       <FloatingPopover

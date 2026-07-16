@@ -1,0 +1,272 @@
+.root {
+  display: grid;
+  width: 100%;
+  max-width: 704px;
+  height: clamp(320px, calc(var(--floating-available-height, 580px) - 12px), 536px);
+  box-sizing: border-box;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  color: var(--text);
+  background: rgba(8, 9, 13, .34);
+  contain: layout paint style;
+}
+
+.searchBar {
+  min-width: 0;
+  padding: 8px 8px 10px;
+}
+
+.searchField {
+  display: grid;
+  min-width: 0;
+  min-height: 42px;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 11px;
+  padding: 0 8px 0 11px;
+  background: rgba(255, 255, 255, .035);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-soft),
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.searchField:focus-within {
+  border-color: rgba(255, 255, 255, .22);
+  background: rgba(255, 255, 255, .052);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.searchIcon {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  color: var(--faint);
+}
+
+.searchIcon svg,
+.clearSearch svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.searchField input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.searchField input::placeholder {
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+}
+
+.searchField input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.resultCount {
+  display: inline-grid;
+  min-width: 30px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  padding: 0 7px;
+  background: rgba(255, 255, 255, .045);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.root[data-search-stale='true'] .resultCount {
+  opacity: .42;
+}
+
+.clearSearch {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  padding: 7px;
+  background: transparent;
+  color: var(--muted);
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
+}
+
+.clearSearch:active {
+  transform: scale(.94);
+}
+
+.pickerBody {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(152px, 176px) minmax(0, 1fr);
+  gap: 8px;
+  padding: 0 8px 8px;
+}
+
+.groupNavigation,
+.itemColumn {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: 32px minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .022);
+}
+
+.itemColumn {
+  background: rgba(0, 0, 0, .11);
+}
+
+.columnHeader {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, .055);
+  padding: 0 12px;
+  color: var(--faint);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .025em;
+  line-height: 1;
+}
+
+.columnHeader span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupNavigationScroll {
+  display: grid;
+  min-height: 100%;
+  align-content: start;
+  gap: 3px;
+  overflow-y: auto;
+  padding: 6px;
+  overscroll-behavior: contain;
+}
+
+.itemScroller {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 8px;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.root[data-search-stale='true'] .itemScroller {
+  opacity: .68;
+}
+
+.virtualCanvas {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  contain: strict;
+}
+
+.virtualRow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  min-width: 0;
+  contain: layout paint;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .clearSearch:hover {
+    background: rgba(255, 255, 255, .09);
+    color: var(--text);
+  }
+}
+
+.searchField input:focus-visible {
+  outline: 0;
+}
+
+.clearSearch:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white 8%);
+  outline-offset: -2px;
+}
+
+@media (max-width: 620px) {
+  .root {
+    width: 100%;
+    height: min(52dvh, 470px);
+    min-height: 330px;
+  }
+
+  .searchBar {
+    padding: 8px 8px 9px;
+  }
+
+  .searchField {
+    min-height: 44px;
+    border-radius: 10px;
+  }
+
+  .pickerBody {
+    grid-template-columns: 116px minmax(0, 1fr);
+    gap: 6px;
+    padding: 0 8px 8px;
+  }
+
+  .groupNavigation,
+  .itemColumn {
+    grid-template-rows: minmax(0, 1fr);
+    border-radius: 10px;
+  }
+
+  .columnHeader {
+    display: none;
+  }
+
+  .groupNavigationScroll {
+    padding: 6px 5px;
+  }
+}
+
+@media (max-width: 390px) {
+  .pickerBody {
+    grid-template-columns: 108px minmax(0, 1fr);
+  }
+}
+
+@media (pointer: coarse) {
+  .clearSearch {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchField,
+  .resultCount,
+  .clearSearch,
+  .itemScroller {
+    transition-duration: .01ms;
+  }
+}

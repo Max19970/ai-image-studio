@@ -119,7 +119,11 @@ function resolvePosition(args: {
       left,
       top,
       width: matchAnchorWidth || minWidth || contentWidth ? width : undefined,
-      minWidth: matchAnchorWidth ? width : minWidth,
+      minWidth: matchAnchorWidth
+        ? width
+        : minWidth
+          ? Math.min(minWidth, viewportMaxWidth)
+          : undefined,
       maxWidth: `calc(100vw - ${margin * 2}px)`,
       maxHeight,
       zIndex: 1000,

@@ -132,15 +132,12 @@
   display: none;
 }
 
-.technicalDetails summary::after,
-.compactDetails summary::after {
-  content: '⌄';
-  display: grid;
+.disclosureChevron {
   width: 20px;
   height: 20px;
   flex: none;
-  place-items: center;
   border-radius: 999px;
+  padding: 3px;
   background: rgba(255,255,255,.08);
   color: var(--muted);
   transition: transform .18s ease, background .16s ease, color .16s ease;
@@ -151,8 +148,7 @@
   border-bottom: 1px solid var(--surface-border-soft);
 }
 
-.technicalDetails[open] summary::after,
-.compactDetails[open] summary::after {
+.technicalDetails[open] .disclosureChevron {
   transform: rotate(180deg);
   background: rgba(255,255,255,.12);
   color: var(--text);

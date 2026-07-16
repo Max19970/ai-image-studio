@@ -221,10 +221,6 @@
     display: none !important;
   }
 
-  :global(.batch-composer-is-open) .mobileBottomNav {
-    display: none !important;
-  }
-
   .mobileBottomNav {
     position: fixed;
     right: var(--mobile-page-gutter, 12px);

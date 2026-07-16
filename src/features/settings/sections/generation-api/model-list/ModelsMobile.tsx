@@ -1,5 +1,5 @@
 import { useI18n } from '../../../../../i18n';
-import { Button } from '../../../../../shared/ui';
+import { Button, DisclosureChevron } from '../../../../../shared/ui';
 import { EmptyState } from '../../../components/SettingsControls';
 import type { SettingsSectionContext } from '../../../settingsTypes';
 import styles from '../GenerationApiMobilePanels.module.css';
@@ -50,7 +50,7 @@ export function ModelsMobile({ context }: { context: SettingsSectionContext }) {
           </div>
 
           <details className={styles.mobileAccordion}>
-            <summary>{t('settings.modelEditor')}</summary>
+            <summary><span>{t('settings.modelEditor')}</span><DisclosureChevron className={styles.disclosureChevron} /></summary>
             <ModelFields context={context} idPrefix="mobile" mobile />
           </details>
         </article>

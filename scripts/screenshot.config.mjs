@@ -86,10 +86,55 @@ const telegramApiFixture = ({ saved = false, running = false, validationFails = 
   miniAppValidation: { ok: false, message: 'Telegram initData hash is invalid.' }
 });
 
+const largeModelProviderNames = [
+  'OpenAI',
+  'Local ComfyUI',
+  'Black Forest Labs',
+  'Google Vertex',
+  'Replicate',
+  'Fal',
+  'RunPod',
+  'Together AI',
+  'Stability AI',
+  'Hugging Face',
+  'Azure AI',
+  'Custom Lab'
+];
+
+const largeModelProviders = largeModelProviderNames.map((name, index) => ({
+  id: `p-large-${index}`,
+  name,
+  adapterId: 'openai-compatible',
+  generationEndpoint: `https://provider-${index}.example/v1/images/generations`,
+  editEndpoint: `https://provider-${index}.example/v1/images/edits`,
+  responsesEndpoint: '',
+  apiKey: '',
+  authHeaderName: 'Authorization',
+  authScheme: 'Bearer',
+  customHeadersJson: '',
+  timeoutMs: 300000,
+  persistApiKey: false
+}));
+
+const largeModelSettings = {
+  providers: largeModelProviders,
+  models: largeModelProviders.flatMap((provider, providerIndex) => Array.from({ length: 48 }, (_, modelIndex) => ({
+    id: `m-large-${providerIndex}-${modelIndex}`,
+    name: `${provider.name} Model ${String(modelIndex + 1).padStart(2, '0')}`,
+    providerId: provider.id,
+    modelId: `${provider.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-image-${modelIndex + 1}`,
+    notes: modelIndex % 7 === 0 ? 'Fast preview model' : ''
+  }))),
+  selectedModelId: 'm-large-0-0',
+  interfaceTheme: 'glass',
+  adapterData: {}
+};
+
 export const seedData = {
   paramsKey: 'gpt-image-2-studio.params.v2',
   tasksKey: 'image-studio.generation-tasks.v1',
   settingsKey: 'image-studio.settings.v1',
+  largeModelSettings,
   comfySettings: {
     providers: [{
       id: 'p-comfy-shot',
@@ -349,6 +394,57 @@ export const scenarios = [
     ]
   },
   {
+    name: 'composer-context-expanded',
+    seedParams: { prompt: 'cinematic portrait, soft window light' },
+    assertSelector: '[data-testid="composer-context-row"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-context-toggle"]' },
+      { type: 'click', selector: '[data-testid="composer-context-toggle"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-context-row"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-queue',
+    seedParams: { prompt: 'cinematic portrait, soft window light' },
+    assertSelector: '[data-testid="composer-queue-panel"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-add-request"]' },
+      { type: 'click', selector: '[data-testid="composer-add-request"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-queue-toggle"]' },
+      { type: 'click', selector: '[data-testid="composer-queue-toggle"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-queue-panel"]' },
+      { type: 'wait', ms: 240 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-queue-item-menu',
+    seedParams: { prompt: 'cinematic portrait, soft window light' },
+    assertSelector: '[data-testid="composer-queue-item-menu"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-add-request"]' },
+      { type: 'click', selector: '[data-testid="composer-add-request"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-add-request"]' },
+      { type: 'click', selector: '[data-testid="composer-add-request"]' },
+      { type: 'click', selector: '[data-testid="composer-queue-toggle"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-queue-panel"]' },
+      { type: 'click', selector: '[data-testid="composer-queue-item-actions-1"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-queue-item-menu"]' },
+      { type: 'keyboard', key: 'Escape' },
+      { type: 'wait', ms: 100 },
+      { type: 'click', selector: '[data-testid="composer-queue-item-actions-2"]' },
+      { type: 'wait', ms: 220 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
     name: 'composer-request-presets',
     seedParams: {
       prompt: 'soft cinematic portrait, warm window light, painterly details'
@@ -407,6 +503,20 @@ export const scenarios = [
   },
   {
     name: 'composer-model-picker',
+    seedSettings: seedData.largeModelSettings,
+    assertSelector: '[data-testid="composer-model-list"]',
+    steps: [
+      { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
+      { type: 'click', selector: '[data-testid="composer-controls"]' },
+      { type: 'waitForSelector', selector: '[data-testid="composer-model-picker"]' },
+      { type: 'click', selector: '[data-testid="composer-model-picker"]' },
+      { type: 'wait', ms: 260 },
+      { type: 'screenshot' }
+    ]
+  },
+  {
+    name: 'composer-model-picker-small',
+    assertSelector: '[data-testid="composer-model-list"]',
     steps: [
       { type: 'waitForSelector', selector: '[data-testid="composer-controls"]' },
       { type: 'click', selector: '[data-testid="composer-controls"]' },
@@ -527,90 +637,6 @@ export const scenarios = [
       { type: 'closeModal', selector: '[data-testid="parameters-modal-close"]' }
     ]
   },
-  {
-    name: 'batch-composer',
-    steps: [
-      { type: 'click', selector: '[data-testid="composer-controls"]' },
-      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
-      { type: 'click', selector: '[data-testid="composer-batch"]' },
-      { type: 'waitForSelector', selector: '[data-testid="batch-composer-stage"], .batch-composer-stage' },
-      { type: 'wait', ms: 250 },
-      { type: 'screenshot' }
-    ]
-  },
-  {
-    name: 'batch-composer-scrolled',
-    steps: [
-      { type: 'click', selector: '[data-testid="composer-controls"]', optional: true },
-      { type: 'click', selector: '[data-testid="composer-batch"]', optional: true },
-      { type: 'waitForSelector', selector: '[data-testid="batch-composer-stage"], .batch-composer-stage' },
-      { type: 'scroll', y: 420 },
-      { type: 'wait', ms: 180 },
-      { type: 'screenshot' },
-      { type: 'scroll', y: 0 },
-      { type: 'click', selector: '[data-testid="batch-composer-close"], .batch-composer-topbar > .btn-secondary', optional: true }
-    ]
-  },
-  {
-    name: 'batch-composer-controls',
-    steps: [
-      { type: 'click', selector: '[data-testid="composer-controls"]' },
-      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
-      { type: 'click', selector: '[data-testid="composer-batch"]' },
-      { type: 'waitForSelector', selector: '[data-testid="batch-draft-controls"]' },
-      { type: 'click', selector: '[data-testid="batch-draft-controls"]' },
-      { type: 'wait', ms: 240 },
-      { type: 'screenshot' }
-    ]
-  },
-  {
-    name: 'batch-request-presets',
-    steps: [
-      { type: 'click', selector: '[data-testid="composer-controls"]' },
-      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
-      { type: 'click', selector: '[data-testid="composer-batch"]' },
-      { type: 'waitForSelector', selector: '[data-testid="batch-draft-controls"]' },
-      { type: 'click', selector: '[data-testid="batch-draft-controls"]' },
-      { type: 'waitForSelector', selector: '[data-testid="batch-request-presets-open"]' },
-      { type: 'click', selector: '[data-testid="batch-request-presets-open"]' },
-      { type: 'waitForSelector', selector: '[data-testid="request-presets-panel"]' },
-      { type: 'wait', ms: 240 },
-      { type: 'screenshot' }
-    ]
-  },
-
-  {
-    name: 'batch-comfy-controls',
-    seedSettings: seedData.comfySettings,
-    seedParams: {
-      providerParams: { comfyui: { checkpoint: 'dream-local.safetensors', width: 1024, height: 1024, batchSize: 1, steps: 24, cfg: 6.5, samplerName: 'euler', scheduler: 'normal', seedMode: 'random', seed: 1, denoise: 1, negativePrompt: '', filenamePrefix: 'ImageStudio', loras: [] } }
-    },
-    steps: [
-      { type: 'click', selector: '[data-testid="composer-controls"]' },
-      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
-      { type: 'click', selector: '[data-testid="composer-batch"]' },
-      { type: 'waitForSelector', selector: '[data-testid="batch-draft-controls"]' },
-      { type: 'click', selector: '[data-testid="batch-draft-controls"]' },
-      { type: 'waitForSelector', selector: '[data-testid="batch-draft-comfy-loras"]' },
-      { type: 'wait', ms: 260 },
-      { type: 'screenshot' }
-    ]
-  },
-  {
-    name: 'batch-model-picker',
-    steps: [
-      { type: 'click', selector: '[data-testid="composer-controls"]' },
-      { type: 'waitForSelector', selector: '[data-testid="composer-batch"]' },
-      { type: 'click', selector: '[data-testid="composer-batch"]' },
-      { type: 'waitForSelector', selector: '[data-testid="batch-draft-controls"]' },
-      { type: 'click', selector: '[data-testid="batch-draft-controls"]' },
-      { type: 'waitForSelector', selector: '[data-testid="batch-draft-model-picker"]' },
-      { type: 'click', selector: '[data-testid="batch-draft-model-picker"]' },
-      { type: 'wait', ms: 260 },
-      { type: 'screenshot' }
-    ]
-  },
-
   {
     name: 'settings-integrations-empty',
     integrationApiFixture: telegramApiFixture(),

@@ -3,12 +3,10 @@ import type { ParameterCommandDeps } from './appCommandTypes';
 
 export function createParameterCommands(args: ParameterCommandDeps): ParameterModalCommands {
   return {
-    closeSingle: () => args.setParametersOpen(false),
-    changeSingle: args.setParams,
-    closeBatch: () => args.setBatchParametersDraftId(null),
-    changeBatch: (next) => {
-      if (!args.activeBatchDraft) return;
-      args.setBatchDrafts((prev) => prev.map((draft) => draft.id === args.activeBatchDraft?.id ? { ...draft, params: next } : draft));
+    closeComposer: () => args.setComposerParametersDraftId(null),
+    changeComposer: (params) => {
+      if (!args.activeComposerDraft) return;
+      args.patchComposerDraft(args.activeComposerDraft.id, { params });
     }
   };
 }

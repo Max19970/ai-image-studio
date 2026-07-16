@@ -122,7 +122,6 @@ export function restoreRequestToWorkspaceCommand(snapshot: GenerationRequestSnap
     : snapshot.attachments.length > 0
       ? commands.t('composer.restoreNeedsFiles')
       : null);
-  commands.setBatchComposerOpen(false);
   commands.setParams((prev) => getProviderGenerationRequestSurfaceById(snapshot.surfaceId).restoreParamsFromSnapshot({ previous: prev, snapshot }));
 
   if (modelFromHistory) {

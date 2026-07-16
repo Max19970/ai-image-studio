@@ -41,7 +41,7 @@ export function App() {
 
   return (
     <main
-      className={`studio-app ${state.batchComposerOpen ? 'batch-composer-is-open' : ''} ${documentHidden ? 'motion-is-backgrounded' : ''} ${(hostEnvironment.decorations.classNames ?? []).join(' ')}`}
+      className={`studio-app ${documentHidden ? 'motion-is-backgrounded' : ''} ${(hostEnvironment.decorations.classNames ?? []).join(' ')}`}
       data-theme={state.studioSettings.interfaceTheme}
       {...hostEnvironment.decorations.dataAttributes}
     >

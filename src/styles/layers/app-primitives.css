@@ -449,10 +449,4 @@
   .studio-app {
     transition: none;
   }
-
-  .batch-composer-is-open .studio-main {
-    align-items: center;
-    justify-content: center;
-    padding-bottom: 28px;
-  }
 }

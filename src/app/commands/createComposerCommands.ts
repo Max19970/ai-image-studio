@@ -1,13 +1,23 @@
 import type { ImageParams } from '../../domain/imageParams';
 import type { ComposerCommands, RequestPresetCommands } from '../../interface/context/commands';
-import { setComposerImageAttachments, setComposerMask, setComposerReferenceImages, setComposerTargetImage } from './composerAttachmentCommands';
-import { applyComposerCompatibilityForModel, setComposerProviderModeWithCompatibility } from './providerCompatibilityCommands';
+import {
+  setComposerImageAttachments,
+  setComposerMask,
+  setComposerReferenceImages,
+  setComposerTargetImage
+} from './composerAttachmentCommands';
+import {
+  applyComposerCompatibilityForModel,
+  setComposerProviderModeWithCompatibility
+} from './providerCompatibilityCommands';
 import type { ComposerCommandDeps } from './appCommandTypes';
-import { submitSingleGenerationCommand } from './generationCommands';
-import { addCurrentRequestToBatchComposerCommand, openBatchComposerCommand } from './workspaceCommands';
+import { submitComposerDraftsCommand } from './generationCommands';
 
-export function createComposerCommands(args: ComposerCommandDeps, requestPresets: RequestPresetCommands): ComposerCommands {
-  const patchParams = (patch: Partial<ImageParams>) => args.setParams((prev) => ({ ...prev, ...patch }));
+export function createComposerCommands(
+  args: ComposerCommandDeps,
+  requestPresets: RequestPresetCommands
+): ComposerCommands {
+  const patchParams = (patch: Partial<ImageParams>) => args.setParams((previous) => ({ ...previous, ...patch }));
 
   return {
     setProviderMode: (providerModeId) => setComposerProviderModeWithCompatibility(args, providerModeId),
@@ -18,48 +28,31 @@ export function createComposerCommands(args: ComposerCommandDeps, requestPresets
     },
     setPrompt: (prompt) => patchParams({ prompt }),
     patchParams: args.setParams,
-    submit: () => submitSingleGenerationCommand({
-      canSubmit: args.canSubmit,
-      mode: args.mode,
-      providerMode: args.providerMode,
-      params: args.params,
-      provider: args.provider,
-      activeProvider: args.activeProvider,
-      activeModel: args.activeModel,
-      payload: args.payload,
-      warnings: args.warnings,
-      targetImage: args.targetImage,
-      referenceImages: args.referenceImages,
-      mask: args.mask,
-      taskHistory: args.taskHistory,
-      setBusy: args.setBusy,
-      setServerSubmission: args.setServerSubmission,
-      t: args.t,
-      galleryPath: args.activeGalleryPath
-    }),
-    openParameters: () => args.setParametersOpen(true),
-    openBatchComposer: () => openBatchComposerCommand({
-      providerModeId: args.providerModeId,
-      params: args.params,
-      selectedModelId: args.studioSettings.selectedModelId,
-      targetImage: args.targetImage,
-      referenceImages: args.referenceImages,
-      mask: args.mask,
-      setDrafts: args.setBatchDrafts,
-      setOpen: args.setBatchComposerOpen,
-      setWorkspaceTab: args.setWorkspaceTab
-    }),
-    addCurrentToBatchComposer: () => addCurrentRequestToBatchComposerCommand({
-      providerModeId: args.providerModeId,
-      params: args.params,
-      selectedModelId: args.studioSettings.selectedModelId,
-      targetImage: args.targetImage,
-      referenceImages: args.referenceImages,
-      mask: args.mask,
-      setDrafts: args.setBatchDrafts,
-      setOpen: args.setBatchComposerOpen,
-      setWorkspaceTab: args.setWorkspaceTab
-    }),
+    submit: async () => {
+      const submittedIds = await submitComposerDraftsCommand({
+        drafts: args.composerDrafts,
+        intervalSeconds: args.composerIntervalSeconds,
+        settings: args.studioSettings,
+        selectedModelId: args.studioSettings.selectedModelId,
+        capabilityReport: args.capabilityReport,
+        setBusy: args.setBusy,
+        setServerSubmission: args.setServerSubmission,
+        taskHistory: args.taskHistory,
+        t: args.t,
+        galleryPath: args.activeGalleryPath
+      });
+      if (submittedIds.length === 0) return;
+      const submitted = new Set(submittedIds);
+      args.setComposerDrafts((drafts) => drafts.filter((draft) => !submitted.has(draft.id)));
+    },
+    openParameters: () => args.setComposerParametersDraftId(args.activeComposerDraftId),
+    selectDraft: args.selectComposerDraft,
+    addDraft: args.addComposerDraft,
+    duplicateDraft: args.duplicateComposerDraft,
+    removeDraft: args.removeComposerDraft,
+    patchDraft: args.patchComposerDraft,
+    patchDraftParams: args.patchComposerDraftParams,
+    setIntervalSeconds: args.setComposerIntervalSeconds,
     setTargetImage: (file) => setComposerTargetImage(args, file),
     setReferenceImages: (files) => setComposerReferenceImages(args, files),
     setImageAttachments: (targetImage, referenceImages) => setComposerImageAttachments(args, targetImage, referenceImages),

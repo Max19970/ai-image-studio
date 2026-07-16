@@ -33,7 +33,6 @@ export interface ProviderProbeStateCommands {
 export interface WorkspaceNavigationCommands {
   setSelectedTaskId: StateSetter<string | null>;
   setSelectedImageId: StateSetter<string | null>;
-  setBatchComposerOpen: StateSetter<boolean>;
 }
 
 export interface SettingsSelectionContext {

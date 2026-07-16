@@ -122,7 +122,6 @@ export async function startGalleryHiresFixCommand(args: GalleryHiresFixCommandDe
     args.setTargetImage(targetFile);
     args.setReferenceImages([]);
     args.setMask(null);
-    args.setBatchComposerOpen(false);
     args.setWorkspaceTab('images');
     args.setSelectedTaskId(null);
     args.setSelectedImageId(null);

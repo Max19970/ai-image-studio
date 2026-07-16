@@ -2,7 +2,7 @@ import type { ImageParams } from './imageParams';
 import type { ProviderGenerationModeId } from './providerMode';
 import type { WorkMode } from './workMode';
 
-export interface BatchComposerDraft {
+export interface ComposerRequestDraft {
   id: string;
   providerModeId: ProviderGenerationModeId;
   params: ImageParams;
@@ -11,6 +11,9 @@ export interface BatchComposerDraft {
   referenceImages: File[];
   mask: File | null;
 }
+
+/** @deprecated Use ComposerRequestDraft. */
+export type BatchComposerDraft = ComposerRequestDraft;
 
 export interface AttachmentSummary {
   role: 'target' | 'reference' | 'mask';

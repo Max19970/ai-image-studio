@@ -1,25 +1,13 @@
 import type { WorkspaceMainContext } from '../../../interface/context/workspace/main';
 import type { WorkspaceContextFactoryArgs } from './types';
 
-export function createMainContext({ state, derived, commands }: WorkspaceContextFactoryArgs): WorkspaceMainContext {
+export function createMainContext({ state, commands }: WorkspaceContextFactoryArgs): WorkspaceMainContext {
   return {
     activeTab: state.workspaceTab,
-    batchComposerOpen: state.batchComposerOpen,
     gallery: {
       tasks: state.tasks,
       busy: state.busy,
       commands: commands.gallery
-    },
-    batchComposer: {
-      drafts: state.batchDrafts,
-      intervalSeconds: state.batchIntervalSeconds,
-      busy: state.busy,
-      canSubmit: derived.batchCanSubmit,
-      models: state.studioSettings.models,
-      providers: state.studioSettings.providers,
-      studioSettings: state.studioSettings,
-      requestPresets: state.requestPresets,
-      commands: commands.batchComposer
     },
     info: {},
     settings: {

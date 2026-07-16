@@ -17,7 +17,6 @@ export function createDetailCommands(args: DetailCommandDeps): DetailCommands {
       t: args.t,
       setProviderModeId: args.setProviderModeId,
       setCompatibilityNotice: args.setCompatibilityNotice,
-      setBatchComposerOpen: args.setBatchComposerOpen,
       setParams: args.setParams,
       settings: args.studioSettings,
       setSettings: args.setStudioSettings,

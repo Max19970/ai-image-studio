@@ -1,0 +1,36 @@
+.icon {
+  display: block;
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  overflow: visible;
+  color: inherit;
+  transform-origin: center;
+  transition: transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.icon path {
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.icon[data-direction='up'] {
+  transform: rotate(180deg);
+}
+
+.icon[data-direction='left'] {
+  transform: rotate(90deg);
+}
+
+.icon[data-direction='right'] {
+  transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon {
+    transition: none;
+  }
+}

@@ -1,6 +1,5 @@
 import type { AppCommands } from '../../interface/context/commands';
 import type { CreateAppCommandsArgs } from './appCommandTypes';
-import { createBatchComposerCommands } from './createBatchComposerCommands';
 import { createComposerCommands } from './createComposerCommands';
 import { createDetailCommands } from './createDetailCommands';
 import { createGalleryCommands } from './createGalleryCommands';
@@ -16,7 +15,6 @@ export function createAppCommands(args: CreateAppCommandsArgs): AppCommands {
     workspace: createWorkspaceCommands(args.workspace),
     composer: createComposerCommands(args.composer, requestPresets),
     gallery: createGalleryCommands(args.gallery),
-    batchComposer: createBatchComposerCommands(args.batchComposer, requestPresets),
     settings: createSettingsCommands(args.settings),
     detail: createDetailCommands(args.detail),
     parameters: createParameterCommands(args.parameters)

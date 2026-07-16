@@ -10,167 +10,315 @@
   height: 34px;
   min-width: 34px;
   place-items: center;
-  border: 1px solid rgba(255,255,255,.13);
-  border-radius: 13px;
+  border: 0;
+  border-radius: 11px;
   padding: 0;
-  background: rgba(255,255,255,.052);
+  background: rgba(255,255,255,.055);
   color: var(--text);
-  font-size: 15px;
-  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+  font-size: 16px;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
 }
 
-.trigger:hover,
 .trigger[data-open='true'] {
-  border-color: rgba(255,255,255,.23);
-  background: rgba(255,255,255,.11);
-  transform: translateY(-1px);
+  background: rgba(255,255,255,.13);
+}
+
+.trigger:active,
+.action:active,
+.modeButton:active,
+.modelRow:active,
+.queueToolbar button:active,
+.backButton:active {
+  transform: scale(.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .trigger:hover,
+  .action:hover,
+  .modelRow:hover,
+  .queueToolbar button:hover,
+  .backButton:hover {
+    background: rgba(255,255,255,.075);
+    color: var(--text);
+  }
 }
 
 .trigger em {
   position: absolute;
-  right: -4px;
   top: -5px;
+  right: -5px;
+  display: grid;
   min-width: 16px;
   height: 16px;
-  border: 1px solid rgba(255,255,255,.20);
+  place-items: center;
   border-radius: 999px;
-  padding: 1px 4px 0;
-  background: rgba(8,8,8,.78);
-  color: var(--text);
+  padding: 0 4px;
+  background: var(--accent);
+  color: var(--accent-ink);
   font-family: var(--font-mono);
   font-size: 9px;
   font-style: normal;
-  line-height: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.floatingMenu {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.mainFloating {
+  width: 284px !important;
+  overflow-y: auto;
+}
+
+.modelPickerFloating {
+  padding: 0 !important;
 }
 
 .menu {
   display: grid;
-  gap: 7px;
-  width: 292px;
-  min-width: 0;
-}
-
-.group {
-  display: grid;
-  gap: 5px;
-}
-
-.groupTitle {
-  margin: 4px 3px 0;
-  color: var(--faint);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: .11em;
-  text-transform: uppercase;
-}
-
-.modeGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 143px);
-  gap: 5px;
-}
-
-.action,
-.modeButton {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 9px;
   width: 100%;
-  align-items: start;
+  min-width: 0;
+  gap: 5px;
+}
+
+.sectionLabel {
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  line-height: 1.2;
+}
+
+.modeSection {
+  display: grid;
+  gap: 6px;
+  padding: 2px 2px 0;
+}
+
+.modeSwitch {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.045);
+}
+
+.modeButton {
+  min-width: 0;
+  min-height: 34px;
+  flex: 1;
   border: 0;
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 8px;
+  padding: 6px 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
+}
+
+.modeButton[data-active='true'] {
+  background: rgba(255,255,255,.12);
+  color: var(--text);
+}
+
+.modelRow {
+  display: flex;
+  min-width: 0;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-radius: 10px;
+  padding: 7px 9px;
   background: transparent;
   color: var(--text);
   text-align: left;
-  transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
 }
 
-.modeButton {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 4px;
-  width: 143px;
+.modelCopy {
+  display: grid;
   min-width: 0;
-}
-
-.action:hover,
-.modeButton:hover,
-.modeButton[data-active='true'] {
-  background: rgba(255,255,255,.085);
-}
-
-.modeButton[data-active='true'] {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 38%, transparent);
-}
-
-.menuModelSelect {
-  width: 100%;
-}
-
-.menuModelTrigger {
-  min-height: 42px;
-  border-radius: 12px;
-  background: rgba(255,255,255,.055);
-}
-
-.menuModelTrigger strong {
-  font-size: 12px;
-}
-
-.menuModelTrigger small {
-  font-size: 10px;
-}
-
-.menuModelPanel {
-  width: min(560px, calc(100vw - 42px));
-}
-
-.icon {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 9px;
-  background: rgba(255,255,255,.045);
-  color: var(--text);
-  font-size: 12px;
-}
-
-.copy {
-  display: grid;
   gap: 2px;
-  min-width: 0;
 }
 
-.copy strong,
-.modeButton strong {
+.modelCopy small {
   overflow: hidden;
-  font-size: 12px;
-  font-weight: 750;
+  color: var(--faint);
+  font-size: 10px;
+  line-height: 1.15;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.copy small,
-.modeButton small {
+.modelCopy strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 720;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowChevron {
+  width: 16px;
+  height: 16px;
+  color: var(--faint);
+}
+
+.divider {
+  height: 1px;
+  margin: 2px 3px;
+  background: var(--surface-border-soft);
+}
+
+.actionList {
+  display: grid;
+  gap: 1px;
+}
+
+.action {
+  display: grid;
+  min-height: 38px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 9px;
+  padding: 6px 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
+}
+
+.icon {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.danger {
+  color: var(--muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .danger:hover {
+    background: rgba(255,154,169,.07) !important;
+    color: #ffd8de !important;
+  }
+}
+
+.queueToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 0 2px 2px;
+}
+
+.queueToolbar button {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 8px;
+  padding: 5px 7px;
+  background: transparent;
   color: var(--muted);
   font-size: 10px;
-  line-height: 1.35;
+  font-weight: 650;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
 }
 
-.modeButton small {
-  overflow-wrap: anywhere;
+.modelMenu {
+  gap: 0;
+  width: 100%;
+  animation: modelMenuIn 180ms var(--motion-ease-standard) both;
 }
 
-.danger:hover {
-  background: rgba(255,154,169,.08);
-  color: #ffd8de;
-}
-
-.sheetBody {
-  display: grid;
+.drillHeader {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
   gap: 10px;
+  padding: 9px 12px 8px;
+  border-bottom: 1px solid var(--surface-border-soft);
+  background: rgba(255,255,255,.012);
+}
+
+.backButton {
+  display: grid;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
+}
+
+.drillHeader > div {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.drillHeader strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 720;
+  line-height: 1.2;
+}
+
+.drillHeader span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes modelMenuIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 620px) {
@@ -178,45 +326,38 @@
     width: 42px;
     min-width: 42px;
     height: 42px;
-    border-radius: 15px;
-  }
-
-  .menu {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .modeGrid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .modeButton {
-    width: 100%;
-  }
-
-  .action,
-  .modeButton {
-    min-height: 44px;
     border-radius: 13px;
-    padding: 9px 10px;
   }
 
-  .copy strong,
-  .modeButton strong {
-    font-size: 12px;
+  .mainFloating {
+    width: min(300px, calc(100vw - 16px)) !important;
+    max-height: min(var(--floating-available-height, 68dvh), 68dvh) !important;
   }
 
-  .copy small,
-  .modeButton small {
-    font-size: 10px;
-    line-height: 1.25;
+  .modelPickerFloating {
+    max-height: min(var(--floating-available-height, 76dvh), 76dvh) !important;
   }
+
+  .action {
+    min-height: 44px;
+  }
+
+  .queueToolbar button {
+    min-height: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modelMenu { animation-duration: .01ms; }
 }
 
 @media (pointer: coarse) {
   .trigger,
   .action,
-  .modeButton {
+  .modeButton,
+  .modelRow,
+  .backButton,
+  .queueToolbar button {
     min-height: 44px;
   }
 }

@@ -26,8 +26,7 @@
   }
 
   .studio-app,
-  .studio-main,
-  .batch-composer-is-open .studio-main {
+  .studio-main {
     height: auto;
     max-height: none;
     overflow-x: hidden;
@@ -39,16 +38,6 @@
     min-height: 100dvh;
     padding-top: 0;
     padding-bottom: calc(var(--mobile-composer-space) + var(--mobile-bottom-nav-space) + max(10px, env(safe-area-inset-bottom)));
-  }
-
-  .batch-composer-is-open {
-    --mobile-bottom-nav-space: 0px;
-  }
-
-  .batch-composer-is-open .studio-main {
-    min-height: auto;
-    padding-top: 0;
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 
   .gallery-spinner {
@@ -196,14 +185,6 @@
       padding-bottom: calc(
         var(--mobile-composer-space) +
         var(--mobile-bottom-nav-space) +
-        max(10px, env(safe-area-inset-bottom)) +
-        var(--telegram-safe-area-bottom, 0px) +
-        var(--telegram-content-safe-area-bottom, 0px)
-      );
-    }
-
-    .telegram-mini-app.batch-composer-is-open .studio-main {
-      padding-bottom: calc(
         max(10px, env(safe-area-inset-bottom)) +
         var(--telegram-safe-area-bottom, 0px) +
         var(--telegram-content-safe-area-bottom, 0px)

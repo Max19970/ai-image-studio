@@ -29,8 +29,13 @@ export interface ComposerCommands {
   patchParams: (params: ImageParams) => void;
   submit: () => Promise<void>;
   openParameters: () => void;
-  openBatchComposer: () => void;
-  addCurrentToBatchComposer: () => void;
+  selectDraft: (id: string) => void;
+  addDraft: () => void;
+  duplicateDraft: (id: string) => void;
+  removeDraft: (id: string) => void;
+  patchDraft: (id: string, patch: Partial<BatchComposerDraft>) => void;
+  patchDraftParams: (id: string, patch: Partial<ImageParams>) => void;
+  setIntervalSeconds: (seconds: number) => void;
   setTargetImage: (file: File | null) => void;
   setReferenceImages: (files: File[]) => void;
   setImageAttachments: (targetImage: File | null, referenceImages: File[]) => void;
@@ -87,17 +92,14 @@ export interface DetailCommands {
 }
 
 export interface ParameterModalCommands {
-  closeSingle: () => void;
-  changeSingle: (params: ImageParams) => void;
-  closeBatch: () => void;
-  changeBatch: (params: ImageParams) => void;
+  closeComposer: () => void;
+  changeComposer: (params: ImageParams) => void;
 }
 
 export interface AppCommands {
   workspace: WorkspaceCommands;
   composer: ComposerCommands;
   gallery: GalleryCommands;
-  batchComposer: BatchComposerCommands;
   settings: SettingsCommands;
   detail: DetailCommands;
   parameters: ParameterModalCommands;

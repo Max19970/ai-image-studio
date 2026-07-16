@@ -42,7 +42,8 @@ function resolveBrowserExecutable() {
         path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Google', 'Chrome', 'Application', 'chrome.exe'),
         path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Google', 'Chrome', 'Application', 'chrome.exe'),
         path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
-        path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Microsoft', 'Edge', 'Application', 'msedge.exe')
+        path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+        path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Microsoft', 'Edge', 'Application', 'msedge.exe')
       ]
     : ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'];
   return candidates.find((candidate) => candidate && existsSync(candidate)) || candidates[0];
@@ -230,6 +231,129 @@ async function clickComposerEditMode(page) {
   if (!clicked) throw new Error('No visible composer edit mode button by text.');
 }
 
+async function assertComposerOverlayTopology(page, scenarioName, viewportName) {
+  if (scenarioName === 'composer-compact' || scenarioName === 'composer-context-expanded') {
+    const contextState = await page.evaluate(() => {
+      const dock = document.querySelector('[data-testid="composer-dock"]');
+      const toggle = document.querySelector('[data-testid="composer-context-toggle"]');
+      const region = document.querySelector('[data-testid="composer-context-region"]');
+      const dockRect = dock?.getBoundingClientRect() ?? null;
+      const toggleRect = toggle?.getBoundingClientRect() ?? null;
+      const regionRect = region?.getBoundingClientRect() ?? null;
+      const regionStyle = region ? window.getComputedStyle(region) : null;
+      const hasMotion = Boolean(regionStyle?.transitionDuration.split(',').some((value) => Number.parseFloat(value) > 0.01));
+      return {
+        centered: Boolean(dockRect && toggleRect && Math.abs((dockRect.left + dockRect.width / 2) - (toggleRect.left + toggleRect.width / 2)) <= 1),
+        expanded: region?.getAttribute('data-expanded') === 'true',
+        regionHeight: regionRect?.height ?? -1,
+        hasMotion
+      };
+    });
+    const expectedExpanded = scenarioName === 'composer-context-expanded';
+    const heightMatches = expectedExpanded ? contextState.regionHeight > 1 : contextState.regionHeight <= 1;
+    if (!contextState.centered || contextState.expanded !== expectedExpanded || !heightMatches || !contextState.hasMotion) {
+      throw new Error(`Composer context disclosure is invalid: ${JSON.stringify(contextState)}`);
+    }
+  }
+
+  if (scenarioName === 'composer-model-picker' || scenarioName === 'composer-model-picker-small') {
+    const topology = await page.evaluate(() => {
+      const visibleLayers = Array.from(document.querySelectorAll('[data-floating-popover-layer="true"]')).filter((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+      });
+      const modelList = document.querySelector('[data-testid="composer-model-list"]');
+      const picker = document.querySelector('[data-testid="composer-grouped-model-picker"]');
+      const layer = modelList?.closest('[data-floating-popover-layer="true"]') ?? null;
+      const searchInput = picker?.querySelector('input[type="search"]') ?? null;
+      const searchField = searchInput?.parentElement ?? null;
+      const pickerBody = picker?.querySelector('nav')?.parentElement ?? null;
+      const layerRect = layer?.getBoundingClientRect() ?? null;
+      const pickerRect = picker?.getBoundingClientRect() ?? null;
+      const searchRect = searchField?.getBoundingClientRect() ?? null;
+      const bodyRect = pickerBody?.getBoundingClientRect() ?? null;
+      const totalItems = Number(picker?.getAttribute('data-total-items') ?? 0);
+      const renderedItems = Number(picker?.getAttribute('data-rendered-items') ?? 0);
+      const balancedInset = (inner, outer) => Boolean(
+        inner && outer && Math.abs((inner.left - outer.left) - (outer.right - inner.right)) <= 1.5
+      );
+      return {
+        visibleLayerCount: visibleLayers.length,
+        modelListInsideLayer: Boolean(layer),
+        hasSearch: Boolean(searchInput),
+        providerCount: picker?.querySelectorAll('nav button').length ?? 0,
+        totalItems,
+        renderedItems,
+        layerInViewport: Boolean(layerRect && layerRect.left >= 0 && layerRect.right <= window.innerWidth + .5),
+        pickerInViewport: Boolean(pickerRect && pickerRect.left >= 0 && pickerRect.right <= window.innerWidth + .5),
+        searchInsetsBalanced: balancedInset(searchRect, pickerRect),
+        bodyInsetsBalanced: balancedInset(bodyRect, pickerRect)
+      };
+    });
+    const largeFixture = scenarioName === 'composer-model-picker';
+    if (
+      topology.visibleLayerCount !== 1
+      || !topology.modelListInsideLayer
+      || !topology.hasSearch
+      || topology.providerCount < (largeFixture ? 10 : 1)
+      || topology.totalItems < (largeFixture ? 500 : 1)
+      || topology.renderedItems <= 0
+      || topology.renderedItems > topology.totalItems
+      || (largeFixture && topology.renderedItems >= topology.totalItems)
+      || (largeFixture && topology.renderedItems > 100)
+      || !topology.layerInViewport
+      || !topology.pickerInViewport
+      || !topology.searchInsetsBalanced
+      || !topology.bodyInsetsBalanced
+    ) {
+      throw new Error(`Composer model picker topology or virtualization is invalid: ${JSON.stringify(topology)}`);
+    }
+  }
+
+  if (scenarioName === 'composer-queue' && viewportName === 'mobile') {
+    const queuePosition = await page.evaluate(() => {
+      const dock = document.querySelector('[data-testid="composer-dock"]');
+      const panel = document.querySelector('[data-testid="composer-queue-panel"]');
+      const dockRect = dock?.getBoundingClientRect() ?? null;
+      const panelRect = panel?.getBoundingClientRect() ?? null;
+      const panelStyle = panel ? window.getComputedStyle(panel) : null;
+      return {
+        attachedGap: dockRect && panelRect ? dockRect.top - panelRect.bottom : null,
+        position: panelStyle?.position ?? null,
+        animationName: panelStyle?.animationName ?? null
+      };
+    });
+    if (
+      queuePosition.attachedGap === null
+      || Math.abs(queuePosition.attachedGap) > 12
+      || queuePosition.position !== 'absolute'
+      || !queuePosition.animationName?.includes('queuePanelMobileIn')
+    ) {
+      throw new Error(`Mobile composer queue is not attached to the dock: ${JSON.stringify(queuePosition)}`);
+    }
+  }
+
+  if (scenarioName === 'composer-queue-item-menu') {
+    const topology = await page.evaluate(() => {
+      const queue = document.querySelector('[data-testid="composer-queue-panel"]');
+      const menus = Array.from(document.querySelectorAll('[data-testid="composer-queue-item-menu"]'));
+      const menu = menus[0] ?? null;
+      const layer = menu?.closest('[data-floating-popover-layer="true"]') ?? null;
+      const rect = layer?.getBoundingClientRect() ?? null;
+      return {
+        menuCount: menus.length,
+        insideQueue: Boolean(queue && menu && queue.contains(menu)),
+        portalLayer: Boolean(layer && layer.parentElement === document.body),
+        inViewport: Boolean(rect && rect.left >= 0 && rect.top >= 0 && rect.right <= window.innerWidth && rect.bottom <= window.innerHeight)
+      };
+    });
+    if (topology.menuCount !== 1 || topology.insideQueue || !topology.portalLayer || !topology.inViewport) {
+      throw new Error(`Queue item menu topology is invalid: ${JSON.stringify(topology)}`);
+    }
+  }
+}
+
 async function assertScenarioDestination(page, scenario, stepIndex, viewportName) {
   const configuredSelector = scenario.assertSelectorByViewport?.[viewportName] || scenario.assertSelector;
   const previousWait = scenario.steps.slice(0, stepIndex).reverse().find((item) => item.type === 'waitForSelector');
@@ -245,6 +369,7 @@ async function assertScenarioDestination(page, scenario, stepIndex, viewportName
     });
   }, selector);
   if (!visible) throw new Error(`Scenario ${scenario.name} destination is not visible: ${selector}`);
+  await assertComposerOverlayTopology(page, scenario.name, viewportName);
 }
 
 async function runStep(page, step, viewportName, scenario, stepIndex) {
