@@ -1,6 +1,6 @@
 import type express from 'express';
 import { resetCancellationRuntimeForTests } from './cancellation';
-import { resetRuntimeStoreForTests, clientSnapshotTasks, waitForRuntimeTaskPersistenceForTests } from './runtimeStore';
+import { resetRuntimeStoreForTests, clientSnapshotEvent, waitForRuntimeTaskPersistenceForTests } from './runtimeStore';
 import { resetTaskEventsForTests, subscribeGenerationTaskEvents as subscribeTaskEvents } from './taskEvents';
 
 export { startServerGenerationRun } from './singleRun';
@@ -31,5 +31,5 @@ export function resetGenerationTaskRuntimeForTests() {
 export { waitForRuntimeTaskPersistenceForTests };
 
 export function subscribeGenerationTaskEvents(req: express.Request, res: express.Response) {
-  subscribeTaskEvents(req, res, clientSnapshotTasks);
+  subscribeTaskEvents(req, res, clientSnapshotEvent);
 }

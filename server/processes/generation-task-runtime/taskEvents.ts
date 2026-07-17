@@ -1,5 +1,6 @@
 import type express from 'express';
 import type { GenerationTask } from '../../../src/domain/generationTask';
+import type { GenerationTasksEvent } from '../../../src/domain/generationTaskEvents';
 import { createGenerationTaskEventBus } from './taskEventBus';
 export type { GenerationTasksDeltaEvent } from './taskEventDelta';
 
@@ -7,6 +8,10 @@ const defaultTaskEventBus = createGenerationTaskEventBus();
 
 export function hasTaskEventClients(): boolean {
   return defaultTaskEventBus.hasClients();
+}
+
+export function currentTaskEventsRevision(): number {
+  return defaultTaskEventBus.currentRevision();
 }
 
 export function nextTaskEventsRevision(): number {
@@ -24,7 +29,7 @@ export function broadcastTaskUpsert(task: GenerationTask, revision: number, task
 export function subscribeGenerationTaskEvents(
   req: express.Request,
   res: express.Response,
-  getSnapshot: () => Promise<GenerationTask[]>
+  getSnapshot: () => Promise<GenerationTasksEvent>
 ) {
   defaultTaskEventBus.subscribe(req, res, getSnapshot);
 }
