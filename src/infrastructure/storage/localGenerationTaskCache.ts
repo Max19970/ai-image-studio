@@ -3,6 +3,7 @@ import type { GenerationTaskHistoryCache } from '../../entities/storage';
 import { normalizeGenerationTasks, toLightGenerationTaskSnapshot } from '../../entities/storage';
 
 export const generationTasksLocalCacheKey = 'image-studio.generation-tasks.v1';
+export const localGenerationTaskFallbackLimit = 1000;
 
 let runtimeNamespace: string | null = null;
 
@@ -31,7 +32,7 @@ export const localGenerationTaskCache: GenerationTaskHistoryCache = {
     try {
       const raw = localStorage.getItem(key);
       if (!raw) return [];
-      return normalizeGenerationTasks(JSON.parse(raw), 1000);
+      return normalizeGenerationTasks(JSON.parse(raw)).slice(0, localGenerationTaskFallbackLimit);
     } catch {
       return [];
     }
@@ -41,7 +42,7 @@ export const localGenerationTaskCache: GenerationTaskHistoryCache = {
     const key = getNamespacedCacheKey();
     if (!key) return;
     try {
-      localStorage.setItem(key, JSON.stringify(toLightGenerationTaskSnapshot(tasks, 1000)));
+      localStorage.setItem(key, JSON.stringify(toLightGenerationTaskSnapshot(tasks, localGenerationTaskFallbackLimit)));
     } catch (error) {
       console.warn('Could not persist even the light generation history cache.', error);
     }

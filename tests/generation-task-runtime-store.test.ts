@@ -8,6 +8,7 @@ import {
   type RuntimeTaskSerializationPort
 } from '../server/processes/generation-task-runtime/runtimeStore';
 import { serializeLiveGenerationTaskImagesForClient } from '../server/processes/liveGenerationImageStore';
+import type { RuntimeTaskRetentionPolicyPort } from '../server/processes/generation-task-runtime/runtimeRetentionPolicy';
 import type { LiveGenerationImageStore } from '../server/processes/liveGenerationImageAssets';
 
 function deferred<T = void>() {
@@ -58,6 +59,10 @@ const events: RuntimeTaskEventPublisherPort = {
   broadcastTaskUpsert: () => undefined
 };
 
+const retentionPolicy: RuntimeTaskRetentionPolicyPort = {
+  getCompletedTaskLimit: () => 1000
+};
+
 test('live final images expose their deterministic storage key before the temporary URL expires', () => {
   const task = failedTask('task-1', 1);
   task.status = 'succeeded';
@@ -92,15 +97,15 @@ test('runtime initialization is shared across concurrent readers', async () => {
     },
     async save() {}
   };
-  const store = createGenerationTaskRuntimeStore(persistence, serialization, events);
+  const store = createGenerationTaskRuntimeStore(persistence, serialization, events, retentionPolicy);
 
   const first = store.ensureRuntimeTasks();
   const second = store.ensureRuntimeTasks();
   loadResult.resolve([failedTask('loaded', 1)]);
 
-  assert.equal(loadCalls, 1);
   assert.deepEqual((await first).map((task) => task.id), ['loaded']);
   assert.deepEqual((await second).map((task) => task.id), ['loaded']);
+  assert.equal(loadCalls, 1);
 });
 
 test('runtime initialization retries after a failed load', async () => {
@@ -113,7 +118,7 @@ test('runtime initialization retries after a failed load', async () => {
     },
     async save() {}
   };
-  const store = createGenerationTaskRuntimeStore(persistence, serialization, events);
+  const store = createGenerationTaskRuntimeStore(persistence, serialization, events, retentionPolicy);
 
   await assert.rejects(store.ensureRuntimeTasks(), /first load failed/);
   assert.deepEqual((await store.ensureRuntimeTasks()).map((task) => task.id), ['loaded']);
@@ -126,13 +131,51 @@ test('runtime mutation waits for initialization and applies to the loaded state'
     load: () => loadResult.promise,
     async save() {}
   };
-  const store = createGenerationTaskRuntimeStore(persistence, serialization, events);
+  const store = createGenerationTaskRuntimeStore(persistence, serialization, events, retentionPolicy);
 
   const mutation = store.prependTask(failedTask('new', 2), { persist: false });
   loadResult.resolve([failedTask('stored', 1)]);
   await mutation;
 
   assert.deepEqual((await store.ensureRuntimeTasks()).map((task) => task.id), ['new', 'stored']);
+});
+
+test('runtime load uses configured completed limit and preserves active tasks beyond it', async () => {
+  const loaded = [
+    failedTask('terminal-new', 4),
+    { ...failedTask('active', 3), status: 'running' as const },
+    failedTask('terminal-old', 2)
+  ];
+  let requestedLimit = 0;
+  const persistence: RuntimeTaskPersistencePort = {
+    async load(completedLimit) {
+      requestedLimit = completedLimit;
+      return loaded;
+    },
+    async save() {}
+  };
+  const policy: RuntimeTaskRetentionPolicyPort = { getCompletedTaskLimit: () => 1 };
+  const store = createGenerationTaskRuntimeStore(persistence, serialization, events, policy);
+
+  assert.deepEqual((await store.ensureRuntimeTasks()).map((task) => task.id), ['terminal-new', 'active']);
+  assert.equal(requestedLimit, 1);
+});
+
+test('runtime mutation removes only the oldest completed task at the configured limit', async () => {
+  const initial = Array.from({ length: 1000 }, (_, index) => failedTask(`terminal-${index}`, 1000 - index));
+  const persistence: RuntimeTaskPersistencePort = {
+    async load() { return initial; },
+    async save() {}
+  };
+  const policy: RuntimeTaskRetentionPolicyPort = { getCompletedTaskLimit: () => 1000 };
+  const store = createGenerationTaskRuntimeStore(persistence, serialization, events, policy);
+
+  await store.prependTask(failedTask('newest', 1001), { persist: false });
+  const retained = await store.ensureRuntimeTasks();
+  assert.equal(retained.length, 1000);
+  assert.equal(retained[0].id, 'newest');
+  assert.equal(retained.at(-1)?.id, 'terminal-998');
+  assert.equal(retained.some((task) => task.id === 'terminal-999'), false);
 });
 
 test('runtime persistence keeps only the latest pending snapshot while a save is in flight', async () => {
@@ -154,7 +197,7 @@ test('runtime persistence keeps only the latest pending snapshot while a save is
     }
   };
 
-  const store = createGenerationTaskRuntimeStore(persistence, serialization, events);
+  const store = createGenerationTaskRuntimeStore(persistence, serialization, events, retentionPolicy);
   await store.prependTask(failedTask('first', 1));
   await firstSaveStarted.promise;
 

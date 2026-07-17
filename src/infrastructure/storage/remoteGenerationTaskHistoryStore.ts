@@ -57,12 +57,12 @@ export const remoteGenerationTaskHistoryStore: GenerationTaskHistoryStore = {
     return {
       backend: 'remote-encrypted',
       ok: true,
-      value: normalizeGenerationTasks(data.tasks, options.limit ?? 1000)
+      value: normalizeGenerationTasks(data.tasks)
     };
   },
 
   async save(tasks: GenerationTask[]): Promise<StorageOperationResult> {
-    const safeTasks = normalizeGenerationTasks(tasks, tasks.length || 1);
+    const safeTasks = normalizeGenerationTasks(tasks);
     const response = await fetchStorage(generationTasksStorageEndpoint, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

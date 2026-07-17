@@ -4,6 +4,7 @@ import {
   getGenerationTaskStorageDiagnostics,
   loadGenerationTaskAssetDocument,
   loadGenerationTaskHistoryDocuments,
+  loadGenerationTaskRuntimeHistoryDocuments,
   saveGenerationTaskHistoryDocuments
 } from './generationTaskStore';
 import type { GenerationTaskStoreWorkerRequest, GenerationTaskStoreWorkerResponse } from './generationTaskStoreWorkerTypes';
@@ -19,6 +20,11 @@ function handleRequest(request: GenerationTaskStoreWorkerRequest): unknown {
   switch (request.operation.type) {
     case 'loadHistory':
       return loadGenerationTaskHistoryDocuments(request.operation.options ?? {});
+    case 'loadRuntimeHistory':
+      return loadGenerationTaskRuntimeHistoryDocuments(
+        request.operation.completedLimit,
+        request.operation.assetMode ?? 'metadata'
+      );
     case 'saveHistory':
       return saveGenerationTaskHistoryDocuments(request.operation.tasks);
     case 'clearHistory':

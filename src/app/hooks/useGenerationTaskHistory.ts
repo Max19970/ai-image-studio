@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GenerationTask } from '../../domain/generationTask';
-import { defaultMaxStoredGenerationTasks, normalizeMaxStoredGenerationTasks } from '../../domain/generationHistorySettings';
+import {
+  defaultMaxStoredGenerationTasks,
+  normalizeMaxStoredGenerationTasks,
+  retainGenerationTasksByCompletedLimit
+} from '../../domain/generationHistorySettings';
 import { collectGenerationTasksObjectUrls, revokeBrowserObjectUrls } from '../../domain/generationTaskObjectUrls';
 import { applyGenerationTasksDelta, parseGenerationTasksDeltaEventData, parseGenerationTasksEventData } from '../../domain/generationTaskEvents';
 import { createTaskCancellationRegistry } from '../../processes/generation-task-lifecycle';
@@ -31,7 +35,7 @@ export function useGenerationTaskHistory(maxStoredGenerationTasks = defaultMaxSt
   const [tasks, setTasks] = useState<GenerationTask[]>(() => {
     const cachedTasks = loadGenerationTaskHistoryFallback();
     fallbackCacheSignatureRef.current = getGenerationTaskHistoryPersistenceSignature(cachedTasks);
-    return cachedTasks;
+    return retainGenerationTasksByCompletedLimit(cachedTasks, historyLimit);
   });
   const taskCancellationRegistryRef = useRef(createTaskCancellationRegistry());
   const liveTaskObjectUrlsRef = useRef<Set<string>>(new Set());
@@ -53,6 +57,12 @@ export function useGenerationTaskHistory(maxStoredGenerationTasks = defaultMaxSt
 
   useEffect(() => {
     historyLimitRef.current = historyLimit;
+    setTasks((current) => {
+      const nextTasks = retainGenerationTasksByCompletedLimit(current, historyLimit);
+      latestTasksRef.current = nextTasks;
+      cacheFallbackIfChanged(nextTasks);
+      return nextTasks;
+    });
   }, [historyLimit]);
 
   useEffect(() => {
@@ -61,7 +71,12 @@ export function useGenerationTaskHistory(maxStoredGenerationTasks = defaultMaxSt
       if (cancelled) return;
       setTasks((current) => {
         if (serverSnapshotLoadedRef.current) return current;
-        const nextTasks = taskCancellationRegistryRef.current.activeCount() > 0 ? current : withoutDeletedTasks(persistedTasks, deletedTaskIdsRef.current);
+        const nextTasks = taskCancellationRegistryRef.current.activeCount() > 0
+          ? current
+          : retainGenerationTasksByCompletedLimit(
+            withoutDeletedTasks(persistedTasks, deletedTaskIdsRef.current),
+            historyLimitRef.current
+          );
         latestTasksRef.current = nextTasks;
         return nextTasks;
       });
@@ -77,7 +92,10 @@ export function useGenerationTaskHistory(maxStoredGenerationTasks = defaultMaxSt
       if (!snapshot || snapshot.revision < serverRevisionRef.current) return;
       serverSnapshotLoadedRef.current = true;
       serverRevisionRef.current = snapshot.revision;
-      const nextTasks = withoutDeletedTasks(snapshot.tasks, deletedTaskIdsRef.current);
+      const nextTasks = retainGenerationTasksByCompletedLimit(
+        withoutDeletedTasks(snapshot.tasks, deletedTaskIdsRef.current),
+        historyLimitRef.current
+      );
       latestTasksRef.current = nextTasks;
       setTasks(nextTasks);
       cacheFallbackIfChanged(nextTasks);
@@ -87,7 +105,10 @@ export function useGenerationTaskHistory(maxStoredGenerationTasks = defaultMaxSt
       if (!delta || delta.revision <= serverRevisionRef.current) return;
       serverSnapshotLoadedRef.current = true;
       serverRevisionRef.current = delta.revision;
-      const nextTasks = withoutDeletedTasks(applyGenerationTasksDelta(latestTasksRef.current, delta), deletedTaskIdsRef.current);
+      const nextTasks = retainGenerationTasksByCompletedLimit(
+        withoutDeletedTasks(applyGenerationTasksDelta(latestTasksRef.current, delta), deletedTaskIdsRef.current),
+        historyLimitRef.current
+      );
       latestTasksRef.current = nextTasks;
       setTasks(nextTasks);
       cacheFallbackIfChanged(nextTasks);
@@ -120,9 +141,12 @@ export function useGenerationTaskHistory(maxStoredGenerationTasks = defaultMaxSt
   const ingestServerTask = (task: GenerationTask) => {
     const current = latestTasksRef.current;
     const exists = current.some((item) => item.id === task.id);
-    const nextTasks = withoutDeletedTasks(
-      exists ? current.map((item) => item.id === task.id ? task : item) : [task, ...current],
-      deletedTaskIdsRef.current
+    const nextTasks = retainGenerationTasksByCompletedLimit(
+      withoutDeletedTasks(
+        exists ? current.map((item) => item.id === task.id ? task : item) : [task, ...current],
+        deletedTaskIdsRef.current
+      ),
+      historyLimitRef.current
     );
     latestTasksRef.current = nextTasks;
     setTasks(nextTasks);

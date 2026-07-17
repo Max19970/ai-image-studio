@@ -1,5 +1,9 @@
 import type { GenerationTask } from '../../domain/generationTask';
-import { defaultMaxStoredGenerationTasks, normalizeMaxStoredGenerationTasks } from '../../domain/generationHistorySettings';
+import {
+  defaultMaxStoredGenerationTasks,
+  normalizeMaxStoredGenerationTasks,
+  retainGenerationTasksByCompletedLimit
+} from '../../domain/generationHistorySettings';
 import { isActiveGenerationStatus } from '../../domain/generationStatus';
 import type { GenerationTaskHistoryCache, GenerationTaskHistoryStore } from '../../entities/storage';
 import { normalizeGenerationTasks, toPersistableGenerationTaskSnapshot } from '../../entities/storage';
@@ -78,7 +82,7 @@ export async function loadGenerationTaskHistory(
   const historyLimit = normalizeMaxStoredGenerationTasks(limit);
   try {
     const result = await remote.load({ limit: historyLimit, offset: 0, assetMode: 'thumbnail' });
-    const normalized = normalizeGenerationTasks(result.value, historyLimit);
+    const normalized = retainGenerationTasksByCompletedLimit(normalizeGenerationTasks(result.value), historyLimit);
     fallback.save(createPersistableGenerationTaskHistorySnapshot(normalized, historyLimit));
     return normalized;
   } catch (error) {

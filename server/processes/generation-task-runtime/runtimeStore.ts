@@ -1,10 +1,15 @@
 import type { GenerationTask } from '../../../src/domain/generationTask';
 import type { GenerationTasksEvent } from '../../../src/domain/generationTaskEvents';
+import { retainGenerationTasksByCompletedLimit } from '../../../src/domain/generationHistorySettings';
 import { normalizeGenerationTasks } from '../../../src/entities/storage';
-import { loadGenerationTaskHistoryDocumentsAsync, saveGenerationTaskHistoryDocumentsAsync } from '../../storage/generationTaskStoreAsync';
+import { loadGenerationTaskRuntimeHistoryDocumentsAsync, saveGenerationTaskHistoryDocumentsAsync } from '../../storage/generationTaskStoreAsync';
 import { serializeGenerationTaskHistoryForClient } from '../generationTaskHistoryClientSerialization';
 import { serializeLiveGenerationTaskImagesForClient } from '../liveGenerationImageStore';
 import { createRuntimePersistenceCoordinator } from './runtimePersistenceCoordinator';
+import {
+  defaultRuntimeTaskRetentionPolicy,
+  type RuntimeTaskRetentionPolicyPort
+} from './runtimeRetentionPolicy';
 import {
   broadcastTasksDelta,
   broadcastTaskUpsert,
@@ -14,7 +19,7 @@ import {
 } from './taskEvents';
 
 export interface RuntimeTaskPersistencePort {
-  load(): Promise<GenerationTask[]>;
+  load(completedLimit: number): Promise<GenerationTask[]>;
   save(tasks: GenerationTask[]): Promise<void>;
 }
 
@@ -43,9 +48,9 @@ export interface GenerationTaskRuntimeStore {
 }
 
 export const defaultRuntimeTaskPersistence: RuntimeTaskPersistencePort = {
-  async load() {
-    const result = await loadGenerationTaskHistoryDocumentsAsync({ limit: 1000, offset: 0, assetMode: 'metadata' });
-    return normalizeGenerationTasks(result.tasks, 1000);
+  async load(completedLimit) {
+    const result = await loadGenerationTaskRuntimeHistoryDocumentsAsync(completedLimit, 'metadata');
+    return normalizeGenerationTasks(result.tasks, { interruptActive: false });
   },
   async save(tasks) {
     await saveGenerationTaskHistoryDocumentsAsync(tasks);
@@ -73,7 +78,8 @@ export const defaultRuntimeTaskEventPublisher: RuntimeTaskEventPublisherPort = {
 export function createGenerationTaskRuntimeStore(
   persistence: RuntimeTaskPersistencePort = defaultRuntimeTaskPersistence,
   serialization: RuntimeTaskSerializationPort = defaultRuntimeTaskSerialization,
-  events: RuntimeTaskEventPublisherPort = defaultRuntimeTaskEventPublisher
+  events: RuntimeTaskEventPublisherPort = defaultRuntimeTaskEventPublisher,
+  retentionPolicy: RuntimeTaskRetentionPolicyPort = defaultRuntimeTaskRetentionPolicy
 ): GenerationTaskRuntimeStore {
   let runtimeTasks: GenerationTask[] | null = null;
   let initializationPromise: Promise<GenerationTask[]> | null = null;
@@ -83,10 +89,11 @@ export function createGenerationTaskRuntimeStore(
   async function initializeRuntimeTasks(): Promise<GenerationTask[]> {
     if (runtimeTasks) return runtimeTasks;
     if (!initializationPromise) {
-      initializationPromise = persistence.load()
-        .then((loadedTasks) => {
-          runtimeTasks = loadedTasks;
-          return loadedTasks;
+      initializationPromise = Promise.resolve(retentionPolicy.getCompletedTaskLimit())
+        .then(async (completedLimit) => {
+          const loadedTasks = await persistence.load(completedLimit);
+          runtimeTasks = retainGenerationTasksByCompletedLimit(loadedTasks, completedLimit);
+          return runtimeTasks;
         })
         .catch((error) => {
           initializationPromise = null;
@@ -128,7 +135,8 @@ export function createGenerationTaskRuntimeStore(
       await enqueue(async () => {
         const currentTasks = await initializeRuntimeTasks();
         const previousClientTasks = events.hasClients() ? serialization.serializeTasks(currentTasks) : [];
-        runtimeTasks = recipe([...currentTasks]);
+        const completedLimit = await retentionPolicy.getCompletedTaskLimit();
+        runtimeTasks = retainGenerationTasksByCompletedLimit(recipe([...currentTasks]), completedLimit);
         if (options.persist !== false) persistenceCoordinator.schedule(runtimeTasks);
         const revision = events.nextRevision();
         if (events.hasClients()) {
@@ -139,7 +147,11 @@ export function createGenerationTaskRuntimeStore(
     async prependTask(task, options = {}) {
       await enqueue(async () => {
         const currentTasks = await initializeRuntimeTasks();
-        runtimeTasks = [task, ...currentTasks.filter((item) => item.id !== task.id)];
+        const completedLimit = await retentionPolicy.getCompletedTaskLimit();
+        runtimeTasks = retainGenerationTasksByCompletedLimit(
+          [task, ...currentTasks.filter((item) => item.id !== task.id)],
+          completedLimit
+        );
         if (options.persist !== false) persistenceCoordinator.schedule(runtimeTasks);
         const revision = events.nextRevision();
         if (events.hasClients()) {
@@ -154,8 +166,10 @@ export function createGenerationTaskRuntimeStore(
         if (taskIndex < 0) return;
 
         const changedTask = recipe(tasks[taskIndex]);
-        runtimeTasks = [...tasks];
-        runtimeTasks[taskIndex] = changedTask;
+        const nextTasks = [...tasks];
+        nextTasks[taskIndex] = changedTask;
+        const completedLimit = await retentionPolicy.getCompletedTaskLimit();
+        runtimeTasks = retainGenerationTasksByCompletedLimit(nextTasks, completedLimit);
         if (options.persist !== false) persistenceCoordinator.schedule(runtimeTasks);
         const revision = events.nextRevision();
         if (events.hasClients()) events.broadcastTaskUpsert(serialization.serializeTask(changedTask), revision);

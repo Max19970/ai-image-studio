@@ -1,6 +1,7 @@
 import { fork, type ChildProcess } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import type {
+  GenerationTaskAssetMode,
   GenerationTaskHistoryLoadOptions,
   GenerationTaskHistoryStorageStats,
   GenerationTaskStorageAudit,
@@ -102,6 +103,13 @@ function callWorker<T extends GenerationTaskStoreWorkerOperation['type']>(
 
 export function loadGenerationTaskHistoryDocumentsAsync(options: GenerationTaskHistoryLoadOptions = {}) {
   return callWorker({ type: 'loadHistory', options });
+}
+
+export function loadGenerationTaskRuntimeHistoryDocumentsAsync(
+  completedLimit: number,
+  assetMode: GenerationTaskAssetMode = 'metadata'
+) {
+  return callWorker({ type: 'loadRuntimeHistory', completedLimit, assetMode });
 }
 
 export function saveGenerationTaskHistoryDocumentsAsync(tasks: unknown[]) {

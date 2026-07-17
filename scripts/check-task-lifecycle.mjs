@@ -7,6 +7,7 @@ const serverRuntimeFiles = [
   'server/processes/generationTaskRuntime.ts',
   'server/processes/generation-task-runtime/index.ts',
   'server/processes/generation-task-runtime/runtimeStore.ts',
+  'server/processes/generation-task-runtime/runtimeRetentionPolicy.ts',
   'server/processes/generation-task-runtime/taskEvents.ts',
   'server/processes/generation-task-runtime/taskEventBus.ts',
   'server/processes/generation-task-runtime/taskEventDelta.ts',
@@ -92,7 +93,13 @@ async function main() {
     'server runtime does not persist failed/cancelled batch item terminal transitions.'
   );
   assert(serverRuntime.includes('subscribeGenerationTaskEvents') && serverRuntime.includes("'tasks-delta'") && serverRuntime.includes('createGenerationTaskEventBus'), 'server runtime split does not preserve SSE task delta publication.');
-  assert(serverRuntime.includes('saveGenerationTaskHistoryDocuments') && serverRuntime.includes('loadGenerationTaskHistoryDocuments'), 'server runtime split does not preserve persisted task history ownership.');
+  assert(
+    serverRuntime.includes('saveGenerationTaskHistoryDocuments')
+      && serverRuntime.includes('loadGenerationTaskRuntimeHistoryDocuments')
+      && serverRuntime.includes('RuntimeTaskRetentionPolicyPort')
+      && serverRuntime.includes('retainGenerationTasksByCompletedLimit'),
+    'server runtime split does not preserve retention-aware persisted task history ownership.'
+  );
   assert(serverRuntime.includes('createGenerationCancellationRegistry') && serverRuntime.includes('GenerationCancellationTaskStorePort') && serverRuntime.includes('reduceCancelledBatchItem'), 'server runtime cancellation is not split into controller registry, task-store port and reducer adapter.');
   assert(serverRuntime.includes('createGenerationTaskRuntimeStore') && serverRuntime.includes('RuntimeTaskPersistencePort') && serverRuntime.includes('RuntimeTaskEventPublisherPort'), 'server runtime store does not expose injected persistence/serialization/event ports.');
   assert(serverRuntime.includes('createLiveGenerationImageStore') && serverRuntime.includes('defaultLiveImageUrl'), 'server runtime does not split live image cache policy from serialization facade.');
