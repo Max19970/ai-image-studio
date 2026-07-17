@@ -1,60 +1,45 @@
 import type { GenerationRequestSnapshot } from '../../domain/generationTask';
-import { hasProviderModeRequiredAttachments } from '../../entities/provider/attachmentCompatibility';
 import {
-  getLegacyWorkModeForProviderMode,
-  resolveProviderGenerationModeForModelContext
-} from '../../entities/provider/modeResolution';
-import { buildImagePayload, explainPayloadWarnings, validateCustomSize } from '../../entities/provider/request';
-import { providerContextForModel } from '../../entities/studio-settings';
+  analyzeComposerDraft,
+  explainComposerDraftAnalysisWarnings
+} from '../generation-request/analyzeComposerDraft';
 import { captureRequestSnapshot } from '../generation-runner/requestSnapshots';
 import type { BatchGenerationRunInput, PreparedBatchItem } from './types';
 
 export function prepareBatchItems(args: BatchGenerationRunInput): PreparedBatchItem[] {
   const { drafts, settings, selectedModelId, capabilityReport, t } = args;
   return drafts.flatMap((draft, index) => {
-    const { model, generationProvider, provider } = providerContextForModel(settings, draft.selectedModelId);
-    if (!model) return [];
-    if (!draft.params.prompt.trim()) return [];
+    const analysis = analyzeComposerDraft(draft, settings);
+    if (!analysis.ready) return [];
 
-    const modeResolution = resolveProviderGenerationModeForModelContext(settings, model, draft.providerModeId);
-    const providerMode = modeResolution.activeMode;
-    const mode = getLegacyWorkModeForProviderMode(providerMode);
-
-    if (!hasProviderModeRequiredAttachments({
+    const warnings = explainComposerDraftAnalysisWarnings({
+      analysis,
+      capabilityReport: draft.selectedModelId === selectedModelId ? capabilityReport : null,
+      t
+    });
+    const snapshot = captureRequestSnapshot({
+      mode: analysis.mode,
+      providerMode: analysis.providerMode,
+      providerModeLabel: t(analysis.providerMode.labelKey),
+      params: draft.params,
+      provider: analysis.provider,
+      activeProvider: analysis.generationProvider,
+      activeModel: analysis.model,
+      payload: analysis.payload,
+      warnings,
       targetImage: draft.targetImage,
       referenceImages: draft.referenceImages,
-      mask: draft.mask
-    }, providerMode)) return [];
-
-    try {
-      const payload = buildImagePayload(draft.params, provider, mode, providerMode);
-      const warnings = explainPayloadWarnings(
-        payload,
-        provider,
-        mode,
-        draft.selectedModelId === selectedModelId ? capabilityReport : null,
-        providerMode
-      );
-      if (draft.params.sizeMode === 'custom') warnings.push(...validateCustomSize(draft.params.width, draft.params.height, provider, providerMode));
-      const snapshot = captureRequestSnapshot({
-        mode,
-        providerMode,
-        providerModeLabel: t(providerMode.labelKey),
-        params: draft.params,
-        provider,
-        activeProvider: generationProvider,
-        activeModel: model,
-        payload,
-        warnings,
-        targetImage: draft.targetImage,
-        referenceImages: draft.referenceImages,
-        mask: draft.mask,
-        fallbackProviderLabel: t('app.localProvider')
-      });
-      return [{ draft, index, provider, providerMode, payload, snapshot }];
-    } catch {
-      return [];
-    }
+      mask: draft.mask,
+      fallbackProviderLabel: t('app.localProvider')
+    });
+    return [{
+      draft,
+      index,
+      provider: analysis.provider,
+      providerMode: analysis.providerMode,
+      payload: analysis.payload,
+      snapshot
+    }];
   });
 }
 
