@@ -112,6 +112,13 @@ export function loadGenerationTaskRuntimeHistoryDocumentsAsync(
   return callWorker({ type: 'loadRuntimeHistory', completedLimit, assetMode });
 }
 
+export function loadGenerationTaskHistoryDocumentsByIdsAsync(
+  taskIds: string[],
+  assetMode: GenerationTaskAssetMode = 'full'
+) {
+  return callWorker({ type: 'loadHistoryByIds', taskIds, assetMode });
+}
+
 export function saveGenerationTaskHistoryDocumentsAsync(tasks: unknown[]) {
   return callWorker({ type: 'saveHistory', tasks });
 }

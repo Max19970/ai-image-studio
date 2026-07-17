@@ -1,26 +1,9 @@
 import type express from 'express';
 import { normalizeGalleryPath } from '../../src/domain/galleryFilesystem';
-import { galleryItemCanContainChildren, isGalleryItemKind, isGalleryPasteOperation, type GalleryItemKind } from '../gallery/descriptors';
+import { isGalleryItemKind, isGalleryPasteOperation, type GalleryItemKind } from '../gallery/descriptors';
+import type { GalleryCatalog } from '../gallery/catalog';
 import { sendServerError } from '../http/errors';
-import {
-  createGalleryFolder,
-  deleteGalleryFolder,
-  ensureGalleryFolderAncestors,
-  loadGalleryFolders,
-  moveGalleryItemPath,
-  pasteGalleryFolderItems,
-  renameGalleryFolder,
-  type GalleryPasteItem,
-  type GalleryPasteOperation
-} from '../storage/galleryFoldersStore';
-import type { GenerationTaskRuntimePort } from '../processes/generation-task-runtime/runtimePort';
-import {
-  loadGalleryPins,
-  loadGalleryTagRecords,
-  remapGalleryFolderMetadata,
-  setGalleryItemPinned,
-  setGalleryItemTags
-} from '../storage/galleryMetadataStore';
+import type { GalleryPasteItem, GalleryPasteOperation } from '../storage/galleryFoldersStore';
 
 function booleanField(value: unknown): boolean {
   return value === true || value === 'true' || value === 1 || value === '1';
@@ -47,17 +30,13 @@ function parsePasteItems(value: unknown): GalleryPasteItem[] {
 }
 
 function parseTags(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.map(String);
+  return Array.isArray(value) ? value.map(String) : [];
 }
 
-export function registerGalleryFolderRoutes(
-  app: express.Express,
-  generationTasks: GenerationTaskRuntimePort
-) {
+export function registerGalleryFolderRoutes(app: express.Express, catalog: GalleryCatalog) {
   app.get('/api/storage/gallery-folders', (_req, res) => {
     try {
-      res.json({ folders: loadGalleryFolders() });
+      res.json({ folders: catalog.listFolders() });
     } catch (error) {
       sendServerError(res, error);
     }
@@ -65,7 +44,7 @@ export function registerGalleryFolderRoutes(
 
   app.get('/api/storage/gallery-pins', (_req, res) => {
     try {
-      res.json({ pins: loadGalleryPins() });
+      res.json({ pins: catalog.listPins() });
     } catch (error) {
       sendServerError(res, error);
     }
@@ -73,7 +52,7 @@ export function registerGalleryFolderRoutes(
 
   app.get('/api/storage/gallery-tags', (_req, res) => {
     try {
-      res.json({ tags: loadGalleryTagRecords() });
+      res.json({ tags: catalog.listTags() });
     } catch (error) {
       sendServerError(res, error);
     }
@@ -83,8 +62,8 @@ export function registerGalleryFolderRoutes(
     try {
       const parentPath = normalizeGalleryPath(req.body?.parentPath);
       const name = typeof req.body?.name === 'string' ? req.body.name : '';
-      const folder = createGalleryFolder(parentPath, name);
-      res.status(201).json({ folder, folders: ensureGalleryFolderAncestors(folder.path) });
+      const result = catalog.createFolder(parentPath, name);
+      res.status(201).json(result);
     } catch (error) {
       sendServerError(res, error);
     }
@@ -94,10 +73,7 @@ export function registerGalleryFolderRoutes(
     try {
       const path = normalizeGalleryPath(req.body?.path);
       const name = typeof req.body?.name === 'string' ? req.body.name : '';
-      const result = renameGalleryFolder(path, name);
-      await generationTasks.moveGalleryFolderTasks(result.sourcePath, result.nextPath);
-      remapGalleryFolderMetadata(result.sourcePath, result.nextPath);
-      res.json({ ok: true, ...result });
+      res.json({ ok: true, ...(await catalog.renameFolder(path, name)) });
     } catch (error) {
       sendServerError(res, error);
     }
@@ -105,9 +81,7 @@ export function registerGalleryFolderRoutes(
 
   app.delete('/api/storage/gallery-folders', async (req, res) => {
     try {
-      const path = normalizeGalleryPath(req.query.path);
-      const folders = deleteGalleryFolder(path);
-      await generationTasks.deleteGalleryFolderTasks(path);
+      const folders = await catalog.deleteFolder(normalizeGalleryPath(req.query.path));
       res.json({ ok: true, folders });
     } catch (error) {
       sendServerError(res, error);
@@ -116,16 +90,11 @@ export function registerGalleryFolderRoutes(
 
   app.post('/api/storage/gallery-items/move', async (req, res) => {
     try {
-      const itemKind = parseGalleryItemKind(req.body?.itemKind);
-      const itemId = typeof req.body?.itemId === 'string' ? req.body.itemId : '';
-      const targetPath = normalizeGalleryPath(req.body?.targetPath);
-      const result = moveGalleryItemPath({ itemKind, itemId, targetPath });
-      if (!galleryItemCanContainChildren(itemKind)) {
-        await generationTasks.moveGalleryTask(itemId, targetPath);
-      } else if (result.sourcePath && result.nextPath) {
-        await generationTasks.moveGalleryFolderTasks(result.sourcePath, result.nextPath);
-        remapGalleryFolderMetadata(result.sourcePath, result.nextPath);
-      }
+      const result = await catalog.moveItem({
+        itemKind: parseGalleryItemKind(req.body?.itemKind),
+        itemId: typeof req.body?.itemId === 'string' ? req.body.itemId : '',
+        targetPath: normalizeGalleryPath(req.body?.targetPath)
+      });
       res.json({ ok: true, ...result });
     } catch (error) {
       sendServerError(res, error);
@@ -134,19 +103,12 @@ export function registerGalleryFolderRoutes(
 
   app.post('/api/storage/gallery-items/paste', async (req, res) => {
     try {
-      const operation = parsePasteOperation(req.body?.operation);
-      const targetPath = normalizeGalleryPath(req.body?.targetPath);
-      const items = parsePasteItems(req.body?.items);
-      const folderResult = pasteGalleryFolderItems({ operation, targetPath, items });
-      const runtimeItems = [
-        ...items.filter((item) => !galleryItemCanContainChildren(item.itemKind)),
-        ...folderResult.mappings
-      ];
-      await generationTasks.pasteGalleryItems({ operation, targetPath, items: runtimeItems });
-      if (operation === 'move') {
-        for (const mapping of folderResult.mappings) remapGalleryFolderMetadata(mapping.sourcePath, mapping.nextPath);
-      }
-      res.json({ ok: true, folders: folderResult.folders, mappings: folderResult.mappings });
+      const result = await catalog.pasteItems({
+        operation: parsePasteOperation(req.body?.operation),
+        targetPath: normalizeGalleryPath(req.body?.targetPath),
+        items: parsePasteItems(req.body?.items)
+      });
+      res.json({ ok: true, ...result });
     } catch (error) {
       sendServerError(res, error);
     }
@@ -154,10 +116,11 @@ export function registerGalleryFolderRoutes(
 
   app.post('/api/storage/gallery-items/pin', (req, res) => {
     try {
-      const itemKind = parseGalleryItemKind(req.body?.itemKind);
-      const itemId = typeof req.body?.itemId === 'string' ? req.body.itemId : '';
-      const pinned = booleanField(req.body?.pinned);
-      const pins = setGalleryItemPinned({ itemKind, itemId, pinned });
+      const pins = catalog.setItemPinned({
+        itemKind: parseGalleryItemKind(req.body?.itemKind),
+        itemId: typeof req.body?.itemId === 'string' ? req.body.itemId : '',
+        pinned: booleanField(req.body?.pinned)
+      });
       res.json({ ok: true, pins });
     } catch (error) {
       sendServerError(res, error);
@@ -166,9 +129,11 @@ export function registerGalleryFolderRoutes(
 
   app.post('/api/storage/gallery-items/tags', (req, res) => {
     try {
-      const itemKind = parseGalleryItemKind(req.body?.itemKind);
-      const itemId = typeof req.body?.itemId === 'string' ? req.body.itemId : '';
-      const tags = setGalleryItemTags({ itemKind, itemId, tags: parseTags(req.body?.tags) });
+      const tags = catalog.setItemTags({
+        itemKind: parseGalleryItemKind(req.body?.itemKind),
+        itemId: typeof req.body?.itemId === 'string' ? req.body.itemId : '',
+        tags: parseTags(req.body?.tags)
+      });
       res.json({ ok: true, tags });
     } catch (error) {
       sendServerError(res, error);

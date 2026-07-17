@@ -4,6 +4,7 @@ import {
   getGenerationTaskStorageDiagnostics,
   loadGenerationTaskAssetDocument,
   loadGenerationTaskHistoryDocuments,
+  loadGenerationTaskHistoryDocumentsByIds,
   loadGenerationTaskRuntimeHistoryDocuments,
   saveGenerationTaskHistoryDocuments
 } from './generationTaskStore';
@@ -24,6 +25,11 @@ function handleRequest(request: GenerationTaskStoreWorkerRequest): unknown {
       return loadGenerationTaskRuntimeHistoryDocuments(
         request.operation.completedLimit,
         request.operation.assetMode ?? 'metadata'
+      );
+    case 'loadHistoryByIds':
+      return loadGenerationTaskHistoryDocumentsByIds(
+        request.operation.taskIds,
+        { assetMode: request.operation.assetMode ?? 'full' }
       );
     case 'saveHistory':
       return saveGenerationTaskHistoryDocuments(request.operation.tasks);

@@ -1,5 +1,6 @@
 import { addGalleryPath, mapGallerySubPath, normalizeGalleryPath, normalizeGalleryPaths } from '../../../src/domain/galleryFilesystem';
-import type { GeneratedImage, GenerationTask } from '../../../src/domain/generationTask';
+import type { GenerationTask } from '../../../src/domain/generationTask';
+import { normalizeGenerationTasks } from '../../../src/entities/storage';
 import {
   galleryItemCanContainChildren,
   galleryPasteOperationDuplicatesTasks,
@@ -7,8 +8,12 @@ import {
   type GalleryItemKind,
   type GalleryPasteOperation
 } from '../../gallery/descriptors';
-import { uid } from './imageState';
-import { mutateTasks, patchTask } from './runtimeStore';
+import {
+  cloneGenerationTaskForGalleryCopy,
+  generationTaskNeedsFullAssetsForCopy
+} from '../../gallery/taskCopy';
+import { loadGenerationTaskHistoryDocumentsByIdsAsync } from '../../storage/generationTaskStoreAsync';
+import { ensureRuntimeTasks, mutateTasks, patchTask } from './runtimeStore';
 
 function galleryPathIsNested(path: string, parent: string): boolean {
   const current = normalizeGalleryPath(path);
@@ -27,48 +32,6 @@ function movePlacement(paths: string[], sourcePath: string, targetPath: string):
   const target = normalizeGalleryPath(targetPath);
   const rest = normalizeGalleryPaths(paths).filter((path) => path !== source);
   return normalizeGalleryPaths([...rest, target], target);
-}
-
-function cloneImageForTask(image: GeneratedImage, taskId: string, batchItemId?: string): GeneratedImage {
-  return {
-    ...image,
-    id: uid('image'),
-    taskId,
-    batchItemId: batchItemId ?? image.batchItemId,
-    storageAssetKey: undefined,
-    storageThumbnailKey: undefined,
-    storageAssetLoaded: undefined,
-    request: image.request ? { ...image.request } : undefined
-  };
-}
-
-function cloneTaskIntoPath(task: GenerationTask, targetPath: string): GenerationTask {
-  const taskId = uid('task');
-  const createdAt = Date.now();
-  const batchIdMap = new Map<string, string>();
-  const batch = task.batch ? {
-    ...task.batch,
-    items: task.batch.items.map((item) => {
-      const nextItemId = uid('batch-item');
-      batchIdMap.set(item.id, nextItemId);
-      return {
-        ...item,
-        id: nextItemId,
-        images: item.images.map((image) => cloneImageForTask(image, taskId, nextItemId))
-      };
-    })
-  } : undefined;
-  const galleryPaths = normalizeGalleryPaths(undefined, targetPath);
-  return {
-    ...task,
-    id: taskId,
-    createdAt,
-    updatedAt: createdAt,
-    galleryPath: galleryPaths[0] ?? '/',
-    galleryPaths,
-    images: task.images.map((image) => cloneImageForTask(image, taskId, image.batchItemId ? batchIdMap.get(image.batchItemId) : undefined)),
-    batch
-  };
 }
 
 export async function moveServerGalleryTask(taskId: string, targetPath: string): Promise<void> {
@@ -96,24 +59,79 @@ export interface ServerGalleryPasteItem {
   nextPath?: string;
 }
 
+export interface ServerGalleryTaskCopyMapping {
+  sourceTaskId: string;
+  nextTaskId: string;
+}
+
+export interface ServerGalleryPasteResult {
+  copiedTasks: ServerGalleryTaskCopyMapping[];
+}
+
+export interface ServerGalleryDeleteResult {
+  deletedTaskIds: string[];
+}
+
 function applyTaskGalleryPasteOperation(operation: ServerGalleryPasteOperation, paths: string[], sourcePath: string, targetPath: string): string[] {
   if (!galleryPasteOperationPreservesSource(operation)) return movePlacement(paths, sourcePath, targetPath);
   return addGalleryPath(paths, targetPath);
 }
 
-export async function pasteServerGalleryItems(args: { operation: ServerGalleryPasteOperation; targetPath: string; items: ServerGalleryPasteItem[] }): Promise<void> {
+function normalizedPasteItems(items: ServerGalleryPasteItem[]): ServerGalleryPasteItem[] {
+  return items.map((item) => ({
+    ...item,
+    sourcePath: normalizeGalleryPath(item.sourcePath),
+    nextPath: item.nextPath ? normalizeGalleryPath(item.nextPath) : undefined
+  }));
+}
+
+function taskSelectedForCopy(task: GenerationTask, items: ServerGalleryPasteItem[]): boolean {
+  if (items.some((item) => !galleryItemCanContainChildren(item.itemKind) && item.itemId === task.id)) return true;
+  const paths = normalizeGalleryPaths(task.galleryPaths, task.galleryPath);
+  return items.some((item) => galleryItemCanContainChildren(item.itemKind)
+    && paths.some((path) => path === item.sourcePath || galleryPathIsNested(path, item.sourcePath)));
+}
+
+async function loadCopySources(items: ServerGalleryPasteItem[]): Promise<Map<string, GenerationTask>> {
+  const runtimeTasks = await ensureRuntimeTasks();
+  const selected = runtimeTasks.filter((task) => taskSelectedForCopy(task, items));
+  const idsToHydrate = selected.filter(generationTaskNeedsFullAssetsForCopy).map((task) => task.id);
+  if (idsToHydrate.length === 0) return new Map(selected.map((task) => [task.id, task]));
+
+  const loaded = await loadGenerationTaskHistoryDocumentsByIdsAsync(idsToHydrate, 'full');
+  const fullTasks = normalizeGenerationTasks(loaded.tasks, { interruptActive: false });
+  const fullById = new Map(fullTasks.map((task) => [task.id, task]));
+  return new Map(selected.map((task) => [task.id, fullById.get(task.id) ?? task]));
+}
+
+export async function pasteServerGalleryItems(args: {
+  operation: ServerGalleryPasteOperation;
+  targetPath: string;
+  items: ServerGalleryPasteItem[];
+}): Promise<ServerGalleryPasteResult> {
   const target = normalizeGalleryPath(args.targetPath);
-  const items = args.items.map((item) => ({ ...item, sourcePath: normalizeGalleryPath(item.sourcePath), nextPath: item.nextPath ? normalizeGalleryPath(item.nextPath) : undefined }));
+  const items = normalizedPasteItems(args.items);
+  const copySources = galleryPasteOperationDuplicatesTasks(args.operation)
+    ? await loadCopySources(items)
+    : new Map<string, GenerationTask>();
+  const copiedTasks: ServerGalleryTaskCopyMapping[] = [];
+
   await mutateTasks((tasks) => {
     const appended: GenerationTask[] = [];
     const nextTasks = tasks.flatMap((task) => {
       let paths = normalizeGalleryPaths(task.galleryPaths, task.galleryPath);
       const taskSelections = items.filter((item) => !galleryItemCanContainChildren(item.itemKind) && item.itemId === task.id);
       const folderSelections = items.filter((item) => galleryItemCanContainChildren(item.itemKind));
+      const copySource = copySources.get(task.id) ?? task;
 
       for (const item of taskSelections) {
-        if (galleryPasteOperationDuplicatesTasks(args.operation)) appended.push(cloneTaskIntoPath(task, target));
-        else paths = applyTaskGalleryPasteOperation(args.operation, paths, item.sourcePath, target);
+        if (galleryPasteOperationDuplicatesTasks(args.operation)) {
+          const copy = cloneGenerationTaskForGalleryCopy(copySource, target);
+          appended.push(copy);
+          copiedTasks.push({ sourceTaskId: task.id, nextTaskId: copy.id });
+        } else {
+          paths = applyTaskGalleryPasteOperation(args.operation, paths, item.sourcePath, target);
+        }
       }
 
       for (const item of folderSelections) {
@@ -121,8 +139,13 @@ export async function pasteServerGalleryItems(args: { operation: ServerGalleryPa
         for (const path of normalizeGalleryPaths(task.galleryPaths, task.galleryPath)) {
           if (path !== item.sourcePath && !galleryPathIsNested(path, item.sourcePath)) continue;
           const mapped = mapGallerySubPath(path, item.sourcePath, nextRoot);
-          if (galleryPasteOperationDuplicatesTasks(args.operation)) appended.push(cloneTaskIntoPath(task, mapped));
-          else paths = applyTaskGalleryPasteOperation(args.operation, paths, path, mapped);
+          if (galleryPasteOperationDuplicatesTasks(args.operation)) {
+            const copy = cloneGenerationTaskForGalleryCopy(copySource, mapped);
+            appended.push(copy);
+            copiedTasks.push({ sourceTaskId: task.id, nextTaskId: copy.id });
+          } else {
+            paths = applyTaskGalleryPasteOperation(args.operation, paths, path, mapped);
+          }
         }
       }
 
@@ -130,12 +153,18 @@ export async function pasteServerGalleryItems(args: { operation: ServerGalleryPa
     });
     return [...appended, ...nextTasks];
   });
+
+  return { copiedTasks };
 }
 
-export async function deleteServerGalleryFolderTasks(folderPath: string): Promise<void> {
+export async function deleteServerGalleryFolderTasks(folderPath: string): Promise<ServerGalleryDeleteResult> {
   const source = normalizeGalleryPath(folderPath);
+  const deletedTaskIds: string[] = [];
   await mutateTasks((tasks) => tasks.flatMap((task) => {
     const paths = normalizeGalleryPaths(task.galleryPaths, task.galleryPath).filter((path) => path !== source && !galleryPathIsNested(path, source));
-    return paths.length > 0 ? [taskWithPaths(task, paths)] : [];
+    if (paths.length > 0) return [taskWithPaths(task, paths)];
+    deletedTaskIds.push(task.id);
+    return [];
   }));
+  return { deletedTaskIds };
 }

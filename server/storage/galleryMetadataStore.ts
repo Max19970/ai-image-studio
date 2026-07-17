@@ -72,3 +72,45 @@ export function remapGalleryFolderMetadata(sourcePath: string, nextPath: string)
     ? { ...item, itemId: mapFolderId(item.itemId), updatedAt: Date.now() }
     : item));
 }
+
+export interface GalleryMetadataCopyMapping {
+  itemKind: GalleryMetadataKind;
+  sourceItemId: string;
+  nextItemId: string;
+}
+
+function copiedMetadataItemId(mapping: GalleryMetadataCopyMapping, itemKind: GalleryMetadataKind, itemId: string): string | null {
+  if (mapping.itemKind !== itemKind) return null;
+  if (itemKind === 'task') return itemId === mapping.sourceItemId ? mapping.nextItemId : null;
+  const source = normalizeGalleryPath(mapping.sourceItemId);
+  if (itemId !== source && !isGalleryPathInside(itemId, source)) return null;
+  return mapGallerySubPath(itemId, source, normalizeGalleryPath(mapping.nextItemId));
+}
+
+export function copyGalleryItemMetadata(mappings: GalleryMetadataCopyMapping[]): void {
+  if (mappings.length === 0) return;
+  const now = Date.now();
+  const pins = loadGalleryPins();
+  const tags = loadGalleryTagRecords();
+  const copiedPins = mappings.flatMap((mapping) => pins.flatMap((item) => {
+    const itemId = copiedMetadataItemId(mapping, item.itemKind, item.itemId);
+    return itemId ? [{ ...item, itemId, createdAt: now }] : [];
+  }));
+  const copiedTags = mappings.flatMap((mapping) => tags.flatMap((item) => {
+    const itemId = copiedMetadataItemId(mapping, item.itemKind, item.itemId);
+    return itemId ? [{ ...item, itemId, tags: [...item.tags], updatedAt: now }] : [];
+  }));
+  saveGalleryPins([...pins, ...copiedPins]);
+  saveGalleryTagRecords([...tags, ...copiedTags]);
+}
+
+export function deleteGalleryItemMetadata(selection: { folderPath?: string; taskIds?: string[] }): void {
+  const folderPath = selection.folderPath ? normalizeGalleryPath(selection.folderPath) : null;
+  const taskIds = new Set(selection.taskIds ?? []);
+  const shouldDelete = (item: { itemKind: GalleryMetadataKind; itemId: string }) => {
+    if (item.itemKind === 'task') return taskIds.has(item.itemId);
+    return Boolean(folderPath && (item.itemId === folderPath || isGalleryPathInside(item.itemId, folderPath)));
+  };
+  saveGalleryPins(loadGalleryPins().filter((item) => !shouldDelete(item)));
+  saveGalleryTagRecords(loadGalleryTagRecords().filter((item) => !shouldDelete(item)));
+}

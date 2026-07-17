@@ -20,7 +20,7 @@ export const backendRouteGroupGeneratedModules: Record<string, BackendRouteGroup
   },
   'generation-task-storage': {
     id: 'generation-task-storage',
-    register: (app, context) => registerGenerationTaskStorageRoutes(app, context.generationTasks)
+    register: (app, context) => registerGenerationTaskStorageRoutes(app, context.generationTasks, context.galleryCatalog)
   },
   'app-documents': {
     id: 'app-documents',
