@@ -19,8 +19,8 @@ export function useWorkspaceState(): WorkspaceState {
   const requestPresets = useRequestPresetWorkspaceState();
 
   return {
-    ...composer,
     ...settings,
+    ...composer,
     ...navigation,
     ...galleryFilesystem,
     ...taskSelection,

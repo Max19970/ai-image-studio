@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import type { ComposerRequestDraft } from '../../../domain/generationTask';
 import { cloneParams } from '../../../domain/generationSnapshots';
 import type { ImageParams } from '../../../domain/imageParams';
@@ -7,11 +7,9 @@ import type { StudioSettings } from '../../../domain/studioSettings';
 import { openAiCompatibleImageGenerateModeId } from '../../../entities/generation-params/openai-compatible/modes';
 import type { StateSetter } from '../types';
 import {
-  clearComposerDraftContent,
-  createComposerRequestDraft,
-  removeComposerDraft,
-  replaceComposerDraft,
-  selectComposerDraftAfterRemoval
+  composerSessionReducer,
+  createComposerSessionState,
+  type ComposerSessionState
 } from './composerSession';
 
 interface ComposerSettingsBridge {
@@ -22,6 +20,10 @@ interface ComposerSettingsBridge {
 }
 
 export interface ComposerWorkspaceState {
+  params: ImageParams;
+  setParams: StateSetter<ImageParams>;
+  studioSettings: StudioSettings;
+  setStudioSettings: StateSetter<StudioSettings>;
   providerModeId: ProviderGenerationModeId;
   setProviderModeId: StateSetter<ProviderGenerationModeId>;
   compatibilityNotice: string | null;
@@ -51,203 +53,164 @@ function resolveStateValue<T>(next: React.SetStateAction<T>, current: T): T {
   return typeof next === 'function' ? (next as (value: T) => T)(current) : next;
 }
 
+function activeDraftFor(session: ComposerSessionState): ComposerRequestDraft {
+  return session.drafts.find((draft) => draft.id === session.activeDraftId) ?? session.drafts[0];
+}
+
 export function useComposerWorkspaceState(bridge: ComposerSettingsBridge): ComposerWorkspaceState {
-  const initialDraftRef = useRef<ComposerRequestDraft | null>(null);
-  if (!initialDraftRef.current) {
-    initialDraftRef.current = createComposerRequestDraft({
+  const [session, dispatch] = useReducer(
+    composerSessionReducer,
+    undefined,
+    () => createComposerSessionState({
       params: bridge.params,
       selectedModelId: bridge.studioSettings.selectedModelId,
       providerModeId: openAiCompatibleImageGenerateModeId
+    })
+  );
+  const sessionRef = useRef(session);
+  const bridgeRef = useRef(bridge);
+  sessionRef.current = session;
+  bridgeRef.current = bridge;
+
+  const activeDraft = activeDraftFor(session);
+
+  useEffect(() => {
+    dispatch({
+      type: 'seedUntouchedSession',
+      seed: {
+        params: bridge.params,
+        selectedModelId: bridge.studioSettings.selectedModelId,
+        providerModeId: activeDraft.providerModeId
+      }
     });
-  }
+  }, [bridge.params, bridge.studioSettings.selectedModelId]);
 
-  const initialDraft = initialDraftRef.current;
-  const [activeComposerDraftId, setActiveComposerDraftId] = useState(initialDraft.id);
-  const [storedDrafts, setStoredDrafts] = useState<ComposerRequestDraft[]>([initialDraft]);
-  const [providerModeId, setProviderModeIdState] = useState<ProviderGenerationModeId>(initialDraft.providerModeId);
-  const [compatibilityNotice, setCompatibilityNotice] = useState<string | null>(null);
-  const [targetImage, setTargetImageState] = useState<File | null>(initialDraft.targetImage);
-  const [referenceImages, setReferenceImagesState] = useState<File[]>(initialDraft.referenceImages);
-  const [mask, setMaskState] = useState<File | null>(initialDraft.mask);
-  const [composerIntervalSeconds, setComposerIntervalSeconds] = useState(4);
-  const [composerParametersDraftId, setComposerParametersDraftId] = useState<string | null>(null);
-
-  const currentDraft = useMemo<ComposerRequestDraft>(() => ({
-    id: activeComposerDraftId,
-    providerModeId,
-    params: bridge.params,
-    selectedModelId: bridge.studioSettings.selectedModelId,
-    targetImage,
-    referenceImages,
-    mask
-  }), [
-    activeComposerDraftId,
-    bridge.params,
-    bridge.studioSettings.selectedModelId,
-    mask,
-    providerModeId,
-    referenceImages,
-    targetImage
+  useEffect(() => {
+    if (session.revision === 0) return;
+    bridge.setParams(cloneParams(activeDraft.params));
+    bridge.setStudioSettings((current) => current.selectedModelId === activeDraft.selectedModelId
+      ? current
+      : { ...current, selectedModelId: activeDraft.selectedModelId });
+  }, [
+    activeDraft.params,
+    activeDraft.selectedModelId,
+    bridge.setParams,
+    bridge.setStudioSettings,
+    session.revision
   ]);
 
-  const composerDrafts = useMemo(
-    () => replaceComposerDraft(storedDrafts, currentDraft),
-    [currentDraft, storedDrafts]
-  );
-  const draftsRef = useRef(composerDrafts);
-  const currentDraftRef = useRef(currentDraft);
-  draftsRef.current = composerDrafts;
-  currentDraftRef.current = currentDraft;
+  const patchActiveDraft = useCallback((patch: Partial<ComposerRequestDraft>) => {
+    const current = activeDraftFor(sessionRef.current);
+    dispatch({ type: 'patchDraft', id: current.id, patch });
+  }, []);
 
-  const applyDraftToCurrent = useCallback((draft: ComposerRequestDraft) => {
-    setProviderModeIdState(draft.providerModeId);
-    bridge.setParams(cloneParams(draft.params));
-    bridge.setStudioSettings((previous) => ({ ...previous, selectedModelId: draft.selectedModelId }));
-    setTargetImageState(draft.targetImage);
-    setReferenceImagesState([...draft.referenceImages]);
-    setMaskState(draft.mask);
-    setCompatibilityNotice(null);
-  }, [bridge.setParams, bridge.setStudioSettings]);
+  const setParams = useCallback<StateSetter<ImageParams>>((next) => {
+    const current = activeDraftFor(sessionRef.current);
+    const value = resolveStateValue(next, current.params);
+    dispatch({ type: 'patchDraft', id: current.id, patch: { params: cloneParams(value) } });
+  }, []);
 
-  const storeCurrentDraft = useCallback((drafts: ComposerRequestDraft[]) => (
-    replaceComposerDraft(drafts, currentDraftRef.current)
-  ), []);
-
-  const selectComposerDraft = useCallback((id: string) => {
-    if (id === currentDraftRef.current.id) return;
-    const nextDraft = draftsRef.current.find((draft) => draft.id === id);
-    if (!nextDraft) return;
-    setStoredDrafts((drafts) => storeCurrentDraft(drafts));
-    setActiveComposerDraftId(id);
-    applyDraftToCurrent(nextDraft);
-  }, [applyDraftToCurrent, storeCurrentDraft]);
-
-  const addComposerDraft = useCallback(() => {
-    const current = currentDraftRef.current;
-    const nextDraft = createComposerRequestDraft({
-      params: current.params,
-      selectedModelId: current.selectedModelId,
-      providerModeId: current.providerModeId
-    }, current, { clearContent: true });
-    const nextDrafts = [...replaceComposerDraft(draftsRef.current, current), nextDraft];
-    setStoredDrafts(nextDrafts);
-    setActiveComposerDraftId(nextDraft.id);
-    applyDraftToCurrent(nextDraft);
-  }, [applyDraftToCurrent]);
-
-  const duplicateComposerDraft = useCallback((id: string) => {
-    const source = draftsRef.current.find((draft) => draft.id === id);
-    if (!source) return;
-    const nextDraft = createComposerRequestDraft({
-      params: source.params,
-      selectedModelId: source.selectedModelId,
-      providerModeId: source.providerModeId
-    }, source);
-    const nextDrafts = [...replaceComposerDraft(draftsRef.current, currentDraftRef.current), nextDraft];
-    setStoredDrafts(nextDrafts);
-    setActiveComposerDraftId(nextDraft.id);
-    applyDraftToCurrent(nextDraft);
-  }, [applyDraftToCurrent]);
-
-  const removeComposerDraftById = useCallback((id: string) => {
-    const synchronized = replaceComposerDraft(draftsRef.current, currentDraftRef.current);
-    if (synchronized.length <= 1) {
-      const cleared = clearComposerDraftContent(synchronized[0]);
-      setStoredDrafts([cleared]);
-      setActiveComposerDraftId(cleared.id);
-      applyDraftToCurrent(cleared);
-      return;
+  const setStudioSettings = useCallback<StateSetter<StudioSettings>>((next) => {
+    const currentDraft = activeDraftFor(sessionRef.current);
+    const currentBridge = bridgeRef.current;
+    const currentSettings = {
+      ...currentBridge.studioSettings,
+      selectedModelId: currentDraft.selectedModelId
+    };
+    const value = resolveStateValue(next, currentSettings);
+    currentBridge.setStudioSettings(value);
+    if (value.selectedModelId !== currentDraft.selectedModelId) {
+      dispatch({
+        type: 'patchDraft',
+        id: currentDraft.id,
+        patch: { selectedModelId: value.selectedModelId }
+      });
     }
-    const replacement = selectComposerDraftAfterRemoval(synchronized, id);
-    const nextDrafts = removeComposerDraft(synchronized, id);
-    setStoredDrafts(nextDrafts);
-    if (id === currentDraftRef.current.id && replacement) {
-      setActiveComposerDraftId(replacement.id);
-      applyDraftToCurrent(replacement);
-    }
-  }, [applyDraftToCurrent]);
-
-  const patchComposerDraft = useCallback((id: string, patch: Partial<ComposerRequestDraft>) => {
-    if (id === currentDraftRef.current.id) {
-      if (patch.providerModeId !== undefined) setProviderModeIdState(patch.providerModeId);
-      if (patch.params !== undefined) bridge.setParams(cloneParams(patch.params));
-      if (patch.selectedModelId !== undefined) {
-        bridge.setStudioSettings((previous) => ({ ...previous, selectedModelId: patch.selectedModelId! }));
-      }
-      if (patch.targetImage !== undefined) setTargetImageState(patch.targetImage);
-      if (patch.referenceImages !== undefined) setReferenceImagesState([...patch.referenceImages]);
-      if (patch.mask !== undefined) setMaskState(patch.mask);
-      return;
-    }
-    setStoredDrafts((drafts) => drafts.map((draft) => draft.id === id
-      ? {
-          ...draft,
-          ...patch,
-          params: patch.params ? cloneParams(patch.params) : draft.params,
-          referenceImages: patch.referenceImages ? [...patch.referenceImages] : draft.referenceImages
-        }
-      : draft));
-  }, [bridge.setParams, bridge.setStudioSettings]);
-
-  const patchComposerDraftParams = useCallback((id: string, patch: Partial<ImageParams>) => {
-    if (id === currentDraftRef.current.id) {
-      bridge.setParams((current) => ({ ...current, ...patch }));
-      return;
-    }
-    setStoredDrafts((drafts) => drafts.map((draft) => draft.id === id
-      ? { ...draft, params: { ...draft.params, ...patch } }
-      : draft));
-  }, [bridge.setParams]);
-
-  const setComposerDrafts = useCallback<StateSetter<ComposerRequestDraft[]>>((next) => {
-    const resolved = resolveStateValue(next, draftsRef.current);
-    const safeDrafts = resolved.length > 0
-      ? resolved
-      : [clearComposerDraftContent(currentDraftRef.current)];
-    const nextActive = safeDrafts.find((draft) => draft.id === currentDraftRef.current.id) ?? safeDrafts[0];
-    setStoredDrafts(safeDrafts);
-    if (nextActive.id !== currentDraftRef.current.id || nextActive !== currentDraftRef.current) {
-      setActiveComposerDraftId(nextActive.id);
-      applyDraftToCurrent(nextActive);
-    }
-  }, [applyDraftToCurrent]);
+  }, []);
 
   const setProviderModeId = useCallback<StateSetter<ProviderGenerationModeId>>((next) => {
-    setProviderModeIdState((current) => resolveStateValue(next, current));
-  }, []);
+    const current = activeDraftFor(sessionRef.current);
+    patchActiveDraft({ providerModeId: resolveStateValue(next, current.providerModeId) });
+  }, [patchActiveDraft]);
+
   const setTargetImage = useCallback<StateSetter<File | null>>((next) => {
-    setTargetImageState((current) => resolveStateValue(next, current));
-  }, []);
+    const current = activeDraftFor(sessionRef.current);
+    patchActiveDraft({ targetImage: resolveStateValue(next, current.targetImage) });
+  }, [patchActiveDraft]);
+
   const setReferenceImages = useCallback<StateSetter<File[]>>((next) => {
-    setReferenceImagesState((current) => [...resolveStateValue(next, current)]);
-  }, []);
+    const current = activeDraftFor(sessionRef.current);
+    patchActiveDraft({ referenceImages: [...resolveStateValue(next, current.referenceImages)] });
+  }, [patchActiveDraft]);
+
   const setMask = useCallback<StateSetter<File | null>>((next) => {
-    setMaskState((current) => resolveStateValue(next, current));
+    const current = activeDraftFor(sessionRef.current);
+    patchActiveDraft({ mask: resolveStateValue(next, current.mask) });
+  }, [patchActiveDraft]);
+
+  const setComposerDrafts = useCallback<StateSetter<ComposerRequestDraft[]>>((next) => {
+    const current = sessionRef.current;
+    dispatch({
+      type: 'replaceDrafts',
+      drafts: resolveStateValue(next, current.drafts)
+    });
   }, []);
 
+  const setCompatibilityNotice = useCallback<StateSetter<string | null>>((next) => {
+    const current = sessionRef.current.compatibilityNotice;
+    dispatch({ type: 'setCompatibilityNotice', notice: resolveStateValue(next, current) });
+  }, []);
+
+  const setComposerIntervalSeconds = useCallback<StateSetter<number>>((next) => {
+    const current = sessionRef.current.composerIntervalSeconds;
+    dispatch({ type: 'setInterval', seconds: resolveStateValue(next, current) });
+  }, []);
+
+  const setComposerParametersDraftId = useCallback<StateSetter<string | null>>((next) => {
+    const current = sessionRef.current.composerParametersDraftId;
+    dispatch({ type: 'setParametersDraft', id: resolveStateValue(next, current) });
+  }, []);
+
+  const patchComposerDraft = useCallback((id: string, patch: Partial<ComposerRequestDraft>) => {
+    dispatch({ type: 'patchDraft', id, patch });
+  }, []);
+
+  const patchComposerDraftParams = useCallback((id: string, patch: Partial<ImageParams>) => {
+    dispatch({ type: 'patchDraftParams', id, patch });
+  }, []);
+
+  const studioSettings = useMemo<StudioSettings>(() => ({
+    ...bridge.studioSettings,
+    selectedModelId: activeDraft.selectedModelId
+  }), [activeDraft.selectedModelId, bridge.studioSettings]);
+
   return {
-    providerModeId,
+    params: activeDraft.params,
+    setParams,
+    studioSettings,
+    setStudioSettings,
+    providerModeId: activeDraft.providerModeId,
     setProviderModeId,
-    compatibilityNotice,
+    compatibilityNotice: session.compatibilityNotice,
     setCompatibilityNotice,
-    targetImage,
+    targetImage: activeDraft.targetImage,
     setTargetImage,
-    referenceImages,
+    referenceImages: activeDraft.referenceImages,
     setReferenceImages,
-    mask,
+    mask: activeDraft.mask,
     setMask,
-    composerDrafts,
+    composerDrafts: session.drafts,
     setComposerDrafts,
-    activeComposerDraftId,
-    selectComposerDraft,
-    addComposerDraft,
-    duplicateComposerDraft,
-    removeComposerDraft: removeComposerDraftById,
+    activeComposerDraftId: session.activeDraftId,
+    selectComposerDraft: (id) => dispatch({ type: 'selectDraft', id }),
+    addComposerDraft: () => dispatch({ type: 'addDraft', id: crypto.randomUUID() }),
+    duplicateComposerDraft: (id) => dispatch({ type: 'duplicateDraft', id, newId: crypto.randomUUID() }),
+    removeComposerDraft: (id) => dispatch({ type: 'removeDraft', id }),
     patchComposerDraft,
     patchComposerDraftParams,
-    composerIntervalSeconds,
+    composerIntervalSeconds: session.composerIntervalSeconds,
     setComposerIntervalSeconds,
-    composerParametersDraftId,
+    composerParametersDraftId: session.composerParametersDraftId,
     setComposerParametersDraftId
   };
 }
