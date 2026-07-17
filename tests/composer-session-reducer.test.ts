@@ -4,6 +4,7 @@ import { defaultImageParams, defaultStudioSettings } from '../src/domain/default
 import {
   composerSessionReducer,
   createComposerSessionState,
+  reconcileComposerDraftsForSettings,
   type ComposerDraftSeed
 } from '../src/app/workspace/state/composerSession';
 
@@ -139,6 +140,57 @@ test('session revision grows only for user mutations and blocks late seeding', (
   });
   assert.equal(afterLateSeed, current);
   assert.equal(afterLateSeed.drafts[0].params.prompt, 'local edit');
+});
+
+test('replaceActiveDraftRequest updates all request fields in one revision', () => {
+  const file = new File(['image'], 'target.png', { type: 'image/png' });
+  const current = composerSessionReducer(state(), {
+    type: 'replaceActiveDraftRequest',
+    request: {
+      providerModeId: 'comfyui.hires-fix',
+      params: { ...defaultImageParams, prompt: 'restored', n: 2 },
+      selectedModelId: 'model-restored',
+      targetImage: file,
+      referenceImages: [file],
+      mask: null
+    },
+    notice: 'Adjusted'
+  });
+
+  assert.equal(current.revision, 1);
+  assert.equal(current.drafts[0].id, 'draft-1');
+  assert.equal(current.drafts[0].providerModeId, 'comfyui.hires-fix');
+  assert.equal(current.drafts[0].params.prompt, 'restored');
+  assert.equal(current.drafts[0].selectedModelId, 'model-restored');
+  assert.equal(current.drafts[0].targetImage, file);
+  assert.notEqual(current.drafts[0].referenceImages, [file]);
+  assert.equal(current.compatibilityNotice, 'Adjusted');
+});
+
+test('settings reconciliation keeps valid models and repairs every removed model draft', () => {
+  let current = composerSessionReducer(state(), { type: 'duplicateDraft', id: 'draft-1', newId: 'draft-2' });
+  current = composerSessionReducer(current, {
+    type: 'patchDraft',
+    id: 'draft-1',
+    patch: { selectedModelId: 'missing-a' }
+  });
+  current = composerSessionReducer(current, {
+    type: 'patchDraft',
+    id: 'draft-2',
+    patch: { selectedModelId: 'missing-b' }
+  });
+  const reconciled = reconcileComposerDraftsForSettings(current.drafts, defaultStudioSettings);
+  assert.deepEqual(reconciled.changedDraftIds.sort(), ['draft-1', 'draft-2']);
+  assert.ok(reconciled.drafts.every((draft) => draft.selectedModelId === defaultStudioSettings.selectedModelId));
+
+  const next = composerSessionReducer(current, {
+    type: 'reconcileDrafts',
+    drafts: reconciled.drafts,
+    notice: 'Adjusted'
+  });
+  assert.equal(next.revision, current.revision + 1);
+  assert.equal(next.compatibilityNotice, 'Adjusted');
+  assert.ok(next.drafts.every((draft) => draft.selectedModelId === defaultStudioSettings.selectedModelId));
 });
 
 test('compatibility notice follows current transition semantics', () => {

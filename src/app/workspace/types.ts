@@ -91,6 +91,8 @@ export interface WorkspaceState {
   removeComposerDraft: (id: string) => void;
   patchComposerDraft: (id: string, patch: Partial<ComposerRequestDraft>) => void;
   patchComposerDraftParams: (id: string, patch: Partial<ImageParams>) => void;
+  replaceActiveComposerRequest: (request: Omit<ComposerRequestDraft, 'id'>, notice: string | null) => void;
+  applyStudioSettingsToComposer: (settings: StudioSettings, compatibilityNotice: string) => void;
   composerIntervalSeconds: number;
   setComposerIntervalSeconds: StateSetter<number>;
   composerParametersDraftId: string | null;

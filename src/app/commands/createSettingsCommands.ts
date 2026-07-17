@@ -7,8 +7,10 @@ export function createSettingsCommands(args: SettingsCommandDeps): SettingsComma
   return {
     save: (next) => {
       const normalized = args.normalizeSettings(next);
-      args.setStudioSettings(normalized);
-      applyComposerCompatibilityForModel(args.composerCompatibility, normalized, normalized.selectedModelId);
+      args.applyStudioSettingsToComposer(
+        normalized,
+        args.composerCompatibility.t('composer.compatibilityAdjustedRequest')
+      );
       sanitizeBatchDraftsAfterSettingsChange(args.batchCompatibility, normalized);
     },
     selectModel: (modelId) => {

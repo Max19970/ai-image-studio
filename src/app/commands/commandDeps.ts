@@ -24,16 +24,17 @@ export type ProviderProbeCommandState = ProviderProbeCommandDeps;
 
 export interface ComposerCompatibilityCommandDeps {
   t: TranslateFn;
+  params: ImageParams;
   providerModeId: ProviderGenerationModeId;
   studioSettings: StudioSettings;
   targetImage: File | null;
   referenceImages: File[];
   mask: File | null;
-  setProviderModeId: StateSetter<ProviderGenerationModeId>;
+  replaceActiveComposerRequest: (
+    request: Omit<ComposerRequestDraft, 'id'>,
+    notice: string | null
+  ) => void;
   setCompatibilityNotice: StateSetter<string | null>;
-  setTargetImage: StateSetter<File | null>;
-  setReferenceImages: StateSetter<File[]>;
-  setMask: StateSetter<File | null>;
 }
 
 export interface BatchCompatibilityCommandDeps {
@@ -98,12 +99,10 @@ export interface GalleryHiresFixCommandDeps {
   t: TranslateFn;
   params: ImageParams;
   studioSettings: StudioSettings;
-  setStudioSettings: StateSetter<StudioSettings>;
-  setProviderModeId: StateSetter<ProviderGenerationModeId>;
-  setParams: StateSetter<ImageParams>;
-  setTargetImage: StateSetter<File | null>;
-  setReferenceImages: StateSetter<File[]>;
-  setMask: StateSetter<File | null>;
+  replaceActiveComposerRequest: (
+    request: Omit<ComposerRequestDraft, 'id'>,
+    notice: string | null
+  ) => void;
   setWorkspaceTab: StateSetter<'images' | 'info' | 'settings'>;
   setSelectedTaskId: StateSetter<string | null>;
   setSelectedImageId: StateSetter<string | null>;
@@ -137,6 +136,7 @@ export interface SettingsCommandDeps {
   activeProvider: GenerationProvider | null;
   activeModel: GenerationModel | null;
   setStudioSettings: StateSetter<StudioSettings>;
+  applyStudioSettingsToComposer: (settings: StudioSettings, compatibilityNotice: string) => void;
   normalizeSettings: (settings: StudioSettings) => StudioSettings;
   composerCompatibility: ComposerCompatibilityCommandDeps;
   batchCompatibility: BatchCompatibilityCommandDeps;
@@ -145,12 +145,13 @@ export interface SettingsCommandDeps {
 
 export interface DetailCommandDeps {
   t: TranslateFn;
+  params: ImageParams;
   studioSettings: StudioSettings;
   hiresFix: GalleryHiresFixCommandDeps;
-  setProviderModeId: StateSetter<ProviderGenerationModeId>;
-  setCompatibilityNotice: StateSetter<string | null>;
-  setParams: StateSetter<ImageParams>;
-  setStudioSettings: StateSetter<StudioSettings>;
+  replaceActiveComposerRequest: (
+    request: Omit<ComposerRequestDraft, 'id'>,
+    notice: string | null
+  ) => void;
   setSelectedTaskId: StateSetter<string | null>;
   setSelectedImageId: StateSetter<string | null>;
 }
@@ -178,6 +179,10 @@ export interface RequestPresetCommandDeps {
   setTargetImage: StateSetter<File | null>;
   setReferenceImages: StateSetter<File[]>;
   setMask: StateSetter<File | null>;
+  replaceActiveComposerRequest: (
+    request: Omit<ComposerRequestDraft, 'id'>,
+    notice: string | null
+  ) => void;
   setBatchDrafts: StateSetter<BatchComposerDraft[]>;
   setRequestPresets: StateSetter<RequestPreset[]>;
   normalizeSettings: (settings: StudioSettings) => StudioSettings;

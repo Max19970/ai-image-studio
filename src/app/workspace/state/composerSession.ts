@@ -2,6 +2,8 @@ import type { ComposerRequestDraft } from '../../../domain/generationTask';
 import { cloneParams } from '../../../domain/generationSnapshots';
 import type { ImageParams } from '../../../domain/imageParams';
 import type { ProviderGenerationModeId } from '../../../domain/providerMode';
+import type { StudioSettings } from '../../../domain/studioSettings';
+import { sanitizeProviderModeDraftForModel } from '../../../entities/provider/attachmentCompatibility';
 
 export interface ComposerDraftSeed {
   params: ImageParams;
@@ -30,6 +32,8 @@ export type ComposerSessionAction =
   | { type: 'setInterval'; seconds: number }
   | { type: 'setParametersDraft'; id: string | null }
   | { type: 'setCompatibilityNotice'; notice: string | null }
+  | { type: 'replaceActiveDraftRequest'; request: Omit<ComposerRequestDraft, 'id'>; notice: string | null }
+  | { type: 'reconcileDrafts'; drafts: ComposerRequestDraft[]; notice: string | null }
   | { type: 'seedUntouchedSession'; seed: ComposerDraftSeed };
 
 export function createComposerRequestDraft(
@@ -127,6 +131,32 @@ function withUserRevision(
   patch: Partial<ComposerSessionState>
 ): ComposerSessionState {
   return { ...state, ...patch, revision: state.revision + 1 };
+}
+
+export interface ComposerDraftSettingsReconciliation {
+  drafts: ComposerRequestDraft[];
+  changedDraftIds: string[];
+}
+
+export function reconcileComposerDraftsForSettings(
+  drafts: readonly ComposerRequestDraft[],
+  settings: StudioSettings
+): ComposerDraftSettingsReconciliation {
+  const availableModelIds = new Set(settings.models.map((model) => model.id));
+  const fallbackModelId = settings.selectedModelId;
+  const changedDraftIds: string[] = [];
+  const reconciled = drafts.map((draft) => {
+    const selectedModelId = availableModelIds.has(draft.selectedModelId)
+      ? draft.selectedModelId
+      : fallbackModelId;
+    const candidate = selectedModelId === draft.selectedModelId
+      ? draft
+      : { ...draft, selectedModelId };
+    const result = sanitizeProviderModeDraftForModel(candidate, settings, selectedModelId);
+    if (selectedModelId !== draft.selectedModelId || result.changed) changedDraftIds.push(draft.id);
+    return result.value;
+  });
+  return { drafts: reconciled, changedDraftIds };
 }
 
 export function composerSessionReducer(
@@ -230,6 +260,34 @@ export function composerSessionReducer(
       });
     case 'setCompatibilityNotice':
       return withUserRevision(state, { compatibilityNotice: action.notice });
+    case 'replaceActiveDraftRequest': {
+      const nextDraft: ComposerRequestDraft = {
+        id: activeDraft.id,
+        providerModeId: action.request.providerModeId,
+        params: cloneParams(action.request.params),
+        selectedModelId: action.request.selectedModelId,
+        targetImage: action.request.targetImage,
+        referenceImages: [...action.request.referenceImages],
+        mask: action.request.mask
+      };
+      return withUserRevision(state, {
+        drafts: replaceComposerDraft(state.drafts, nextDraft),
+        compatibilityNotice: action.notice
+      });
+    }
+    case 'reconcileDrafts': {
+      const drafts = action.drafts.length > 0
+        ? action.drafts.map(cloneComposerDraft)
+        : [clearComposerDraftContent(activeDraft)];
+      const activeDraftId = drafts.some((draft) => draft.id === state.activeDraftId)
+        ? state.activeDraftId
+        : drafts[0].id;
+      return withUserRevision(state, {
+        drafts,
+        activeDraftId,
+        compatibilityNotice: action.notice
+      });
+    }
     case 'seedUntouchedSession': {
       if (state.revision !== 0) return state;
       const seeded = {

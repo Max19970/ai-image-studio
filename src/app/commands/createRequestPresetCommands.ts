@@ -108,13 +108,14 @@ export function createRequestPresetCommands(args: RequestPresetCommandDeps): Req
         mask: null
       }, nextSettings, selectedModelId);
 
-      args.setStudioSettings(nextSettings);
-      args.setParams(preset.snapshot.params);
-      args.setProviderModeId(compatibility.value.providerModeId);
-      args.setTargetImage(null);
-      args.setReferenceImages([]);
-      args.setMask(null);
-      args.setCompatibilityNotice(modelMissing
+      args.replaceActiveComposerRequest({
+        providerModeId: compatibility.value.providerModeId,
+        params: preset.snapshot.params,
+        selectedModelId,
+        targetImage: null,
+        referenceImages: [],
+        mask: null
+      }, modelMissing
         ? args.t('requestPresets.modelMissingNotice')
         : args.t('requestPresets.appliedNotice'));
     },

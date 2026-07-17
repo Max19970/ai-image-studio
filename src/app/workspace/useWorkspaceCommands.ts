@@ -8,16 +8,14 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
   return useMemo(() => {
     const composerCompatibility = {
       t,
+      params: state.params,
       providerModeId: state.providerModeId,
       studioSettings: state.studioSettings,
       targetImage: state.targetImage,
       referenceImages: state.referenceImages,
       mask: state.mask,
-      setProviderModeId: state.setProviderModeId,
-      setCompatibilityNotice: state.setCompatibilityNotice,
-      setTargetImage: state.setTargetImage,
-      setReferenceImages: state.setReferenceImages,
-      setMask: state.setMask
+      replaceActiveComposerRequest: state.replaceActiveComposerRequest,
+      setCompatibilityNotice: state.setCompatibilityNotice
     };
 
     const galleryNavigation = {
@@ -29,12 +27,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
       t,
       params: state.params,
       studioSettings: state.studioSettings,
-      setStudioSettings: state.setStudioSettings,
-      setProviderModeId: state.setProviderModeId,
-      setParams: state.setParams,
-      setTargetImage: state.setTargetImage,
-      setReferenceImages: state.setReferenceImages,
-      setMask: state.setMask,
+      replaceActiveComposerRequest: state.replaceActiveComposerRequest,
       setWorkspaceTab: state.setWorkspaceTab,
       setSelectedTaskId: state.setSelectedTaskId,
       setSelectedImageId: state.setSelectedImageId,
@@ -113,6 +106,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         activeProvider: derived.activeProvider,
         activeModel: derived.activeModel,
         setStudioSettings: state.setStudioSettings,
+        applyStudioSettingsToComposer: state.applyStudioSettingsToComposer,
         normalizeSettings: normalizeSelectedModel,
         composerCompatibility,
         batchCompatibility: {
@@ -122,12 +116,10 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
       },
       detail: {
         t,
+        params: state.params,
         studioSettings: state.studioSettings,
         hiresFix,
-        setProviderModeId: state.setProviderModeId,
-        setCompatibilityNotice: state.setCompatibilityNotice,
-        setParams: state.setParams,
-        setStudioSettings: state.setStudioSettings,
+        replaceActiveComposerRequest: state.replaceActiveComposerRequest,
         setSelectedTaskId: state.setSelectedTaskId,
         setSelectedImageId: state.setSelectedImageId
       },
@@ -155,6 +147,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         setTargetImage: state.setTargetImage,
         setReferenceImages: state.setReferenceImages,
         setMask: state.setMask,
+        replaceActiveComposerRequest: state.replaceActiveComposerRequest,
         setBatchDrafts: state.setComposerDrafts,
         setRequestPresets: state.setRequestPresets,
         normalizeSettings: normalizeSelectedModel

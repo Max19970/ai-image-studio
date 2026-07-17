@@ -118,17 +118,22 @@ export function restoreRequestToWorkspaceCommand(snapshot: GenerationRequestSnap
     mask: null
   }, commands.settings, selectedModelId, snapshot.mode);
 
-  commands.setProviderModeId(sanitized.value.providerModeId);
-  commands.setCompatibilityNotice(sanitized.changed
+  const params = getProviderGenerationRequestSurfaceById(snapshot.surfaceId).restoreParamsFromSnapshot({
+    previous: commands.params,
+    snapshot
+  });
+  commands.replaceActiveComposerRequest({
+    providerModeId: sanitized.value.providerModeId,
+    params,
+    selectedModelId,
+    targetImage: sanitized.value.targetImage,
+    referenceImages: sanitized.value.referenceImages,
+    mask: sanitized.value.mask
+  }, sanitized.changed
     ? commands.t('composer.compatibilityAdjustedRequest')
     : snapshot.attachments.length > 0
       ? commands.t('composer.restoreNeedsFiles')
       : null);
-  commands.setParams((prev) => getProviderGenerationRequestSurfaceById(snapshot.surfaceId).restoreParamsFromSnapshot({ previous: prev, snapshot }));
-
-  if (modelFromHistory) {
-    commands.setSettings((prev: StudioSettings) => normalizeSelectedModel({ ...prev, selectedModelId: modelFromHistory.id }));
-  }
 
   commands.setSelectedTaskId(null);
   commands.setSelectedImageId(null);

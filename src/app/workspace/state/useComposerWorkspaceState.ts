@@ -9,6 +9,7 @@ import type { StateSetter } from '../types';
 import {
   composerSessionReducer,
   createComposerSessionState,
+  reconcileComposerDraftsForSettings,
   type ComposerSessionState
 } from './composerSession';
 
@@ -17,6 +18,8 @@ interface ComposerSettingsBridge {
   setParams: StateSetter<ImageParams>;
   studioSettings: StudioSettings;
   setStudioSettings: StateSetter<StudioSettings>;
+  settingsHydration: 'loading' | 'ready' | 'degraded';
+  paramsHydration: 'loading' | 'ready' | 'degraded';
 }
 
 export interface ComposerWorkspaceState {
@@ -43,6 +46,8 @@ export interface ComposerWorkspaceState {
   removeComposerDraft: (id: string) => void;
   patchComposerDraft: (id: string, patch: Partial<ComposerRequestDraft>) => void;
   patchComposerDraftParams: (id: string, patch: Partial<ImageParams>) => void;
+  replaceActiveComposerRequest: (request: Omit<ComposerRequestDraft, 'id'>, notice: string | null) => void;
+  applyStudioSettingsToComposer: (settings: StudioSettings, compatibilityNotice: string) => void;
   composerIntervalSeconds: number;
   setComposerIntervalSeconds: StateSetter<number>;
   composerParametersDraftId: string | null;
@@ -75,6 +80,7 @@ export function useComposerWorkspaceState(bridge: ComposerSettingsBridge): Compo
   const activeDraft = activeDraftFor(session);
 
   useEffect(() => {
+    if (bridge.settingsHydration === 'loading' || bridge.paramsHydration === 'loading') return;
     dispatch({
       type: 'seedUntouchedSession',
       seed: {
@@ -83,7 +89,12 @@ export function useComposerWorkspaceState(bridge: ComposerSettingsBridge): Compo
         providerModeId: activeDraft.providerModeId
       }
     });
-  }, [bridge.params, bridge.studioSettings.selectedModelId]);
+  }, [
+    bridge.params,
+    bridge.paramsHydration,
+    bridge.settingsHydration,
+    bridge.studioSettings.selectedModelId
+  ]);
 
   useEffect(() => {
     if (session.revision === 0) return;
@@ -179,6 +190,29 @@ export function useComposerWorkspaceState(bridge: ComposerSettingsBridge): Compo
     dispatch({ type: 'patchDraftParams', id, patch });
   }, []);
 
+  const replaceActiveComposerRequest = useCallback((
+    request: Omit<ComposerRequestDraft, 'id'>,
+    notice: string | null
+  ) => {
+    dispatch({ type: 'replaceActiveDraftRequest', request, notice });
+  }, []);
+
+  const applyStudioSettingsToComposer = useCallback((
+    settings: StudioSettings,
+    compatibilityNotice: string
+  ) => {
+    const currentSession = sessionRef.current;
+    const reconciliation = reconcileComposerDraftsForSettings(currentSession.drafts, settings);
+    bridgeRef.current.setStudioSettings(settings);
+    dispatch({
+      type: 'reconcileDrafts',
+      drafts: reconciliation.drafts,
+      notice: reconciliation.changedDraftIds.includes(currentSession.activeDraftId)
+        ? compatibilityNotice
+        : null
+    });
+  }, []);
+
   const studioSettings = useMemo<StudioSettings>(() => ({
     ...bridge.studioSettings,
     selectedModelId: activeDraft.selectedModelId
@@ -208,6 +242,8 @@ export function useComposerWorkspaceState(bridge: ComposerSettingsBridge): Compo
     removeComposerDraft: (id) => dispatch({ type: 'removeDraft', id }),
     patchComposerDraft,
     patchComposerDraftParams,
+    replaceActiveComposerRequest,
+    applyStudioSettingsToComposer,
     composerIntervalSeconds: session.composerIntervalSeconds,
     setComposerIntervalSeconds,
     composerParametersDraftId: session.composerParametersDraftId,

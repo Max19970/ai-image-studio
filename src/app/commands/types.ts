@@ -33,9 +33,10 @@ export interface WorkspaceNavigationCommands {
 
 export interface RestoreRequestCommands extends WorkspaceNavigationCommands {
   t: TranslateFn;
-  setProviderModeId: StateSetter<ProviderGenerationModeId>;
-  setCompatibilityNotice: StateSetter<string | null>;
-  setParams: StateSetter<ImageParams>;
+  params: ImageParams;
   settings: StudioSettings;
-  setSettings: StateSetter<StudioSettings>;
+  replaceActiveComposerRequest(
+    request: Omit<import('../../domain/generationTask').ComposerRequestDraft, 'id'>,
+    notice: string | null
+  ): void;
 }
