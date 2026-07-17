@@ -10,28 +10,9 @@ import {
 } from './cancellation';
 import { startServerBatchGenerationRun } from './batchRun';
 import { startServerGenerationRun } from './singleRun';
-import {
-  deleteServerGalleryFolderTasks,
-  moveServerGalleryFolderTasks,
-  moveServerGalleryTask,
-  pasteServerGalleryItems,
-  type ServerGalleryDeleteResult,
-  type ServerGalleryPasteItem,
-  type ServerGalleryPasteOperation,
-  type ServerGalleryPasteResult
-} from './galleryMutations';
 import { subscribeGenerationTaskEvents } from './index';
 
-export type { ServerGalleryPasteItem, ServerGalleryPasteOperation } from './galleryMutations';
-
-export interface GenerationTaskGalleryMutationPort {
-  moveGalleryTask(taskId: string, targetPath: string): Promise<void>;
-  moveGalleryFolderTasks(sourcePath: string, nextPath: string): Promise<void>;
-  pasteGalleryItems(args: { operation: ServerGalleryPasteOperation; targetPath: string; items: ServerGalleryPasteItem[] }): Promise<ServerGalleryPasteResult>;
-  deleteGalleryFolderTasks(folderPath: string): Promise<ServerGalleryDeleteResult>;
-}
-
-export interface GenerationTaskRuntimePort extends GenerationTaskGalleryMutationPort {
+export interface GenerationTaskRuntimePort {
   subscribeEvents(req: express.Request, res: express.Response): void;
   startSingle(input: ServerGenerationRunInput): Promise<GenerationTask>;
   startBatch(input: ServerBatchGenerationRunInput): Promise<GenerationTask>;
@@ -48,9 +29,5 @@ export const defaultGenerationTaskRuntimePort: GenerationTaskRuntimePort = {
   clearAll: clearServerGenerationTasks,
   removeOne: deleteServerGenerationTask,
   stopTask: cancelServerGenerationTask,
-  stopBatchItem: cancelServerBatchGenerationItem,
-  moveGalleryTask: moveServerGalleryTask,
-  moveGalleryFolderTasks: moveServerGalleryFolderTasks,
-  pasteGalleryItems: pasteServerGalleryItems,
-  deleteGalleryFolderTasks: deleteServerGalleryFolderTasks
+  stopBatchItem: cancelServerBatchGenerationItem
 };

@@ -30,7 +30,6 @@ const requiredFiles = [
   'server/gallery/catalogState.ts',
   'server/gallery/taskState.ts',
   'server/storage/galleryCatalogStore.ts',
-  'server/storage/galleryFoldersStore.ts',
   'server/routes/galleryFolderRoutes.ts',
   'src/infrastructure/storage/remoteGalleryFolderStore.ts',
   'src/infrastructure/storage/remoteGenerationTaskHistoryStore.ts',
@@ -76,10 +75,7 @@ const galleryCatalogState = fs.readFileSync(path.join(root, 'server/gallery/cata
 const galleryTaskState = fs.readFileSync(path.join(root, 'server/gallery/taskState.ts'), 'utf8');
 const galleryCatalogStore = fs.readFileSync(path.join(root, 'server/storage/galleryCatalogStore.ts'), 'utf8');
 const runtimeStore = fs.readFileSync(path.join(root, 'server/processes/generation-task-runtime/runtimeStore.ts'), 'utf8');
-const galleryFoldersStore = fs.readFileSync(path.join(root, 'server/storage/galleryFoldersStore.ts'), 'utf8');
 const galleryFolderRoutes = fs.readFileSync(path.join(root, 'server/routes/galleryFolderRoutes.ts'), 'utf8');
-const galleryMutations = fs.readFileSync(path.join(root, 'server/processes/generation-task-runtime/galleryMutations.ts'), 'utf8');
-const galleryMetadataStore = fs.readFileSync(path.join(root, 'server/storage/galleryMetadataStore.ts'), 'utf8');
 const remoteGalleryFolderStore = fs.readFileSync(path.join(root, 'src/infrastructure/storage/remoteGalleryFolderStore.ts'), 'utf8');
 const storageSyncHistory = fs.readFileSync(path.join(root, 'src/processes/storage-sync/generationTaskHistory.ts'), 'utf8');
 const storageSyncSettings = fs.readFileSync(path.join(root, 'src/processes/storage-sync/studioSettings.ts'), 'utf8');
@@ -116,11 +112,11 @@ const expectations = [
   ['app document descriptors own buckets and routes', /appDocumentBuckets/.test(appDocumentDescriptors) && /listAppDocumentRouteDescriptors/.test(appDocumentDescriptors) && /integration-settings\.v1/.test(appDocumentDescriptors) && /for \(const descriptor of listAppDocumentRouteDescriptors\(\)\)/.test(appDocumentRoutes)],
   ['app document store exists', /studioSettingsBucket/.test(appDocumentStore) && /providerProbeCacheBucket/.test(appDocumentStore)],
   ['remote history store supports asset endpoint', /generationTaskAssetEndpoint/.test(remoteHistoryStore) && /loadGenerationTaskAsset/.test(remoteHistoryStore)],
-  ['gallery descriptors own item kinds and paste operation policies', /galleryItemKindDescriptors/.test(galleryDescriptors) && /galleryPasteOperationDescriptors/.test(galleryDescriptors) && /galleryItemCanContainChildren/.test(galleryCatalogState) && /galleryPasteOperationDuplicatesTasks/.test(galleryTaskState) && /parseGalleryItemKind/.test(galleryFolderRoutes) && /normalizeGalleryMetadataKind/.test(galleryMetadataStore)],
+  ['gallery descriptors own item kinds and paste operation policies', /galleryItemKindDescriptors/.test(galleryDescriptors) && /galleryPasteOperationDescriptors/.test(galleryDescriptors) && /galleryItemCanContainChildren/.test(galleryCatalogState) && /galleryPasteOperationDuplicatesTasks/.test(galleryTaskState) && /parseGalleryItemKind/.test(galleryFolderRoutes) && /setGalleryPinnedState/.test(galleryCatalogState)],
   ['gallery routes delegate orchestration to GalleryCatalog', /GalleryCatalog/.test(galleryFolderRoutes) && !/galleryFoldersStore/.test(galleryFolderRoutes) && !/galleryMetadataStore/.test(galleryFolderRoutes) && /createDefaultGalleryCatalog/.test(galleryCatalog)],
   ['gallery catalog persists tasks, folders, pins and tags in one SQLite transaction', /saveGenerationTaskHistoryDocumentsInTransaction/.test(galleryCatalogStore) && /generationGalleryFolderBucket/.test(galleryCatalogStore) && /generationGalleryPinBucket/.test(galleryCatalogStore) && /generationGalleryTagBucket/.test(galleryCatalogStore) && /db\.exec\('BEGIN'\)/.test(galleryCatalogStore) && /db\.exec\('COMMIT'\)/.test(galleryCatalogStore) && /db\.exec\('ROLLBACK'\)/.test(galleryCatalogStore)],
   ['runtime publishes gallery mutations only after atomic persistence', /commitGalleryMutation/.test(runtimeStore) && /await persist\(nextTasks, prepared\.payload\)/.test(runtimeStore) && /runtimeTasks = nextTasks/.test(runtimeStore) && runtimeStore.indexOf('await persist(nextTasks, prepared.payload)') < runtimeStore.indexOf('runtimeTasks = nextTasks')],
-  ['gallery folder store uses encrypted documents', /generationGalleryFolderBucket/.test(galleryFoldersStore) && /saveEncryptedDocument/.test(galleryFoldersStore) && /loadGalleryFolders/.test(galleryFoldersStore)],
+  ['gallery catalog owns encrypted folder and metadata documents', /loadGalleryCatalogDocuments/.test(galleryCatalogStore) && /saveGalleryCatalogStateDocuments/.test(galleryCatalogStore)],
   ['remote gallery folder store exists', /gallery-folders/.test(remoteGalleryFolderStore) && /moveRemoteGalleryItem/.test(remoteGalleryFolderStore)],
   ['client history sync is fallback-only and has no remote writer',
     /localGenerationTaskCache/.test(storageSyncHistory)

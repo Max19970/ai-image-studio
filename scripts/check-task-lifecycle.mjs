@@ -19,7 +19,6 @@ const serverRuntimeFiles = [
   'server/processes/generation-task-runtime/cancellationRegistry.ts',
   'server/processes/generation-task-runtime/cancellationTaskStore.ts',
   'server/processes/generation-task-runtime/cancellationBatchReducer.ts',
-  'server/processes/generation-task-runtime/galleryMutations.ts',
   'server/processes/generation-task-runtime/imageState.ts',
   'server/processes/liveGenerationImageAssets.ts',
   'server/processes/liveGenerationImageStore.ts'
@@ -103,7 +102,6 @@ async function main() {
   assert(serverRuntime.includes('createGenerationCancellationRegistry') && serverRuntime.includes('GenerationCancellationTaskStorePort') && serverRuntime.includes('reduceCancelledBatchItem'), 'server runtime cancellation is not split into controller registry, task-store port and reducer adapter.');
   assert(serverRuntime.includes('createGenerationTaskRuntimeStore') && serverRuntime.includes('RuntimeTaskPersistencePort') && serverRuntime.includes('RuntimeTaskEventPublisherPort'), 'server runtime store does not expose injected persistence/serialization/event ports.');
   assert(serverRuntime.includes('createLiveGenerationImageStore') && serverRuntime.includes('defaultLiveImageUrl'), 'server runtime does not split live image cache policy from serialization facade.');
-  assert(serverRuntime.includes('moveServerGalleryFolderTasks') && serverRuntime.includes('pasteServerGalleryItems'), 'server runtime split does not preserve gallery task mutations.');
 
   const batchTaskReducer = await readCombined([
     'src/processes/batch-runner/batchTaskReducer.ts',

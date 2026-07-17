@@ -1,104 +1,114 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type { GalleryFolder } from '../src/domain/galleryFilesystem';
-import type { GalleryPinItem, GalleryTagRecord } from '../src/entities/gallery/galleryMetadata';
-import {
-  createGalleryCatalog,
-  type GalleryCatalogDependencies,
-  type GalleryCatalogMetadataCopyMapping
-} from '../server/gallery/catalog';
+import type { GenerationTask } from '../src/domain/generationTask';
+import type { GalleryCatalogDocumentsState } from '../server/gallery/catalogState';
+import { createGalleryCatalog, type GalleryCatalogMutation } from '../server/gallery/catalog';
 
-function folder(path: string): GalleryFolder {
-  return { id: path, path, name: path.split('/').filter(Boolean).at(-1) ?? '/', createdAt: 1, updatedAt: 1 };
+function task(id: string, galleryPath: string): GenerationTask {
+  return {
+    id,
+    kind: 'single',
+    status: 'succeeded',
+    galleryPath,
+    galleryPaths: [galleryPath],
+    createdAt: 1,
+    updatedAt: 1,
+    request: {
+      createdAt: 1,
+      mode: 'generate',
+      prompt: id,
+      endpoint: '/generate',
+      providerLabel: 'Provider',
+      model: 'model',
+      modelLabel: 'Model',
+      payload: {},
+      warnings: [],
+      attachments: [],
+      params: {}
+    },
+    images: []
+  };
 }
 
 function createHarness() {
-  const calls: string[] = [];
-  const copiedMetadata: GalleryCatalogMetadataCopyMapping[][] = [];
-  const deletedMetadata: Array<{ folderPath?: string; taskIds?: string[] }> = [];
-  const folders = [folder('/source')];
-  const pins: GalleryPinItem[] = [];
-  const tags: GalleryTagRecord[] = [];
-
-  const dependencies: GalleryCatalogDependencies = {
-    folders: {
-      load: () => folders,
-      create: (parentPath, name) => ({ folder: folder(`${parentPath === '/' ? '' : parentPath}/${name}`), folders }),
-      rename: (path, name) => ({ folders, sourcePath: path, nextPath: `/${name}` }),
-      delete: () => folders,
-      moveItem: () => ({ folders, sourcePath: '/source', nextPath: '/target/source' }),
-      pasteItems: () => ({
-        folders: [folder('/source'), folder('/target/source')],
-        mappings: [{ itemKind: 'folder', itemId: '/source', sourcePath: '/source', nextPath: '/target/source' }]
-      })
-    },
-    metadata: {
-      loadPins: () => pins,
-      loadTags: () => tags,
-      setPinned: () => pins,
-      setTags: () => tags,
-      remapFolder: (sourcePath, nextPath) => calls.push(`metadata:remap:${sourcePath}->${nextPath}`),
-      copyItems: (mappings) => {
-        copiedMetadata.push(mappings);
-        calls.push('metadata:copy');
-      },
-      deleteItems: (selection) => {
-        deletedMetadata.push(selection);
-        calls.push('metadata:delete');
-      }
-    },
-    generationTasks: {
-      moveGalleryTask: async (taskId, targetPath) => { calls.push(`tasks:move:${taskId}->${targetPath}`); },
-      moveGalleryFolderTasks: async (sourcePath, nextPath) => { calls.push(`tasks:remap:${sourcePath}->${nextPath}`); },
-      pasteGalleryItems: async () => {
-        calls.push('tasks:paste');
-        return { copiedTasks: [{ sourceTaskId: 'source-task', nextTaskId: 'copy-task' }] };
-      },
-      deleteGalleryFolderTasks: async () => {
-        calls.push('tasks:delete');
-        return { deletedTaskIds: ['deleted-task'] };
-      }
-    }
+  let tasks = [task('source-task', '/source')];
+  let documents: GalleryCatalogDocumentsState = {
+    folders: [
+      { id: '/source', path: '/source', name: 'source', createdAt: 1, updatedAt: 1 },
+      { id: '/source/nested', path: '/source/nested', name: 'nested', createdAt: 1, updatedAt: 1 }
+    ],
+    pins: [
+      { itemKind: 'folder', itemId: '/source', createdAt: 1 },
+      { itemKind: 'task', itemId: 'source-task', createdAt: 1 }
+    ],
+    tags: [
+      { itemKind: 'folder', itemId: '/source/nested', tags: ['nested'], updatedAt: 1 },
+      { itemKind: 'task', itemId: 'source-task', tags: ['task'], updatedAt: 1 }
+    ]
   };
+  let commits = 0;
 
-  return { catalog: createGalleryCatalog(dependencies), calls, copiedMetadata, deletedMetadata };
+  const catalog = createGalleryCatalog({
+    readDocuments: () => structuredClone(documents),
+    loadFullTasks: async (ids) => tasks.filter((item) => ids.includes(item.id)),
+    async commit<TResult>(prepare: (
+      currentTasks: GenerationTask[],
+      currentDocuments: GalleryCatalogDocumentsState
+    ) => Promise<GalleryCatalogMutation<TResult>> | GalleryCatalogMutation<TResult>) {
+      const prepared = await prepare(structuredClone(tasks), structuredClone(documents));
+      tasks = prepared.tasks;
+      documents = prepared.documents;
+      commits += 1;
+      return prepared.result;
+    }
+  });
+
+  return {
+    catalog,
+    readTasks: () => tasks,
+    readDocuments: () => documents,
+    readCommits: () => commits
+  };
 }
 
-test('GalleryCatalog owns folder rename coordination across tasks and metadata', async () => {
-  const { catalog, calls } = createHarness();
+test('GalleryCatalog rename changes tasks and folder metadata in one aggregate commit', async () => {
+  const harness = createHarness();
 
-  const result = await catalog.renameFolder('/source', 'renamed');
+  const result = await harness.catalog.renameFolder('/source', 'renamed');
 
-  assert.equal(result.sourcePath, '/source');
   assert.equal(result.nextPath, '/renamed');
-  assert.deepEqual(calls, [
-    'tasks:remap:/source->/renamed',
-    'metadata:remap:/source->/renamed'
-  ]);
+  assert.deepEqual(harness.readTasks()[0].galleryPaths, ['/renamed']);
+  assert.deepEqual(harness.readDocuments().folders.map((item) => item.path), ['/renamed', '/renamed/nested']);
+  assert.deepEqual(harness.readDocuments().pins.map((item) => item.itemId).sort(), ['/renamed', 'source-task']);
+  assert.deepEqual(harness.readDocuments().tags.map((item) => item.itemId).sort(), ['/renamed/nested', 'source-task']);
+  assert.equal(harness.readCommits(), 1);
 });
 
 test('GalleryCatalog copy duplicates folder and task metadata onto copied identities', async () => {
-  const { catalog, calls, copiedMetadata } = createHarness();
+  const harness = createHarness();
 
-  const result = await catalog.pasteItems({
-    operation: 'copy',
+  const result = await harness.catalog.pasteItems({
+    operation: 'deep-copy',
     targetPath: '/target',
     items: [{ itemKind: 'folder', itemId: '/source', sourcePath: '/source' }]
   });
 
-  assert.deepEqual(result.folders.map((item) => item.path), ['/source', '/target/source']);
-  assert.deepEqual(calls, ['tasks:paste', 'metadata:copy']);
-  assert.deepEqual(copiedMetadata, [[
-    { itemKind: 'folder', sourceItemId: '/source', nextItemId: '/target/source' },
-    { itemKind: 'task', sourceItemId: 'source-task', nextItemId: 'copy-task' }
-  ]]);
+  const copiedTask = harness.readTasks().find((item) => item.id !== 'source-task');
+  assert.ok(copiedTask);
+  assert.deepEqual(result.folders.map((item) => item.path), ['/source', '/source/nested', '/target/source', '/target/source/nested']);
+  assert.ok(harness.readDocuments().pins.some((item) => item.itemKind === 'folder' && item.itemId === '/target/source'));
+  assert.ok(harness.readDocuments().pins.some((item) => item.itemKind === 'task' && item.itemId === copiedTask.id));
+  assert.ok(harness.readDocuments().tags.some((item) => item.itemKind === 'folder' && item.itemId === '/target/source/nested'));
+  assert.ok(harness.readDocuments().tags.some((item) => item.itemKind === 'task' && item.itemId === copiedTask.id));
+  assert.equal(harness.readCommits(), 1);
 });
 
-test('GalleryCatalog delete removes metadata for the folder subtree and deleted tasks', async () => {
-  const { catalog, calls, deletedMetadata } = createHarness();
+test('GalleryCatalog delete removes folder subtree, orphan tasks and related metadata together', async () => {
+  const harness = createHarness();
 
-  await catalog.deleteFolder('/source');
+  await harness.catalog.deleteFolder('/source');
 
-  assert.deepEqual(calls, ['tasks:delete', 'metadata:delete']);
-  assert.deepEqual(deletedMetadata, [{ folderPath: '/source', taskIds: ['deleted-task'] }]);
+  assert.deepEqual(harness.readTasks(), []);
+  assert.deepEqual(harness.readDocuments(), { folders: [], pins: [], tags: [] });
+  assert.equal(harness.readCommits(), 1);
 });

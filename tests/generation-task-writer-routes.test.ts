@@ -30,11 +30,7 @@ function createRuntimeSpy() {
     async clearAll() { calls.clear += 1; },
     async removeOne(taskId) { calls.remove.push(taskId); },
     async stopTask() {},
-    async stopBatchItem() {},
-    async moveGalleryTask() {},
-    async moveGalleryFolderTasks() {},
-    async pasteGalleryItems() {},
-    async deleteGalleryFolderTasks() {}
+    async stopBatchItem() {}
   };
   return { runtime, calls };
 }

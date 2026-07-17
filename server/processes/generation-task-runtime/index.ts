@@ -11,16 +11,8 @@ export {
   clearServerGenerationTasks,
   deleteServerGenerationTask
 } from './cancellation';
-export {
-  deleteServerGalleryFolderTasks,
-  moveServerGalleryFolderTasks,
-  moveServerGalleryTask,
-  pasteServerGalleryItems
-} from './galleryMutations';
-
 export type { ServerGenerationRunInput } from './providerPipeline';
 export type { ServerBatchGenerationRunInput } from './batchRun';
-export type { ServerGalleryPasteItem, ServerGalleryPasteOperation } from './galleryMutations';
 
 export function resetGenerationTaskRuntimeForTests() {
   resetCancellationRuntimeForTests();

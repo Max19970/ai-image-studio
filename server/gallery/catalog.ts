@@ -1,3 +1,4 @@
+import type { GenerationTask } from '../../src/domain/generationTask';
 import type { GalleryFolder } from '../../src/domain/galleryFilesystem';
 import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../src/entities/gallery/galleryMetadata';
 import { normalizeGenerationTasks } from '../../src/entities/storage';
@@ -29,8 +30,6 @@ import {
   pasteGalleryTasksState,
   type ServerGalleryPasteItem
 } from './taskState';
-type GalleryPasteItem = GalleryFolderPasteItem;
-import type { GenerationTaskGalleryMutationPort } from '../processes/generation-task-runtime/runtimePort';
 import { commitGalleryMutation } from '../processes/generation-task-runtime/runtimeStore';
 import {
   loadGalleryCatalogDocumentsAsync,
@@ -40,31 +39,7 @@ import {
 import { loadGalleryCatalogDocuments } from '../storage/galleryCatalogStore';
 
 export type { GalleryCatalogMetadataCopyMapping } from './catalogState';
-
-export interface GalleryCatalogFolderPort {
-  load(): GalleryFolder[];
-  create(parentPath: string, name: string): { folder: GalleryFolder; folders: GalleryFolder[] };
-  rename(path: string, name: string): { folders: GalleryFolder[]; sourcePath: string; nextPath: string };
-  delete(path: string): GalleryFolder[];
-  moveItem(args: { itemKind: GalleryItemKind; itemId: string; targetPath: string }): { folders: GalleryFolder[]; sourcePath?: string; nextPath?: string };
-  pasteItems(args: { operation: GalleryPasteOperation; targetPath: string; items: GalleryPasteItem[] }): { folders: GalleryFolder[]; mappings: GalleryFolderPasteMapping[] };
-}
-
-export interface GalleryCatalogMetadataPort {
-  loadPins(): GalleryPinItem[];
-  loadTags(): GalleryTagRecord[];
-  setPinned(args: { itemKind: GalleryMetadataKind; itemId: string; pinned: boolean }): GalleryPinItem[];
-  setTags(args: { itemKind: GalleryMetadataKind; itemId: string; tags: string[] }): GalleryTagRecord[];
-  remapFolder(sourcePath: string, nextPath: string): void;
-  copyItems(mappings: GalleryCatalogMetadataCopyMapping[]): void;
-  deleteItems(selection: { folderPath?: string; taskIds?: string[] }): void;
-}
-
-export interface GalleryCatalogDependencies {
-  folders: GalleryCatalogFolderPort;
-  metadata: GalleryCatalogMetadataPort;
-  generationTasks: GenerationTaskGalleryMutationPort;
-}
+export type GalleryPasteItem = GalleryFolderPasteItem;
 
 export interface GalleryCatalog {
   listFolders(): GalleryFolder[];
@@ -79,6 +54,23 @@ export interface GalleryCatalog {
   setItemTags(args: { itemKind: GalleryMetadataKind; itemId: string; tags: string[] }): Promise<GalleryTagRecord[]>;
 }
 
+export interface GalleryCatalogMutation<TResult> {
+  tasks: GenerationTask[];
+  documents: GalleryCatalogDocumentsState;
+  result: TResult;
+}
+
+export interface GalleryCatalogDependencies {
+  readDocuments(): GalleryCatalogDocumentsState;
+  loadFullTasks(taskIds: string[]): Promise<GenerationTask[]>;
+  commit<TResult>(
+    prepare: (
+      tasks: GenerationTask[],
+      documents: GalleryCatalogDocumentsState
+    ) => Promise<GalleryCatalogMutation<TResult>> | GalleryCatalogMutation<TResult>
+  ): Promise<TResult>;
+}
+
 function folderCopyMappings(mappings: GalleryFolderPasteMapping[]): GalleryCatalogMetadataCopyMapping[] {
   return mappings.map((mapping) => ({ itemKind: 'folder', sourceItemId: mapping.sourcePath, nextItemId: mapping.nextPath }));
 }
@@ -88,96 +80,19 @@ function taskCopyMappings(mappings: Array<{ sourceTaskId: string; nextTaskId: st
 }
 
 export function createGalleryCatalog(dependencies: GalleryCatalogDependencies): GalleryCatalog {
-  const { folders, metadata, generationTasks } = dependencies;
-  return {
-    listFolders: () => folders.load(),
-    listPins: () => metadata.loadPins(),
-    listTags: () => metadata.loadTags(),
-    createFolder: async (parentPath, name) => folders.create(parentPath, name),
-    async renameFolder(path, name) {
-      const result = folders.rename(path, name);
-      await generationTasks.moveGalleryFolderTasks(result.sourcePath, result.nextPath);
-      metadata.remapFolder(result.sourcePath, result.nextPath);
-      return result;
-    },
-    async deleteFolder(path) {
-      const nextFolders = folders.delete(path);
-      const result = await generationTasks.deleteGalleryFolderTasks(path);
-      metadata.deleteItems({ folderPath: path, taskIds: result.deletedTaskIds });
-      return nextFolders;
-    },
-    async moveItem(args) {
-      const result = folders.moveItem(args);
-      if (!galleryItemCanContainChildren(args.itemKind)) {
-        await generationTasks.moveGalleryTask(args.itemId, args.targetPath);
-      } else if (result.sourcePath && result.nextPath) {
-        await generationTasks.moveGalleryFolderTasks(result.sourcePath, result.nextPath);
-        metadata.remapFolder(result.sourcePath, result.nextPath);
-      }
-      return result;
-    },
-    async pasteItems(args) {
-      const folderResult = folders.pasteItems(args);
-      const runtimeItems: ServerGalleryPasteItem[] = [
-        ...args.items.filter((item) => !galleryItemCanContainChildren(item.itemKind)),
-        ...folderResult.mappings
-      ];
-      const taskResult = await generationTasks.pasteGalleryItems({ ...args, items: runtimeItems });
-      if (args.operation === 'move') {
-        for (const mapping of folderResult.mappings) metadata.remapFolder(mapping.sourcePath, mapping.nextPath);
-      } else {
-        metadata.copyItems([...folderCopyMappings(folderResult.mappings), ...taskCopyMappings(taskResult.copiedTasks)]);
-      }
-      return folderResult;
-    },
-    setItemPinned: async (args) => metadata.setPinned(args),
-    setItemTags: async (args) => metadata.setTags(args)
-  };
-}
-
-async function loadFullTasks(taskIds: string[]) {
-  const loaded = await loadGenerationTaskHistoryDocumentsByIdsAsync(taskIds, 'full');
-  return normalizeGenerationTasks(loaded.tasks, { interruptActive: false });
-}
-
-interface TransactionalCatalogPreparation<TResult> {
-  tasks: import('../../src/domain/generationTask').GenerationTask[];
-  documents: GalleryCatalogDocumentsState;
-  result: TResult;
-}
-
-async function commitCatalogMutation<TResult>(
-  prepare: (
-    tasks: import('../../src/domain/generationTask').GenerationTask[],
-    documents: GalleryCatalogDocumentsState
-  ) => Promise<TransactionalCatalogPreparation<TResult>> | TransactionalCatalogPreparation<TResult>
-): Promise<TResult> {
-  return commitGalleryMutation(
-    async (tasks) => {
-      const documents = await loadGalleryCatalogDocumentsAsync();
-      const prepared = await prepare(tasks, documents);
-      return { tasks: prepared.tasks, payload: prepared.documents, result: prepared.result };
-    },
-    async (tasks, documents) => {
-      await saveGalleryCatalogStateDocumentsAsync({ tasks, ...documents });
-    }
-  );
-}
-
-export function createDefaultGalleryCatalog(): GalleryCatalog {
-  const readDocuments = () => loadGalleryCatalogDocuments();
+  const readDocuments = () => dependencies.readDocuments();
   return {
     listFolders: () => readDocuments().folders,
     listPins: () => readDocuments().pins,
     listTags: () => readDocuments().tags,
     createFolder(parentPath, name) {
-      return commitCatalogMutation((tasks, documents) => {
+      return dependencies.commit((tasks, documents) => {
         const result = createGalleryFolderState(documents.folders, parentPath, name);
         return { tasks, documents: { ...documents, folders: result.folders }, result };
       });
     },
     renameFolder(path, name) {
-      return commitCatalogMutation((tasks, documents) => {
+      return dependencies.commit((tasks, documents) => {
         const result = renameGalleryFolderState(documents.folders, path, name);
         const metadata = remapGalleryFolderMetadataState(documents, result.sourcePath, result.nextPath);
         return {
@@ -188,15 +103,18 @@ export function createDefaultGalleryCatalog(): GalleryCatalog {
       });
     },
     deleteFolder(path) {
-      return commitCatalogMutation((tasks, documents) => {
+      return dependencies.commit((tasks, documents) => {
         const taskResult = deleteGalleryFolderTasksState(tasks, path);
-        const metadata = deleteGalleryMetadataState(documents, { folderPath: path, taskIds: taskResult.result.deletedTaskIds });
+        const metadata = deleteGalleryMetadataState(documents, {
+          folderPath: path,
+          taskIds: taskResult.result.deletedTaskIds
+        });
         const folders = deleteGalleryFolderState(documents.folders, path);
         return { tasks: taskResult.tasks, documents: { folders, ...metadata }, result: folders };
       });
     },
     moveItem(args) {
-      return commitCatalogMutation((tasks, documents) => {
+      return dependencies.commit((tasks, documents) => {
         const folderResult = moveGalleryFolderItemState({ folders: documents.folders, ...args });
         if (!galleryItemCanContainChildren(args.itemKind)) {
           return {
@@ -217,18 +135,23 @@ export function createDefaultGalleryCatalog(): GalleryCatalog {
       });
     },
     pasteItems(args) {
-      return commitCatalogMutation(async (tasks, documents) => {
+      return dependencies.commit(async (tasks, documents) => {
         const folderResult = pasteGalleryFolderState({
           folders: documents.folders,
           operation: args.operation,
           targetPath: args.targetPath,
-          items: args.items as GalleryFolderPasteItem[]
+          items: args.items
         });
         const runtimeItems: ServerGalleryPasteItem[] = [
           ...args.items.filter((item) => !galleryItemCanContainChildren(item.itemKind)),
           ...folderResult.mappings
         ];
-        const taskResult = await pasteGalleryTasksState({ ...args, tasks, items: runtimeItems, loadFullTasks });
+        const taskResult = await pasteGalleryTasksState({
+          ...args,
+          tasks,
+          items: runtimeItems,
+          loadFullTasks: dependencies.loadFullTasks
+        });
         let metadata: Pick<GalleryCatalogDocumentsState, 'pins' | 'tags'> = documents;
         if (args.operation === 'move') {
           for (const mapping of folderResult.mappings) {
@@ -248,16 +171,40 @@ export function createDefaultGalleryCatalog(): GalleryCatalog {
       });
     },
     setItemPinned(args) {
-      return commitCatalogMutation((tasks, documents) => {
+      return dependencies.commit((tasks, documents) => {
         const pins = setGalleryPinnedState(documents.pins, args);
         return { tasks, documents: { ...documents, pins }, result: pins };
       });
     },
     setItemTags(args) {
-      return commitCatalogMutation((tasks, documents) => {
+      return dependencies.commit((tasks, documents) => {
         const tags = setGalleryTagsState(documents.tags, args);
         return { tasks, documents: { ...documents, tags }, result: tags };
       });
     }
   };
+}
+
+async function loadFullTasks(taskIds: string[]) {
+  const loaded = await loadGenerationTaskHistoryDocumentsByIdsAsync(taskIds, 'full');
+  return normalizeGenerationTasks(loaded.tasks, { interruptActive: false });
+}
+
+export function createDefaultGalleryCatalog(): GalleryCatalog {
+  return createGalleryCatalog({
+    readDocuments: loadGalleryCatalogDocuments,
+    loadFullTasks,
+    commit(prepare) {
+      return commitGalleryMutation(
+        async (tasks) => {
+          const documents = await loadGalleryCatalogDocumentsAsync();
+          const prepared = await prepare(tasks, documents);
+          return { tasks: prepared.tasks, payload: prepared.documents, result: prepared.result };
+        },
+        async (tasks, documents) => {
+          await saveGalleryCatalogStateDocumentsAsync({ tasks, ...documents });
+        }
+      );
+    }
+  });
 }
