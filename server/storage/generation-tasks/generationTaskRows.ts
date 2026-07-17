@@ -7,7 +7,6 @@ import {
 } from '../encryptedStore';
 import { generationTaskAssetsTableName, generationTasksTableName } from '../schema';
 import { normalizeGalleryPath, normalizeGalleryPaths } from '../../../src/domain/galleryFilesystem';
-import { ACTIVE_GENERATION_STATUSES } from '../../../src/domain/generationStatus';
 import { isRecord, numberOrFallback, stringOrFallback } from './generationTaskCodecs';
 import type { AssetRow, JsonObject, StoredImageReference, TaskRow } from './types';
 
@@ -71,26 +70,6 @@ export function selectTaskRows(limit: number, offset: number): TaskRow[] {
   return getStorageDb()
     .prepare(`SELECT id, document_key, kind, status, gallery_path, created_at, updated_at, image_count, batch_item_count FROM ${generationTasksTableName} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
     .all(limit, offset) as TaskRow[];
-}
-
-export function selectRuntimeTaskRows(completedLimit: number): TaskRow[] {
-  const activeStatuses = [...ACTIVE_GENERATION_STATUSES];
-  const activePlaceholders = activeStatuses.map(() => '?').join(', ');
-  return getStorageDb()
-    .prepare(`
-      SELECT id, document_key, kind, status, gallery_path, created_at, updated_at, image_count, batch_item_count
-      FROM ${generationTasksTableName}
-      WHERE status IN (${activePlaceholders})
-         OR id IN (
-           SELECT id
-           FROM ${generationTasksTableName}
-           WHERE status NOT IN (${activePlaceholders})
-           ORDER BY created_at DESC
-           LIMIT ?
-         )
-      ORDER BY created_at DESC
-    `)
-    .all(...activeStatuses, ...activeStatuses, completedLimit) as TaskRow[];
 }
 
 export function selectTaskRowsByIds(taskIds: string[]): TaskRow[] {

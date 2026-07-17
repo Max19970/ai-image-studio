@@ -27,9 +27,9 @@ import {
   selectAllTaskRows,
   selectAssetRows,
   selectTaskRows,
-  selectRuntimeTaskRows,
   selectTaskRowsByIds
 } from './generationTaskRows';
+import { selectRuntimeTaskRows } from './generationTaskRuntimeRows';
 import type { GenerationTaskAssetMode, GenerationTaskHistoryLoadOptions, GenerationTaskHistoryStorageStats, JsonObject, TaskRow } from './types';
 
 function resolveLoadOptions(options: GenerationTaskHistoryLoadOptions): Required<GenerationTaskHistoryLoadOptions> {
