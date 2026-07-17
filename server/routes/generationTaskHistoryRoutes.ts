@@ -1,12 +1,17 @@
 import type express from 'express';
 import {
-  clearGenerationTaskHistoryDocumentsAsync,
   getGenerationTaskStorageDiagnosticsAsync,
-  loadGenerationTaskHistoryDocumentsAsync,
-  saveGenerationTaskHistoryDocumentsAsync
+  loadGenerationTaskHistoryDocumentsAsync
 } from '../storage/generationTaskStoreAsync';
 import { sendServerError } from '../http/errors';
 import { serializeGenerationTaskHistoryForClient } from '../processes/generationTaskHistoryClientSerialization';
+
+function sendReadOnlyMethodError(res: express.Response) {
+  res.setHeader('Allow', 'GET');
+  res.status(405).json({
+    error: 'Generation task storage history is read-only. Use GenerationTaskRuntime commands to mutate tasks.'
+  });
+}
 
 export function registerGenerationTaskHistoryRoutes(app: express.Express) {
   app.get('/api/storage/generation-tasks/diagnostics', async (_req, res) => {
@@ -30,22 +35,11 @@ export function registerGenerationTaskHistoryRoutes(app: express.Express) {
     }
   });
 
-  app.put('/api/storage/generation-tasks', async (req, res) => {
-    try {
-      const tasks = Array.isArray(req.body?.tasks) ? req.body.tasks : [];
-      const stats = await saveGenerationTaskHistoryDocumentsAsync(tasks);
-      res.json({ ok: true, count: tasks.length, storage: stats });
-    } catch (error) {
-      sendServerError(res, error);
-    }
+  app.put('/api/storage/generation-tasks', (_req, res) => {
+    sendReadOnlyMethodError(res);
   });
 
-  app.delete('/api/storage/generation-tasks', async (_req, res) => {
-    try {
-      const stats = await clearGenerationTaskHistoryDocumentsAsync();
-      res.json({ ok: true, count: 0, storage: stats });
-    } catch (error) {
-      sendServerError(res, error);
-    }
+  app.delete('/api/storage/generation-tasks', (_req, res) => {
+    sendReadOnlyMethodError(res);
   });
 }

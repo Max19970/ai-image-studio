@@ -13,12 +13,7 @@ import {
   type GalleryPasteItem,
   type GalleryPasteOperation
 } from '../storage/galleryFoldersStore';
-import {
-  deleteServerGalleryFolderTasks,
-  moveServerGalleryFolderTasks,
-  moveServerGalleryTask,
-  pasteServerGalleryItems
-} from '../processes/generationTaskRuntime';
+import type { GenerationTaskRuntimePort } from '../processes/generation-task-runtime/runtimePort';
 import {
   loadGalleryPins,
   loadGalleryTagRecords,
@@ -56,7 +51,10 @@ function parseTags(value: unknown): string[] {
   return value.map(String);
 }
 
-export function registerGalleryFolderRoutes(app: express.Express) {
+export function registerGalleryFolderRoutes(
+  app: express.Express,
+  generationTasks: GenerationTaskRuntimePort
+) {
   app.get('/api/storage/gallery-folders', (_req, res) => {
     try {
       res.json({ folders: loadGalleryFolders() });
@@ -97,7 +95,7 @@ export function registerGalleryFolderRoutes(app: express.Express) {
       const path = normalizeGalleryPath(req.body?.path);
       const name = typeof req.body?.name === 'string' ? req.body.name : '';
       const result = renameGalleryFolder(path, name);
-      await moveServerGalleryFolderTasks(result.sourcePath, result.nextPath);
+      await generationTasks.moveGalleryFolderTasks(result.sourcePath, result.nextPath);
       remapGalleryFolderMetadata(result.sourcePath, result.nextPath);
       res.json({ ok: true, ...result });
     } catch (error) {
@@ -109,7 +107,7 @@ export function registerGalleryFolderRoutes(app: express.Express) {
     try {
       const path = normalizeGalleryPath(req.query.path);
       const folders = deleteGalleryFolder(path);
-      await deleteServerGalleryFolderTasks(path);
+      await generationTasks.deleteGalleryFolderTasks(path);
       res.json({ ok: true, folders });
     } catch (error) {
       sendServerError(res, error);
@@ -123,9 +121,9 @@ export function registerGalleryFolderRoutes(app: express.Express) {
       const targetPath = normalizeGalleryPath(req.body?.targetPath);
       const result = moveGalleryItemPath({ itemKind, itemId, targetPath });
       if (!galleryItemCanContainChildren(itemKind)) {
-        await moveServerGalleryTask(itemId, targetPath);
+        await generationTasks.moveGalleryTask(itemId, targetPath);
       } else if (result.sourcePath && result.nextPath) {
-        await moveServerGalleryFolderTasks(result.sourcePath, result.nextPath);
+        await generationTasks.moveGalleryFolderTasks(result.sourcePath, result.nextPath);
         remapGalleryFolderMetadata(result.sourcePath, result.nextPath);
       }
       res.json({ ok: true, ...result });
@@ -144,7 +142,7 @@ export function registerGalleryFolderRoutes(app: express.Express) {
         ...items.filter((item) => !galleryItemCanContainChildren(item.itemKind)),
         ...folderResult.mappings
       ];
-      await pasteServerGalleryItems({ operation, targetPath, items: runtimeItems });
+      await generationTasks.pasteGalleryItems({ operation, targetPath, items: runtimeItems });
       if (operation === 'move') {
         for (const mapping of folderResult.mappings) remapGalleryFolderMetadata(mapping.sourcePath, mapping.nextPath);
       }

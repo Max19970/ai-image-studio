@@ -10,6 +10,14 @@ import {
 } from './cancellation';
 import { startServerBatchGenerationRun } from './batchRun';
 import { startServerGenerationRun } from './singleRun';
+import {
+  deleteServerGalleryFolderTasks,
+  moveServerGalleryFolderTasks,
+  moveServerGalleryTask,
+  pasteServerGalleryItems,
+  type ServerGalleryPasteItem,
+  type ServerGalleryPasteOperation
+} from './galleryMutations';
 import { subscribeGenerationTaskEvents } from './index';
 
 export interface GenerationTaskRuntimePort {
@@ -20,6 +28,10 @@ export interface GenerationTaskRuntimePort {
   removeOne(taskId: string): Promise<void>;
   stopTask(taskId: string): Promise<void>;
   stopBatchItem(taskId: string, itemId: string): Promise<void>;
+  moveGalleryTask(taskId: string, targetPath: string): Promise<void>;
+  moveGalleryFolderTasks(sourcePath: string, nextPath: string): Promise<void>;
+  pasteGalleryItems(args: { operation: ServerGalleryPasteOperation; targetPath: string; items: ServerGalleryPasteItem[] }): Promise<void>;
+  deleteGalleryFolderTasks(folderPath: string): Promise<void>;
 }
 
 export const defaultGenerationTaskRuntimePort: GenerationTaskRuntimePort = {
@@ -29,5 +41,9 @@ export const defaultGenerationTaskRuntimePort: GenerationTaskRuntimePort = {
   clearAll: clearServerGenerationTasks,
   removeOne: deleteServerGenerationTask,
   stopTask: cancelServerGenerationTask,
-  stopBatchItem: cancelServerBatchGenerationItem
+  stopBatchItem: cancelServerBatchGenerationItem,
+  moveGalleryTask: moveServerGalleryTask,
+  moveGalleryFolderTasks: moveServerGalleryFolderTasks,
+  pasteGalleryItems: pasteServerGalleryItems,
+  deleteGalleryFolderTasks: deleteServerGalleryFolderTasks
 };

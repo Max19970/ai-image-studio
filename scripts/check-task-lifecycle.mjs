@@ -132,9 +132,10 @@ async function main() {
   assert(!clientApi.includes(`export async function ${legacyClientSubmit}`), 'client API still exports direct provider submit as a production path.');
 
   const historyHook = await read('src/app/hooks/useGenerationTaskHistory.ts');
-  assert(historyHook.includes('createTaskCancellationRegistry'), 'task history hook does not use the cancellation registry for legacy local work.');
-  assert(historyHook.includes('.cancel(taskId)'), 'deleteTask does not cancel active work before removal.');
-  assert(historyHook.includes('.cancelAll()'), 'clearTasks does not cancel active work before clearing.');
+  assert(historyHook.includes("new EventSource('/api/generation-tasks/events')"), 'task history hook does not project the canonical runtime SSE stream.');
+  assert(!historyHook.includes('createTaskCancellationRegistry'), 'task history hook still owns client-side cancellation.');
+  assert(!historyHook.includes('deletedTaskIdsRef'), 'task history hook still hides canonical tasks behind tombstones.');
+  assert(!historyHook.includes('loadGenerationTaskHistory('), 'task history hook still competes with runtime SSE hydration.');
 
   const storage = await read('src/entities/storage/generationTasks.ts');
   assert(storage.includes('interruptedStatusToFailed'), 'storage restore does not normalize interrupted active tasks.');
@@ -147,6 +148,7 @@ async function main() {
   console.log(`  ${expectedStatuses.length} persisted lifecycle statuses`);
   console.log(`  ${serverRuntimeFiles.length} server runtime facade/modules`);
   console.log('  server-owned runtime is the lifecycle owner for single and batch generation');
+  console.log('  client task history is SSE projection plus bounded fallback only');
   console.log('  client single generation is snapshot/enqueue-only');
   console.log('  legacy client direct batch runner is quarantined');
   console.log('  delayed parallel scheduler enabled for server batch sends');

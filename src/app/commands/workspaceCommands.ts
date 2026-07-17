@@ -10,27 +10,29 @@ import type { ProviderGenerationModeId } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { RestoreRequestCommands, StateSetter, TaskHistoryCommands, WorkspaceNavigationCommands } from './types';
 
-export function deleteTaskCommand(args: {
+export async function deleteTaskCommand(args: {
   taskId: string;
   selectedTaskId: string | null;
   navigation: WorkspaceNavigationCommands;
   taskHistory: Pick<TaskHistoryCommands, 'deleteTask'>;
+  serverActions?: { deleteTask(taskId: string): Promise<void> };
 }) {
   const { taskId, selectedTaskId, navigation, taskHistory } = args;
+  await (args.serverActions?.deleteTask ?? deleteServerGenerationTask)(taskId);
   taskHistory.deleteTask(taskId);
-  void deleteServerGenerationTask(taskId).catch(console.error);
   if (selectedTaskId === taskId) {
     navigation.setSelectedTaskId(null);
     navigation.setSelectedImageId(null);
   }
 }
 
-export function clearTasksCommand(args: {
+export async function clearTasksCommand(args: {
   navigation: WorkspaceNavigationCommands;
   taskHistory: Pick<TaskHistoryCommands, 'clearTasks'>;
+  serverActions?: { clearTasks(): Promise<void> };
 }) {
+  await (args.serverActions?.clearTasks ?? clearServerGenerationTasks)();
   args.taskHistory.clearTasks();
-  void clearServerGenerationTasks().catch(console.error);
   args.navigation.setSelectedTaskId(null);
   args.navigation.setSelectedImageId(null);
 }

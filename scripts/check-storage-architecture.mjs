@@ -77,6 +77,7 @@ const storageSyncSettings = fs.readFileSync(path.join(root, 'src/processes/stora
 const storageSyncParams = fs.readFileSync(path.join(root, 'src/processes/storage-sync/imageParams.ts'), 'utf8');
 const storageSyncProbeCache = fs.readFileSync(path.join(root, 'src/processes/storage-sync/providerProbeCache.ts'), 'utf8');
 const generationTaskDownloadUseCases = fs.readFileSync(path.join(root, 'server/processes/generation-task-downloads/downloadUseCases.ts'), 'utf8');
+const generationTaskHistoryRoutes = fs.readFileSync(path.join(root, 'server/routes/generationTaskHistoryRoutes.ts'), 'utf8');
 const serverApiRoutes = ['server/index.ts', 'server/routes/generationTaskStorageRoutes.ts', 'server/routes/generationTaskAssetRoutes.ts', 'server/routes/generationTaskDiagnosticsRoutes.ts', 'server/routes/generationTaskDownloadRoutes.ts', 'server/routes/generationTaskHistoryRoutes.ts'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
 
 const expectations = [
@@ -92,7 +93,11 @@ const expectations = [
   ['generation task store stores thumbnails', /thumbnail/.test(taskStore) && /thumbnailCount/.test(taskStore)],
   ['generation task store supports asset modes', /assetMode/.test(taskStore) && /metadata/.test(taskStore)],
   ['generation task store restores images', /restoreTaskImages/.test(taskStore)],
-  ['server routes use v2 task store', /loadGenerationTaskHistoryDocuments/.test(serverApiRoutes) && /saveGenerationTaskHistoryDocuments/.test(serverApiRoutes)],
+  ['server task history routes are read-only v2 readers',
+    /loadGenerationTaskHistoryDocuments/.test(generationTaskHistoryRoutes)
+      && !/saveGenerationTaskHistoryDocuments/.test(generationTaskHistoryRoutes)
+      && !/clearGenerationTaskHistoryDocuments/.test(generationTaskHistoryRoutes)
+      && /status\(405\)/.test(generationTaskHistoryRoutes)],
   ['generation task store is split into repository modules', /generationTaskRepository/.test(taskStore) && /generationTaskCodecs/.test(taskStore) && /generationTaskRows/.test(taskStore)],
   ['server exposes lazy asset endpoint', /generation-task-asset/.test(serverApiRoutes) && /loadGenerationTaskAssetDocument/.test(serverApiRoutes)],
   ['server exposes storage diagnostics and audit endpoints', /generation-tasks\/diagnostics/.test(serverApiRoutes) && /generation-tasks\/audit/.test(serverApiRoutes) && /getGenerationTaskStorageDiagnostics/.test(taskStore) && /auditGenerationTaskStorageDocuments/.test(taskStore)],
@@ -103,7 +108,11 @@ const expectations = [
   ['gallery descriptors own item kinds and paste operation policies', /galleryItemKindDescriptors/.test(galleryDescriptors) && /galleryPasteOperationDescriptors/.test(galleryDescriptors) && /galleryItemCanContainChildren/.test(galleryFoldersStore) && /galleryPasteOperationDuplicatesTasks/.test(galleryMutations) && /parseGalleryItemKind/.test(galleryFolderRoutes) && /normalizeGalleryMetadataKind/.test(galleryMetadataStore)],
   ['gallery folder store uses encrypted documents', /generationGalleryFolderBucket/.test(galleryFoldersStore) && /saveEncryptedDocument/.test(galleryFoldersStore) && /loadGalleryFolders/.test(galleryFoldersStore)],
   ['remote gallery folder store exists', /gallery-folders/.test(remoteGalleryFolderStore) && /moveRemoteGalleryItem/.test(remoteGalleryFolderStore)],
-  ['history sync creates thumbnails before persistence', /createOptimizedThumbnail/.test(storageSyncHistory) && /withGeneratedImageThumbnails/.test(storageSyncHistory)],
+  ['client history sync is fallback-only and has no remote writer',
+    /localGenerationTaskCache/.test(storageSyncHistory)
+      && !/remoteGenerationTaskHistoryStore/.test(storageSyncHistory)
+      && !/saveGenerationTaskHistory/.test(storageSyncHistory)
+      && !/clearGenerationTaskHistory/.test(storageSyncHistory)],
   ['settings sync uses encrypted remote store', /loadStudioSettingsFromDatabase/.test(storageSyncSettings) && /remoteStudioSettingsStore/.test(storageSyncSettings)],
   ['image params sync uses encrypted remote store', /loadImageParamsFromDatabase/.test(storageSyncParams) && /remoteImageParamsStore/.test(storageSyncParams)],
   ['provider probe cache sync uses encrypted remote store', /loadProviderProbeReportFromDatabase/.test(storageSyncProbeCache) && /remoteProviderProbeCache/.test(storageSyncProbeCache)]

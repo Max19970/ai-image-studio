@@ -16,10 +16,6 @@ export interface TaskSelectionState {
 export function useTaskSelectionState(maxStoredGenerationTasks?: number): TaskSelectionState {
   const {
     tasks,
-    setTasks,
-    registerAborter,
-    releaseAborter,
-    updateTask,
     ingestServerTask,
     deleteTask,
     clearTasks
@@ -30,11 +26,7 @@ export function useTaskSelectionState(maxStoredGenerationTasks?: number): TaskSe
   return {
     tasks,
     taskHistory: {
-      setTasks,
-      updateTask,
       ingestServerTask,
-      registerAborter,
-      releaseAborter,
       deleteTask,
       clearTasks
     },

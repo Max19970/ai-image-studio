@@ -12,7 +12,7 @@ import type { BackendRouteGroup } from './types';
 export const backendRouteGroupGeneratedModules: Record<string, BackendRouteGroup> = {
   generation: {
     id: 'generation',
-    register: (app, context) => registerGenerationRoutes(app, context.upload)
+    register: (app, context) => registerGenerationRoutes(app, context.upload, context.generationTasks)
   },
   providers: {
     id: 'providers',
@@ -20,7 +20,7 @@ export const backendRouteGroupGeneratedModules: Record<string, BackendRouteGroup
   },
   'generation-task-storage': {
     id: 'generation-task-storage',
-    register: (app) => registerGenerationTaskStorageRoutes(app)
+    register: (app, context) => registerGenerationTaskStorageRoutes(app, context.generationTasks)
   },
   'app-documents': {
     id: 'app-documents',
