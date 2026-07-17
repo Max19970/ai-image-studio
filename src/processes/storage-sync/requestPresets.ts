@@ -1,32 +1,37 @@
-import { normalizeRequestPresets } from '../../entities/request-presets';
-import type { RequestPreset } from '../../entities/request-presets';
+import { normalizeRequestPresets, type RequestPreset } from '../../entities/request-presets';
 import { localRequestPresetStore } from '../../infrastructure/storage/localRequestPresetStore';
 import { remoteRequestPresetStore } from '../../infrastructure/storage/remoteRequestPresetStore';
-import { createSyncDocumentRuntime, voidContext, type SyncDocumentDescriptor } from './documentSyncEngine';
+import type { SyncDocumentDescriptor } from './documentSyncEngine';
 
-export const requestPresetsSyncDescriptor = {
-  id: 'request-presets',
-  loadFallback: () => localRequestPresetStore.load(),
-  saveFallback: (presets) => localRequestPresetStore.save(presets),
-  loadRemote: () => remoteRequestPresetStore.load(),
-  saveRemote: (presets) => remoteRequestPresetStore.save(presets),
-  normalize: (presets) => normalizeRequestPresets(presets),
-  messages: {
-    loadRemoteFailed: 'Could not load request presets from encrypted storage. Using local presets fallback.',
-    saveRemoteFailed: 'Could not persist request presets to encrypted storage. Local presets fallback was updated.'
-  }
-} satisfies SyncDocumentDescriptor<RequestPreset[]>;
-
-const requestPresetsSync = createSyncDocumentRuntime(requestPresetsSyncDescriptor);
-
-export function loadRequestPresets(): RequestPreset[] {
-  return requestPresetsSync.loadFallback(voidContext());
+export interface RequestPresetFallbackStore {
+  load(): RequestPreset[];
+  save(presets: RequestPreset[]): void;
 }
 
-export function loadRequestPresetsFromDatabase(): Promise<RequestPreset[]> {
-  return requestPresetsSync.loadFromRemote(voidContext());
+export interface RequestPresetRemoteStore {
+  load(): Promise<RequestPreset[]>;
+  save(presets: RequestPreset[]): Promise<void>;
 }
 
-export function saveRequestPresets(presets: RequestPreset[]) {
-  requestPresetsSync.save(presets, voidContext());
+export function createRequestPresetsSyncDescriptor(stores: {
+  fallback: RequestPresetFallbackStore;
+  remote: RequestPresetRemoteStore;
+}): SyncDocumentDescriptor<RequestPreset[]> {
+  return {
+    id: 'request-presets',
+    loadFallback: () => stores.fallback.load(),
+    saveFallback: (presets) => stores.fallback.save(presets),
+    loadRemote: () => stores.remote.load(),
+    saveRemote: (presets) => stores.remote.save(presets),
+    normalize: (presets) => normalizeRequestPresets(presets),
+    messages: {
+      loadRemoteFailed: 'Could not load request presets from encrypted storage. Using local presets fallback.',
+      saveRemoteFailed: 'Could not persist request presets to encrypted storage. Local presets fallback was updated.'
+    }
+  };
 }
+
+export const requestPresetsSyncDescriptor = createRequestPresetsSyncDescriptor({
+  fallback: localRequestPresetStore,
+  remote: remoteRequestPresetStore
+});
