@@ -76,6 +76,8 @@ const storageSyncHistory = fs.readFileSync(path.join(root, 'src/processes/storag
 const storageSyncSettings = fs.readFileSync(path.join(root, 'src/processes/storage-sync/studioSettings.ts'), 'utf8');
 const storageSyncParams = fs.readFileSync(path.join(root, 'src/processes/storage-sync/imageParams.ts'), 'utf8');
 const storageSyncProbeCache = fs.readFileSync(path.join(root, 'src/processes/storage-sync/providerProbeCache.ts'), 'utf8');
+const persistentWorkspaceSettings = fs.readFileSync(path.join(root, 'src/app/workspace/state/usePersistentWorkspaceSettings.ts'), 'utf8');
+const providerProbeState = fs.readFileSync(path.join(root, 'src/app/workspace/state/useProviderProbeState.ts'), 'utf8');
 const generationTaskDownloadUseCases = fs.readFileSync(path.join(root, 'server/processes/generation-task-downloads/downloadUseCases.ts'), 'utf8');
 const generationTaskHistoryRoutes = fs.readFileSync(path.join(root, 'server/routes/generationTaskHistoryRoutes.ts'), 'utf8');
 const serverApiRoutes = ['server/index.ts', 'server/routes/generationTaskStorageRoutes.ts', 'server/routes/generationTaskAssetRoutes.ts', 'server/routes/generationTaskDiagnosticsRoutes.ts', 'server/routes/generationTaskDownloadRoutes.ts', 'server/routes/generationTaskHistoryRoutes.ts'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
@@ -113,9 +115,19 @@ const expectations = [
       && !/remoteGenerationTaskHistoryStore/.test(storageSyncHistory)
       && !/saveGenerationTaskHistory/.test(storageSyncHistory)
       && !/clearGenerationTaskHistory/.test(storageSyncHistory)],
-  ['settings sync uses encrypted remote store', /loadStudioSettingsFromDatabase/.test(storageSyncSettings) && /remoteStudioSettingsStore/.test(storageSyncSettings)],
-  ['image params sync uses encrypted remote store', /loadImageParamsFromDatabase/.test(storageSyncParams) && /remoteImageParamsStore/.test(storageSyncParams)],
-  ['provider probe cache sync uses encrypted remote store', /loadProviderProbeReportFromDatabase/.test(storageSyncProbeCache) && /remoteProviderProbeCache/.test(storageSyncProbeCache)]
+  ['settings sync uses the shared controller over encrypted remote storage',
+    /studioSettingsSyncDescriptor/.test(storageSyncSettings)
+      && /remoteStudioSettingsStore/.test(storageSyncSettings)
+      && /useSyncedDocumentState\(studioSettingsSyncDescriptor/.test(persistentWorkspaceSettings)],
+  ['image params sync uses the shared controller over encrypted remote storage',
+    /imageParamsSyncDescriptor/.test(storageSyncParams)
+      && /remoteImageParamsStore/.test(storageSyncParams)
+      && /useSyncedDocumentState\(imageParamsSyncDescriptor/.test(persistentWorkspaceSettings)],
+  ['provider probe cache sync owns one synchronized map',
+    /providerProbeCacheSyncDescriptor/.test(storageSyncProbeCache)
+      && /remoteProviderProbeCache/.test(storageSyncProbeCache)
+      && /useSyncedDocumentState\(providerProbeCacheSyncDescriptor/.test(providerProbeState)
+      && /getCachedProviderProbeReport\(cache\.value, provider\)/.test(providerProbeState)]
 ];
 
 const failed = expectations.filter(([, ok]) => !ok);

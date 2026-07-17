@@ -30,13 +30,6 @@ export interface SyncedDocumentState<TValue> {
   dispose(): void;
 }
 
-export interface SyncDocumentRuntime<TValue, TContext = void> {
-  descriptor: SyncDocumentDescriptor<TValue, TContext>;
-  loadFallback(context: TContext): TValue;
-  loadFromRemote(context: TContext): Promise<TValue>;
-  save(value: TValue, context: TContext): void;
-}
-
 interface PendingSave<TValue> {
   revision: number;
   value: TValue;
@@ -184,35 +177,6 @@ export function createSyncedDocumentState<TValue, TContext = void>(
     dispose() {
       disposed = true;
       listeners.clear();
-    }
-  };
-}
-
-export function createSyncDocumentRuntime<TValue, TContext = void>(
-  descriptor: SyncDocumentDescriptor<TValue, TContext>
-): SyncDocumentRuntime<TValue, TContext> {
-  const controllers = new Map<TContext, SyncedDocumentState<TValue>>();
-  const controllerFor = (context: TContext) => {
-    let controller = controllers.get(context);
-    if (!controller) {
-      controller = createSyncedDocumentState(descriptor, context);
-      controllers.set(context, controller);
-    }
-    return controller;
-  };
-
-  return {
-    descriptor,
-    loadFallback(context) {
-      return controllerFor(context).getSnapshot().value;
-    },
-    async loadFromRemote(context) {
-      const controller = controllerFor(context);
-      await controller.hydrate();
-      return controller.getSnapshot().value;
-    },
-    save(value, context) {
-      controllerFor(context).setValue(value);
     }
   };
 }

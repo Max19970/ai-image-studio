@@ -13,6 +13,7 @@ import type { ServerSubmissionSetter, StateSetter, TaskHistoryCommands, Translat
 
 export interface ProviderProbeCommandDeps {
   setCapabilityReport: StateSetter<ProviderProbeReport | null>;
+  clearCapabilityReport(settings: ProviderSettings): void;
   setProbeError: StateSetter<string | null>;
   setProbingProviderId: StateSetter<string | null>;
   setQuickCheckingProviderId: StateSetter<string | null>;

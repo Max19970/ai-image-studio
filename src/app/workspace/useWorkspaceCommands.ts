@@ -43,6 +43,7 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
 
     const providerProbe = {
       setCapabilityReport: state.setCapabilityReport,
+      clearCapabilityReport: state.clearCapabilityReport,
       setProbeError: state.setProbeError,
       setProbingProviderId: state.setProbingProviderId,
       setQuickCheckingProviderId: state.setQuickCheckingProviderId,

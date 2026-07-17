@@ -1,4 +1,3 @@
-import type { GenerationProvider, GenerationModel } from '../../domain/providerSettings';
 import type { GenerationRequestSnapshot, GenerationTask } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
@@ -20,6 +19,7 @@ export type ServerSubmissionSetter = StateSetter<ServerSubmissionState>;
 
 export interface ProviderProbeStateCommands {
   setCapabilityReport: StateSetter<ProviderProbeReport | null>;
+  clearCapabilityReport(settings: import('../../domain/providerSettings').ProviderSettings): void;
   setProbeError: StateSetter<string | null>;
   setProbingProviderId: StateSetter<string | null>;
   setQuickCheckingProviderId: StateSetter<string | null>;
@@ -29,13 +29,6 @@ export interface ProviderProbeStateCommands {
 export interface WorkspaceNavigationCommands {
   setSelectedTaskId: StateSetter<string | null>;
   setSelectedImageId: StateSetter<string | null>;
-}
-
-export interface SettingsSelectionContext {
-  settings: StudioSettings;
-  activeProvider: GenerationProvider | null;
-  activeModel: GenerationModel | null;
-  setSettings: StateSetter<StudioSettings>;
 }
 
 export interface RestoreRequestCommands extends WorkspaceNavigationCommands {

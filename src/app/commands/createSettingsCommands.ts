@@ -4,13 +4,6 @@ import { applyComposerCompatibilityForModel, sanitizeBatchDraftsAfterSettingsCha
 import { clearProviderProbeCacheCommand, probeProviderCommand, quickCheckProviderCommand } from './providerCommands';
 
 export function createSettingsCommands(args: SettingsCommandDeps): SettingsCommands {
-  const selection = {
-    settings: args.studioSettings,
-    activeProvider: args.activeProvider,
-    activeModel: args.activeModel,
-    setSettings: args.setStudioSettings
-  };
-
   return {
     save: (next) => {
       const normalized = args.normalizeSettings(next);
@@ -25,7 +18,6 @@ export function createSettingsCommands(args: SettingsCommandDeps): SettingsComma
     probeProvider: (provider, model) => probeProviderCommand({
       provider,
       model,
-      selection,
       state: args.providerProbe
     }),
     quickCheckProvider: (provider, model) => quickCheckProviderCommand({
@@ -36,7 +28,6 @@ export function createSettingsCommands(args: SettingsCommandDeps): SettingsComma
     clearProbeCache: (provider, model) => clearProviderProbeCacheCommand({
       provider,
       model,
-      selection,
       state: args.providerProbe
     })
   };

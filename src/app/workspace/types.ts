@@ -79,6 +79,7 @@ export interface WorkspaceState {
   setQuickCheckResults: StateSetter<Record<string, ProviderQuickCheckResult>>;
   capabilityReport: ProviderProbeReport | null;
   setCapabilityReport: StateSetter<ProviderProbeReport | null>;
+  clearCapabilityReport(settings: ProviderSettings): void;
   requestPresets: RequestPreset[];
   setRequestPresets: StateSetter<RequestPreset[]>;
   composerDrafts: ComposerRequestDraft[];
