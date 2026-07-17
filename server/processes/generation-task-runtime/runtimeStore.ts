@@ -36,11 +36,21 @@ export interface RuntimeTaskEventPublisherPort {
   broadcastTaskUpsert(task: GenerationTask, revision: number, taskIds?: string[]): void;
 }
 
+export interface RuntimeGalleryMutationPreparation<TPayload, TResult> {
+  tasks: GenerationTask[];
+  payload: TPayload;
+  result: TResult;
+}
+
 export interface GenerationTaskRuntimeStore {
   ensureRuntimeTasks(): Promise<GenerationTask[]>;
   clientSnapshotTasks(): Promise<GenerationTask[]>;
   clientSnapshotEvent(): Promise<GenerationTasksEvent>;
   mutateTasks(recipe: (tasks: GenerationTask[]) => GenerationTask[], options?: { persist?: boolean }): Promise<void>;
+  commitGalleryMutation<TPayload, TResult>(
+    prepare: (tasks: GenerationTask[]) => Promise<RuntimeGalleryMutationPreparation<TPayload, TResult>>,
+    persist: (tasks: GenerationTask[], payload: TPayload) => Promise<void>
+  ): Promise<TResult>;
   prependTask(task: GenerationTask, options?: { persist?: boolean }): Promise<void>;
   patchTask(taskId: string, recipe: (task: GenerationTask) => GenerationTask, options?: { persist?: boolean }): Promise<void>;
   waitForPersistenceForTests(): Promise<void>;
@@ -144,6 +154,23 @@ export function createGenerationTaskRuntimeStore(
         }
       });
     },
+    async commitGalleryMutation(prepare, persist) {
+      return enqueue(async () => {
+        const currentTasks = await initializeRuntimeTasks();
+        const previousClientTasks = events.hasClients() ? serialization.serializeTasks(currentTasks) : [];
+        await persistenceCoordinator.waitForIdle();
+        const prepared = await prepare([...currentTasks]);
+        const completedLimit = await retentionPolicy.getCompletedTaskLimit();
+        const nextTasks = retainGenerationTasksByCompletedLimit(prepared.tasks, completedLimit);
+        await persist(nextTasks, prepared.payload);
+        runtimeTasks = nextTasks;
+        const revision = events.nextRevision();
+        if (events.hasClients()) {
+          events.broadcastTasksDelta(previousClientTasks, serialization.serializeTasks(runtimeTasks), revision);
+        }
+        return prepared.result;
+      });
+    },
     async prependTask(task, options = {}) {
       await enqueue(async () => {
         const currentTasks = await initializeRuntimeTasks();
@@ -201,6 +228,13 @@ export function clientSnapshotEvent(): Promise<GenerationTasksEvent> {
 
 export async function mutateTasks(recipe: (tasks: GenerationTask[]) => GenerationTask[], options: { persist?: boolean } = {}) {
   await defaultRuntimeStore.mutateTasks(recipe, options);
+}
+
+export function commitGalleryMutation<TPayload, TResult>(
+  prepare: (tasks: GenerationTask[]) => Promise<RuntimeGalleryMutationPreparation<TPayload, TResult>>,
+  persist: (tasks: GenerationTask[], payload: TPayload) => Promise<void>
+): Promise<TResult> {
+  return defaultRuntimeStore.commitGalleryMutation(prepare, persist);
 }
 
 export async function prependTask(task: GenerationTask, options: { persist?: boolean } = {}) {

@@ -178,6 +178,35 @@ test('runtime mutation removes only the oldest completed task at the configured 
   assert.equal(retained.some((task) => task.id === 'terminal-999'), false);
 });
 
+test('atomic gallery mutation keeps runtime memory and SSE unchanged when persistence fails', async () => {
+  let revisions = 0;
+  let broadcasts = 0;
+  const publishingEvents: RuntimeTaskEventPublisherPort = {
+    hasClients: () => true,
+    currentRevision: () => revisions,
+    nextRevision: () => ++revisions,
+    broadcastTasksDelta: () => { broadcasts += 1; },
+    broadcastTaskUpsert: () => { broadcasts += 1; }
+  };
+  const persistence: RuntimeTaskPersistencePort = {
+    load: async () => [failedTask('stored', 1)],
+    async save() {}
+  };
+  const store = createGenerationTaskRuntimeStore(persistence, serialization, publishingEvents, retentionPolicy);
+
+  await assert.rejects(
+    () => store.commitGalleryMutation(
+      async (tasks) => ({ tasks: [failedTask('new', 2), ...tasks], payload: undefined, result: 'never' }),
+      async () => { throw new Error('atomic persistence failed'); }
+    ),
+    /atomic persistence failed/
+  );
+
+  assert.deepEqual((await store.ensureRuntimeTasks()).map((task) => task.id), ['stored']);
+  assert.equal(revisions, 0);
+  assert.equal(broadcasts, 0);
+});
+
 test('runtime persistence keeps only the latest pending snapshot while a save is in flight', async () => {
   const firstSaveStarted = deferred();
   const releaseFirstSave = deferred();

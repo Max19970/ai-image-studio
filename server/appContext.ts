@@ -48,6 +48,6 @@ export function createBackendAppContext(): BackendAppContext {
     providers: createProviderRegistryPort(),
     integrations: preconfiguredIntegrations.length > 0 ? defaultIntegrationRegistry : createBuiltInIntegrationRegistry(),
     generationTasks,
-    galleryCatalog: createDefaultGalleryCatalog(generationTasks)
+    galleryCatalog: createDefaultGalleryCatalog()
   };
 }

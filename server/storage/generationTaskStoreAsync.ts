@@ -1,5 +1,6 @@
 import { fork, type ChildProcess } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import type { GalleryCatalogPersistedState } from './galleryCatalogStore';
 import type {
   GenerationTaskAssetMode,
   GenerationTaskHistoryLoadOptions,
@@ -117,6 +118,14 @@ export function loadGenerationTaskHistoryDocumentsByIdsAsync(
   assetMode: GenerationTaskAssetMode = 'full'
 ) {
   return callWorker({ type: 'loadHistoryByIds', taskIds, assetMode });
+}
+
+export function loadGalleryCatalogDocumentsAsync() {
+  return callWorker({ type: 'loadGalleryCatalog' });
+}
+
+export function saveGalleryCatalogStateDocumentsAsync(state: GalleryCatalogPersistedState) {
+  return callWorker({ type: 'saveGalleryCatalog', state });
 }
 
 export function saveGenerationTaskHistoryDocumentsAsync(tasks: unknown[]) {

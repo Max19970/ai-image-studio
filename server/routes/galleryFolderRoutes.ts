@@ -2,8 +2,9 @@ import type express from 'express';
 import { normalizeGalleryPath } from '../../src/domain/galleryFilesystem';
 import { isGalleryItemKind, isGalleryPasteOperation, type GalleryItemKind } from '../gallery/descriptors';
 import type { GalleryCatalog } from '../gallery/catalog';
+import type { GalleryFolderPasteItem as GalleryPasteItem } from '../gallery/catalogState';
+import type { GalleryPasteOperation } from '../gallery/descriptors';
 import { sendServerError } from '../http/errors';
-import type { GalleryPasteItem, GalleryPasteOperation } from '../storage/galleryFoldersStore';
 
 function booleanField(value: unknown): boolean {
   return value === true || value === 'true' || value === 1 || value === '1';
@@ -58,11 +59,11 @@ export function registerGalleryFolderRoutes(app: express.Express, catalog: Galle
     }
   });
 
-  app.post('/api/storage/gallery-folders', (req, res) => {
+  app.post('/api/storage/gallery-folders', async (req, res) => {
     try {
       const parentPath = normalizeGalleryPath(req.body?.parentPath);
       const name = typeof req.body?.name === 'string' ? req.body.name : '';
-      const result = catalog.createFolder(parentPath, name);
+      const result = await catalog.createFolder(parentPath, name);
       res.status(201).json(result);
     } catch (error) {
       sendServerError(res, error);
@@ -114,9 +115,9 @@ export function registerGalleryFolderRoutes(app: express.Express, catalog: Galle
     }
   });
 
-  app.post('/api/storage/gallery-items/pin', (req, res) => {
+  app.post('/api/storage/gallery-items/pin', async (req, res) => {
     try {
-      const pins = catalog.setItemPinned({
+      const pins = await catalog.setItemPinned({
         itemKind: parseGalleryItemKind(req.body?.itemKind),
         itemId: typeof req.body?.itemId === 'string' ? req.body.itemId : '',
         pinned: booleanField(req.body?.pinned)
@@ -127,9 +128,9 @@ export function registerGalleryFolderRoutes(app: express.Express, catalog: Galle
     }
   });
 
-  app.post('/api/storage/gallery-items/tags', (req, res) => {
+  app.post('/api/storage/gallery-items/tags', async (req, res) => {
     try {
-      const tags = catalog.setItemTags({
+      const tags = await catalog.setItemTags({
         itemKind: parseGalleryItemKind(req.body?.itemKind),
         itemId: typeof req.body?.itemId === 'string' ? req.body.itemId : '',
         tags: parseTags(req.body?.tags)

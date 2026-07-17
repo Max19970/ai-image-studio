@@ -131,29 +131,35 @@ export function loadGenerationTaskHistoryDocumentsByIds(taskIds: string[], optio
   return { tasks, stats: { ...stats, legacyFallbackUsed: tasks.length > 0 } };
 }
 
+export function saveGenerationTaskHistoryDocumentsInTransaction(tasks: unknown[]): void {
+  const { preparedTasks, removedTaskIds, replacedTaskIds } = createGenerationTaskPersistencePlan(tasks, selectAllTaskRows());
+  deleteGenerationTaskRows([...removedTaskIds, ...replacedTaskIds]);
+
+  preparedTasks.forEach(({ taskId, task, imageRefs, fullImageCount }) => {
+    saveEncryptedDocument(generationTaskDocumentBucket, taskId, cloneWithoutImages(task));
+    insertTaskRow(task, fullImageCount);
+    saveGenerationTaskAssetDocuments(imageRefs);
+    insertAssetRows(imageRefs);
+  });
+}
+
+export function finalizeGenerationTaskHistoryTransaction(): GenerationTaskHistoryStorageStats {
+  clearLegacyGenerationTaskHistory();
+  return getGenerationTaskHistoryStats();
+}
+
 export function saveGenerationTaskHistoryDocuments(tasks: unknown[]) {
   const db = getStorageDb();
-  const { preparedTasks, removedTaskIds, replacedTaskIds } = createGenerationTaskPersistencePlan(tasks, selectAllTaskRows());
-
   db.exec('BEGIN');
   try {
-    deleteGenerationTaskRows([...removedTaskIds, ...replacedTaskIds]);
-
-    preparedTasks.forEach(({ taskId, task, imageRefs, fullImageCount }) => {
-      saveEncryptedDocument(generationTaskDocumentBucket, taskId, cloneWithoutImages(task));
-      insertTaskRow(task, fullImageCount);
-      saveGenerationTaskAssetDocuments(imageRefs);
-      insertAssetRows(imageRefs);
-    });
-
+    saveGenerationTaskHistoryDocumentsInTransaction(tasks);
     db.exec('COMMIT');
   } catch (error) {
     db.exec('ROLLBACK');
     throw error;
   }
 
-  clearLegacyGenerationTaskHistory();
-  return getGenerationTaskHistoryStats();
+  return finalizeGenerationTaskHistoryTransaction();
 }
 
 export function clearGenerationTaskHistoryDocuments() {
