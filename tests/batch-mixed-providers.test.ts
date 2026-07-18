@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import type { BatchComposerDraft } from '../src/domain/generationTask';
+import type { ComposerRequestDraft } from '../src/domain/generationTask';
 import { defaultImageParams, defaultStudioSettings } from '../src/domain/defaults';
 import type { StudioSettings } from '../src/domain/studioSettings';
 import { writeProviderParamState } from '../src/entities/generation-params/providerState';
@@ -24,7 +24,7 @@ function mixedSettings(): StudioSettings {
 test('batch request builder keeps provider/model params isolated per draft', () => {
   const settings = mixedSettings();
   const comfyProvider = providerContextForModel(settings, 'comfyui-checkpoint-default').provider;
-  const openAiDraft: BatchComposerDraft = {
+  const openAiDraft: ComposerRequestDraft = {
     id: 'draft-openai',
     mode: 'generate',
     selectedModelId: 'gpt-image-2-default',
@@ -33,7 +33,7 @@ test('batch request builder keeps provider/model params isolated per draft', () 
     referenceImages: [],
     mask: null
   };
-  const comfyDraft: BatchComposerDraft = {
+  const comfyDraft: ComposerRequestDraft = {
     id: 'draft-comfy',
     mode: 'generate',
     selectedModelId: 'comfyui-checkpoint-default',

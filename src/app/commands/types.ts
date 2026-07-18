@@ -1,4 +1,3 @@
-import type { GenerationProvider, GenerationModel } from '../../domain/providerSettings';
 import type { GenerationRequestSnapshot, GenerationTask } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
@@ -11,11 +10,7 @@ export type TranslateFn = (key: string, vars?: Record<string, string | number | 
 export type { StateSetter } from '../stateTypes';
 
 export interface TaskHistoryCommands {
-  setTasks: StateSetter<GenerationTask[]>;
-  updateTask: (taskId: string, recipe: (task: GenerationTask) => GenerationTask) => void;
   ingestServerTask: (task: GenerationTask) => void;
-  registerAborter: (taskId: string, controller: AbortController) => void;
-  releaseAborter: (taskId: string) => void;
   deleteTask: (taskId: string) => void;
   clearTasks: () => void;
 }
@@ -24,6 +19,7 @@ export type ServerSubmissionSetter = StateSetter<ServerSubmissionState>;
 
 export interface ProviderProbeStateCommands {
   setCapabilityReport: StateSetter<ProviderProbeReport | null>;
+  clearCapabilityReport(settings: import('../../domain/providerSettings').ProviderSettings): void;
   setProbeError: StateSetter<string | null>;
   setProbingProviderId: StateSetter<string | null>;
   setQuickCheckingProviderId: StateSetter<string | null>;
@@ -35,18 +31,12 @@ export interface WorkspaceNavigationCommands {
   setSelectedImageId: StateSetter<string | null>;
 }
 
-export interface SettingsSelectionContext {
-  settings: StudioSettings;
-  activeProvider: GenerationProvider | null;
-  activeModel: GenerationModel | null;
-  setSettings: StateSetter<StudioSettings>;
-}
-
 export interface RestoreRequestCommands extends WorkspaceNavigationCommands {
   t: TranslateFn;
-  setProviderModeId: StateSetter<ProviderGenerationModeId>;
-  setCompatibilityNotice: StateSetter<string | null>;
-  setParams: StateSetter<ImageParams>;
+  params: ImageParams;
   settings: StudioSettings;
-  setSettings: StateSetter<StudioSettings>;
+  replaceActiveComposerRequest(
+    request: Omit<import('../../domain/generationTask').ComposerRequestDraft, 'id'>,
+    notice: string | null
+  ): void;
 }

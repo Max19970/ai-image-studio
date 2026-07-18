@@ -11,7 +11,8 @@ const root = path.resolve(__dirname, '..');
 const buildRoot = path.join(root, 'dist');
 const dist = existsSync(path.join(buildRoot, 'client')) ? path.join(buildRoot, 'client') : buildRoot;
 const host = '127.0.0.1';
-const port = Number(process.env.PORT || 4177);
+const requestedPort = Number(process.env.SCREENSHOT_PORT || 0);
+let port = requestedPort;
 
 const argv = process.argv.slice(2);
 const flag = (name) => {
@@ -90,7 +91,20 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const listen = () => new Promise((resolve) => server.listen(port, host, resolve));
+const listen = () => new Promise((resolve, reject) => {
+  const onError = (error) => reject(error);
+  server.once('error', onError);
+  server.listen(requestedPort, host, () => {
+    server.off('error', onError);
+    const address = server.address();
+    if (!address || typeof address === 'string') {
+      reject(new Error('Screenshot server did not expose a TCP port.'));
+      return;
+    }
+    port = address.port;
+    resolve();
+  });
+});
 const stop = () => new Promise((resolve) => server.close(resolve));
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -133,7 +147,13 @@ function createScreenshotApiMockResponse(request, scenario) {
   }
 
   if (url.pathname === '/api/generation-tasks/events') {
-    return { status: 204, contentType: 'text/plain; charset=utf-8', body: '' };
+    const tasks = scenario.seedTasks ?? seedData.tasks;
+    return {
+      status: 200,
+      contentType: 'text/event-stream; charset=utf-8',
+      headers: { 'Cache-Control': 'no-cache' },
+      body: `event: tasks\ndata: ${JSON.stringify({ revision: 0, tasks })}\n\n`
+    };
   }
 
   return null;

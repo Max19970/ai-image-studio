@@ -26,7 +26,10 @@ const requiredFiles = [
   'server/storage/migrations/registry.generated.ts',
   'server/storage/migrations/types.ts',
   'server/gallery/descriptors.ts',
-  'server/storage/galleryFoldersStore.ts',
+  'server/gallery/catalog.ts',
+  'server/gallery/catalogState.ts',
+  'server/gallery/taskState.ts',
+  'server/storage/galleryCatalogStore.ts',
   'server/routes/galleryFolderRoutes.ts',
   'src/infrastructure/storage/remoteGalleryFolderStore.ts',
   'src/infrastructure/storage/remoteGenerationTaskHistoryStore.ts',
@@ -67,16 +70,21 @@ const appDocumentStore = fs.readFileSync(path.join(root, 'server/storage/appDocu
 const appDocumentRoutes = fs.readFileSync(path.join(root, 'server/routes/appDocumentStorageRoutes.ts'), 'utf8');
 const remoteHistoryStore = fs.readFileSync(path.join(root, 'src/infrastructure/storage/remoteGenerationTaskHistoryStore.ts'), 'utf8');
 const galleryDescriptors = fs.readFileSync(path.join(root, 'server/gallery/descriptors.ts'), 'utf8');
-const galleryFoldersStore = fs.readFileSync(path.join(root, 'server/storage/galleryFoldersStore.ts'), 'utf8');
+const galleryCatalog = fs.readFileSync(path.join(root, 'server/gallery/catalog.ts'), 'utf8');
+const galleryCatalogState = fs.readFileSync(path.join(root, 'server/gallery/catalogState.ts'), 'utf8');
+const galleryTaskState = fs.readFileSync(path.join(root, 'server/gallery/taskState.ts'), 'utf8');
+const galleryCatalogStore = fs.readFileSync(path.join(root, 'server/storage/galleryCatalogStore.ts'), 'utf8');
+const runtimeStore = fs.readFileSync(path.join(root, 'server/processes/generation-task-runtime/runtimeStore.ts'), 'utf8');
 const galleryFolderRoutes = fs.readFileSync(path.join(root, 'server/routes/galleryFolderRoutes.ts'), 'utf8');
-const galleryMutations = fs.readFileSync(path.join(root, 'server/processes/generation-task-runtime/galleryMutations.ts'), 'utf8');
-const galleryMetadataStore = fs.readFileSync(path.join(root, 'server/storage/galleryMetadataStore.ts'), 'utf8');
 const remoteGalleryFolderStore = fs.readFileSync(path.join(root, 'src/infrastructure/storage/remoteGalleryFolderStore.ts'), 'utf8');
 const storageSyncHistory = fs.readFileSync(path.join(root, 'src/processes/storage-sync/generationTaskHistory.ts'), 'utf8');
 const storageSyncSettings = fs.readFileSync(path.join(root, 'src/processes/storage-sync/studioSettings.ts'), 'utf8');
 const storageSyncParams = fs.readFileSync(path.join(root, 'src/processes/storage-sync/imageParams.ts'), 'utf8');
 const storageSyncProbeCache = fs.readFileSync(path.join(root, 'src/processes/storage-sync/providerProbeCache.ts'), 'utf8');
+const persistentWorkspaceSettings = fs.readFileSync(path.join(root, 'src/app/workspace/state/usePersistentWorkspaceSettings.ts'), 'utf8');
+const providerProbeState = fs.readFileSync(path.join(root, 'src/app/workspace/state/useProviderProbeState.ts'), 'utf8');
 const generationTaskDownloadUseCases = fs.readFileSync(path.join(root, 'server/processes/generation-task-downloads/downloadUseCases.ts'), 'utf8');
+const generationTaskHistoryRoutes = fs.readFileSync(path.join(root, 'server/routes/generationTaskHistoryRoutes.ts'), 'utf8');
 const serverApiRoutes = ['server/index.ts', 'server/routes/generationTaskStorageRoutes.ts', 'server/routes/generationTaskAssetRoutes.ts', 'server/routes/generationTaskDiagnosticsRoutes.ts', 'server/routes/generationTaskDownloadRoutes.ts', 'server/routes/generationTaskHistoryRoutes.ts'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
 
 const expectations = [
@@ -92,7 +100,11 @@ const expectations = [
   ['generation task store stores thumbnails', /thumbnail/.test(taskStore) && /thumbnailCount/.test(taskStore)],
   ['generation task store supports asset modes', /assetMode/.test(taskStore) && /metadata/.test(taskStore)],
   ['generation task store restores images', /restoreTaskImages/.test(taskStore)],
-  ['server routes use v2 task store', /loadGenerationTaskHistoryDocuments/.test(serverApiRoutes) && /saveGenerationTaskHistoryDocuments/.test(serverApiRoutes)],
+  ['server task history routes are read-only v2 readers',
+    /loadGenerationTaskHistoryDocuments/.test(generationTaskHistoryRoutes)
+      && !/saveGenerationTaskHistoryDocuments/.test(generationTaskHistoryRoutes)
+      && !/clearGenerationTaskHistoryDocuments/.test(generationTaskHistoryRoutes)
+      && /status\(405\)/.test(generationTaskHistoryRoutes)],
   ['generation task store is split into repository modules', /generationTaskRepository/.test(taskStore) && /generationTaskCodecs/.test(taskStore) && /generationTaskRows/.test(taskStore)],
   ['server exposes lazy asset endpoint', /generation-task-asset/.test(serverApiRoutes) && /loadGenerationTaskAssetDocument/.test(serverApiRoutes)],
   ['server exposes storage diagnostics and audit endpoints', /generation-tasks\/diagnostics/.test(serverApiRoutes) && /generation-tasks\/audit/.test(serverApiRoutes) && /getGenerationTaskStorageDiagnostics/.test(taskStore) && /auditGenerationTaskStorageDocuments/.test(taskStore)],
@@ -100,13 +112,30 @@ const expectations = [
   ['app document descriptors own buckets and routes', /appDocumentBuckets/.test(appDocumentDescriptors) && /listAppDocumentRouteDescriptors/.test(appDocumentDescriptors) && /integration-settings\.v1/.test(appDocumentDescriptors) && /for \(const descriptor of listAppDocumentRouteDescriptors\(\)\)/.test(appDocumentRoutes)],
   ['app document store exists', /studioSettingsBucket/.test(appDocumentStore) && /providerProbeCacheBucket/.test(appDocumentStore)],
   ['remote history store supports asset endpoint', /generationTaskAssetEndpoint/.test(remoteHistoryStore) && /loadGenerationTaskAsset/.test(remoteHistoryStore)],
-  ['gallery descriptors own item kinds and paste operation policies', /galleryItemKindDescriptors/.test(galleryDescriptors) && /galleryPasteOperationDescriptors/.test(galleryDescriptors) && /galleryItemCanContainChildren/.test(galleryFoldersStore) && /galleryPasteOperationDuplicatesTasks/.test(galleryMutations) && /parseGalleryItemKind/.test(galleryFolderRoutes) && /normalizeGalleryMetadataKind/.test(galleryMetadataStore)],
-  ['gallery folder store uses encrypted documents', /generationGalleryFolderBucket/.test(galleryFoldersStore) && /saveEncryptedDocument/.test(galleryFoldersStore) && /loadGalleryFolders/.test(galleryFoldersStore)],
+  ['gallery descriptors own item kinds and paste operation policies', /galleryItemKindDescriptors/.test(galleryDescriptors) && /galleryPasteOperationDescriptors/.test(galleryDescriptors) && /galleryItemCanContainChildren/.test(galleryCatalogState) && /galleryPasteOperationDuplicatesTasks/.test(galleryTaskState) && /parseGalleryItemKind/.test(galleryFolderRoutes) && /setGalleryPinnedState/.test(galleryCatalogState)],
+  ['gallery routes delegate orchestration to GalleryCatalog', /GalleryCatalog/.test(galleryFolderRoutes) && !/galleryFoldersStore/.test(galleryFolderRoutes) && !/galleryMetadataStore/.test(galleryFolderRoutes) && /createDefaultGalleryCatalog/.test(galleryCatalog)],
+  ['gallery catalog persists tasks, folders, pins and tags in one SQLite transaction', /saveGenerationTaskHistoryDocumentsInTransaction/.test(galleryCatalogStore) && /generationGalleryFolderBucket/.test(galleryCatalogStore) && /generationGalleryPinBucket/.test(galleryCatalogStore) && /generationGalleryTagBucket/.test(galleryCatalogStore) && /db\.exec\('BEGIN'\)/.test(galleryCatalogStore) && /db\.exec\('COMMIT'\)/.test(galleryCatalogStore) && /db\.exec\('ROLLBACK'\)/.test(galleryCatalogStore)],
+  ['runtime publishes gallery mutations only after atomic persistence', /commitGalleryMutation/.test(runtimeStore) && /await persist\(nextTasks, prepared\.payload\)/.test(runtimeStore) && /runtimeTasks = nextTasks/.test(runtimeStore) && runtimeStore.indexOf('await persist(nextTasks, prepared.payload)') < runtimeStore.indexOf('runtimeTasks = nextTasks')],
+  ['gallery catalog owns encrypted folder and metadata documents', /loadGalleryCatalogDocuments/.test(galleryCatalogStore) && /saveGalleryCatalogStateDocuments/.test(galleryCatalogStore)],
   ['remote gallery folder store exists', /gallery-folders/.test(remoteGalleryFolderStore) && /moveRemoteGalleryItem/.test(remoteGalleryFolderStore)],
-  ['history sync creates thumbnails before persistence', /createOptimizedThumbnail/.test(storageSyncHistory) && /withGeneratedImageThumbnails/.test(storageSyncHistory)],
-  ['settings sync uses encrypted remote store', /loadStudioSettingsFromDatabase/.test(storageSyncSettings) && /remoteStudioSettingsStore/.test(storageSyncSettings)],
-  ['image params sync uses encrypted remote store', /loadImageParamsFromDatabase/.test(storageSyncParams) && /remoteImageParamsStore/.test(storageSyncParams)],
-  ['provider probe cache sync uses encrypted remote store', /loadProviderProbeReportFromDatabase/.test(storageSyncProbeCache) && /remoteProviderProbeCache/.test(storageSyncProbeCache)]
+  ['client history sync is fallback-only and has no remote writer',
+    /localGenerationTaskCache/.test(storageSyncHistory)
+      && !/remoteGenerationTaskHistoryStore/.test(storageSyncHistory)
+      && !/saveGenerationTaskHistory/.test(storageSyncHistory)
+      && !/clearGenerationTaskHistory/.test(storageSyncHistory)],
+  ['settings sync uses the shared controller over encrypted remote storage',
+    /studioSettingsSyncDescriptor/.test(storageSyncSettings)
+      && /remoteStudioSettingsStore/.test(storageSyncSettings)
+      && /useSyncedDocumentState\(studioSettingsSyncDescriptor/.test(persistentWorkspaceSettings)],
+  ['image params sync uses the shared controller over encrypted remote storage',
+    /imageParamsSyncDescriptor/.test(storageSyncParams)
+      && /remoteImageParamsStore/.test(storageSyncParams)
+      && /useSyncedDocumentState\(imageParamsSyncDescriptor/.test(persistentWorkspaceSettings)],
+  ['provider probe cache sync owns one synchronized map',
+    /providerProbeCacheSyncDescriptor/.test(storageSyncProbeCache)
+      && /remoteProviderProbeCache/.test(storageSyncProbeCache)
+      && /useSyncedDocumentState\(providerProbeCacheSyncDescriptor/.test(providerProbeState)
+      && /getCachedProviderProbeReport\(cache\.value, provider\)/.test(providerProbeState)]
 ];
 
 const failed = expectations.filter(([, ok]) => !ok);
@@ -125,6 +154,7 @@ console.log('  storage path, key, codec and SQLite connection ports enabled');
 console.log('  normalized generation task table enabled');
 console.log('  gallery item kind and paste operation descriptors enabled');
 console.log('  gallery path index and encrypted folder descriptors enabled');
+console.log('  atomic GalleryCatalog transaction enabled');
 console.log('  separated encrypted image asset documents enabled');
 console.log('  encrypted thumbnail asset documents enabled');
 console.log('  lazy history asset modes and single asset endpoint enabled');

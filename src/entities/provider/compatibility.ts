@@ -21,7 +21,6 @@ export {
   providerModeAllowsAttachmentRole,
   providerModeAllowsImageAttachments,
   providerModeAllowsMask,
-  sanitizeBatchDraftForSettings,
-  sanitizeBatchDraftsForSettings,
+  sanitizeComposerDraftForSettings,
   sanitizeProviderModeDraftForModel
 } from './attachmentCompatibility';

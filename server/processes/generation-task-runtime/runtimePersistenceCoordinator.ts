@@ -3,6 +3,7 @@ import { isActiveStatus, taskPersistableFinalImageCount } from './imageState';
 
 export interface RuntimePersistenceCoordinator {
   schedule(tasks: GenerationTask[]): void;
+  waitForIdle(): Promise<void>;
   waitForIdleForTests(): Promise<void>;
   resetForTests(): void;
 }
@@ -54,6 +55,9 @@ export function createRuntimePersistenceCoordinator(
       if (snapshot.length === 0 && tasks.length > 0) return;
       pendingSnapshot = snapshot;
       startDrain();
+    },
+    async waitForIdle() {
+      while (runs.size > 0) await Promise.allSettled([...runs]);
     },
     async waitForIdleForTests() {
       while (runs.size > 0) await Promise.allSettled([...runs]);

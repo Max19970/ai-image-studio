@@ -4,11 +4,11 @@ import type { ProviderRuntimeCapabilities } from '../src/entities/provider/types
 import {
   addImageFilesToProviderModeDraft,
   providerModeAllowsImageAttachments,
-  sanitizeGenerationDraftForProviderCapabilities,
-  sanitizeBatchDraftsForSettings
+  sanitizeComposerDraftForSettings,
+  sanitizeGenerationDraftForProviderCapabilities
 } from '../src/entities/provider/compatibility';
 import { defaultImageParams, defaultStudioSettings } from '../src/domain/defaults';
-import type { BatchComposerDraft } from '../src/domain/generationTask';
+import type { ComposerRequestDraft } from '../src/domain/generationTask';
 import { comfyUiHiresFixMode, comfyUiTextToImageMode } from '../src/entities/generation-params/comfyui/modes';
 import { openAiCompatibleImageEditMode, openAiCompatibleImageEditModeId } from '../src/entities/generation-params/openai-compatible/modes';
 
@@ -95,8 +95,8 @@ test('provider mode image availability is based on the active mode, not provider
   assert.equal(providerModeAllowsImageAttachments(comfyUiHiresFixMode), true);
 });
 
-test('batch draft sanitizer preserves OpenAI-compatible drafts with default settings', () => {
-  const draft: BatchComposerDraft = {
+test('composer draft sanitizer preserves OpenAI-compatible drafts with default settings', () => {
+  const draft: ComposerRequestDraft = {
     id: 'draft-1',
     providerModeId: openAiCompatibleImageEditModeId,
     params: defaultImageParams,
@@ -106,10 +106,10 @@ test('batch draft sanitizer preserves OpenAI-compatible drafts with default sett
     mask: image('mask.png')
   };
 
-  const sanitized = sanitizeBatchDraftsForSettings([draft], defaultStudioSettings);
+  const sanitized = sanitizeComposerDraftForSettings(draft, defaultStudioSettings).value;
 
-  assert.equal(sanitized[0].providerModeId, openAiCompatibleImageEditModeId);
-  assert.ok(sanitized[0].targetImage);
-  assert.equal(sanitized[0].referenceImages.length, 1);
-  assert.ok(sanitized[0].mask);
+  assert.equal(sanitized.providerModeId, openAiCompatibleImageEditModeId);
+  assert.ok(sanitized.targetImage);
+  assert.equal(sanitized.referenceImages.length, 1);
+  assert.ok(sanitized.mask);
 });

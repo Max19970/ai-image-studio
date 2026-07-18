@@ -5,6 +5,8 @@ import {
   saveEncryptedDocument
 } from '../encryptedStore';
 import { normalizeGalleryPath, normalizeGalleryPaths } from '../../../src/domain/galleryFilesystem';
+import { normalizeMaxStoredGenerationTasks, retainGenerationTasksByCompletedLimit } from '../../../src/domain/generationHistorySettings';
+import { normalizeGenerationTasks } from '../../../src/entities/storage';
 import {
   clampLimit,
   clampOffset,
@@ -27,6 +29,7 @@ import {
   selectTaskRows,
   selectTaskRowsByIds
 } from './generationTaskRows';
+import { selectRuntimeTaskRows } from './generationTaskRuntimeRows';
 import type { GenerationTaskAssetMode, GenerationTaskHistoryLoadOptions, GenerationTaskHistoryStorageStats, JsonObject, TaskRow } from './types';
 
 function resolveLoadOptions(options: GenerationTaskHistoryLoadOptions): Required<GenerationTaskHistoryLoadOptions> {
@@ -46,7 +49,11 @@ function isEmptyActiveStoredTask(task: JsonObject, imageCount: number): boolean 
   return isActiveStoredStatus(task.status);
 }
 
-function loadV2TaskRows(taskRows: TaskRow[], assetMode: GenerationTaskAssetMode): unknown[] {
+function loadV2TaskRows(
+  taskRows: TaskRow[],
+  assetMode: GenerationTaskAssetMode,
+  options: { includeEmptyActive?: boolean } = {}
+): unknown[] {
   const assetsByTask = new Map<string, ReturnType<typeof selectAssetRows>>();
   selectAssetRows(taskRows.map((row) => row.id)).forEach((row) => {
     const list = assetsByTask.get(row.task_id) ?? [];
@@ -57,7 +64,7 @@ function loadV2TaskRows(taskRows: TaskRow[], assetMode: GenerationTaskAssetMode)
   return taskRows.flatMap((row) => {
     const task = loadEncryptedDocument<JsonObject | null>(generationTaskDocumentBucket, row.document_key, null);
     if (!task) return [];
-    if (isEmptyActiveStoredTask(task, row.image_count)) return [];
+    if (!options.includeEmptyActive && isEmptyActiveStoredTask(task, row.image_count)) return [];
     task.galleryPath = normalizeGalleryPath(task.galleryPath ?? row.gallery_path);
     task.galleryPaths = normalizeGalleryPaths(task.galleryPaths, task.galleryPath);
     return [restoreTaskImages(task, assetsByTask.get(row.id) ?? [], assetMode, loadGenerationTaskAssetDocument)];
@@ -82,6 +89,33 @@ export function loadGenerationTaskHistoryDocuments(options: GenerationTaskHistor
   return { tasks, stats: { ...getGenerationTaskHistoryStats(), legacyFallbackUsed: tasks.length > 0 } };
 }
 
+export function loadGenerationTaskRuntimeHistoryDocuments(
+  completedLimit: unknown,
+  assetMode: GenerationTaskAssetMode = 'metadata'
+): { tasks: unknown[]; stats: GenerationTaskHistoryStorageStats } {
+  const limit = normalizeMaxStoredGenerationTasks(completedLimit);
+  const stats = getGenerationTaskHistoryStats();
+  if (hasV2HistoryRows()) {
+    const tasks = loadV2TaskRows(selectRuntimeTaskRows(limit), assetMode, { includeEmptyActive: true });
+    return {
+      tasks: retainGenerationTasksByCompletedLimit(
+        normalizeGenerationTasks(tasks, { interruptActive: false }),
+        limit
+      ),
+      stats
+    };
+  }
+
+  const legacyTasks = loadLegacyGenerationTaskHistory({ assetMode, limit: 10000, offset: 0 });
+  return {
+    tasks: retainGenerationTasksByCompletedLimit(
+      normalizeGenerationTasks(legacyTasks, { interruptActive: false }),
+      limit
+    ),
+    stats: { ...stats, legacyFallbackUsed: legacyTasks.length > 0 }
+  };
+}
+
 export function loadGenerationTaskHistoryDocumentsByIds(taskIds: string[], options: Pick<GenerationTaskHistoryLoadOptions, 'assetMode'> = {}): { tasks: unknown[]; stats: GenerationTaskHistoryStorageStats } {
   const ids = [...new Set(taskIds.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()))].slice(0, 400);
   const assetMode = options.assetMode ?? 'full';
@@ -97,29 +131,35 @@ export function loadGenerationTaskHistoryDocumentsByIds(taskIds: string[], optio
   return { tasks, stats: { ...stats, legacyFallbackUsed: tasks.length > 0 } };
 }
 
+export function saveGenerationTaskHistoryDocumentsInTransaction(tasks: unknown[]): void {
+  const { preparedTasks, removedTaskIds, replacedTaskIds } = createGenerationTaskPersistencePlan(tasks, selectAllTaskRows());
+  deleteGenerationTaskRows([...removedTaskIds, ...replacedTaskIds]);
+
+  preparedTasks.forEach(({ taskId, task, imageRefs, fullImageCount }) => {
+    saveEncryptedDocument(generationTaskDocumentBucket, taskId, cloneWithoutImages(task));
+    insertTaskRow(task, fullImageCount);
+    saveGenerationTaskAssetDocuments(imageRefs);
+    insertAssetRows(imageRefs);
+  });
+}
+
+export function finalizeGenerationTaskHistoryTransaction(): GenerationTaskHistoryStorageStats {
+  clearLegacyGenerationTaskHistory();
+  return getGenerationTaskHistoryStats();
+}
+
 export function saveGenerationTaskHistoryDocuments(tasks: unknown[]) {
   const db = getStorageDb();
-  const { preparedTasks, removedTaskIds, replacedTaskIds } = createGenerationTaskPersistencePlan(tasks, selectAllTaskRows());
-
   db.exec('BEGIN');
   try {
-    deleteGenerationTaskRows([...removedTaskIds, ...replacedTaskIds]);
-
-    preparedTasks.forEach(({ taskId, task, imageRefs, fullImageCount }) => {
-      saveEncryptedDocument(generationTaskDocumentBucket, taskId, cloneWithoutImages(task));
-      insertTaskRow(task, fullImageCount);
-      saveGenerationTaskAssetDocuments(imageRefs);
-      insertAssetRows(imageRefs);
-    });
-
+    saveGenerationTaskHistoryDocumentsInTransaction(tasks);
     db.exec('COMMIT');
   } catch (error) {
     db.exec('ROLLBACK');
     throw error;
   }
 
-  clearLegacyGenerationTaskHistory();
-  return getGenerationTaskHistoryStats();
+  return finalizeGenerationTaskHistoryTransaction();
 }
 
 export function clearGenerationTaskHistoryDocuments() {

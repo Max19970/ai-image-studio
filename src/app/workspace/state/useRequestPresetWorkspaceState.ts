@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
 import type { RequestPreset } from '../../../entities/request-presets';
-import { loadRequestPresets, loadRequestPresetsFromDatabase, saveRequestPresets } from '../../../processes/storage-sync/requestPresets';
+import { requestPresetsSyncDescriptor } from '../../../processes/storage-sync/requestPresets';
 import type { StateSetter } from '../types';
+import { useSyncedDocumentState } from './useSyncedDocumentState';
 
 export interface RequestPresetWorkspaceState {
   requestPresets: RequestPreset[];
@@ -9,25 +9,9 @@ export interface RequestPresetWorkspaceState {
 }
 
 export function useRequestPresetWorkspaceState(): RequestPresetWorkspaceState {
-  const [requestPresets, setRequestPresets] = useState<RequestPreset[]>(() => loadRequestPresets());
-  const presetsHydratedRef = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    void loadRequestPresetsFromDatabase().then((loaded) => {
-      if (cancelled) return;
-      presetsHydratedRef.current = true;
-      setRequestPresets(loaded);
-    });
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    if (presetsHydratedRef.current) saveRequestPresets(requestPresets);
-  }, [requestPresets]);
-
+  const synced = useSyncedDocumentState(requestPresetsSyncDescriptor, undefined);
   return {
-    requestPresets,
-    setRequestPresets
+    requestPresets: synced.value,
+    setRequestPresets: synced.setValue
   };
 }

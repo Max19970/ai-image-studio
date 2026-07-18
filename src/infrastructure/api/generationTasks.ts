@@ -110,15 +110,13 @@ export async function enqueueServerBatchGenerationRequest(request: ServerBatchGe
 }
 
 export async function deleteServerGenerationTask(taskId: string): Promise<void> {
-  await readJsonOrThrow(await fetchProxy('/api/generation-tasks/delete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ taskId })
+  await readJsonOrThrow(await fetchProxy(`/api/generation-tasks/${encodeURIComponent(taskId)}`, {
+    method: 'DELETE'
   }));
 }
 
 export async function clearServerGenerationTasks(): Promise<void> {
-  await readJsonOrThrow(await fetchProxy('/api/generation-tasks/clear', { method: 'POST' }));
+  await readJsonOrThrow(await fetchProxy('/api/generation-tasks', { method: 'DELETE' }));
 }
 
 export async function cancelServerGenerationTask(taskId: string): Promise<void> {

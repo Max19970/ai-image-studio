@@ -4,9 +4,9 @@ import path from 'node:path';
 
 const root = process.cwd();
 const serverRuntimeFiles = [
-  'server/processes/generationTaskRuntime.ts',
   'server/processes/generation-task-runtime/index.ts',
   'server/processes/generation-task-runtime/runtimeStore.ts',
+  'server/processes/generation-task-runtime/runtimeRetentionPolicy.ts',
   'server/processes/generation-task-runtime/taskEvents.ts',
   'server/processes/generation-task-runtime/taskEventBus.ts',
   'server/processes/generation-task-runtime/taskEventDelta.ts',
@@ -18,7 +18,6 @@ const serverRuntimeFiles = [
   'server/processes/generation-task-runtime/cancellationRegistry.ts',
   'server/processes/generation-task-runtime/cancellationTaskStore.ts',
   'server/processes/generation-task-runtime/cancellationBatchReducer.ts',
-  'server/processes/generation-task-runtime/galleryMutations.ts',
   'server/processes/generation-task-runtime/imageState.ts',
   'server/processes/liveGenerationImageAssets.ts',
   'server/processes/liveGenerationImageStore.ts'
@@ -62,9 +61,6 @@ async function main() {
   }
   assert(!domainTypes.includes("'streaming' |"), "GenerationStatus still exposes legacy 'streaming'.");
 
-  const serverRuntimeFacade = await read('server/processes/generationTaskRuntime.ts');
-  assert(serverRuntimeFacade.includes("./generation-task-runtime/index"), 'server runtime facade does not point at split runtime modules.');
-
   const serverRuntime = await readCombined(serverRuntimeFiles);
   assert(serverRuntime.includes('runGenerationRequestPipeline'), 'server runtime does not own the provider request pipeline.');
   assert(serverRuntime.includes('createRunnerRetryPolicy') && serverRuntime.includes('runWithRetryPolicy'), 'server runtime does not use the shared retry policy.');
@@ -92,11 +88,16 @@ async function main() {
     'server runtime does not persist failed/cancelled batch item terminal transitions.'
   );
   assert(serverRuntime.includes('subscribeGenerationTaskEvents') && serverRuntime.includes("'tasks-delta'") && serverRuntime.includes('createGenerationTaskEventBus'), 'server runtime split does not preserve SSE task delta publication.');
-  assert(serverRuntime.includes('saveGenerationTaskHistoryDocuments') && serverRuntime.includes('loadGenerationTaskHistoryDocuments'), 'server runtime split does not preserve persisted task history ownership.');
+  assert(
+    serverRuntime.includes('saveGenerationTaskHistoryDocuments')
+      && serverRuntime.includes('loadGenerationTaskRuntimeHistoryDocuments')
+      && serverRuntime.includes('RuntimeTaskRetentionPolicyPort')
+      && serverRuntime.includes('retainGenerationTasksByCompletedLimit'),
+    'server runtime split does not preserve retention-aware persisted task history ownership.'
+  );
   assert(serverRuntime.includes('createGenerationCancellationRegistry') && serverRuntime.includes('GenerationCancellationTaskStorePort') && serverRuntime.includes('reduceCancelledBatchItem'), 'server runtime cancellation is not split into controller registry, task-store port and reducer adapter.');
   assert(serverRuntime.includes('createGenerationTaskRuntimeStore') && serverRuntime.includes('RuntimeTaskPersistencePort') && serverRuntime.includes('RuntimeTaskEventPublisherPort'), 'server runtime store does not expose injected persistence/serialization/event ports.');
   assert(serverRuntime.includes('createLiveGenerationImageStore') && serverRuntime.includes('defaultLiveImageUrl'), 'server runtime does not split live image cache policy from serialization facade.');
-  assert(serverRuntime.includes('moveServerGalleryFolderTasks') && serverRuntime.includes('pasteServerGalleryItems'), 'server runtime split does not preserve gallery task mutations.');
 
   const batchTaskReducer = await readCombined([
     'src/processes/batch-runner/batchTaskReducer.ts',
@@ -117,17 +118,14 @@ async function main() {
   assert(singleRunner.includes('enqueueServerGenerationRequest'), 'client single runner is not reduced to server-owned enqueue wiring.');
   assert(!singleRunner.includes(`${legacyClientSubmit}(`), 'client single runner still calls legacy provider submit as lifecycle truth.');
 
-  const clientBatchRunner = await read('src/processes/batch-runner/batchRunner.ts');
-  assert(clientBatchRunner.includes('Legacy client-side direct batch runner quarantine'), 'client direct batch runner is not explicitly quarantined.');
-  assert(!clientBatchRunner.includes(`${legacyClientSubmit}(`), 'client batch runner still calls legacy provider submit as lifecycle truth.');
-
-  const clientApi = await read('src/infrastructure/api.ts');
-  assert(!clientApi.includes(`export async function ${legacyClientSubmit}`), 'client API still exports direct provider submit as a production path.');
+  const clientActions = await read('src/processes/server-generation-actions/index.ts');
+  assert(!clientActions.includes(`export async function ${legacyClientSubmit}`), 'client generation actions still export direct provider submit as a production path.');
 
   const historyHook = await read('src/app/hooks/useGenerationTaskHistory.ts');
-  assert(historyHook.includes('createTaskCancellationRegistry'), 'task history hook does not use the cancellation registry for legacy local work.');
-  assert(historyHook.includes('.cancel(taskId)'), 'deleteTask does not cancel active work before removal.');
-  assert(historyHook.includes('.cancelAll()'), 'clearTasks does not cancel active work before clearing.');
+  assert(historyHook.includes("new EventSource('/api/generation-tasks/events')"), 'task history hook does not project the canonical runtime SSE stream.');
+  assert(!historyHook.includes('createTaskCancellationRegistry'), 'task history hook still owns client-side cancellation.');
+  assert(!historyHook.includes('deletedTaskIdsRef'), 'task history hook still hides canonical tasks behind tombstones.');
+  assert(!historyHook.includes('loadGenerationTaskHistory('), 'task history hook still competes with runtime SSE hydration.');
 
   const storage = await read('src/entities/storage/generationTasks.ts');
   assert(storage.includes('interruptedStatusToFailed'), 'storage restore does not normalize interrupted active tasks.');
@@ -138,10 +136,11 @@ async function main() {
 
   console.log('Task lifecycle architecture summary:');
   console.log(`  ${expectedStatuses.length} persisted lifecycle statuses`);
-  console.log(`  ${serverRuntimeFiles.length} server runtime facade/modules`);
+  console.log(`  ${serverRuntimeFiles.length} server runtime modules`);
   console.log('  server-owned runtime is the lifecycle owner for single and batch generation');
+  console.log('  client task history is SSE projection plus bounded fallback only');
   console.log('  client single generation is snapshot/enqueue-only');
-  console.log('  legacy client direct batch runner is quarantined');
+  console.log('  retired client direct batch runner is absent');
   console.log('  delayed parallel scheduler enabled for server batch sends');
   console.log('  shared retry policy enabled for server runtime requests');
   console.log('Task lifecycle check passed.');

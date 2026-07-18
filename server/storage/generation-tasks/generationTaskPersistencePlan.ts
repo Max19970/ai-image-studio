@@ -28,10 +28,6 @@ export interface GenerationTaskPersistencePlan {
   replacedTaskIds: string[];
 }
 
-function isActiveStoredStatus(status: unknown): boolean {
-  return status === 'queued' || status === 'sending' || status === 'running' || status === 'retrying';
-}
-
 function isImageDataUrl(value: unknown): value is string {
   return typeof value === 'string' && /^data:image\/[^;,]+;base64,/i.test(value);
 }
@@ -63,7 +59,6 @@ function createCandidate(taskLike: unknown): GenerationTaskPersistenceCandidate 
     galleryPath: galleryPaths[0] ?? normalizeGalleryPath(taskLike.galleryPath),
     galleryPaths
   };
-  if (fullImageCount === 0 && isActiveStoredStatus(task.status)) return null;
   return { taskId, task, fullImageCount, batchItemCount: batchItems.length };
 }
 

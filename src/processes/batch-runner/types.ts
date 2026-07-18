@@ -1,4 +1,4 @@
-import type { BatchComposerDraft, GenerationRequestSnapshot } from '../../domain/generationTask';
+import type { ComposerRequestDraft, GenerationRequestSnapshot } from '../../domain/generationTask';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderSettings } from '../../domain/providerSettings';
@@ -6,7 +6,7 @@ import type { StudioSettings } from '../../domain/studioSettings';
 import type { RunnerTranslateFn } from '../generation-runner/types';
 
 export interface PreparedBatchItem {
-  draft: BatchComposerDraft;
+  draft: ComposerRequestDraft;
   index: number;
   provider: ProviderSettings;
   providerMode: ProviderGenerationModeDefinition;
@@ -15,7 +15,7 @@ export interface PreparedBatchItem {
 }
 
 export interface BatchGenerationRunInput {
-  drafts: BatchComposerDraft[];
+  drafts: ComposerRequestDraft[];
   intervalSeconds: number;
   settings: StudioSettings;
   selectedModelId: string;

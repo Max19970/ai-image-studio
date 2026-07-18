@@ -4,8 +4,11 @@ import {
   getGenerationTaskStorageDiagnostics,
   loadGenerationTaskAssetDocument,
   loadGenerationTaskHistoryDocuments,
+  loadGenerationTaskHistoryDocumentsByIds,
+  loadGenerationTaskRuntimeHistoryDocuments,
   saveGenerationTaskHistoryDocuments
 } from './generationTaskStore';
+import { loadGalleryCatalogDocuments, saveGalleryCatalogStateDocuments } from './galleryCatalogStore';
 import type { GenerationTaskStoreWorkerRequest, GenerationTaskStoreWorkerResponse } from './generationTaskStoreWorkerTypes';
 
 function serializeError(error: unknown): { name: string; message: string; stack?: string } {
@@ -19,6 +22,20 @@ function handleRequest(request: GenerationTaskStoreWorkerRequest): unknown {
   switch (request.operation.type) {
     case 'loadHistory':
       return loadGenerationTaskHistoryDocuments(request.operation.options ?? {});
+    case 'loadRuntimeHistory':
+      return loadGenerationTaskRuntimeHistoryDocuments(
+        request.operation.completedLimit,
+        request.operation.assetMode ?? 'metadata'
+      );
+    case 'loadHistoryByIds':
+      return loadGenerationTaskHistoryDocumentsByIds(
+        request.operation.taskIds,
+        { assetMode: request.operation.assetMode ?? 'full' }
+      );
+    case 'loadGalleryCatalog':
+      return loadGalleryCatalogDocuments();
+    case 'saveGalleryCatalog':
+      return saveGalleryCatalogStateDocuments(request.operation.state);
     case 'saveHistory':
       return saveGenerationTaskHistoryDocuments(request.operation.tasks);
     case 'clearHistory':

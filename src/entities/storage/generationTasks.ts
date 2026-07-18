@@ -1,4 +1,5 @@
 import { sanitizeGenerationRequestParamsSnapshot } from '../generation-params/logicalRegistry';
+import { retainGenerationTasksByCompletedLimit } from '../../domain/generationHistorySettings';
 import { interruptedStatusToFailed, isActiveGenerationStatus, normalizeGenerationStatus } from '../../domain/generationStatus';
 import type { AttachmentSummary, BatchGenerationItem, GeneratedImage, GenerationTask } from '../../domain/generationTask';
 import { normalizeGalleryPath, normalizeGalleryPaths } from '../../domain/galleryFilesystem';
@@ -80,10 +81,19 @@ function sanitizeGeneratedImage(image: Partial<GeneratedImage>, fallbackIndex = 
 }
 
 
-function sanitizeBatchItem(item: Partial<BatchGenerationItem>, taskId: string, fallbackIndex = 0): BatchGenerationItem {
+interface GenerationTaskNormalizationOptions {
+  interruptActive?: boolean;
+}
+
+function sanitizeBatchItem(
+  item: Partial<BatchGenerationItem>,
+  taskId: string,
+  fallbackIndex = 0,
+  options: GenerationTaskNormalizationOptions = {}
+): BatchGenerationItem {
   const request = sanitizeRequestSnapshot((item.request ?? {}) as any);
   const loadedStatus = normalizeGenerationStatus(item.status);
-  const status = interruptedStatusToFailed(loadedStatus);
+  const status = options.interruptActive === false ? loadedStatus : interruptedStatusToFailed(loadedStatus);
   const images = Array.isArray(item.images)
     ? item.images.flatMap((image, index) => {
       const normalized = sanitizeGeneratedImage(image as Partial<GeneratedImage>, index);
@@ -98,22 +108,29 @@ function sanitizeBatchItem(item: Partial<BatchGenerationItem>, taskId: string, f
     request,
     images,
     raw: item.raw,
-    error: isActiveGenerationStatus(loadedStatus) ? 'Interrupted by page reload.' : item.error ?? null
+    error: options.interruptActive !== false && isActiveGenerationStatus(loadedStatus)
+      ? 'Interrupted by page reload.'
+      : item.error ?? null
   };
 }
 
-export function sanitizeGenerationTask(task: Partial<GenerationTask>): GenerationTask | null {
+export function sanitizeGenerationTask(
+  task: Partial<GenerationTask>,
+  options: GenerationTaskNormalizationOptions = {}
+): GenerationTask | null {
   const id = task.id || uid('task');
   const request = sanitizeRequestSnapshot((task.request ?? {}) as any);
   const loadedStatus = normalizeGenerationStatus(task.status);
-  const status = interruptedStatusToFailed(loadedStatus);
+  const status = options.interruptActive === false ? loadedStatus : interruptedStatusToFailed(loadedStatus);
   const images = Array.isArray(task.images)
     ? task.images.flatMap((image, index) => {
       const normalized = sanitizeGeneratedImage(image as Partial<GeneratedImage>, index);
       return normalized ? [{ ...normalized, taskId: id, request: normalized.request ?? request }] : [];
     })
     : [];
-  const batchItems = Array.isArray(task.batch?.items) ? task.batch.items.map((item, index) => sanitizeBatchItem(item as Partial<BatchGenerationItem>, id, index)) : [];
+  const batchItems = Array.isArray(task.batch?.items)
+    ? task.batch.items.map((item, index) => sanitizeBatchItem(item as Partial<BatchGenerationItem>, id, index, options))
+    : [];
 
   return {
     id,
@@ -130,21 +147,25 @@ export function sanitizeGenerationTask(task: Partial<GenerationTask>): Generatio
       items: batchItems
     } : undefined,
     raw: task.raw,
-    error: isActiveGenerationStatus(loadedStatus) ? 'Interrupted by page reload.' : task.error ?? null
+    error: options.interruptActive !== false && isActiveGenerationStatus(loadedStatus)
+      ? 'Interrupted by page reload.'
+      : task.error ?? null
   };
 }
 
-export function normalizeGenerationTasks(tasks: unknown, limit = 120): GenerationTask[] {
+export function normalizeGenerationTasks(
+  tasks: unknown,
+  options: GenerationTaskNormalizationOptions = {}
+): GenerationTask[] {
   if (!Array.isArray(tasks)) return [];
   const seen = new Set<string>();
   const normalizedTasks: GenerationTask[] = [];
 
   for (const task of tasks) {
-    const normalized = sanitizeGenerationTask(task as Partial<GenerationTask>);
+    const normalized = sanitizeGenerationTask(task as Partial<GenerationTask>, options);
     if (!normalized || seen.has(normalized.id)) continue;
     seen.add(normalized.id);
     normalizedTasks.push(normalized);
-    if (normalizedTasks.length >= limit) break;
   }
 
   return normalizedTasks;
@@ -166,12 +187,13 @@ export function isEmptyActiveGenerationTask(task: Partial<GenerationTask>): bool
   return isActiveGenerationStatus(status) && !taskHasPersistableGenerationImage(task);
 }
 
-export function toPersistableGenerationTaskSnapshot(tasks: GenerationTask[], limit = 120): GenerationTask[] {
-  return normalizeGenerationTasks(tasks.filter((task) => !isEmptyActiveGenerationTask(task)), limit);
+export function toPersistableGenerationTaskSnapshot(tasks: GenerationTask[], completedLimit = 120): GenerationTask[] {
+  const normalized = normalizeGenerationTasks(tasks.filter((task) => !isEmptyActiveGenerationTask(task)));
+  return retainGenerationTasksByCompletedLimit(normalized, completedLimit);
 }
 
 export function toLightGenerationTaskSnapshot(tasks: GenerationTask[], limit = 40): GenerationTask[] {
-  return normalizeGenerationTasks(tasks, limit).map((task) => ({
+  return normalizeGenerationTasks(tasks).slice(0, Math.max(0, Math.floor(limit))).map((task) => ({
     ...task,
     raw: undefined,
     images: task.images.slice(0, 3).map((image) => ({ ...image, raw: undefined })),

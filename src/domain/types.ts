@@ -14,7 +14,7 @@ export type { GenerationModel, GenerationProvider, ProviderSettings } from './pr
 export type { InterfaceTheme, StudioSettings } from './studioSettings';
 export type {
   AttachmentSummary,
-  BatchComposerDraft,
+  ComposerRequestDraft,
   BatchGenerationItem,
   BatchGenerationSnapshot,
   GeneratedImage,

@@ -1,4 +1,5 @@
 import type {
+  GenerationTaskAssetMode,
   GenerationTaskHistoryLoadOptions,
   GenerationTaskHistoryStorageStats,
   GenerationTaskStorageAudit,
@@ -8,6 +9,10 @@ import type {
 
 export type GenerationTaskStoreWorkerOperation =
   | { type: 'loadHistory'; options?: GenerationTaskHistoryLoadOptions }
+  | { type: 'loadRuntimeHistory'; completedLimit: number; assetMode?: GenerationTaskAssetMode }
+  | { type: 'loadHistoryByIds'; taskIds: string[]; assetMode?: GenerationTaskAssetMode }
+  | { type: 'loadGalleryCatalog' }
+  | { type: 'saveGalleryCatalog'; state: import('./galleryCatalogStore').GalleryCatalogPersistedState }
   | { type: 'saveHistory'; tasks: unknown[] }
   | { type: 'clearHistory' }
   | { type: 'loadAsset'; key: string }
@@ -20,7 +25,9 @@ export interface GenerationTaskStoreWorkerRequest {
 }
 
 export type GenerationTaskStoreWorkerValue<T extends GenerationTaskStoreWorkerOperation['type']> =
-  T extends 'loadHistory' ? { tasks: unknown[]; stats: GenerationTaskHistoryStorageStats } :
+  T extends 'loadHistory' | 'loadRuntimeHistory' | 'loadHistoryByIds' ? { tasks: unknown[]; stats: GenerationTaskHistoryStorageStats } :
+  T extends 'loadGalleryCatalog' ? ReturnType<typeof import('./galleryCatalogStore').loadGalleryCatalogDocuments> :
+  T extends 'saveGalleryCatalog' ? ReturnType<typeof import('./galleryCatalogStore').saveGalleryCatalogStateDocuments> :
   T extends 'saveHistory' ? ReturnType<typeof import('./generationTaskStore').saveGenerationTaskHistoryDocuments> :
   T extends 'clearHistory' ? GenerationTaskHistoryStorageStats :
   T extends 'loadAsset' ? JsonObject | null :

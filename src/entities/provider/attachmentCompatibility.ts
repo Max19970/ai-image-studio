@@ -1,4 +1,4 @@
-import type { BatchComposerDraft } from '../../domain/generationTask';
+import type { ComposerRequestDraft } from '../../domain/generationTask';
 import type { ProviderGenerationModeDefinition, ProviderGenerationModeId, ProviderAttachmentPolicy, ProviderAttachmentRole } from '../../domain/providerMode';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
@@ -153,15 +153,11 @@ export function sanitizeProviderModeDraftForModel<T extends ProviderModeDraftCom
   );
 }
 
-export function sanitizeBatchDraftForSettings(
-  draft: BatchComposerDraft,
+export function sanitizeComposerDraftForSettings(
+  draft: ComposerRequestDraft,
   settings: StudioSettings
-): ProviderCompatibilityResult<BatchComposerDraft> {
+): ProviderCompatibilityResult<ComposerRequestDraft> {
   return sanitizeProviderModeDraftForModel(draft, settings, draft.selectedModelId);
-}
-
-export function sanitizeBatchDraftsForSettings(drafts: BatchComposerDraft[], settings: StudioSettings): BatchComposerDraft[] {
-  return drafts.map((draft) => sanitizeBatchDraftForSettings(draft, settings).value);
 }
 
 export function getProviderModeForAttachmentRole(

@@ -15,11 +15,9 @@ export function createDetailCommands(args: DetailCommandDeps): DetailCommands {
     cancelTask: (taskId) => cancelServerGenerationTask(taskId),
     restoreRequest: (snapshot) => restoreRequestToWorkspaceCommand(snapshot, {
       t: args.t,
-      setProviderModeId: args.setProviderModeId,
-      setCompatibilityNotice: args.setCompatibilityNotice,
-      setParams: args.setParams,
+      params: args.params,
       settings: args.studioSettings,
-      setSettings: args.setStudioSettings,
+      replaceActiveComposerRequest: args.replaceActiveComposerRequest,
       setSelectedTaskId: args.setSelectedTaskId,
       setSelectedImageId: args.setSelectedImageId
     })

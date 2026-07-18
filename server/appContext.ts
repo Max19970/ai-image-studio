@@ -8,6 +8,11 @@ import {
   providerServerManifestsById
 } from './providers/registry';
 import type { ProviderAdapterDefinition, ProviderSettings } from './providers/types';
+import { createDefaultGalleryCatalog, type GalleryCatalog } from './gallery/catalog';
+import {
+  defaultGenerationTaskRuntimePort,
+  type GenerationTaskRuntimePort
+} from './processes/generation-task-runtime/runtimePort';
 
 export interface ProviderRegistryPort {
   manifests: typeof providerServerManifests;
@@ -21,6 +26,8 @@ export interface ProviderRegistryPort {
 export interface BackendAppContext {
   providers: ProviderRegistryPort;
   integrations: IntegrationRegistryPort;
+  generationTasks: GenerationTaskRuntimePort;
+  galleryCatalog: GalleryCatalog;
 }
 
 export function createProviderRegistryPort(): ProviderRegistryPort {
@@ -36,8 +43,11 @@ export function createProviderRegistryPort(): ProviderRegistryPort {
 
 export function createBackendAppContext(): BackendAppContext {
   const preconfiguredIntegrations = defaultIntegrationRegistry.list();
+  const generationTasks = defaultGenerationTaskRuntimePort;
   return {
     providers: createProviderRegistryPort(),
-    integrations: preconfiguredIntegrations.length > 0 ? defaultIntegrationRegistry : createBuiltInIntegrationRegistry()
+    integrations: preconfiguredIntegrations.length > 0 ? defaultIntegrationRegistry : createBuiltInIntegrationRegistry(),
+    generationTasks,
+    galleryCatalog: createDefaultGalleryCatalog()
   };
 }

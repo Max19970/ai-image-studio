@@ -1,4 +1,3 @@
-export type { WorkspaceBatchComposerContext } from './workspace/batchComposer';
 export type { WorkspaceComposerDockContext, WorkspaceModalsContext } from './workspace/composerDock';
 export type { DetailActionContext, DetailLayoutContext } from './workspace/detail';
 export type {

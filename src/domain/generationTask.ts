@@ -3,7 +3,6 @@ import type { GenerationRequestSnapshot } from './generationRequest';
 export type {
   AttachmentSummary,
   BatchAggregateRequestSnapshot,
-  BatchComposerDraft,
   ComposerRequestDraft,
   GenerationRequestSnapshot,
   ProviderRequestParameterSummary,
@@ -64,7 +63,6 @@ export interface GenerationTask {
   status: GenerationStatus;
   galleryPath?: string;
   galleryPaths?: string[];
-  galleryFavorite?: boolean;
   createdAt: number;
   updatedAt: number;
   request: GenerationRequestSnapshot;

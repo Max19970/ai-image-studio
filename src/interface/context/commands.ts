@@ -1,7 +1,7 @@
 import type { GalleryFolder } from '../../domain/galleryFilesystem';
 import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
 import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
-import type { BatchComposerDraft, GeneratedImage, GenerationRequestSnapshot, GenerationTask } from '../../domain/generationTask';
+import type { ComposerRequestDraft, GeneratedImage, GenerationRequestSnapshot, GenerationTask } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider } from '../../domain/providerSettings';
 import type { RequestPreset } from '../../entities/request-presets';
 import type { ImageParams } from '../../domain/imageParams';
@@ -15,11 +15,9 @@ export interface WorkspaceCommands {
 
 export interface RequestPresetCommands {
   saveCurrent: (name?: string, note?: string) => void;
-  saveBatchDraft: (draftId: string, name?: string, note?: string) => void;
   applyPreset: (presetId: string) => void;
-  updatePreset: (presetId: string, patch: { name?: string; note?: string; captureCurrent?: boolean; captureBatchDraftId?: string }) => void;
+  updatePreset: (presetId: string, patch: { name?: string; note?: string; captureCurrent?: boolean }) => void;
   deletePreset: (presetId: string) => void;
-  applyPresetToBatchDraft: (draftId: string, presetId: string) => void;
 }
 
 export interface ComposerCommands {
@@ -33,7 +31,7 @@ export interface ComposerCommands {
   addDraft: () => void;
   duplicateDraft: (id: string) => void;
   removeDraft: (id: string) => void;
-  patchDraft: (id: string, patch: Partial<BatchComposerDraft>) => void;
+  patchDraft: (id: string, patch: Partial<ComposerRequestDraft>) => void;
   patchDraftParams: (id: string, patch: Partial<ImageParams>) => void;
   setIntervalSeconds: (seconds: number) => void;
   setTargetImage: (file: File | null) => void;
@@ -62,19 +60,6 @@ export interface GalleryCommands {
   pasteItems: (operation: GalleryClipboardOperation, items: GalleryClipboardItemPayload[], targetPath: string) => Promise<void>;
   setPinned: (kind: GalleryMetadataKind, id: string, enabled: boolean) => Promise<void>;
   setTags: (kind: GalleryMetadataKind, id: string, tags: string[]) => Promise<void>;
-}
-
-export interface BatchComposerCommands {
-  setIntervalSeconds: (seconds: number) => void;
-  patchDraft: (id: string, patch: Partial<BatchComposerDraft>) => void;
-  patchDraftParams: (id: string, params: ImageParams) => void;
-  addDraft: () => void;
-  duplicateDraft: (id: string) => void;
-  removeDraft: (id: string) => void;
-  openParameters: (draftId: string) => void;
-  submit: () => Promise<void>;
-  close: () => void;
-  requestPresets: RequestPresetCommands;
 }
 
 export interface SettingsCommands {

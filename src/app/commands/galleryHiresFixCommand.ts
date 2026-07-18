@@ -7,7 +7,7 @@ import { toComfyUiProviderParamState } from '../../entities/generation-params/co
 import { getProviderGenerationRequestSurfaceById } from '../../entities/generation-params/requestSurface';
 import { writeProviderParamState } from '../../entities/generation-params/providerState';
 import { loadGenerationTaskAsset } from '../../infrastructure/storage/remoteGenerationTaskHistoryStore';
-import { normalizeSelectedModel, providerContextForModel } from '../../entities/studio-settings';
+import { providerContextForModel } from '../../entities/studio-settings';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { GalleryHiresFixCommandDeps } from './appCommandTypes';
 
@@ -116,16 +116,17 @@ export async function startGalleryHiresFixCommand(args: GalleryHiresFixCommandDe
     const snapshot = getSnapshotForHiresFix(task, fullImage);
     const restoredParams = restoreParamsForHiresFix({ previous: args.params, snapshot, sourceSize, provider });
 
-    args.setStudioSettings((prev) => normalizeSelectedModel({ ...prev, selectedModelId: comfyModelId }));
-    args.setProviderModeId(comfyUiHiresFixModeId);
-    args.setParams(restoredParams);
-    args.setTargetImage(targetFile);
-    args.setReferenceImages([]);
-    args.setMask(null);
+    args.replaceActiveComposerRequest({
+      providerModeId: comfyUiHiresFixModeId,
+      params: restoredParams,
+      selectedModelId: comfyModelId,
+      targetImage: targetFile,
+      referenceImages: [],
+      mask: null
+    }, null);
     args.setWorkspaceTab('images');
     args.setSelectedTaskId(null);
     args.setSelectedImageId(null);
-    args.setCompatibilityNotice(null);
   } catch {
     args.setCompatibilityNotice(args.t('gallery.hiresFixImageLoadFailed'));
   }

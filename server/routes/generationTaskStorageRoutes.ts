@@ -4,11 +4,17 @@ import { registerGenerationTaskDiagnosticsRoutes } from './generationTaskDiagnos
 import { registerGenerationTaskDownloadRoutes } from './generationTaskDownloadRoutes';
 import { registerGenerationTaskHistoryRoutes } from './generationTaskHistoryRoutes';
 import { registerGalleryFolderRoutes } from './galleryFolderRoutes';
+import type { GenerationTaskRuntimePort } from '../processes/generation-task-runtime/runtimePort';
+import type { GalleryCatalog } from '../gallery/catalog';
 
-export function registerGenerationTaskStorageRoutes(app: express.Express) {
+export function registerGenerationTaskStorageRoutes(
+  app: express.Express,
+  generationTasks: GenerationTaskRuntimePort,
+  galleryCatalog: GalleryCatalog
+) {
   registerGenerationTaskDiagnosticsRoutes(app);
   registerGenerationTaskHistoryRoutes(app);
-  registerGalleryFolderRoutes(app);
+  registerGalleryFolderRoutes(app, galleryCatalog);
   registerGenerationTaskAssetRoutes(app);
   registerGenerationTaskDownloadRoutes(app);
 }
