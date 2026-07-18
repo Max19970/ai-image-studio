@@ -1,6 +1,6 @@
 import type { SettingsCommands } from '../../interface/context/commands';
 import type { SettingsCommandDeps } from './appCommandTypes';
-import { applyComposerCompatibilityForModel, sanitizeBatchDraftsAfterSettingsChange } from './providerCompatibilityCommands';
+import { applyComposerCompatibilityForModel } from './providerCompatibilityCommands';
 import { clearProviderProbeCacheCommand, probeProviderCommand, quickCheckProviderCommand } from './providerCommands';
 
 export function createSettingsCommands(args: SettingsCommandDeps): SettingsCommands {
@@ -11,7 +11,6 @@ export function createSettingsCommands(args: SettingsCommandDeps): SettingsComma
         normalized,
         args.composerCompatibility.t('composer.compatibilityAdjustedRequest')
       );
-      sanitizeBatchDraftsAfterSettingsChange(args.batchCompatibility, normalized);
     },
     selectModel: (modelId) => {
       args.setStudioSettings((prev) => args.normalizeSettings({ ...prev, selectedModelId: modelId }));

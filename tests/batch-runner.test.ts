@@ -1,13 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { GeneratedImage, GenerationRequestSnapshot, GenerationTask } from '../src/domain/generationTask';
-import { createBatchRunProgressTracker } from '../src/processes/batch-runner/batchRunProgress';
 import { reduceBatchTask } from '../src/processes/batch-runner/batchTaskReducer';
-
-const t = (key: string, params?: Record<string, unknown>) => {
-  if (key === 'batch.itemError') return `Item ${params?.index}: ${params?.error}`;
-  return key;
-};
 
 const snapshot: GenerationRequestSnapshot = {
   createdAt: 1,
@@ -132,31 +126,4 @@ test('batch task reducer appends final images for non-streamed items', () => {
   assert.equal(task.images.length, 2);
   assert.equal(task.batch?.items[0].images.length, 2);
   assert.equal(task.batch?.items[0].status, 'succeeded');
-});
-
-test('batch progress tracker resolves success with partial failures when images exist', () => {
-  const progress = createBatchRunProgressTracker(2, t);
-  progress.recordItemFailure(1, 'provider failed', false);
-
-  const task = createTask();
-  const taskWithImage = { ...task, images: [image(0)] };
-  const terminal = progress.resolveTerminal(taskWithImage);
-
-  assert.equal(terminal.status, 'succeeded');
-  assert.equal(terminal.error, 'Item 2: provider failed');
-  assert.equal(terminal.cancelled, false);
-});
-
-test('batch progress tracker resolves all-cancelled batch as cancelled', () => {
-  const progress = createBatchRunProgressTracker(2, t);
-  progress.recordItemFailure(0, 'cancelled', true);
-  progress.recordItemFailure(1, 'cancelled', true);
-
-  let task = createTask();
-  task = reduceBatchTask(task, { type: 'item-cancelled', itemId: 'item-0', error: 'cancelled', aggregateError: progress.getAggregateError() }, 2);
-  task = reduceBatchTask(task, { type: 'item-cancelled', itemId: 'item-1', error: 'cancelled', aggregateError: progress.getAggregateError() }, 3);
-  const terminal = progress.resolveTerminal(task);
-
-  assert.equal(terminal.status, 'cancelled');
-  assert.equal(terminal.cancelled, true);
 });

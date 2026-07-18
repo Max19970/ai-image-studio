@@ -3,7 +3,7 @@ import type { WorkspaceComposerDockContext, WorkspaceModalsContext } from '../..
 import type { WorkspaceMainContext } from '../../interface/context/workspace/main';
 import type { WorkspaceSidebarContext } from '../../interface/context/workspace/sidebar';
 import type { WorkspaceTab } from '../../interface/context/workspace/tabs';
-import type { BatchComposerDraft, ComposerRequestDraft, GeneratedImage, GenerationTask } from '../../domain/generationTask';
+import type { ComposerRequestDraft, GeneratedImage, GenerationTask } from '../../domain/generationTask';
 import type { ComposerDraftReadiness, ComposerQueueSummary } from '../../features/composer/model/composerDraftReadiness';
 import type { GalleryFolder } from '../../domain/galleryFilesystem';
 import type { RequestPreset } from '../../entities/request-presets';
@@ -116,9 +116,7 @@ export interface WorkspaceDerivedState {
   activeComposerDraft: ComposerRequestDraft;
   composerDraftReadiness: ComposerDraftReadiness[];
   composerQueueSummary: ComposerQueueSummary;
-  activeBatchDraft: BatchComposerDraft | null;
-  batchCanSubmit: boolean;
-  batchWarnings: string[];
+  composerParametersWarnings: string[];
   statusText: string | null;
 }
 

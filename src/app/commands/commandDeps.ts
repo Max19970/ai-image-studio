@@ -2,7 +2,7 @@ import type { GalleryFolder } from '../../domain/galleryFilesystem';
 import type { RequestPreset } from '../../entities/request-presets';
 import type { GalleryClipboardItemPayload, GalleryClipboardOperation } from '../../entities/gallery/galleryClipboard';
 import type { GalleryMetadataKind, GalleryPinItem, GalleryTagRecord } from '../../entities/gallery/galleryMetadata';
-import type { BatchComposerDraft, ComposerRequestDraft } from '../../domain/generationTask';
+import type { ComposerRequestDraft } from '../../domain/generationTask';
 import type { GenerationModel, GenerationProvider, ProviderSettings } from '../../domain/providerSettings';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderProbeReport, ProviderQuickCheckResult } from '../../domain/providerProbe';
@@ -35,10 +35,6 @@ export interface ComposerCompatibilityCommandDeps {
     notice: string | null
   ) => void;
   setCompatibilityNotice: StateSetter<string | null>;
-}
-
-export interface BatchCompatibilityCommandDeps {
-  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
 }
 
 export interface WorkspaceCommandDeps {
@@ -76,23 +72,6 @@ export interface ComposerCommandDeps extends ComposerCompatibilityCommandDeps {
   setBusy: StateSetter<boolean>;
   setServerSubmission: ServerSubmissionSetter;
   normalizeSettings: (settings: StudioSettings) => StudioSettings;
-}
-
-export interface BatchComposerCommandDeps {
-  t: TranslateFn;
-  providerModeId: ProviderGenerationModeId;
-  params: ImageParams;
-  studioSettings: StudioSettings;
-  capabilityReport: ProviderProbeReport | null;
-  activeGalleryPath: string;
-  batchCanSubmit: boolean;
-  batchDrafts: BatchComposerDraft[];
-  batchIntervalSeconds: number;
-  setBusy: StateSetter<boolean>;
-  setBatchComposerOpen: StateSetter<boolean>;
-  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
-  setBatchIntervalSeconds: StateSetter<number>;
-  setBatchParametersDraftId: StateSetter<string | null>;
 }
 
 export interface GalleryHiresFixCommandDeps {
@@ -139,7 +118,6 @@ export interface SettingsCommandDeps {
   applyStudioSettingsToComposer: (settings: StudioSettings, compatibilityNotice: string) => void;
   normalizeSettings: (settings: StudioSettings) => StudioSettings;
   composerCompatibility: ComposerCompatibilityCommandDeps;
-  batchCompatibility: BatchCompatibilityCommandDeps;
   providerProbe: ProviderProbeCommandDeps;
 }
 
@@ -170,7 +148,6 @@ export interface RequestPresetCommandDeps {
   activeProvider: GenerationProvider | null;
   activeModel: GenerationModel | null;
   studioSettings: StudioSettings;
-  batchDrafts: BatchComposerDraft[];
   requestPresets: RequestPreset[];
   setProviderModeId: StateSetter<ProviderGenerationModeId>;
   setCompatibilityNotice: StateSetter<string | null>;
@@ -183,7 +160,6 @@ export interface RequestPresetCommandDeps {
     request: Omit<ComposerRequestDraft, 'id'>,
     notice: string | null
   ) => void;
-  setBatchDrafts: StateSetter<BatchComposerDraft[]>;
   setRequestPresets: StateSetter<RequestPreset[]>;
   normalizeSettings: (settings: StudioSettings) => StudioSettings;
 }

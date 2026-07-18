@@ -62,23 +62,23 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     ? selectedTask.images.find((image) => image.id === state.selectedImageId) ?? null
     : null;
   const currentTask = state.tasks[0] ?? null;
-  const activeBatchDraft = state.composerParametersDraftId
+  const composerParametersDraft = state.composerParametersDraftId
     ? state.composerDrafts.find((draft) => draft.id === state.composerParametersDraftId) ?? null
     : null;
-  const activeBatchAnalysis = activeBatchDraft
-    ? composerDraftAnalyses.find((analysis) => analysis.draftId === activeBatchDraft.id) ?? null
+  const composerParametersAnalysis = composerParametersDraft
+    ? composerDraftAnalyses.find((analysis) => analysis.draftId === composerParametersDraft.id) ?? null
     : null;
 
-  const batchWarnings = useMemo(() => {
-    if (!activeBatchAnalysis) return [];
+  const composerParametersWarnings = useMemo(() => {
+    if (!composerParametersAnalysis) return [];
     return explainComposerDraftAnalysisWarnings({
-      analysis: activeBatchAnalysis,
-      capabilityReport: activeBatchAnalysis.draft.selectedModelId === activeComposerDraft.selectedModelId
+      analysis: composerParametersAnalysis,
+      capabilityReport: composerParametersAnalysis.draft.selectedModelId === activeComposerDraft.selectedModelId
         ? state.capabilityReport
         : null,
       t
     });
-  }, [activeBatchAnalysis, activeComposerDraft.selectedModelId, state.capabilityReport, t]);
+  }, [composerParametersAnalysis, activeComposerDraft.selectedModelId, state.capabilityReport, t]);
 
   const taskStatusText = currentTask?.status === 'succeeded' ? null : getStatusText(currentTask, t);
   const serverSubmissionText = state.serverSubmission.phase === 'submitting'
@@ -107,9 +107,7 @@ export function useWorkspaceDerivedState(state: WorkspaceState, t: TranslateFn):
     activeComposerDraft,
     composerDraftReadiness,
     composerQueueSummary,
-    activeBatchDraft,
-    batchCanSubmit: composerQueueSummary.readyCount > 0,
-    batchWarnings,
+    composerParametersWarnings,
     statusText: composerStatusText
   };
 }

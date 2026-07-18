@@ -19,7 +19,7 @@ const { createImageStudioApp } = await import('../server/app');
 const {
   resetGenerationTaskRuntimeForTests,
   waitForRuntimeTaskPersistenceForTests
-} = await import('../server/processes/generationTaskRuntime');
+} = await import('../server/processes/generation-task-runtime/index');
 const generationTaskStore = await import('../server/storage/generationTaskStore');
 const { closeGenerationTaskStoreWorkerForTests } = await import('../server/storage/generationTaskStoreAsync');
 const { closeStorageDbForTests } = await import('../server/storage/encryptedStore');

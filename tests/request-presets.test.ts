@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { defaultImageParams } from '../src/domain/defaults';
-import type { BatchComposerDraft } from '../src/domain/generationTask';
+import type { ComposerRequestDraft } from '../src/domain/generationTask';
 import {
   applyRequestPresetToDraft,
   createRequestPreset,
@@ -68,7 +68,7 @@ test('request preset edits can replace metadata without losing snapshot unless a
   assert.equal(replaced.snapshot.params.prompt, 'hires pass');
 });
 
-test('applying a request preset to a batch draft restores only that draft and clears runtime attachments', () => {
+test('applying a request preset to a composer draft restores only that draft and clears runtime attachments', () => {
   const preset = createRequestPreset({
     snapshot: {
       providerModeId: 'openai-compatible.image-generate',
@@ -77,7 +77,7 @@ test('applying a request preset to a batch draft restores only that draft and cl
     }
   });
 
-  const draft: BatchComposerDraft = {
+  const draft: ComposerRequestDraft = {
     id: 'draft-1',
     providerModeId: 'comfyui.hires-fix',
     selectedModelId: 'model-a',

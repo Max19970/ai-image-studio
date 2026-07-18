@@ -1,4 +1,3 @@
-import type { BatchComposerDraft } from '../../domain/generationTask';
 import type { ProviderGenerationModeId } from '../../domain/providerMode';
 import type { WorkMode } from '../../domain/workMode';
 
@@ -23,8 +22,6 @@ export interface ProviderCompatibilityResult<T> {
   changed: boolean;
   changes: ProviderCompatibilityChange[];
 }
-
-export type BatchDraftCompatibilityResult = ProviderCompatibilityResult<BatchComposerDraft>;
 
 export function uniqueCompatibilityChanges(changes: ProviderCompatibilityChange[]): ProviderCompatibilityChange[] {
   return Array.from(new Set(changes));

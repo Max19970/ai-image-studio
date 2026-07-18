@@ -27,7 +27,7 @@ export function createModalsContext({ state, derived, commands }: WorkspaceConte
         ? state.capabilityReport
         : null,
       studioSettings: state.studioSettings,
-      warnings: draft?.id === derived.activeComposerDraft.id ? derived.warnings : derived.batchWarnings,
+      warnings: draft?.id === derived.activeComposerDraft.id ? derived.warnings : derived.composerParametersWarnings,
       commands: commands.parameters
     }
   };

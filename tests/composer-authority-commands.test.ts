@@ -34,7 +34,6 @@ function snapshot(overrides: Partial<GenerationRequestSnapshot> = {}): Generatio
 test('Settings Apply persists once and delegates all-draft reconciliation atomically', () => {
   const applied: Array<{ settings: typeof defaultStudioSettings; notice: string }> = [];
   let legacySetCalls = 0;
-  let batchSanitizeCalls = 0;
   const commands = createSettingsCommands({
     studioSettings: defaultStudioSettings,
     activeProvider: null,
@@ -55,12 +54,6 @@ test('Settings Apply persists once and delegates all-draft reconciliation atomic
       setReferenceImages: () => undefined,
       setMask: () => undefined
     },
-    batchCompatibility: {
-      setBatchDrafts: (updater) => {
-        batchSanitizeCalls += 1;
-        if (typeof updater === 'function') updater([]);
-      }
-    },
     providerProbe: {
       setCapabilityReport: () => undefined,
       clearCapabilityReport: () => undefined,
@@ -77,7 +70,6 @@ test('Settings Apply persists once and delegates all-draft reconciliation atomic
   assert.equal(applied[0].settings, defaultStudioSettings);
   assert.equal(applied[0].notice, 'composer.compatibilityAdjustedRequest');
   assert.equal(legacySetCalls, 0);
-  assert.equal(batchSanitizeCalls, 1);
 });
 
 test('history restore replaces the active request in one command', () => {

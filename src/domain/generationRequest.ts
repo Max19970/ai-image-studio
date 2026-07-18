@@ -12,9 +12,6 @@ export interface ComposerRequestDraft {
   mask: File | null;
 }
 
-/** @deprecated Use ComposerRequestDraft. */
-export type BatchComposerDraft = ComposerRequestDraft;
-
 export interface AttachmentSummary {
   role: 'target' | 'reference' | 'mask';
   name: string;

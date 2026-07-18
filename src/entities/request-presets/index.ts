@@ -1,4 +1,4 @@
-import type { BatchComposerDraft } from '../../domain/generationTask';
+import type { ComposerRequestDraft } from '../../domain/generationTask';
 import type { ImageParams } from '../../domain/imageParams';
 import { normalizeImageParams } from '../image-params';
 import { createStorageUid } from '../studio-settings';
@@ -105,7 +105,7 @@ export function updateRequestPreset(preset: RequestPreset, input: UpdateRequestP
   };
 }
 
-export function applyRequestPresetToDraft(draft: BatchComposerDraft, preset: RequestPreset): BatchComposerDraft {
+export function applyRequestPresetToDraft(draft: ComposerRequestDraft, preset: RequestPreset): ComposerRequestDraft {
   return {
     ...draft,
     providerModeId: preset.snapshot.providerModeId,

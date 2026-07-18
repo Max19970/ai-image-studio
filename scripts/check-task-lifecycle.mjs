@@ -4,7 +4,6 @@ import path from 'node:path';
 
 const root = process.cwd();
 const serverRuntimeFiles = [
-  'server/processes/generationTaskRuntime.ts',
   'server/processes/generation-task-runtime/index.ts',
   'server/processes/generation-task-runtime/runtimeStore.ts',
   'server/processes/generation-task-runtime/runtimeRetentionPolicy.ts',
@@ -61,9 +60,6 @@ async function main() {
     assert(domainTypes.includes(`'${status}'`), `GenerationStatus is missing '${status}'.`);
   }
   assert(!domainTypes.includes("'streaming' |"), "GenerationStatus still exposes legacy 'streaming'.");
-
-  const serverRuntimeFacade = await read('server/processes/generationTaskRuntime.ts');
-  assert(serverRuntimeFacade.includes("./generation-task-runtime/index"), 'server runtime facade does not point at split runtime modules.');
 
   const serverRuntime = await readCombined(serverRuntimeFiles);
   assert(serverRuntime.includes('runGenerationRequestPipeline'), 'server runtime does not own the provider request pipeline.');
@@ -122,12 +118,8 @@ async function main() {
   assert(singleRunner.includes('enqueueServerGenerationRequest'), 'client single runner is not reduced to server-owned enqueue wiring.');
   assert(!singleRunner.includes(`${legacyClientSubmit}(`), 'client single runner still calls legacy provider submit as lifecycle truth.');
 
-  const clientBatchRunner = await read('src/processes/batch-runner/batchRunner.ts');
-  assert(clientBatchRunner.includes('Legacy client-side direct batch runner quarantine'), 'client direct batch runner is not explicitly quarantined.');
-  assert(!clientBatchRunner.includes(`${legacyClientSubmit}(`), 'client batch runner still calls legacy provider submit as lifecycle truth.');
-
-  const clientApi = await read('src/infrastructure/api.ts');
-  assert(!clientApi.includes(`export async function ${legacyClientSubmit}`), 'client API still exports direct provider submit as a production path.');
+  const clientActions = await read('src/processes/server-generation-actions/index.ts');
+  assert(!clientActions.includes(`export async function ${legacyClientSubmit}`), 'client generation actions still export direct provider submit as a production path.');
 
   const historyHook = await read('src/app/hooks/useGenerationTaskHistory.ts');
   assert(historyHook.includes("new EventSource('/api/generation-tasks/events')"), 'task history hook does not project the canonical runtime SSE stream.');
@@ -144,11 +136,11 @@ async function main() {
 
   console.log('Task lifecycle architecture summary:');
   console.log(`  ${expectedStatuses.length} persisted lifecycle statuses`);
-  console.log(`  ${serverRuntimeFiles.length} server runtime facade/modules`);
+  console.log(`  ${serverRuntimeFiles.length} server runtime modules`);
   console.log('  server-owned runtime is the lifecycle owner for single and batch generation');
   console.log('  client task history is SSE projection plus bounded fallback only');
   console.log('  client single generation is snapshot/enqueue-only');
-  console.log('  legacy client direct batch runner is quarantined');
+  console.log('  retired client direct batch runner is absent');
   console.log('  delayed parallel scheduler enabled for server batch sends');
   console.log('  shared retry policy enabled for server runtime requests');
   console.log('Task lifecycle check passed.');

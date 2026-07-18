@@ -65,7 +65,7 @@ test('Telegram Mini App runtime is isolated from regular workspace flows', () =>
   const appSource = readFileSync(new URL('../src/app/App.tsx', import.meta.url), 'utf8');
   const hookSource = readFileSync(new URL('../src/integrations/telegram-mini-app/useTelegramMiniApp.ts', import.meta.url), 'utf8');
   const bridgeSource = readFileSync(new URL('../src/integrations/telegram-mini-app/telegramWebApp.ts', import.meta.url), 'utf8');
-  const routeSource = readFileSync(new URL('../server/routes/telegramMiniAppRoutes.ts', import.meta.url), 'utf8');
+  const routeSource = readFileSync(new URL('../server/integrations/telegram/miniAppRoutes.ts', import.meta.url), 'utf8');
   const indexHtml = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const integrationSources = `${hookSource}\n${bridgeSource}`;
 

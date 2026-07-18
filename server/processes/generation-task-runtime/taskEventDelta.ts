@@ -45,7 +45,6 @@ function taskDeltaSignature(task: GenerationTask): string {
     updatedAt: task.updatedAt,
     galleryPath: task.galleryPath ?? '/',
     galleryPaths: task.galleryPaths ?? [task.galleryPath ?? '/'],
-    favorite: task.galleryFavorite ?? false,
     error: task.error ?? null,
     progress: progressDeltaSignature(task.progress),
     images: task.images.map(imageDeltaSignature),

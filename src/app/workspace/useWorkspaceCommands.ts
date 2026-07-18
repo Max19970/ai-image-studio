@@ -109,9 +109,6 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         applyStudioSettingsToComposer: state.applyStudioSettingsToComposer,
         normalizeSettings: normalizeSelectedModel,
         composerCompatibility,
-        batchCompatibility: {
-          setBatchDrafts: state.setComposerDrafts
-        },
         providerProbe
       },
       detail: {
@@ -138,7 +135,6 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         activeProvider: derived.activeProvider,
         activeModel: derived.activeModel,
         studioSettings: state.studioSettings,
-        batchDrafts: state.composerDrafts,
         requestPresets: state.requestPresets,
         setProviderModeId: state.setProviderModeId,
         setCompatibilityNotice: state.setCompatibilityNotice,
@@ -148,7 +144,6 @@ export function useWorkspaceCommands(state: WorkspaceState, derived: WorkspaceDe
         setReferenceImages: state.setReferenceImages,
         setMask: state.setMask,
         replaceActiveComposerRequest: state.replaceActiveComposerRequest,
-        setBatchDrafts: state.setComposerDrafts,
         setRequestPresets: state.setRequestPresets,
         normalizeSettings: normalizeSelectedModel
       }

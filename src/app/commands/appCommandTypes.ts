@@ -1,6 +1,4 @@
 export type {
-  BatchComposerCommandDeps,
-  BatchCompatibilityCommandDeps,
   ComposerCommandDeps,
   ComposerCompatibilityCommandDeps,
   CreateAppCommandsArgs,

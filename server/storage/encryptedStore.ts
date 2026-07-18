@@ -12,7 +12,6 @@ export const historyBlobKey = 'generation-tasks.v1';
 export const generationTaskDocumentBucket = 'generation-task.v2';
 export const generationTaskAssetBucket = 'generation-task-asset.v2';
 export const generationGalleryFolderBucket = 'gallery-folder.v1';
-export const generationGalleryFavoriteBucket = 'gallery-favorite.v1';
 export const generationGalleryPinBucket = 'gallery-pin.v1';
 export const generationGalleryTagBucket = 'gallery-tag.v1';
 export const storageBackend = 'sqlite-aes-gcm-brotli-v2';
