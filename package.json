@@ -10,6 +10,7 @@
     "dev:server": "tsx watch server/start.ts",
     "dev:client": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
+    "prestart": "npm run build",
     "start": "tsx server/start.ts",
     "capture:mobile": "npm run capture:screenshots -- --viewports=mobile --out=artifacts/mobile-screenshots",
     "capture:screenshots": "npm run build && node scripts/capture-app.mjs",
