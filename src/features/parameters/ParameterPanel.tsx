@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { ImageParams } from '../../domain/imageParams';
-import { defaultImageParams } from '../../domain/defaults';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
 import type { ProviderSettings } from '../../domain/providerSettings';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import { useI18n } from '../../i18n';
-import { capabilityLabel, type GenerationParamTab } from '../../entities/generation-params';
+import { capabilityLabel } from '../../entities/generation-params';
 import { getProviderGenerationSurface } from '../../entities/generation-params/surfaceRegistry';
 import { readProviderParamState, writeProviderParamState } from '../../entities/generation-params/providerState';
 import type { ProviderParamState } from '../../entities/generation-params/surfaceTypes';
+import { GroupedCollection, useMeasuredGroupedCollection } from '../../shared/ui';
 import styles from './ParameterPanel.module.css';
 
 interface Props {
@@ -23,22 +23,34 @@ interface Props {
   onChange: (params: ImageParams) => void;
 }
 
-export function ParameterPanel({ mode, providerMode, params, provider, capabilityReport, studioSettings, onChange }: Props) {
+export function ParameterPanel({
+  mode,
+  providerMode,
+  params,
+  provider,
+  capabilityReport,
+  studioSettings,
+  onChange
+}: Props) {
   const { t } = useI18n();
   const surface = useMemo(() => getProviderGenerationSurface(provider), [provider]);
-  const surfaceContext = useMemo(() => ({ mode, providerMode, params, provider, capabilityReport, studioSettings }), [mode, providerMode, params, provider, capabilityReport, studioSettings]);
-  const surfaceTabs = useMemo(() => surface.getTabs(surfaceContext), [surface, surfaceContext]);
-  const [activeTab, setActiveTab] = useState<GenerationParamTab>(() => surface.getInitialTab(surfaceContext));
-  const tabRailRef = useRef<HTMLElement | null>(null);
+  const surfaceContext = useMemo(
+    () => ({ mode, providerMode, params, provider, capabilityReport, studioSettings }),
+    [mode, providerMode, params, provider, capabilityReport, studioSettings]
+  );
 
-  const patch = <K extends keyof ImageParams>(key: K, value: ImageParams[K]) => onChange({ ...params, [key]: value });
-  const setProviderParams = (next: ProviderParamState) => onChange(writeProviderParamState(params, provider, surface.normalizeState(next, provider)));
-  const patchProviderParam = (key: string, value: unknown) => {
+  const patch = useCallback(<K extends keyof ImageParams,>(key: K, value: ImageParams[K]) => {
+    onChange({ ...params, [key]: value });
+  }, [onChange, params]);
+  const setProviderParams = useCallback((next: ProviderParamState) => {
+    onChange(writeProviderParamState(params, provider, surface.normalizeState(next, provider)));
+  }, [onChange, params, provider, surface]);
+  const patchProviderParam = useCallback((key: string, value: unknown) => {
     setProviderParams({
       ...readProviderParamState(params, provider, surface.getDefaultState(provider)),
       [key]: value
     });
-  };
+  }, [params, provider, setProviderParams, surface]);
 
   const fieldContext = useMemo(() => ({
     ...surfaceContext,
@@ -47,70 +59,107 @@ export function ParameterPanel({ mode, providerMode, params, provider, capabilit
     patchProviderParam
   }), [surfaceContext, patch, setProviderParams, patchProviderParam]);
 
-  const hiddenSummary = surface.getHiddenSummary(fieldContext);
-  const hiddenParamsCount = hiddenSummary.capabilityKeys.length + hiddenSummary.paramLabelKeys.length;
-
-  const tabStats = useMemo(
+  const sectionDefinitions = useMemo(
+    () => surface.getTabs(surfaceContext),
+    [surface, surfaceContext]
+  );
+  const sections = useMemo(
+    () => sectionDefinitions
+      .map((definition) => ({
+        definition,
+        fields: surface.renderSlot(definition.slot, fieldContext)
+      }))
+      .filter((section) => section.fields.length > 0),
+    [fieldContext, sectionDefinitions, surface]
+  );
+  const sectionIds = useMemo(
+    () => sections.map(({ definition }) => definition.id),
+    [sections]
+  );
+  const sectionSummaries = useMemo(
     () => surface.getTabStats(surfaceContext, { retryOff: t('params.retryOff') }),
     [surface, surfaceContext, t]
   );
+  const groupedNavigation = useMeasuredGroupedCollection(sectionIds, { scrollOffset: 18 });
 
-  useEffect(() => {
-    if (surfaceTabs.some((tab) => tab.id === activeTab)) return;
-    setActiveTab(surface.getInitialTab(surfaceContext));
-  }, [activeTab, surface, surfaceContext, surfaceTabs]);
-
-  const activeTabMeta = surfaceTabs.find((tab) => tab.id === activeTab) ?? surfaceTabs[0];
-  const activeTabFields = activeTabMeta ? surface.renderSlot(activeTabMeta.slot, fieldContext) : [];
-  const resetParams = () => onChange({ ...defaultImageParams, prompt: params.prompt });
-
-  useEffect(() => {
-    const rail = tabRailRef.current;
-    if (!rail || window.matchMedia('(min-width: 641px)').matches) return;
-    const active = rail.querySelector<HTMLElement>('[data-active="true"]');
-    active?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-  }, [activeTab]);
+  const hiddenSummary = surface.getHiddenSummary(fieldContext);
+  const hiddenParamsCount = hiddenSummary.capabilityKeys.length + hiddenSummary.paramLabelKeys.length;
 
   return (
     <section className={styles.workbench} data-generation-surface={surface.id}>
-      <div className={`panel-heading ${styles.heading}`}>
-        <span className="section-kicker">{t('params.controlRoom')}</span>
-        <h2>{t('params.title')}</h2>
-        <p>{hiddenParamsCount > 0 ? t('params.hiddenCount', { count: hiddenParamsCount }) : t('params.fullSet')}</p>
-      </div>
+      <GroupedCollection.Root className={styles.collection}>
+        <GroupedCollection.Navigation
+          className={styles.navigation}
+          listClassName={styles.navigationList}
+          label={t('params.tabsAria')}
+        >
+          {sections.map(({ definition }) => {
+            const active = definition.id === groupedNavigation.activeGroupId;
+            return (
+              <GroupedCollection.NavigationItem
+                key={definition.id}
+                active={active}
+                className={styles.navigationItem}
+                aria-controls={`parameter-section-${definition.id}`}
+                onClick={() => groupedNavigation.navigateToGroup(definition.id)}
+              >
+                <span className={styles.navigationCopy}>
+                  <strong>{t(definition.labelKey)}</strong>
+                  <small>{sectionSummaries[definition.id]}</small>
+                </span>
+              </GroupedCollection.NavigationItem>
+            );
+          })}
+        </GroupedCollection.Navigation>
 
-      <aside ref={tabRailRef} className={styles.tabRail} aria-label={t('params.tabsAria')}>
-        {surfaceTabs.map((tab) => (
-          <button key={tab.id} type="button" className={`${styles.tabButton} ${activeTab === tab.id ? styles.tabButtonActive : ''}`.trim()} data-param-tab={tab.id} data-active={activeTab === tab.id ? 'true' : 'false'} onClick={() => setActiveTab(tab.id)}>
-            <span className={styles.tabLabel}>{t(tab.labelKey)}</span>
-            <small className={styles.tabStat}>{tabStats[tab.id]}</small>
-          </button>
-        ))}
-      </aside>
-
-      <div className={styles.tabMain}>
-        {hiddenParamsCount > 0 && (
-          <div className={styles.infoStrip}>
-            {hiddenSummary.capabilityKeys.length > 0 && <p>{t('params.hiddenList', { items: hiddenSummary.capabilityKeys.map((key) => capabilityLabel(key)).join(', ') })}</p>}
-            {hiddenSummary.paramLabelKeys.length > 0 && <p>{t('params.hiddenProviderList', { items: hiddenSummary.paramLabelKeys.map((key) => t(key)).join(', ') })}</p>}
-          </div>
-        )}
-
-        {activeTabMeta && (
-          <section className={`inspector-group ${styles.tabPanel} ${activeTabMeta.panelClassKey ? styles[activeTabMeta.panelClassKey] : ''}`.trim()} data-param-slot={activeTabMeta.slot}>
-            <header className={styles.panelHead}>
-              <div className={styles.panelTitleRow}>
-                <h3 className={styles.panelTitle}>{t(activeTabMeta.labelKey)}</h3>
-                <button type="button" className={styles.resetButton} onClick={resetParams}>{t('params.resetAll')}</button>
+        <GroupedCollection.Content className={styles.content} label={t('params.title')}>
+          <div
+            ref={groupedNavigation.scrollerRef}
+            className={styles.contentScroller}
+            onScroll={groupedNavigation.scheduleActiveGroupUpdate}
+          >
+            {hiddenParamsCount > 0 && (
+              <div className={styles.infoStrip}>
+                {hiddenSummary.capabilityKeys.length > 0 && (
+                  <p>{t('params.hiddenList', {
+                    items: hiddenSummary.capabilityKeys.map((key) => capabilityLabel(key)).join(', ')
+                  })}</p>
+                )}
+                {hiddenSummary.paramLabelKeys.length > 0 && (
+                  <p>{t('params.hiddenProviderList', {
+                    items: hiddenSummary.paramLabelKeys.map((key) => t(key)).join(', ')
+                  })}</p>
+                )}
               </div>
-              <p className={styles.panelHint}>{t(activeTabMeta.hintKey)}</p>
-            </header>
-            <div className={styles.fieldGrid}>
-              {activeTabFields}
-            </div>
-          </section>
-        )}
-      </div>
+            )}
+
+            {sections.length > 0 ? sections.map(({ definition, fields }) => (
+              <section
+                key={definition.id}
+                ref={(element) => groupedNavigation.setGroupElement(definition.id, element)}
+                id={`parameter-section-${definition.id}`}
+                className={styles.section}
+                aria-labelledby={`parameter-section-title-${definition.id}`}
+                data-param-slot={definition.slot}
+              >
+                <header className={styles.sectionHeader}>
+                  <h3 id={`parameter-section-title-${definition.id}`} className={styles.sectionTitle}>
+                    {t(definition.labelKey)}
+                  </h3>
+                  <p className={styles.sectionHint}>{t(definition.hintKey)}</p>
+                </header>
+                <div className={styles.fieldList}>
+                  {fields}
+                </div>
+              </section>
+            )) : (
+              <div className={styles.emptyState} role="status">
+                <strong>{t('params.fullSet')}</strong>
+              </div>
+            )}
+          </div>
+        </GroupedCollection.Content>
+      </GroupedCollection.Root>
     </section>
   );
 }

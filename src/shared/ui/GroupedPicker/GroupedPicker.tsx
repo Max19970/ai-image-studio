@@ -10,6 +10,7 @@ import {
   type RefObject
 } from 'react';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { GroupedCollection } from '../GroupedCollection';
 import {
   buildGroupedPickerRows,
   filterGroupedPickerGroups,
@@ -160,41 +161,43 @@ export function GroupedPicker({
       </div>
 
       {hasSourceItems && filteredGroups.length > 0 ? (
-        <div className={chromeStyles.pickerBody}>
-          <nav className={chromeStyles.groupNavigation} aria-label={groupNavigationLabel}>
-            <div className={chromeStyles.columnHeader} aria-hidden="true">
-              <span>{groupNavigationLabel}</span>
-            </div>
-            <div className={chromeStyles.groupNavigationScroll}>
-              {filteredGroups.map((group) => {
-                const active = group.id === navigation.activeGroupId;
-                return (
-                  <button
-                    key={group.id}
-                    ref={(element) => navigation.setGroupButtonRef(group.id, element)}
-                    type="button"
-                    className={styles.groupButton}
-                    data-active={active ? 'true' : 'false'}
-                    aria-current={active ? 'true' : undefined}
-                    aria-controls={listboxId}
-                    disabled={group.disabled}
-                    tabIndex={active ? 0 : -1}
-                    onClick={() => pickerWindow.scrollToGroup(group.id)}
-                    onFocus={() => setActiveGroupId(group.id)}
-                    onKeyDown={(event) => navigation.handleGroupKeyDown(event, group.id)}
-                  >
-                    <span className={styles.groupCopy}>
-                      <strong>{group.label}</strong>
-                      {group.description && <small>{group.description}</small>}
-                    </span>
-                    <span className={styles.groupCount}>{group.items.length}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
+        <GroupedCollection.Root className={chromeStyles.pickerBody}>
+          <GroupedCollection.Navigation
+            className={chromeStyles.groupNavigation}
+            listClassName={chromeStyles.groupNavigationScroll}
+            label={groupNavigationLabel}
+            header={(
+              <div className={chromeStyles.columnHeader} aria-hidden="true">
+                <span>{groupNavigationLabel}</span>
+              </div>
+            )}
+          >
+            {filteredGroups.map((group) => {
+              const active = group.id === navigation.activeGroupId;
+              return (
+                <GroupedCollection.NavigationItem
+                  key={group.id}
+                  ref={(element) => navigation.setGroupButtonRef(group.id, element)}
+                  active={active}
+                  className={styles.groupButton}
+                  aria-controls={listboxId}
+                  disabled={group.disabled}
+                  tabIndex={active ? 0 : -1}
+                  onClick={() => pickerWindow.scrollToGroup(group.id)}
+                  onFocus={() => setActiveGroupId(group.id)}
+                  onKeyDown={(event) => navigation.handleGroupKeyDown(event, group.id)}
+                >
+                  <span className={styles.groupCopy}>
+                    <strong>{group.label}</strong>
+                    {group.description && <small>{group.description}</small>}
+                  </span>
+                  <span className={styles.groupCount}>{group.items.length}</span>
+                </GroupedCollection.NavigationItem>
+              );
+            })}
+          </GroupedCollection.Navigation>
 
-          <section className={chromeStyles.itemColumn} aria-label={itemListLabel}>
+          <GroupedCollection.Content className={chromeStyles.itemColumn} label={itemListLabel}>
             <div className={chromeStyles.columnHeader} aria-hidden="true">
               <span>{itemListLabel}</span>
             </div>
@@ -233,8 +236,8 @@ export function GroupedPicker({
                 ))}
               </div>
             </div>
-          </section>
-        </div>
+          </GroupedCollection.Content>
+        </GroupedCollection.Root>
       ) : (
         <div className={styles.emptyState} role="status">
           <strong>{hasSourceItems ? noResultsText : emptyText}</strong>

@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ParameterPanel } from './ParameterPanel';
+import { defaultImageParams } from '../../domain/defaults';
 import type { ImageParams } from '../../domain/imageParams';
 import type { ProviderGenerationModeDefinition } from '../../domain/providerMode';
 import type { ProviderProbeReport } from '../../domain/providerProbe';
@@ -33,6 +34,7 @@ export function ParametersModal({ open, mode, providerMode, params, provider, ca
 
   if (!open || typeof document === 'undefined') return null;
 
+  const resetParams = () => onChange({ ...defaultImageParams, prompt: params.prompt });
   const summarySize = params.sizeMode === 'custom'
     ? `${params.width}×${params.height}`
     : params.sizeMode === 'preset'
@@ -62,6 +64,7 @@ export function ParametersModal({ open, mode, providerMode, params, provider, ca
         </div>
 
         <footer className={styles.footer}>
+          <Button className={styles.resetButton} variant="ghost" size="compact" onClick={resetParams}>{t('params.resetAll')}</Button>
           <Button className={styles.doneButton} variant="primary" size="compact" onClick={onClose}>{t('params.done')}</Button>
         </footer>
       </section>

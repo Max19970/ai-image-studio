@@ -18,6 +18,14 @@ export { EntityList, EntityListItem } from './EntityList';
 export type { EntityListDensity, EntityListItemProps, EntityListProps } from './EntityList';
 
 export { FloatingPopover } from './FloatingPopover';
+export { GroupedCollection, useMeasuredGroupedCollection } from './GroupedCollection';
+export type {
+  GroupedCollectionContentProps,
+  GroupedCollectionNavigationItemProps,
+  GroupedCollectionNavigationProps,
+  GroupedCollectionPosition,
+  GroupedCollectionRootProps
+} from './GroupedCollection';
 export { GroupedPicker } from './GroupedPicker';
 export type {
   GroupedPickerProps,
