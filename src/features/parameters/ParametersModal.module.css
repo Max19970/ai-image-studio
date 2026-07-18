@@ -51,6 +51,10 @@
   flex: 0 0 auto;
 }
 
+.resetButton {
+  color: var(--muted);
+}
+
 .doneButton {
   min-width: 82px;
 }
@@ -83,7 +87,7 @@
   z-index: 4;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   min-height: 62px;
   border-top: 1px solid var(--surface-border-soft);
   padding: 10px 20px 14px;

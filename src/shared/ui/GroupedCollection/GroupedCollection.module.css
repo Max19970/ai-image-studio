@@ -1,0 +1,51 @@
+.root {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, var(--grouped-collection-navigation-width, 176px)) minmax(0, 1fr);
+  gap: var(--grouped-collection-gap, 8px);
+}
+
+.navigation,
+.content {
+  min-width: 0;
+  min-height: 0;
+}
+
+.navigation {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.navigation[data-has-header='true'] {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.navigationHeader {
+  min-width: 0;
+}
+
+.navigationList {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.navigationItem {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.content {
+  overflow: hidden;
+}

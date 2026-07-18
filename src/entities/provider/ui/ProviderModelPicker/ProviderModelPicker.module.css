@@ -1,0 +1,555 @@
+.root {
+  display: grid;
+  width: 100%;
+  max-width: 704px;
+  height: clamp(320px, calc(var(--floating-available-height, 580px) - 12px), 536px);
+  box-sizing: border-box;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  color: var(--text);
+  background: rgba(8, 9, 13, .34);
+  contain: layout paint style;
+}
+
+.searchBar {
+  min-width: 0;
+  padding: 8px 8px 10px;
+}
+
+.searchField {
+  display: grid;
+  min-width: 0;
+  min-height: 42px;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 11px;
+  padding: 0 8px 0 11px;
+  background: rgba(255, 255, 255, .035);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-soft),
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.searchField:focus-within {
+  border-color: rgba(255, 255, 255, .22);
+  background: rgba(255, 255, 255, .052);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.searchIcon {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  color: var(--faint);
+}
+
+.searchIcon svg,
+.clearSearch svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.searchField input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.searchField input::placeholder {
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+}
+
+.searchField input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.resultCount {
+  display: inline-grid;
+  min-width: 30px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  padding: 0 7px;
+  background: rgba(255, 255, 255, .045);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.root[data-search-stale='true'] .resultCount {
+  opacity: .42;
+}
+
+.clearSearch {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  padding: 7px;
+  background: transparent;
+  color: var(--muted);
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
+}
+
+.clearSearch:active {
+  transform: scale(.94);
+}
+
+.collection {
+  --grouped-collection-navigation-width: 176px;
+  min-height: 0;
+  padding: 0 8px 8px;
+}
+
+.groupNavigation,
+.modelColumn {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: 32px minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .022);
+}
+
+.modelColumn {
+  background: rgba(0, 0, 0, .11);
+}
+
+.columnHeader {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, .055);
+  padding: 0 12px;
+  color: var(--faint);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .025em;
+  line-height: 1;
+}
+
+.columnHeader span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupNavigationList {
+  gap: 3px;
+  padding: 6px;
+}
+
+.groupButton {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  padding: 8px 9px;
+  color: var(--muted);
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 50px;
+}
+
+.groupButton[data-active='true'] {
+  background: rgba(255, 255, 255, .075);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.groupButton:active {
+  transform: scale(.98);
+}
+
+.groupButton:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+
+.groupCopy,
+.modelCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.groupCopy strong,
+.groupCopy small,
+.modelCopy strong,
+.modelCopy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupCopy strong {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 720;
+  line-height: 1.2;
+}
+
+.groupCopy small {
+  color: var(--faint);
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.groupCount {
+  display: inline-grid;
+  min-width: 24px;
+  height: 20px;
+  place-items: center;
+  border-radius: 999px;
+  padding: 0 6px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.groupButton[data-active='true'] .groupCount {
+  background: color-mix(in srgb, var(--accent) 13%, rgba(255, 255, 255, .05));
+  color: var(--text);
+}
+
+.modelScroller {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 8px;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.root[data-search-stale='true'] .modelScroller {
+  opacity: .68;
+}
+
+.virtualCanvas {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  contain: strict;
+}
+
+.virtualRow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  min-width: 0;
+  contain: layout paint;
+}
+
+.groupHeader {
+  display: flex;
+  height: 100%;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 15px 7px;
+  color: var(--faint);
+}
+
+.groupHeader strong {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupHeader span {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.modelButton {
+  display: flex;
+  width: calc(100% - 16px);
+  height: calc(100% - 4px);
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 2px 8px;
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 11px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-soft),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-soft),
+    color var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 120ms var(--motion-ease-standard);
+}
+
+.modelButton[data-selected='true'] {
+  background: rgba(255, 255, 255, .085);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.modelButton[data-active='true']:not([data-selected='true']) {
+  background: rgba(255, 255, 255, .04);
+}
+
+.modelButton:active {
+  transform: scale(.988);
+}
+
+.modelButton:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+
+.modelCopy strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.modelCopy small {
+  color: var(--faint);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.selectionMark {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  padding: 4px;
+  background: var(--surface-success);
+  color: var(--ok);
+  opacity: 0;
+  transform: scale(.72);
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-soft),
+    transform 180ms var(--motion-ease-standard);
+}
+
+.selectionMark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.selectionMark[data-visible='true'] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.emptyState {
+  display: grid;
+  min-height: 220px;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 28px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.emptyState strong {
+  max-width: 34ch;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.emptyState button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 9px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, .07);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.compact .groupButton {
+  min-height: 44px;
+  padding-block: 6px;
+}
+
+.compact .modelButton {
+  padding-block: 6px;
+}
+
+.compact .groupCopy strong,
+.compact .modelCopy strong {
+  font-size: 11px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .clearSearch:hover,
+  .groupButton:hover:not(:disabled),
+  .modelButton:hover:not(:disabled),
+  .emptyState button:hover {
+    background: rgba(255, 255, 255, .09);
+    color: var(--text);
+  }
+}
+
+.searchField input:focus-visible {
+  outline: 0;
+}
+
+.clearSearch:focus-visible,
+.groupButton:focus-visible,
+.modelButton:focus-visible,
+.emptyState button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white 8%);
+  outline-offset: -2px;
+}
+
+@media (max-width: 620px) {
+  .root {
+    width: 100%;
+    height: min(52dvh, 470px);
+    min-height: 330px;
+  }
+
+  .searchBar {
+    padding: 8px 8px 9px;
+  }
+
+  .searchField {
+    min-height: 44px;
+    border-radius: 10px;
+  }
+
+  .collection {
+    --grouped-collection-navigation-width: 116px;
+    --grouped-collection-gap: 6px;
+  }
+
+  .groupNavigation,
+  .modelColumn {
+    grid-template-rows: auto minmax(0, 1fr);
+    border-radius: 10px;
+  }
+
+  .columnHeader {
+    display: none;
+  }
+
+  .groupNavigationList {
+    padding: 6px 5px;
+  }
+
+  .groupButton {
+    min-height: 48px;
+    padding: 7px 8px;
+  }
+
+  .groupCopy small {
+    display: none;
+  }
+
+  .groupCopy strong {
+    font-size: 10px;
+  }
+
+  .groupCount {
+    min-width: 22px;
+    height: 20px;
+    padding: 0 5px;
+    font-size: 8px;
+  }
+
+  .groupHeader {
+    padding-inline: 11px;
+  }
+
+  .modelButton {
+    width: calc(100% - 12px);
+    margin-inline: 6px;
+    padding-inline: 10px;
+  }
+
+  .modelCopy strong {
+    font-size: 11px;
+  }
+
+  .modelCopy small {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 390px) {
+  .collection {
+    --grouped-collection-navigation-width: 108px;
+  }
+
+  .selectionMark {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (pointer: coarse) {
+  .clearSearch,
+  .groupButton,
+  .modelButton,
+  .emptyState button {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchField,
+  .resultCount,
+  .clearSearch,
+  .groupButton,
+  .groupCount,
+  .modelScroller,
+  .modelButton,
+  .selectionMark {
+    transition-duration: .01ms;
+  }
+}
