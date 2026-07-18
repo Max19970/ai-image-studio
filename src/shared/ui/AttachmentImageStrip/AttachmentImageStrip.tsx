@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useI18n } from '../../../i18n';
 import { useOptimizedImageSrc } from '../../image';
+import { XIcon } from '../Icon';
 import { AttachmentPreviewModal } from './AttachmentPreviewModal';
 import styles from './AttachmentImageStrip.module.css';
 
@@ -55,7 +56,9 @@ function AttachmentImageChip({ item, onOpen, onRemove, size = 'regular', classNa
         <span className={cx(styles.roleBadge, badgeClass(item.role))}>{roleBadge(item.role, t)}</span>
       </button>
       {onRemove && (
-        <button type="button" className={styles.removeButton} onClick={(event) => { event.stopPropagation(); onRemove(); }} aria-label={t('attachment.remove', { name: item.name })}>×</button>
+        <button type="button" className={styles.removeButton} onClick={(event) => { event.stopPropagation(); onRemove(); }} aria-label={t('attachment.remove', { name: item.name })}>
+          <XIcon size={13} strokeWidth={2.1} />
+        </button>
       )}
     </figure>
   );

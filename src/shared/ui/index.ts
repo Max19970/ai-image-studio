@@ -1,6 +1,45 @@
 export { Button } from './Button';
 export type { ButtonProps } from './Button';
 export { IconButton } from './IconButton';
+export {
+  ArrowLeftIcon,
+  ArrowUpIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CircleAlertIcon,
+  CircleCheckIcon,
+  CircleIcon,
+  CopyIcon,
+  DownloadIcon,
+  EllipsisIcon,
+  EraserIcon,
+  FolderIcon,
+  FolderOpenIcon,
+  FolderPlusIcon,
+  FoldersIcon,
+  GripVerticalIcon,
+  ImagePlusIcon,
+  ImagesIcon,
+  InfoIcon,
+  Layers3Icon,
+  ListChecksIcon,
+  ListFilterIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  PinIcon,
+  PlusIcon,
+  RotateCcwIcon,
+  ScanIcon,
+  SearchIcon,
+  SlidersHorizontalIcon,
+  SparklesIcon,
+  TagIcon,
+  Trash2Icon,
+  XIcon
+} from './Icon';
+export type { IconProps } from './Icon';
 export { NavigationButton } from './NavigationButton';
 export type { NavigationButtonProps } from './NavigationButton';
 

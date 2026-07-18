@@ -31,7 +31,7 @@
   "composer.submitGenerate": "Сгенерировать",
   "composer.submitEdit": "Редактировать",
   "composer.busy": "…",
-  "composer.send": "↑",
+  "composer.send": "Отправить",
   "composer.editNeedsTarget": "Для редактирования нужен исходник.",
   "composer.role.target": "исходник",
   "composer.role.ref": "реф {index}",

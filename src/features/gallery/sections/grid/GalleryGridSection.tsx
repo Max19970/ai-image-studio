@@ -5,7 +5,7 @@ import type { GalleryFolderCardContext, GalleryLayoutContext, GalleryTaskCardCon
 import { hasGalleryDragPayload, readGalleryDragPayload, writeGalleryDragPayload } from '../../../../entities/gallery/galleryDrag';
 import type { GalleryItem } from '../../../../entities/gallery/galleryItems';
 import { useI18n } from '../../../../i18n';
-import { PinIcon } from '../shared/PinIcon';
+import { CheckIcon, PinIcon } from '../../../../shared/ui';
 import styles from '../../../gallery/ResultsGallery.module.css';
 
 function SelectableGalleryItem({ item, context, children }: { item: GalleryItem; context: GalleryLayoutContext; children: ReactNode }) {
@@ -94,7 +94,7 @@ function SelectableGalleryItem({ item, context, children }: { item: GalleryItem;
           aria-label={selected ? t('gallery.selectionUnselectItem') : t('gallery.selectionSelectItem')}
           aria-pressed={selected}
         >
-          {selected ? '✓' : ''}
+          {selected ? <CheckIcon size={15} strokeWidth={2.4} /> : null}
         </button>
       )}
       <div>{children}</div>

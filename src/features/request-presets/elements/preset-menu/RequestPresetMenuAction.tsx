@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
-import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
+import { BottomSheet, FloatingPopover, SparklesIcon } from '../../../../shared/ui';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import { useI18n } from '../../../../i18n';
 import type { ComposerActionContext } from '../../../composer/composerTypes';
@@ -39,7 +39,7 @@ export function RequestPresetMenuAction({ context }: ElementDefinitionProps<Comp
         aria-expanded={open}
         onClick={toggle}
       >
-        <span aria-hidden="true">✦</span>
+        <SparklesIcon size={18} />
         {context.requestPresets.length > 0 && <em>{context.requestPresets.length}</em>}
       </button>
 

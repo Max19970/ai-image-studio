@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { GalleryFolder } from '../../../../domain/galleryFilesystem';
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
-import { Button, ConfirmationDialog } from '../../../../shared/ui';
+import { Button, ConfirmationDialog, FolderPlusIcon } from '../../../../shared/ui';
 import { GalleryQuickActionMenu } from '../shared/GalleryQuickActionMenu';
 import { GalleryFolderCreatorForm } from './GalleryFolderCreatorForm';
 import { GalleryFolderRenameDialog } from './GalleryFolderRenameDialog';
@@ -70,7 +70,7 @@ export function GalleryFolderTreeToolbar({
         )}
         <div className={styles.toolbarActions}>
           <button type="button" className={styles.toolbarButton} data-testid="gallery-folder-tree-create" onClick={() => setCreatorOpen(true)} aria-label={t('gallery.folderCreate')}>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" /></svg>
+            <FolderPlusIcon size={19} />
           </button>
           <GalleryQuickActionMenu
             triggerClassName={styles.toolbarButton}

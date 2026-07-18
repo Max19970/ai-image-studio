@@ -4,7 +4,7 @@ import {
   type ComfyUiLoraRegistration
 } from '../../../domain/comfyUiSettings';
 import { useI18n } from '../../../i18n';
-import { PopoverSelect } from '../../../shared/ui';
+import { GripVerticalIcon, PopoverSelect } from '../../../shared/ui';
 import { ParamField } from '../support';
 import type { ProviderGenerationSurfacePatchContext } from '../surfaceTypes';
 import controls from '../ParamControls.module.css';
@@ -138,7 +138,9 @@ export function LoraStackField({ context }: { context: ProviderGenerationSurface
                     onPointerCancel={clearLongPress}
                   >
                     <summary className={workflowControls.workflowBuilderSummary}>
-                      <span className={workflowControls.workflowBuilderHandle} aria-label={t('params.comfy.workflowPlugins.builder.drag')}>⋮⋮</span>
+                      <span className={workflowControls.workflowBuilderHandle} aria-label={t('params.comfy.workflowPlugins.builder.drag')}>
+                        <GripVerticalIcon size={17} />
+                      </span>
                       <span className={workflowControls.workflowBuilderStep}>{String(index + 1).padStart(2, '0')}</span>
                       <span className={workflowControls.workflowBuilderCopy}>
                         <strong>{registration?.displayName || lora.name}</strong>

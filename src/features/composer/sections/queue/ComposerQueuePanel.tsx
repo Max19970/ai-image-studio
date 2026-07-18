@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useI18n } from '../../../../i18n';
-import { FloatingPopover } from '../../../../shared/ui';
+import { CheckIcon, CircleAlertIcon, CopyIcon, EllipsisIcon, FloatingPopover, PlusIcon, Trash2Icon, XIcon } from '../../../../shared/ui';
 import type { ComposerLayoutContext } from '../../composerTypes';
 import type { ComposerDraftIssue } from '../../model/composerDraftReadiness';
 import popoverStyles from '../../ui/ComposerPopover.module.css';
@@ -58,7 +58,7 @@ export function ComposerQueuePanel({ context, onClose }: Props) {
           })}</span>
         </div>
         <button type="button" className={styles.closeButton} onClick={onClose} aria-label={t('composer.hideQueue')}>
-          <span aria-hidden="true">×</span>
+          <XIcon size={17} />
         </button>
       </header>
 
@@ -101,7 +101,7 @@ export function ComposerQueuePanel({ context, onClose }: Props) {
                   title={statusText}
                   aria-label={statusText}
                 >
-                  {issue ? '!' : '✓'}
+                  {issue ? <CircleAlertIcon size={17} strokeWidth={2.1} /> : <CheckIcon size={15} strokeWidth={2.4} />}
                 </span>
               </button>
               <button
@@ -117,7 +117,7 @@ export function ComposerQueuePanel({ context, onClose }: Props) {
                   setOpenItemMenuId((value) => value === draft.id ? null : draft.id);
                 }}
               >
-                <span aria-hidden="true">•••</span>
+                <EllipsisIcon size={18} strokeWidth={2} />
               </button>
             </li>
           );
@@ -126,7 +126,7 @@ export function ComposerQueuePanel({ context, onClose }: Props) {
 
       <footer className={styles.footer}>
         <button type="button" className={styles.addButton} onClick={() => runItemAction(context.actions.addDraft)}>
-          <span aria-hidden="true">＋</span>
+          <PlusIcon size={16} strokeWidth={2.1} />
           {t('composer.addRequest')}
         </button>
         {context.queueSummary.invalidCount > 0 && (
@@ -151,11 +151,11 @@ export function ComposerQueuePanel({ context, onClose }: Props) {
         {menuDraft && (
           <div className={styles.itemMenuContent} data-testid="composer-queue-item-menu">
             <button type="button" role="menuitem" onClick={() => runItemAction(() => context.actions.duplicateDraft(menuDraft.id))}>
-              <span aria-hidden="true">⧉</span>
+              <CopyIcon size={16} />
               {t('composer.duplicateRequest')}
             </button>
             <button type="button" role="menuitem" className={styles.dangerAction} onClick={() => runItemAction(() => context.actions.removeDraft(menuDraft.id))}>
-              <span aria-hidden="true">×</span>
+              <Trash2Icon size={16} />
               {t('composer.removeRequest')}
             </button>
           </div>

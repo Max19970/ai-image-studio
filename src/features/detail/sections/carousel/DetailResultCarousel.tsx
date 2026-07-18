@@ -3,6 +3,7 @@ import type { GeneratedImage, GenerationTask } from '../../../../domain/generati
 import { useI18n } from '../../../../i18n';
 import { isTerminalGenerationStatus } from '../../../../domain/generationStatus';
 import { useOptimizedImageSrc } from '../../../../shared/image';
+import { ChevronLeftIcon, ChevronRightIcon } from '../../../../shared/ui';
 import { cx, expectedImageCount } from '../../model/detailHelpers';
 import { getVisibleCarouselSlides, type CarouselSlidePlacement } from './carouselWindow';
 import styles from './DetailResultCarousel.module.css';
@@ -99,8 +100,12 @@ export function ResultCarousel({
       </div>
       {slides.length > 1 && (
         <>
-          <button type="button" className={cx(styles.carouselNav, styles.carouselNavPrev)} onClick={() => go(-1)} aria-label={t('detail.prevImage')}>←</button>
-          <button type="button" className={cx(styles.carouselNav, styles.carouselNavNext)} onClick={() => go(1)} aria-label={t('detail.nextImage')}>→</button>
+          <button type="button" className={cx(styles.carouselNav, styles.carouselNavPrev)} onClick={() => go(-1)} aria-label={t('detail.prevImage')}>
+            <ChevronLeftIcon size={22} />
+          </button>
+          <button type="button" className={cx(styles.carouselNav, styles.carouselNavNext)} onClick={() => go(1)} aria-label={t('detail.nextImage')}>
+            <ChevronRightIcon size={22} />
+          </button>
           <span className={styles.carouselCounter}>{activeIndex + 1} / {slides.length}</span>
         </>
       )}

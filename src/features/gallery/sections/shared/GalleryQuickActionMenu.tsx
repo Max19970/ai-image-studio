@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode, type MouseEvent } from 'react';
-import { BottomSheet, FloatingPopover } from '../../../../shared/ui';
+import { BottomSheet, EllipsisIcon, FloatingPopover } from '../../../../shared/ui';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import { useI18n } from '../../../../i18n';
 import styles from './GalleryQuickActionMenu.module.css';
@@ -55,11 +55,7 @@ export function GalleryQuickActionMenu({
         aria-expanded={open}
         onClick={toggle}
       >
-        <svg className={styles.dotsIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <circle cx="6" cy="12" r="1.7" />
-          <circle cx="12" cy="12" r="1.7" />
-          <circle cx="18" cy="12" r="1.7" />
-        </svg>
+        <EllipsisIcon className={styles.dotsIcon} size={20} strokeWidth={2} />
       </button>
       {!isMobile && (
         <FloatingPopover

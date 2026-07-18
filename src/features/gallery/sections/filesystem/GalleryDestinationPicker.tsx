@@ -3,7 +3,7 @@ import { getGalleryBreadcrumbs, isGalleryPathInside, joinGalleryPath, normalizeG
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
-import { BottomSheet, Button, Dialog } from '../../../../shared/ui';
+import { BottomSheet, Button, Dialog, FolderPlusIcon } from '../../../../shared/ui';
 import { GalleryFolderTree } from './GalleryFolderTree';
 import styles from './GalleryDestinationPicker.module.css';
 
@@ -106,7 +106,7 @@ function DestinationPickerBody({
         </form>
       ) : (
         <button type="button" className={styles.createFolder} onClick={() => setCreatorOpen(true)}>
-          <span aria-hidden="true">+</span>{t('gallery.destinationCreateFolder')}
+          <FolderPlusIcon size={18} />{t('gallery.destinationCreateFolder')}
         </button>
       )}
 

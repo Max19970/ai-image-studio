@@ -1,6 +1,6 @@
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import { locales, useI18n, type Locale } from '../../../../i18n';
-import { PopoverSelect } from '../../../../shared/ui';
+import { ChevronRightIcon, PopoverSelect } from '../../../../shared/ui';
 import { FieldShell, InfoTip } from '../../components/SettingsControls';
 import selectStyles from '../../components/SettingsPopoverSelect.module.css';
 import type { SettingsSectionContext, SettingsSectionVariant } from '../../settingsTypes';
@@ -133,6 +133,9 @@ export function InterfaceSettingsSection({ context, props }: ElementDefinitionPr
             {interfaceThemeDescriptors.map((theme) => (
               <ThemeButton key={theme.id} theme={theme} active={activeTheme === theme.id} onSelect={() => selectTheme(theme.id)} />
             ))}
+            <span className="mobile-theme-scroll-hint" aria-hidden="true">
+              <ChevronRightIcon size={16} />
+            </span>
           </div>
         </article>
       </section>

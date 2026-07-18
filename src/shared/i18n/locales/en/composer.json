@@ -31,7 +31,7 @@
   "composer.submitGenerate": "Generate",
   "composer.submitEdit": "Edit",
   "composer.busy": "…",
-  "composer.send": "↑",
+  "composer.send": "Send",
   "composer.editNeedsTarget": "Edit mode needs a target image.",
   "composer.role.target": "target",
   "composer.role.ref": "ref {index}",

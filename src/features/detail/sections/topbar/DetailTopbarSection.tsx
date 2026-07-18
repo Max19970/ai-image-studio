@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { DetailLayoutContext } from '../../../../interface/context/workspace/detail';
 import { useI18n } from '../../../../i18n';
-import { Button } from '../../../../shared/ui';
+import { ArrowLeftIcon, Button } from '../../../../shared/ui';
 import { isTerminalGenerationStatus } from '../../../../domain/generationStatus';
 import { statusPillToneClass } from '../../model/detailHelpers';
 import styles from './DetailTopbarSection.module.css';
@@ -27,7 +27,10 @@ export function DetailTopbarSection({ context }: ElementDefinitionProps<DetailLa
 
   return (
     <header className={styles.topbar} data-detail-slot="topbar">
-      <Button className={styles.backButton} variant="secondary" onClick={context.onBack}>{t('detail.back')}</Button>
+      <Button className={styles.backButton} variant="secondary" onClick={context.onBack}>
+        <ArrowLeftIcon size={17} />
+        {t('detail.back')}
+      </Button>
       <div className={styles.titleBlock}>
         <h1>{title}</h1>
         <p className="muted-copy">{t('detail.statusLine', { status: label, date: new Date(task.createdAt).toLocaleString() })}</p>

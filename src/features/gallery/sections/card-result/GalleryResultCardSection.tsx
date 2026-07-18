@@ -3,6 +3,7 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 import type { GalleryCardActionContext, GalleryTaskCardContext } from '../../../../interface/context/workspace/gallery';
 import { SlotHost } from '../../../../interface/SlotHost';
 import { useOptimizedImageSrc } from '../../../../shared/image';
+import { ChevronLeftIcon, ChevronRightIcon, RotateCcwIcon } from '../../../../shared/ui';
 import { useI18n } from '../../../../i18n';
 import { isTerminalGenerationStatus } from '../../../../domain/generationStatus';
 import styles from '../shared/GalleryTileSection.module.css';
@@ -91,18 +92,22 @@ export function GalleryResultCardSection({ context }: ElementDefinitionProps<Gal
         ) : null}
         {hasMultiple && (
           <span className={styles.sequenceBadge}>
-            <span aria-hidden="true">↻</span>
+            <RotateCcwIcon size={13} strokeWidth={2} />
             {t('gallery.sequenceCount', { count: task.images.length })}
           </span>
         )}
       </button>
       {hasMultiple && (
         <div className={styles.sequenceControls} aria-label={t('gallery.sequenceControls')}>
-          <button type="button" className={styles.sequenceControlButton} onClick={showPrevious} aria-label={t('gallery.sequencePrevious')}>‹</button>
+          <button type="button" className={styles.sequenceControlButton} onClick={showPrevious} aria-label={t('gallery.sequencePrevious')}>
+            <ChevronLeftIcon size={17} />
+          </button>
           <span className={styles.sequencePosition} aria-live="polite">
             {t('gallery.sequencePosition', { current: activeIndex + 1, count: task.images.length })}
           </span>
-          <button type="button" className={styles.sequenceControlButton} onClick={showNext} aria-label={t('gallery.sequenceNext')}>›</button>
+          <button type="button" className={styles.sequenceControlButton} onClick={showNext} aria-label={t('gallery.sequenceNext')}>
+            <ChevronRightIcon size={17} />
+          </button>
         </div>
       )}
       <div className={styles.tileOverlay} aria-hidden="false">

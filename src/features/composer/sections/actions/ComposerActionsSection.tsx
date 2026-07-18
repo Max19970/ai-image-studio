@@ -3,6 +3,7 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 import { SlotHost } from '../../../../interface/SlotHost';
 import type { ComposerActionContext, ComposerLayoutContext } from '../../composerTypes';
 import { useI18n } from '../../../../i18n';
+import { ArrowUpIcon, CircleAlertIcon, ListChecksIcon } from '../../../../shared/ui';
 import { providerModeAllowsImageAttachments, providerModeAllowsMask } from '../../../../entities/provider/attachmentCompatibility';
 import styles from '../../ComposerLayout.module.css';
 
@@ -52,7 +53,7 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
         aria-label={queueOpen ? t('composer.hideQueue') : t('composer.showQueue')}
         aria-expanded={queueOpen}
       >
-        <span className={styles.queueIcon} aria-hidden="true">☷</span>
+        <ListChecksIcon className={styles.queueIcon} size={19} />
         {queueCount > 1 && <span className={styles.queueCount}>{queueCount}</span>}
       </button>
 
@@ -67,11 +68,11 @@ export function ComposerActionsSection({ context }: ElementDefinitionProps<Compo
           aria-describedby={!canSubmitAny && context.blockedReason && context.prompt.trim() ? 'composer-submit-blocked-reason' : undefined}
           title={!canSubmitAny && context.blockedReason ? context.blockedReason : submitLabel}
         >
-          <span className={styles.sendArrow} aria-hidden="true">↑</span>
+          <ArrowUpIcon className={styles.sendArrow} size={19} strokeWidth={2.2} />
           {queueCount > 1 && (
             <span className={styles.sendCount} data-warning={queueHasIssues ? 'true' : 'false'}>
               {queueCount}
-              {queueHasIssues && <sup aria-hidden="true">!</sup>}
+              {queueHasIssues && <CircleAlertIcon size={10} strokeWidth={2.4} />}
             </span>
           )}
         </button>

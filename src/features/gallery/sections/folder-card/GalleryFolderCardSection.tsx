@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Button, ConfirmationDialog } from '../../../../shared/ui';
+import { Button, ConfirmationDialog, FolderOpenIcon, PinIcon } from '../../../../shared/ui';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import type { GalleryFolderCardContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
 import tileStyles from '../shared/GalleryTileSection.module.css';
-import { PinIcon } from '../shared/PinIcon';
 import { GalleryQuickActionMenu } from '../shared/GalleryQuickActionMenu';
 import { GalleryTagEditorModal } from '../tags/GalleryTagEditorModal';
 import { GalleryFolderRenameDialog } from '../filesystem/GalleryFolderRenameDialog';
@@ -62,7 +61,7 @@ export function GalleryFolderCardSection({ context }: ElementDefinitionProps<Gal
           onClick={context.onOpenFolder}
           aria-label={t('gallery.folderOpen', { name: context.folder.name })}
         >
-          <span className={styles.folderGlyph} aria-hidden="true" />
+          <FolderOpenIcon className={styles.folderGlyph} strokeWidth={1.35} />
           <span className={styles.folderCopy}>
             <strong>{context.folder.name}</strong>
             <span>{t('gallery.folderChildCount', { count: childCount })}</span>

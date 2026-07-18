@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { BottomSheet } from '../../../../shared/ui';
+import { BottomSheet, XIcon } from '../../../../shared/ui';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import { useI18n } from '../../../../i18n';
 import { useModalDialog } from '../../../../shared/hooks/useModalDialog';
@@ -54,7 +54,9 @@ export function RequestPresetManagerDialog({ open, controller, onClose, testId =
         tabIndex={-1}
         onPointerDown={(event) => event.stopPropagation()}
       >
-        <button type="button" className={styles.dialogClose} aria-label={t('requestPresets.close')} onClick={onClose}>×</button>
+        <button type="button" className={styles.dialogClose} aria-label={t('requestPresets.close')} onClick={onClose}>
+          <XIcon size={18} />
+        </button>
         <PresetPanel controller={controller} close={onClose} />
       </div>
     </div>,

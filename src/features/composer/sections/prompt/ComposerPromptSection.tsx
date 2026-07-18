@@ -5,6 +5,7 @@ import { useI18n } from '../../../../i18n';
 import { getProviderModePromptPlaceholderKey } from '../../../../entities/provider/modeIntent';
 import { useAutosizedTextarea } from '../../../../shared/hooks/useAutosizedTextarea';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
+import { XIcon } from '../../../../shared/ui';
 import styles from '../../ComposerLayout.module.css';
 
 export function ComposerPromptSection({ context }: ElementDefinitionProps<ComposerLayoutContext>) {
@@ -53,7 +54,7 @@ export function ComposerPromptSection({ context }: ElementDefinitionProps<Compos
           aria-label={t('composer.clearPrompt')}
           title={t('composer.clearPrompt')}
         >
-          ×
+          <XIcon size={15} strokeWidth={2.2} />
         </button>
       )}
     </div>

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { SlotHost } from '../../interface/SlotHost';
 import type { SidebarTabContext, WorkspaceTab } from '../../interface/context/workspace/tabs';
 import { useI18n } from '../../i18n';
+import { ImagesIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from '../../shared/ui';
 import styles from './StudioSidebar.module.css';
 
 interface Props {
@@ -12,24 +13,13 @@ interface Props {
 }
 
 function BrandMark() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-      <rect x="3.25" y="4.25" width="14.5" height="14.5" rx="3" />
-      <path d="m6.5 15 3.15-3.45 2.3 2.15 2.85-3.2" />
-      <circle cx="13.9" cy="8.35" r="1.15" />
-      <path d="M8 20.25h9.25a3.5 3.5 0 0 0 3.5-3.5V8" />
-    </svg>
-  );
+  return <ImagesIcon size={24} strokeWidth={1.7} />;
 }
 
 function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
-  return (
-    <svg className={collapsed ? styles.toggleIconCollapsed : undefined} viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
-      <rect x="2.75" y="3.25" width="14.5" height="13.5" rx="2.5" />
-      <path d="M7 3.75v12.5" />
-      <path d="m12.25 7.75-2.25 2.25 2.25 2.25" />
-    </svg>
-  );
+  return collapsed
+    ? <PanelLeftOpenIcon size={20} />
+    : <PanelLeftCloseIcon size={20} />;
 }
 
 function MobileBottomNavigation({ activeTab, onTabChange }: Pick<Props, 'activeTab' | 'onTabChange'>) {

@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { DisclosureChevron } from '../DisclosureChevron';
 import { FloatingPopover } from '../FloatingPopover';
+import { CheckIcon } from '../Icon';
 import styles from './PopoverSelect.module.css';
 
 export interface PopoverSelectOption {
@@ -242,7 +243,7 @@ export function PopoverSelect({
                     </span>
                     <span className={cx(styles.optionSide, 'popover-select-option-side')}>
                       {renderOptionSuffix?.(option)}
-                      {isActive && <span className={cx(styles.check, 'popover-select-check')} aria-hidden="true">•</span>}
+                      {isActive && <CheckIcon className={cx(styles.check, 'popover-select-check')} size={15} strokeWidth={2.2} />}
                     </span>
                   </button>
                 );

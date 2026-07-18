@@ -9,7 +9,7 @@ import type { ProviderSettings } from '../../domain/providerSettings';
 import type { StudioSettings } from '../../domain/studioSettings';
 import type { WorkMode } from '../../domain/workMode';
 import { useI18n } from '../../i18n';
-import { Button, IconButton } from '../../shared/ui';
+import { Button, IconButton, XIcon } from '../../shared/ui';
 import { useModalDialog } from '../../shared/hooks/useModalDialog';
 import styles from './ParametersModal.module.css';
 
@@ -50,7 +50,9 @@ export function ParametersModal({ open, mode, providerMode, params, provider, ca
             <h2 id="parameters-modal-title" className="section-title">{t('params.title')}</h2>
             <p className={styles.subcopy}>{t('params.summary', { mode: t(providerMode.labelKey), size: summarySize, n: params.n })}</p>
           </div>
-          <IconButton className={styles.closeButton} data-testid="parameters-modal-close" onClick={onClose} aria-label={t('attachment.close')}>×</IconButton>
+          <IconButton className={styles.closeButton} data-testid="parameters-modal-close" onClick={onClose} aria-label={t('attachment.close')}>
+            <XIcon size={18} />
+          </IconButton>
         </header>
 
         {warnings.length > 0 && (

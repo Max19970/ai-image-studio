@@ -119,18 +119,16 @@
     padding: 0;
     overflow: hidden;
     border-color: color-mix(in srgb, #ff9aaa 38%, transparent);
-    color: transparent !important;
+    color: #ffd2d9 !important;
   }
 
-  .clearResultsButton::after {
-    content: "🗑";
+  .clearResultsLabel {
     position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: #ffd2d9;
-    font-size: 15px;
-    line-height: 1;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .historyButton {

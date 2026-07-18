@@ -1,30 +1,14 @@
 import { memo, type KeyboardEvent } from 'react';
+import { CheckIcon, SearchIcon, XIcon } from '../Icon';
 import type { GroupedPickerItemRow, GroupedPickerRow } from './groupedPickerModel';
 import styles from './GroupedPicker.module.css';
 
 export function GroupedPickerSearchIcon() {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true">
-      <circle cx="8.8" cy="8.8" r="5.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <path d="m12.8 12.8 4 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
+  return <SearchIcon size={20} />;
 }
 
 export function GroupedPickerClearIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="m4 4 8 8M12 4l-8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="m3.4 8.3 2.8 2.8 6.4-6.4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <XIcon size={16} />;
 }
 
 export const GroupedPickerVirtualGroupHeader = memo(function GroupedPickerVirtualGroupHeader({
@@ -86,7 +70,7 @@ export const GroupedPickerVirtualItem = memo(function GroupedPickerVirtualItem({
         {item.description && <small>{item.description}</small>}
       </span>
       <span className={styles.selectionMark} aria-hidden="true" data-visible={selected ? 'true' : 'false'}>
-        <CheckIcon />
+        <CheckIcon size={16} strokeWidth={2.1} />
       </span>
     </button>
   );

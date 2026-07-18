@@ -1,6 +1,7 @@
 import { useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useModalDialog } from '../../hooks/useModalDialog';
+import { XIcon } from '../Icon';
 import styles from './BottomSheet.module.css';
 
 const cx = (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' ');
@@ -72,7 +73,9 @@ export function BottomSheet({
             {title && <h2 id={titleId}>{title}</h2>}
             {description && <p id={descriptionId}>{description}</p>}
           </div>
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label={closeLabel}>×</button>
+          <button type="button" className={styles.closeButton} onClick={onClose} aria-label={closeLabel}>
+            <XIcon size={18} />
+          </button>
         </header>
         <div className={styles.body}>{children}</div>
         {footer && <footer className={styles.footer}>{footer}</footer>}

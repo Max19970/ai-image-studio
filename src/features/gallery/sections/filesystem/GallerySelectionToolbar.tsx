@@ -1,6 +1,6 @@
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
-import { Button } from '../../../../shared/ui';
+import { Button, DownloadIcon, XIcon } from '../../../../shared/ui';
 import { GalleryQuickActionMenu } from '../shared/GalleryQuickActionMenu';
 import styles from './GalleryExplorerBar.module.css';
 
@@ -24,7 +24,7 @@ export function GallerySelectionToolbar({ context, onDelete }: { context: Galler
         <div className={styles.selectionActions}>
           <button type="button" className={`${styles.secondaryAction} ${styles.selectVisibleAction}`} onClick={context.selection.selectVisible}>{t('gallery.selectionSelectVisible')}</button>
           <button type="button" className={`${styles.secondaryAction} ${styles.downloadAction}`} disabled={selectedTaskCount === 0} onClick={download} aria-label={t('gallery.selectionDownloadCompact')}>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5v8.25m0 0 3-3m-3 3-3-3M4.5 14v2h11v-2" /></svg>
+            <DownloadIcon size={18} />
             <span>{t('gallery.selectionDownloadCompact')}</span>
           </button>
           <button type="button" className={styles.primaryAction} data-testid="gallery-selection-move" disabled={selectedCount === 0} onClick={() => context.selection.copyToClipboard('move')}>{t('gallery.selectionMove')}</button>
@@ -53,7 +53,7 @@ export function GallerySelectionToolbar({ context, onDelete }: { context: Galler
           onClick={context.selection.cancel}
           aria-label={t('gallery.selectionCancel')}
         >
-          ×
+          <XIcon size={18} />
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../../../i18n';
+import { XIcon } from '../Icon';
 import { IconButton } from '../IconButton';
 import styles from './AttachmentPreviewModal.module.css';
 import type { AttachmentPreviewItem } from '../../image/attachmentPreviewTypes';
@@ -78,7 +79,9 @@ export function AttachmentPreviewModal({ open, attachment, onClose }: Props) {
             <h2 id="attachment-preview-title" className="section-title">{roleTitle}</h2>
             <p className={styles.subcopy}>{roleHint}</p>
           </div>
-          <IconButton className={styles.closeButton} onClick={onClose} aria-label={t('attachment.close')}>×</IconButton>
+          <IconButton className={styles.closeButton} onClick={onClose} aria-label={t('attachment.close')}>
+            <XIcon size={18} />
+          </IconButton>
         </header>
 
         <div className={styles.layout}>

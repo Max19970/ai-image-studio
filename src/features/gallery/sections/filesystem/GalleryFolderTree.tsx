@@ -5,7 +5,7 @@ import { hasGalleryDragPayload, readGalleryDragPayload } from '../../../../entit
 import { galleryMetadataKey, galleryPinSet } from '../../../../entities/gallery/galleryMetadata';
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
-import { PinIcon } from '../shared/PinIcon';
+import { ChevronRightIcon, FolderIcon, FolderOpenIcon, PinIcon } from '../../../../shared/ui';
 import { GalleryFolderTreeToolbar } from './GalleryFolderTreeToolbar';
 import styles from './GalleryFolderTree.module.css';
 
@@ -78,9 +78,7 @@ function FolderBranch({
           aria-expanded={hasChildren ? expanded : undefined}
           onClick={() => onToggle(node.folder.path)}
         >
-          {hasChildren ? (
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5.5 3.75 4.25 4.25-4.25 4.25" /></svg>
-          ) : <span aria-hidden="true" />}
+          {hasChildren ? <ChevronRightIcon size={16} /> : <span aria-hidden="true" />}
         </button>
         <button
           type="button"
@@ -103,9 +101,9 @@ function FolderBranch({
             onDropItem(node.folder.path, event.dataTransfer);
           }}
         >
-          <svg className={styles.folderIcon} viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M2.75 5.75h5l1.35 1.5h8.15v7.5a1.5 1.5 0 0 1-1.5 1.5H4.25a1.5 1.5 0 0 1-1.5-1.5v-9Z" />
-          </svg>
+          {expanded || active
+            ? <FolderOpenIcon className={styles.folderIcon} size={20} />
+            : <FolderIcon className={styles.folderIcon} size={20} />}
           <span>{node.folder.name}</span>
         </button>
       </div>
@@ -253,7 +251,7 @@ export function GalleryFolderTree({
                 moveDroppedItem(galleryRootPath, event.dataTransfer);
               }}
             >
-              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4.75h5l1.35 1.5H17v9H3v-10.5Z" /></svg>
+              {activePath === galleryRootPath ? <FolderOpenIcon size={20} /> : <FolderIcon size={20} />}
               <span>{t('gallery.rootFolder')}</span>
             </button>
             {tree.length > 0 ? (

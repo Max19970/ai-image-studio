@@ -131,9 +131,8 @@
   cursor: pointer;
 }
 
-.tagChip span {
+.tagRemoveIcon {
   color: var(--muted);
-  font-size: 13px;
 }
 
 .empty {

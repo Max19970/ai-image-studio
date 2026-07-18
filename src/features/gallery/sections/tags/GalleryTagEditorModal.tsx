@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button } from '../../../../shared/ui';
+import { Button, XIcon } from '../../../../shared/ui';
 import { normalizeGalleryTag } from '../../../../entities/gallery/galleryMetadata';
 import { useI18n } from '../../../../i18n';
 import { useModalDialog } from '../../../../shared/hooks/useModalDialog';
@@ -84,7 +84,7 @@ export function GalleryTagEditorModal({ open, title, tags, onClose, onSave }: Ga
               {draftTags.length === 0 && <span className={styles.empty}>{t('gallery.tagsModalEmpty')}</span>}
               {draftTags.map((tag) => (
                 <button key={tag} type="button" className={styles.tagChip} onClick={() => removeTag(tag)}>
-                  #{tag}<span aria-hidden="true">×</span>
+                  #{tag}<XIcon className={styles.tagRemoveIcon} size={13} strokeWidth={2.1} />
                 </button>
               ))}
             </div>

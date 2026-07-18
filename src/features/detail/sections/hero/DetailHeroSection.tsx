@@ -5,6 +5,7 @@ import type { ElementDefinitionProps } from '../../../../interface/registry/type
 import { SlotHost } from '../../../../interface/SlotHost';
 import type { DetailActionContext, DetailLayoutContext } from '../../../../interface/context/workspace/detail';
 import { useI18n } from '../../../../i18n';
+import { CheckIcon, PlusIcon } from '../../../../shared/ui';
 import { ResultCarousel } from '../carousel/DetailResultCarousel';
 import { cx } from '../../model/detailHelpers';
 import { DetailThumb } from './DetailThumb';
@@ -106,7 +107,7 @@ export function DetailHeroSection({ context }: ElementDefinitionProps<DetailLayo
                       aria-label={t('detail.selectImageForArchive', { index: item.index + 1 })}
                       onClick={() => toggleDownloadImage(item)}
                     >
-                      {selected ? '✓' : '+'}
+                      {selected ? <CheckIcon size={15} strokeWidth={2.4} /> : <PlusIcon size={15} strokeWidth={2.2} />}
                     </button>
                   </div>
                 );

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import type { GalleryKindFilter, GallerySortMode, GalleryStatusFilter } from '../../../../entities/gallery/archiveTypes';
-import { BottomSheet, Button, ConfirmationDialog, PopoverSelect, type PopoverSelectOption } from '../../../../shared/ui';
+import { BottomSheet, Button, ConfirmationDialog, ListFilterIcon, PopoverSelect, SearchIcon, type PopoverSelectOption } from '../../../../shared/ui';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
 import { useI18n } from '../../../../i18n';
 import styles from './GalleryArchiveControls.module.css';
@@ -170,7 +170,7 @@ export function GalleryArchiveControls({ context, open }: { context: GalleryLayo
             <div className={styles.toolbar}>
               <label className={styles.searchField}>
                 <span className={styles.visuallyHidden}>{t('gallery.search')}</span>
-                <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.75" cy="8.75" r="5.25" /><path d="m12.75 12.75 3.5 3.5" /></svg>
+                <SearchIcon size={18} />
                 <input
                   data-testid="gallery-search-input"
                   value={archive.query}
@@ -194,7 +194,7 @@ export function GalleryArchiveControls({ context, open }: { context: GalleryLayo
                   aria-expanded={filtersOpen}
                   onClick={() => setFiltersOpen((current) => !current)}
                 >
-                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.25h13M6 10h8M8.25 14.75h3.5" /></svg>
+                  <ListFilterIcon size={18} />
                   <span>{t('gallery.filters')}</span>
                   {activeFilterCount > 0 && <strong>{activeFilterCount}</strong>}
                 </Button>

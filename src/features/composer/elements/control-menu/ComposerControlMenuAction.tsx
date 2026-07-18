@@ -1,5 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
-import { DisclosureChevron, FloatingPopover } from '../../../../shared/ui';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  CopyIcon,
+  DisclosureChevron,
+  EraserIcon,
+  FloatingPopover,
+  ImagePlusIcon,
+  PlusIcon,
+  ScanIcon,
+  SlidersHorizontalIcon,
+  SparklesIcon,
+  Trash2Icon
+} from '../../../../shared/ui';
 import { useI18n } from '../../../../i18n';
 import type { ComposerActionContext } from '../../composerTypes';
 import { ProviderModelPickerPanel } from '../../../../entities/provider/ui';
@@ -25,7 +36,7 @@ function MenuAction({
   testId,
   onClick
 }: {
-  icon: string;
+  icon: ReactNode;
   label: string;
   danger?: boolean;
   testId?: string;
@@ -38,7 +49,7 @@ function MenuAction({
       data-testid={testId}
       onClick={onClick}
     >
-      <span className={styles.icon} aria-hidden="true">{icon}</span>
+      <span className={styles.icon}>{icon}</span>
       <span>{label}</span>
     </button>
   );
@@ -95,7 +106,7 @@ function MainMenu({ context, onOpenPresets, onOpenModels }: MenuProps) {
       <div className={styles.actionList}>
         {canUseImages && (
           <MenuAction
-            icon="＋"
+            icon={<ImagePlusIcon size={18} />}
             label={t('composer.addImages')}
             testId="composer-add-attachments"
             onClick={() => runAndClose(context.actions.openAttachmentPicker)}
@@ -103,7 +114,7 @@ function MainMenu({ context, onOpenPresets, onOpenModels }: MenuProps) {
         )}
         {canUseMask && (
           <MenuAction
-            icon="◌"
+            icon={<ScanIcon size={18} />}
             label={context.hasMask ? t('composer.replaceMask') : t('composer.addMask')}
             testId="composer-add-mask"
             onClick={() => runAndClose(context.actions.openMaskPicker)}
@@ -111,21 +122,21 @@ function MainMenu({ context, onOpenPresets, onOpenModels }: MenuProps) {
         )}
         {context.controlSurface.showParameters && (
           <MenuAction
-            icon="⚙"
+            icon={<SlidersHorizontalIcon size={18} />}
             label={t('composer.paramsTitle')}
             testId="composer-parameters"
             onClick={() => runAndClose(context.actions.openParameters)}
           />
         )}
         <MenuAction
-          icon="✦"
+          icon={<SparklesIcon size={18} />}
           label={t('requestPresets.open')}
           testId="request-presets-open"
           onClick={onOpenPresets}
         />
         {canUseMask && context.hasMask && (
           <MenuAction
-            icon="−"
+            icon={<EraserIcon size={18} />}
             label={t('composer.clearMask')}
             danger
             testId="composer-clear-mask"
@@ -134,7 +145,7 @@ function MainMenu({ context, onOpenPresets, onOpenModels }: MenuProps) {
         )}
         {(canUseImages || canUseMask) && context.attachmentsCount > 0 && (
           <MenuAction
-            icon="×"
+            icon={<Trash2Icon size={18} />}
             label={t('composer.clearAttachments')}
             danger
             onClick={() => runAndClose(context.actions.clearAttachments)}
@@ -146,16 +157,16 @@ function MainMenu({ context, onOpenPresets, onOpenModels }: MenuProps) {
 
       <div className={styles.queueToolbar} aria-label={t('composer.queueActions')}>
         <button type="button" data-testid="composer-add-request" onClick={() => runAndClose(context.actions.addDraft)}>
-          <span aria-hidden="true">＋</span>
+          <PlusIcon size={16} />
           {t('composer.addRequest')}
         </button>
         <button type="button" onClick={() => runAndClose(context.actions.duplicateActiveDraft)}>
-          <span aria-hidden="true">⧉</span>
+          <CopyIcon size={16} />
           {t('composer.duplicateRequest')}
         </button>
         {context.draftsCount > 1 && (
           <button type="button" className={styles.danger} onClick={() => runAndClose(context.actions.removeActiveDraft)}>
-            <span aria-hidden="true">×</span>
+            <Trash2Icon size={16} />
             {t('composer.removeRequest')}
           </button>
         )}
@@ -220,7 +231,7 @@ export function ComposerControlMenuAction({ context }: ElementDefinitionProps<Co
         aria-expanded={open}
         onClick={() => context.setOpenPopover((value) => value === popoverId ? null : popoverId)}
       >
-        <span aria-hidden="true">＋</span>
+        <PlusIcon size={19} strokeWidth={2.1} />
         {context.attachmentsCount > 0 && <em>{context.attachmentsCount}</em>}
       </button>
 

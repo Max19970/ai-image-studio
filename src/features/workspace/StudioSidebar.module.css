@@ -116,9 +116,6 @@
   transition: transform var(--motion-duration-medium) var(--motion-ease-standard);
 }
 
-.toggleIconCollapsed {
-  transform: rotate(180deg);
-}
 
 .railToggle:focus-visible {
   outline: 0;

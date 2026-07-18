@@ -2,6 +2,7 @@ import type { ImageParams } from '../../../../domain/imageParams';
 import type { ProviderSettings } from '../../../../domain/providerSettings';
 import type { StudioSettings } from '../../../../domain/studioSettings';
 import { useI18n } from '../../../../i18n';
+import { CircleCheckIcon, CircleIcon, Layers3Icon } from '../../../../shared/ui';
 import { getComfyUiRegisteredLoraOptions, toggleComfyUiRegisteredLoraById } from '../loraSelection';
 import styles from './ComfyUiLoraQuickGroup.module.css';
 
@@ -39,12 +40,14 @@ export function ComfyUiLoraQuickGroup({ settings, params, provider, onChangePara
               data-active={option.selected ? 'true' : 'false'}
               onClick={() => toggle(option.id)}
             >
-              <span className={styles.icon} aria-hidden="true">Lo</span>
+              <span className={styles.icon}><Layers3Icon size={17} /></span>
               <span className={styles.copy}>
                 <strong>{option.label}</strong>
                 <small>{option.description}</small>
               </span>
-              <span className={styles.statusIcon} aria-hidden="true">{option.selected ? 'on' : 'off'}</span>
+              <span className={styles.statusIcon}>
+                {option.selected ? <CircleCheckIcon size={17} /> : <CircleIcon size={17} />}
+              </span>
             </button>
           ))}
         </div>

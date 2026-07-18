@@ -4,7 +4,7 @@ import type { ProviderGenerationExtension } from '../../extensionTypes';
 import type { ProviderGenerationSurfaceContext, ProviderGenerationSurfacePatchContext } from '../../surfaceTypes';
 import type { GenerationParamSlot } from '../../types';
 import { useI18n } from '../../../../i18n';
-import { PopoverSelect } from '../../../../shared/ui';
+import { GripVerticalIcon, PopoverSelect } from '../../../../shared/ui';
 import controls from '../../ParamControls.module.css';
 import workflowControls from '../ComfyUiWorkflowControls.module.css';
 import { ConflictWarning } from './workflowPluginFields';
@@ -148,7 +148,9 @@ function WorkflowBuilder({ context }: { context: ProviderGenerationSurfacePatchC
               onPointerCancel={clearLongPress}
             >
               <summary className={workflowControls.workflowBuilderSummary}>
-                <span className={workflowControls.workflowBuilderHandle} aria-label={t('params.comfy.workflowPlugins.builder.drag')}>⋮⋮</span>
+                <span className={workflowControls.workflowBuilderHandle} aria-label={t('params.comfy.workflowPlugins.builder.drag')}>
+                  <GripVerticalIcon size={17} />
+                </span>
                 <span className={workflowControls.workflowBuilderStep}>{String(index + 1).padStart(2, '0')}</span>
                 <span className={workflowControls.workflowBuilderCopy}>
                   <strong>{t(definition.labelKey)}</strong>

@@ -3,7 +3,7 @@ import { getGalleryBreadcrumbs, getGalleryParentPath, galleryRootPath } from '..
 import type { GalleryLayoutContext } from '../../../../interface/context/workspace/gallery';
 import { useI18n } from '../../../../i18n';
 import { useMediaQuery } from '../../../../shared/hooks/useMediaQuery';
-import { BottomSheet, ConfirmationDialog } from '../../../../shared/ui';
+import { BottomSheet, ChevronLeftIcon, CircleCheckIcon, ConfirmationDialog, FoldersIcon, ListFilterIcon } from '../../../../shared/ui';
 import { GalleryDestinationPicker } from './GalleryDestinationPicker';
 import { GalleryFolderTree } from './GalleryFolderTree';
 import { GallerySelectionToolbar } from './GallerySelectionToolbar';
@@ -56,10 +56,7 @@ export function GalleryExplorerBar({
                 aria-label={isMobile ? t('gallery.folderNavigatorOpen') : treeVisible ? t('gallery.folderTreeHide') : t('gallery.folderTreeShow')}
                 aria-expanded={isMobile ? navigatorOpen : treeVisible}
               >
-                <svg viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="M3.25 4.25h5l1.35 1.5h7.15v10H3.25v-11.5Z" />
-                  <path d="M6.5 8.75h6.75M6.5 11.25h5.25" />
-                </svg>
+                <FoldersIcon size={19} />
               </button>
 
               {isMobile && context.activePath !== galleryRootPath && (
@@ -69,7 +66,7 @@ export function GalleryExplorerBar({
                   onClick={() => context.commands.setActivePath(getGalleryParentPath(context.activePath))}
                   aria-label={t('gallery.folderUp')}
                 >
-                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.25 4.75-5.25 5.25 5.25 5.25" /></svg>
+                  <ChevronLeftIcon size={19} />
                 </button>
               )}
 
@@ -108,15 +105,12 @@ export function GalleryExplorerBar({
                     aria-label={archiveControlsOpen ? t('gallery.archiveControlsHide') : t('gallery.archiveControlsShow')}
                     aria-expanded={archiveControlsOpen}
                   >
-                    <svg viewBox="0 0 20 20" aria-hidden="true">
-                      <circle cx="7.5" cy="7.5" r="4.25" />
-                      <path d="m10.75 10.75 3 3M12.5 5.25h4M13.75 8h2.75M14.75 10.75h1.75" />
-                    </svg>
+                    <ListFilterIcon size={19} />
                   </button>
                 )}
                 {canSelect && (
                   <button type="button" className={styles.selectionTrigger} data-testid="gallery-selection-start" onClick={context.selection.begin} aria-label={t('gallery.selectionStart')}>
-                    <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5" /><path d="m7 10 2 2 4-4" /></svg>
+                    <CircleCheckIcon size={19} />
                   </button>
                 )}
               </div>

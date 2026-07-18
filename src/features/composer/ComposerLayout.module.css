@@ -224,8 +224,7 @@
 }
 
 .queueIcon {
-  font-size: 15px;
-  line-height: 1;
+  display: block;
 }
 
 .queueCount {
@@ -273,8 +272,6 @@
 
 .sendArrow {
   display: block;
-  font-size: 17px;
-  line-height: 1;
 }
 
 .sendCount {
@@ -286,19 +283,14 @@
   line-height: 1;
 }
 
-.sendCount sup {
+.sendCount > svg {
   position: absolute;
   top: -8px;
-  right: -7px;
-  display: grid;
-  width: 12px;
-  height: 12px;
-  place-items: center;
+  right: -8px;
+  padding: 1px;
   border-radius: 999px;
   background: var(--warn);
   color: #241608;
-  font-size: 8px;
-  line-height: 1;
 }
 
 .sendButton:has(.sendCount) {

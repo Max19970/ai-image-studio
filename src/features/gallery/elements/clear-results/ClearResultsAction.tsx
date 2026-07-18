@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useI18n } from '../../../../i18n';
-import { Button, ConfirmationDialog } from '../../../../shared/ui';
+import { Button, ConfirmationDialog, Trash2Icon } from '../../../../shared/ui';
 import type { GalleryHeaderActionContext } from '../../../../interface/context/workspace/gallery';
 import type { ElementDefinitionProps } from '../../../../interface/registry/types';
 import styles from '../../sections/header/GalleryHeaderSection.module.css';
@@ -21,7 +21,8 @@ export function ClearResultsAction({ context }: ElementDefinitionProps<GalleryHe
       aria-label={t('gallery.clearResultsAccessible')}
       title={t('gallery.clearResultsAccessible')}
     >
-      {t('gallery.clearResults')}
+      <Trash2Icon className={styles.clearResultsIcon} size={17} />
+      <span className={styles.clearResultsLabel}>{t('gallery.clearResults')}</span>
     </Button>
     <ConfirmationDialog
       open={confirmOpen}
